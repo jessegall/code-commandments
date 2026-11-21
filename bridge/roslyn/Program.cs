@@ -31,15 +31,6 @@ catch (Exception failure)
 
 static int Run(string[] args, Workspace workspace)
 {
-    // The one ask besides a tree: what this bridge can emit, which a census of recorded streams cannot say.
-    if (args.Contains("--declares"))
-    {
-        using var declared = Console.OpenStandardOutput();
-        Declaration.Write(declared);
-
-        return 0;
-    }
-
     if (args.Contains("--serve"))
     {
         Parent.LeaveWithIt();

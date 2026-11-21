@@ -69,11 +69,6 @@ A class writes its own keyed store (fill under a key, throw on a missing key) in
 ```php
 ----------[ Bad ]----------
 
-// A generic keyed store behind a typed façade — the righteous twin of a derived argument. `add()` takes
-// the subject once and derives the key itself, and the inner `register($carrier->key, $carrier)` only
-// looks like the sin: `register` accepts `mixed`, so it provably cannot derive anything from what it
-// holds, and the key beside the item is the only way the value gets there (#504).
-
 final class CarrierRegistry
 {
     /**
@@ -103,8 +98,6 @@ final class CarrierRegistry
 }
 
 ----------[ Good ]----------
-
-// The carriers the shop ships with, kept under their carrier codes by the shared Registry.
 
 final class CarrierRoster extends Registry
 {

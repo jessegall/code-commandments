@@ -9,7 +9,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 ```vue
 ----------[ Bad ]----------
 
-<span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+<span v-else-if="status === 'pending'" class="badge badge-amber">Pending</span>
 
 ----------[ Good ]----------
 
@@ -81,18 +81,14 @@ A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :
 ```vue
 ----------[ Bad ]----------
 
-<span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+<CartReview v-if="step === 1" />
 
 ----------[ Good ]----------
 
-<!-- in OrderStatusBadge.vue -->
 <SwitchCase :value="status">
   <template #paid><span class="badge badge-green">Paid</span></template>
   <template #pending><span class="badge badge-amber">Pending</span></template>
   <template #refunded><span class="badge badge-grey">Refunded</span></template>
   <template #default><span class="badge">Unknown</span></template>
 </SwitchCase>
-
-<!-- in SwitchCase.vue -->
-<slot :name="$slots[value] ? value : 'default'" />
 ```

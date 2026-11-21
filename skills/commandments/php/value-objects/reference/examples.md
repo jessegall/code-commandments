@@ -21,16 +21,10 @@ public function normalize(array $row): void
 ----------[ Good ]----------
 
 // in Shop\Catalog\ImportRowNormalizer
-// The same import row, given its type the moment it arrives: `ImportRow::from($row)` names the
-// fields ONCE at the boundary, so nothing downstream reads `$row['sku']` off a loose array.
-
 public function ingest(array $row): void
 {
     $this->persist(ImportRow::from($row));
 }
-
-// The same row with its required fields non-nullable: `::from()` fails hard on a
-// real miss, so a valid row can't be confused with a malformed one.
 
 final class ImportRow extends Data
 {
@@ -67,8 +61,6 @@ public function pushJob(LabelJob $job): void
 {
     $this->spooled[] = $job->line();
 }
-
-// One label to print: the parcel it belongs to, how many copies and the printer's format.
 
 final readonly class LabelJob
 {
@@ -107,9 +99,6 @@ public function daily(int $day): array
 ----------[ Good ]----------
 
 // in Shop\Reporting\SalesReport
-// The same daily figures as a typed report value object — named fields, not a
-// loose string-keyed bag.
-
 public function dailyReport(int $day): DailyReport
 {
     $gross = $this->orders->grossForDay($day);
@@ -119,9 +108,6 @@ public function dailyReport(int $day): DailyReport
         net: (int) round($gross * 0.79),
     );
 }
-
-// What the string-keyed bag became. The keys a caller used to guess at are fields, so a typo is a
-// failure here rather than a null three layers down.
 
 final class DailyReport
 {
@@ -139,11 +125,6 @@ A class's own fields always change and get checked together — one concept spli
 ```php
 ----------[ Bad ]----------
 
-/*
- * Pattern: coupled optionals. `floor`/`ceil` are one price range — they are null-guarded as a PAIR and
- * then assembled together, so the illegal half-present state (floor set, ceil absent) is representable and
- * the guard only exists to reject it. They should be one `Range|null`.
- */
 final class PriceBand
 {
     public function __construct(
@@ -160,7 +141,6 @@ final class PriceBand
 
 ----------[ Good ]----------
 
-/* The clump extracted: the two halves that only ever moved together ARE the range. */
 final readonly class PriceRange
 {
     public function __construct(
@@ -168,10 +148,6 @@ final readonly class PriceRange
         public int $ceil,
     ) {}
 }
-
-// The same band holding the value object instead of its parts: one `PriceRange|null` says "banded or not"
-// in one field, so the half-present state (floor set, ceil absent) cannot be spelled and the pair-guard
-// that existed only to reject it is gone.
 
 final class BandedPrice
 {
@@ -196,9 +172,6 @@ public function withValue(?string $value): self
 
 ----------[ Good ]----------
 
-// The wither saying ONLY what changes: `clone($this, ['order' => $order])` states the intent, so a
-// seventh field never touches this method — and the constructor is stated once, not N times over.
-
 public function withOrder(int $order): self
 {
     return clone($this, ['order' => $order]);
@@ -211,10 +184,6 @@ A value type that mutates its own field after construction, so two things holdin
 
 ```php
 ----------[ Bad ]----------
-
-// A reading with its own scale, taken once and then re-scaled in place. The field is not promoted
-// but the constructor still takes it, so it is what the caller ASKED for — and converting rewrites
-// it, leaving anything that already recorded this reading describing a temperature nobody measured.
 
 final class Temperature
 {
@@ -246,10 +215,6 @@ final class Temperature
 }
 
 ----------[ Good ]----------
-
-// The same reading, derived instead of re-scaled: `readonly` on the CLASS makes it final once built, and
-// `withCelsius()` answers with a NEW reading — so whatever recorded this one still describes the
-// temperature that was actually measured.
 
 final readonly class CalibratedReading
 {
@@ -286,9 +251,6 @@ public function unpack(string $reference): array
 ----------[ Good ]----------
 
 // in Shop\Checkout\CheckoutUnpacker
-// The same reference, answered with a named result: the caller reads `->currency`, not `[3]`, so
-// adding a field never silently re-numbers what everyone else destructured.
-
 public function parse(string $reference): CheckoutReference
 {
     $parts = explode(':', $reference);
@@ -300,7 +262,6 @@ public function parse(string $reference): CheckoutReference
     );
 }
 
-/* The tuple named: the four values that were positional now answer to what they are. */
 final readonly class CheckoutReference
 {
     /**
@@ -326,10 +287,6 @@ A `#[TypeScript]` `Data` class spreads a value object it already models flat acr
 ```php
 ----------[ Bad ]----------
 
-/*
- * PortView restates the existing Wire value object FLAT as wire{Type,Socket,Label} instead of nesting a
- * single `wire: Wire`. The flat trio travels to the frontend and should be one depth-nested sub-object.
- */
 #[TypeScript]
 final class PortView extends Data
 {
@@ -367,9 +324,6 @@ final class PortView extends Data
 
 ----------[ Good ]----------
 
-// The same view with its depth restored: the wire{Type,Socket,Label} trio is NESTED as the one `Wire` the
-// codebase already declares, so each member sheds the prefix and the value object is modelled once.
-
 #[TypeScript]
 final class NestedPortView extends Data
 {
@@ -379,7 +333,6 @@ final class NestedPortView extends Data
     ) {}
 }
 
-/* The Wire value object: a port's wiring identity, {type, socket, label}. */
 #[TypeScript]
 final class Wire extends Data
 {

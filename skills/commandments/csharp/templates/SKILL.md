@@ -68,26 +68,57 @@ assembles it. The principle is the same: the literal in one piece, the values si
 ```cs
 ----------[ Bad ]----------
 
-public static string Body(string name, string tracking)
+// The email a customer gets when their order ships.
+public static class ShippedEmail
 {
-    var body = new StringBuilder();
+    public static string Body(string name, string tracking)
+    {
+        var body = new StringBuilder();
 
-    body.AppendLine($"Hi {name},");
-    body.AppendLine();
-    body.AppendLine("Your order is on its way.");
-    body.AppendLine($"Track it with code {tracking}.");
+        body.AppendLine($"Hi {name},");
+        body.AppendLine();
+        body.AppendLine("Your order is on its way.");
+        body.AppendLine($"Track it with code {tracking}.");
 
-    return body.ToString();
+        return body.ToString();
+    }
+
+    public static string Written(string name, string tracking) => $"""
+        Hi {name},
+
+        Your order is on its way.
+        Track it with code {tracking}.
+        """;
+
+    public static string Items(IEnumerable<string> lines) => string.Join("\n", lines.Select(line => $"- {line}"));
 }
 
 ----------[ Good ]----------
 
-public static string Written(string name, string tracking) => $"""
-    Hi {name},
+// The email a customer gets when their order ships.
+public static class ShippedEmail
+{
+    public static string Body(string name, string tracking)
+    {
+        var body = new StringBuilder();
 
-    Your order is on its way.
-    Track it with code {tracking}.
-    """;
+        body.AppendLine($"Hi {name},");
+        body.AppendLine();
+        body.AppendLine("Your order is on its way.");
+        body.AppendLine($"Track it with code {tracking}.");
+
+        return body.ToString();
+    }
+
+    public static string Written(string name, string tracking) => $"""
+        Hi {name},
+
+        Your order is on its way.
+        Track it with code {tracking}.
+        """;
+
+    public static string Items(IEnumerable<string> lines) => string.Join("\n", lines.Select(line => $"- {line}"));
+}
 ```
 
 ## Commands

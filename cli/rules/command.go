@@ -313,19 +313,12 @@ func Tree(root engine.Match, line int) string {
 func Describe(node engine.Match, depth int) string {
 	parts := []string{node.Kind()}
 
-	var neutral []string
-	for _, kind := range engine.Neutrals {
-		if node.Is(kind) {
-			neutral = append(neutral, string(kind))
-		}
+	if role := node.Node().InRole(); role != "" {
+		parts = []string{role + ": " + node.Kind()}
 	}
 
-	if len(neutral) > 0 {
-		parts = append(parts, "["+strings.Join(neutral, ", ")+"]")
-	}
-
-	if field := node.Node().Field; field != "" {
-		parts = append(parts, "field="+field)
+	if form := node.Node().Form; form != "" {
+		parts = append(parts, "form="+form)
 	}
 
 	if name := node.Name(); name != "" {

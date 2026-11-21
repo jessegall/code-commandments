@@ -21,10 +21,6 @@ public function __construct(
 
 ----------[ Good ]----------
 
-// The FIX for the same overview: every slot is a `#[Computed]` get-hook that projects itself from the
-// injected reporter, so the class declares WHAT each field is next to HOW it is projected — and the
-// constructor is left holding nothing but the seed.
-
 #[TypeScript]
 final class ComputedOverviewPage extends Data
 {
@@ -51,10 +47,6 @@ A page object injects a service (`#[FromContainer]`, …) into a public property
 
 ```php
 ----------[ Bad ]----------
-
-// A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
-// with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
-// is not — one un-hidden service is enough to leak into the frontend type.
 
 #[TypeScript]
 final class CatalogPage extends Data
@@ -88,9 +80,6 @@ final class CatalogPage extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
-// reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
 
 #[TypeScript]
 final class HiddenCatalogPage extends Data
@@ -168,10 +157,6 @@ public function __construct(
     public readonly int $quantity,
 ) {}
 
-// Tiny custom output transformers — each reshapes a value object into a different wire type, so the
-// generated TypeScript must be told the new shape with a `#[TypeScriptType]`. The generator cannot infer
-// a custom transformer's output; only the built-ins (`DateTimeInterfaceTransformer`, …) are known to it.
-
 final class MoneyTransformer implements Transformer
 {
     public function transform(DataProperty $property, mixed $value, TransformationContext $context): string
@@ -187,9 +172,6 @@ A page object travels back in a response but carries no `#[TypeScript]` — the 
 
 ```php
 ----------[ Bad ]----------
-
-// Two direct stat slots; one container-injected reporter left PUBLIC and un-hidden — it serializes
-// and leaks into the frontend `DashboardPage` type.
 
 final class DashboardPage extends Data
 {
@@ -219,10 +201,6 @@ final class DashboardPage extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for the same dashboard: `#[TypeScript]` on the page object, so the transformer generates the
-// frontend type the `.vue` page binds its props against — the payload contract is checked, not `any`.
-// (The reporter is injected `#[Hidden]`, so only the page data reaches that type.)
 
 #[TypeScript]
 final class TypedDashboardPage extends Data
@@ -257,10 +235,6 @@ public function isHealthy(): bool
 }
 
 ----------[ Good ]----------
-
-// The FIX for the same status page: the health service is pulled through the container declaratively —
-// `#[Hidden] #[FromContainer(ContainersService::class)]` on a promoted property — so the getter reads an
-// injected collaborator instead of reaching out with `app()`.
 
 #[TypeScript]
 final class InjectedStatusPage extends Data

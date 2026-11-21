@@ -73,9 +73,6 @@ public function carrierNameNamed(Shipment $shipment): string
         ?? throw CarrierMissing::for($shipment->id);
 }
 
-// Where the message went. The failure is named once, so every throw site says WHAT went wrong
-// instead of spelling out a sentence the next site has to spell differently.
-
 final class CarrierMissing extends RuntimeException
 {
     public static function for(int|string $shipment): self
@@ -108,24 +105,6 @@ export function postageInZone(zone: string, rates: Record<string, number>): numb
     }
 
     return rates[zone]
-}
-```
-
-### generic-exception — in Vue
-
-A throw of the language's catch-all failure (`Exception`, `RuntimeException`, `Error`, `RuntimeError`) instead of a named one
-
-```vue
-----------[ Bad ]----------
-
-async (productId: number): Promise<number[]> => {
-    const result = await fetch(`/api/products/${productId}/questions`)
-    if (!result.ok) {
-        throw new Error(result.statusText)
-    }
-    const questions: Entry[] = await result.json()
-    const answered = questions.filter((question) => question.published)
-    return answered.map((question) => question.id)
 }
 ```
 
@@ -163,27 +142,77 @@ A throw of the language's catch-all failure (`Exception`, `RuntimeException`, `E
 ```cs
 ----------[ Bad ]----------
 
-public string Account(string carrier)
+// Looking a carrier up fails with an `Exception` that names nothing — a caller cannot catch "no such
+// carrier" without matching on the text, and every lookup re-words the message.
+public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> accounts)
 {
-    if (!accounts.TryGetValue(carrier, out var account))
+    public string Account(string carrier)
     {
-        throw new Exception($"No carrier is registered as '{carrier}'.");
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw new Exception($"No carrier is registered as '{carrier}'.");
+        }
+
+        return account;
     }
 
-    return account;
+    public string AccountOf(string carrier)
+    {
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw UnknownCarrier.Named(carrier);
+        }
+
+        return account;
+    }
+
+    public string Normalised(string carrier)
+    {
+        if (string.IsNullOrWhiteSpace(carrier))
+        {
+            throw new ArgumentException("A carrier needs a name.", nameof(carrier));
+        }
+
+        return carrier.Trim().ToLowerInvariant();
+    }
 }
 
 ----------[ Good ]----------
 
 // in CarrierDirectory.cs
-public string AccountOf(string carrier)
+// Looking a carrier up fails with an `Exception` that names nothing — a caller cannot catch "no such
+// carrier" without matching on the text, and every lookup re-words the message.
+public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> accounts)
 {
-    if (!accounts.TryGetValue(carrier, out var account))
+    public string Account(string carrier)
     {
-        throw UnknownCarrier.Named(carrier);
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw new Exception($"No carrier is registered as '{carrier}'.");
+        }
+
+        return account;
     }
 
-    return account;
+    public string AccountOf(string carrier)
+    {
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw UnknownCarrier.Named(carrier);
+        }
+
+        return account;
+    }
+
+    public string Normalised(string carrier)
+    {
+        if (string.IsNullOrWhiteSpace(carrier))
+        {
+            throw new ArgumentException("A carrier needs a name.", nameof(carrier));
+        }
+
+        return carrier.Trim().ToLowerInvariant();
+    }
 }
 
 // in CarrierDirectory.cs
@@ -201,12 +230,11 @@ The other 18 — one per rule — are in [`reference/examples.md`](reference/exa
 
 - `{{binary}} judge --skill=shared/exceptions` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `generic-exception`, `message-at-throw`, `rethrown-unchanged`, `swallow-catch`, `wrapping-without-cause`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `wrapping-without-cause`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 23 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 22 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

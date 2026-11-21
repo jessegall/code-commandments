@@ -68,13 +68,11 @@ A string written out as the path of a route the server declares by name
 ```vue
 ----------[ Bad ]----------
 
-function openBoard(): void {
-    window.location.assign('/plans')
-}
+<a :href="'/plans/' + card.id">{{ card.title }}</a>
 
 ----------[ Good ]----------
 
-const planAddress = route('plans.show', { plan: props.card.number })
+<a href="https://help.example.com/plans/archive">Help</a>
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

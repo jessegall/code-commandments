@@ -80,6 +80,15 @@ def mark_gift(line: CartLine) -> CartLine:
 def mark_sample(line: CartLine) -> CartLine:
     return line.amend(flags={"sample": True})
 
+# in escalations.py
+def escalate(self, ticket: Ticket) -> Ticket:
+    self.pager.append(ticket.subject)
+    return ticket.evolve(meta=TicketMeta.of(3).to_dict())
+
+# in support_desk.py
+def raise_level(ticket: Ticket, level: int) -> Ticket:
+    return ticket.evolve(meta=TicketMeta.of(level).to_dict())
+
 ----------[ Good ]----------
 
 class RoutedTicket:

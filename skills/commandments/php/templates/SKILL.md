@@ -82,9 +82,6 @@ A multi-line template assembled as an array of line fragments and joined with a 
 ```php
 ----------[ Bad ]----------
 
-// The docblock delimiters are separate elements and the indentation is spaces
-// inside a quote — the output has to be assembled in the reader's head.
-
 public function stub(string $class): string
 {
     $lines = [
@@ -103,9 +100,6 @@ public function stub(string $class): string
 }
 
 ----------[ Good ]----------
-
-// The FIX: one heredoc at the shape it emits. The docblock reads as a docblock,
-// the indentation is real whitespace, and the class name sits where it lands.
 
 public function stated(string $class): string
 {

@@ -25,9 +25,6 @@ public function suspendByTelling(Customer $customer, string $reason): void
 }
 
 // in Shop\Models\Customer
-// Where every call site's poking-and-saving went: the transition named once, on the model that
-// owns the columns it writes.
-
 public function suspend(string $reason): void
 {
     $this->suspended = true;
@@ -89,18 +86,12 @@ public function forItem(CatalogItem $item): array
 ----------[ Good ]----------
 
 // in Shop\Catalog\ReservedSkus
-// The item knows its own reserved SKUs — ask it directly instead of using its
-// code as a key back into a registry.
-
 public function forItemDirect(CatalogItem $item): array
 {
     return $item->reservedSkus();
 }
 
 // in Shop\Catalog\CatalogItem
-// Where the registry lookup went. The item held the key all along, so it can answer the
-// question the key was being used to ask.
-
 public function reservedSkus(): array
 {
     return $this->reserved;
@@ -113,8 +104,6 @@ A class whose every public method only hands its arguments, unchanged, to the sa
 
 ```php
 ----------[ Bad ]----------
-
-// Asks the carrier where a parcel is. Every method hands its tracking code straight to the carrier client.
 
 final class ParcelTracker
 {
@@ -132,8 +121,6 @@ final class ParcelTracker
 }
 
 ----------[ Good ]----------
-
-// The tracking page, asking the carrier client itself rather than a class that only passes the question on.
 
 final class TrackingPage
 {

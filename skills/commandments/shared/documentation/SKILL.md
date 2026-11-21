@@ -108,13 +108,27 @@ A comment narrates the history of the code
 ```cs
 ----------[ Bad ]----------
 
-// formerly lived in the checkout service, and was extracted here
-public static int Days(bool member) => member ? 60 : 30;
+// How long after delivery a customer may still send an order back.
+public static class RefundWindows
+{
+    // formerly lived in the checkout service, and was extracted here
+    public static int Days(bool member) => member ? 60 : 30;
+
+    /// <summary>Members get longer to decide, since they return far less often.</summary>
+    public static int DaysFor(bool member) => member ? 60 : 30;
+}
 
 ----------[ Good ]----------
 
-/// <summary>Members get longer to decide, since they return far less often.</summary>
-public static int DaysFor(bool member) => member ? 60 : 30;
+// How long after delivery a customer may still send an order back.
+public static class RefundWindows
+{
+    // formerly lived in the checkout service, and was extracted here
+    public static int Days(bool member) => member ? 60 : 30;
+
+    /// <summary>Members get longer to decide, since they return far less often.</summary>
+    public static int DaysFor(bool member) => member ? 60 : 30;
+}
 ```
 
 ### archaeology-comment · negative-space-comment · restated-comment — in Go
@@ -150,7 +164,6 @@ The other 22 — one per rule — are in [`reference/examples.md`](reference/exa
 
 - `{{binary}} judge --skill=shared/documentation` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `archaeology-comment`, `bloated-docblock`, `ceremony-docblock`, `dangling-doc-reference`, `negative-space-comment`, `restated-comment`, `stacked-docblock`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `stacked-docblock`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

@@ -240,25 +240,138 @@ function canDispatch(details: LabelDetails): boolean {
 }
 ```
 
-### computed-boolean-argument — in C#
+### computed-boolean-argument · hand-rolled-wither · keyed-lookup-envy · scratch-state-restore · unused-parameter — in C#
 
-Callers repeatedly compute Boolean arguments from one object
+_computed-boolean-argument_ — Callers repeatedly compute Boolean arguments from one object
+
+_hand-rolled-wither_ — A wither repeats fields from its type's constructor
+
+_keyed-lookup-envy_ — A routine looks up a value using a field of another local type
+
+_scratch-state-restore_ — A method saves a field, changes it, and restores it
+
+_unused-parameter_ — The function never reads a declared parameter
 
 ```cs
 ----------[ Bad ]----------
 
-public bool Check(ReceiptRoute front, ReceiptRoute back)
+public sealed class ReceiptRouting
 {
-    var first = NeedsReview(front.Printed, front.Verified);
-    var second = NeedsReview(back.Printed, back.Verified);
-    return first || second;
+    private string zone;
+    private string depot;
+    private int counter;
+
+    public ReceiptRouting(string zone, string depot, int counter)
+    {
+        this.zone = zone;
+        this.depot = depot;
+        this.counter = counter;
+    }
+
+    private static bool NeedsReview(bool left, bool right)
+    {
+        return left && !right;
+    }
+
+    public bool Check(ReceiptRoute front, ReceiptRoute back)
+    {
+        var first = NeedsReview(front.Printed, front.Verified);
+        var second = NeedsReview(back.Printed, back.Verified);
+        return first || second;
+    }
+
+    private string Caption(string value,
+        string prefix)
+    {
+        return this.zone + value;
+    }
+
+    public void Dispatches()
+    {
+        this.counter = this.counter + 1;
+    }
+
+    public ReceiptRouting WithCounter(int next)
+    {
+        return new ReceiptRouting(this.zone, this.depot, next);
+    }
+
+    public string Owner(Dictionary<string, string> owners, ReceiptRoute route)
+    {
+        return owners[route.Code];
+    }
+
+    public string Inspect(string probe)
+    {
+        var saved = this.zone;
+        this.zone = probe;
+        var caption = Caption(probe, this.depot);
+        this.zone = saved;
+        return caption;
+    }
+
+    public void ResetCounter()
+    {
+        this.counter = 0;
+    }
 }
 
 ----------[ Good ]----------
 
-public static bool CanDispatch(LabelDetails label)
+public sealed class ArgumentContracts
 {
-    return label.Paid && label.Checked;
+    public static bool CanDispatch(LabelDetails label)
+    {
+        return label.Paid && label.Checked;
+    }
+
+    public bool Accept(LabelDetails label)
+    {
+        return CanDispatch(label);
+    }
+
+    public string ChooseTitle(string title,
+        string prefix)
+    {
+        return prefix + title;
+    }
+
+    public string PrintTitle(string title)
+    {
+        return title.Trim();
+    }
+
+    public LabelDetails Approve(LabelDetails label)
+    {
+        return label with { Checked = true };
+    }
+
+    public LabelDetails Pay(LabelDetails label)
+    {
+        return label with { Paid = true };
+    }
+
+    public string CompareLabel(LabelDetails label, string prefix)
+    {
+        return prefix + label.Text;
+    }
+
+    public string PrintLabel(LabelDetails label)
+    {
+        return label.Text;
+    }
+
+    public string ProbeLabel(LabelDetails label)
+    {
+        var saved = label.Text;
+        var caption = saved.Trim();
+        return caption;
+    }
+
+    public string InspectLabel(LabelDetails label, string probe)
+    {
+        return probe + label.Text;
+    }
 }
 ```
 
@@ -382,16 +495,10 @@ public function publish(string $shopId, string $userId, string $channelId): int
 ----------[ Good ]----------
 
 // in Shop\Reporting\AccessAuditor
-// The clump named: one value object carries the three fields that travelled
-// together.
-
 public function recordAccess(AccessContext $context): string
 {
     return implode(self::SEPARATOR, [$context->shopId, $context->userId, $context->channelId]);
 }
-
-// The three ids that always travelled together, named once. Signatures shrink to one parameter and
-// nothing can pass them in the wrong order any more.
 
 final class AccessContext
 {
@@ -423,6 +530,27 @@ canSend(counterId: number, copies: number, store: string): boolean {
     return counterId >= 10
 }
 
+// in vessel-value-shape.ts
+print(voyage: string, dock: string, vessel: string): string {
+    return `${vessel.toUpperCase()} departs ${dock} on ${voyage}`
+}
+
+// in vessel-value-shape.ts
+check(voyage: string, dock: string, vessel: string): boolean {
+    if (voyage.length < 3 || dock.length < 2) return false
+    return vessel.charAt(0) === dock.charAt(0)
+}
+
+// in wrapping-value-shape.ts
+print(paper: string, ribbon: string, stamp: string): string {
+    return [paper, ribbon].filter(Boolean).join(' + ') + ' / ' + stamp
+}
+
+// in wrapping-value-shape.ts
+check(paper: string, ribbon: string, stamp: string): boolean {
+    return paper.startsWith('kraft') || ribbon !== '' && stamp.toLowerCase() === 'fragile'
+}
+
 ----------[ Good ]----------
 
 current(parts: AddressParts): string {
@@ -436,6 +564,14 @@ The same group of scalar parameters appears on different types
 
 ```py
 ----------[ Bad ]----------
+
+# in customers.py
+def subscribe(self, name: str, email: str, phone: str, opt_in: bool) -> None:
+    self.list.add(email, name)
+
+# in customers.py
+def enrol(self, phone: str, name: str, email: str, opt_in: bool = False) -> None:
+    self.members.add(name, email, phone, opt_in)
 
 # in delivery.py
 def book_delivery(street: str, city: str, postcode: str, carrier) -> str:
@@ -471,16 +607,69 @@ The same group of scalar parameters appears on different types
 ----------[ Bad ]----------
 
 // in LabelPrinter.cs
-public string Print(string street, string city, string postcode) => $"{street}\n{postcode} {city}";
+// A label is printed from a street, a city and a postcode — the same three values the quote takes, side
+// by side, in another class: an address nobody named.
+public sealed class LabelPrinter
+{
+    public string Print(string street, string city, string postcode) => $"{street}\n{postcode} {city}";
+
+    public string PrintFor(Address address) => $"{address.Street}\n{address.Postcode} {address.City}";
+}
 
 // in Quotes.cs
-public decimal Price(string postcode, string city, string street) =>
-    street.Length + city.Length > 40 ? perKilometre * 2 : postcode.StartsWith('1') ? perKilometre : perKilometre * 1.5m;
+public sealed class Quotes(decimal perKilometre)
+{
+    public decimal Price(string postcode, string city, string street) =>
+        street.Length + city.Length > 40 ? perKilometre * 2 : postcode.StartsWith('1') ? perKilometre : perKilometre * 1.5m;
+}
+
+// in SalesReport.cs
+// Sales and returns are both reported over a period — a start, an end and a time zone — passed as three
+// loose values to each report, so "the period" is a notion only the parameter lists share.
+public sealed class SalesReport(IReadOnlyList<(DateTime At, long Cents)> sales)
+{
+    public long Total(DateTime from, DateTime until, string zone) =>
+        sales.Where(sale => sale.At >= from && sale.At < until && zone.Length > 0).Sum(sale => sale.Cents);
+}
+
+// in SalesReport.cs
+public sealed class ReturnsReport(IReadOnlyList<(DateTime At, string Sku)> returns)
+{
+    public int Count(string zone, DateTime until, DateTime from) =>
+        returns.Count(entry => entry.At >= from && entry.At < until && zone.Length > 0);
+}
+
+// in Listings.cs
+// Two listings page through stock the same way — a page, a size and a sort order handed along together —
+// so the paging rules live in two places and a third listing will copy them.
+public sealed class ShelfListing(IReadOnlyList<string> skus)
+{
+    public IReadOnlyList<string> Page(int page, int size, bool descending) =>
+        (descending ? skus.OrderDescending() : skus.Order()).Skip(page * size).Take(size).ToList();
+}
+
+// in Listings.cs
+public sealed class BackorderListing(IReadOnlyList<(string Sku, int Missing)> backorders)
+{
+    public IReadOnlyList<string> Page(int page, int size, bool descending)
+    {
+        var ordered = descending ? backorders.OrderByDescending(entry => entry.Missing) : backorders.OrderBy(entry => entry.Missing);
+
+        return ordered.Skip(page * size).Take(size).Select(entry => $"{entry.Sku}: {entry.Missing}").ToList();
+    }
+}
 
 ----------[ Good ]----------
 
 // in LabelPrinter.cs
-public string PrintFor(Address address) => $"{address.Street}\n{address.Postcode} {address.City}";
+// A label is printed from a street, a city and a postcode — the same three values the quote takes, side
+// by side, in another class: an address nobody named.
+public sealed class LabelPrinter
+{
+    public string Print(string street, string city, string postcode) => $"{street}\n{postcode} {city}";
+
+    public string PrintFor(Address address) => $"{address.Street}\n{address.Postcode} {address.City}";
+}
 
 // in LabelPrinter.cs
 public sealed record Address(string Street, string City, string Postcode);
@@ -504,6 +693,27 @@ func (ReceiptShapeValidator) Check(copies int, counter int, store string) bool {
 		return false
 	}
 	return copies > 0 && copies < 20
+}
+
+// in vessel_value_shape.go
+func (VesselShapePrinter) Print(street string, district string, code string) string {
+	return street + district + code
+}
+
+// in vessel_value_shape.go
+func (VesselShapeValidator) Check(street string, district string, code string) bool {
+	return street != district && len(code) > 1
+}
+
+// in wrapping_value_shape.go
+func (WrappingShapePrinter) Measure(height int, width int, depth int) int {
+	area := height*width + width*depth + depth*height
+	return area * 2
+}
+
+// in wrapping_value_shape.go
+func (WrappingShapeValidator) Fits(height int, width int, depth int) bool {
+	return height < width+5 && depth > 0
 }
 
 // in wrapping_value_shape.go
@@ -710,26 +920,6 @@ withStreet(street: string): SelectedAddress {
 }
 ```
 
-### hand-rolled-wither — in C#
-
-A wither repeats fields from its type's constructor
-
-```cs
-----------[ Bad ]----------
-
-public ReceiptRouting WithCounter(int next)
-{
-    return new ReceiptRouting(this.zone, this.depot, next);
-}
-
-----------[ Good ]----------
-
-public LabelDetails Pay(LabelDetails label)
-{
-    return label with { Paid = true };
-}
-```
-
 ### handed-out-collection — in TypeScript
 
 A routine exposes its own mutable collection
@@ -788,26 +978,6 @@ export class RoutingAddress {
 }
 ```
 
-### keyed-lookup-envy — in C#
-
-A routine looks up a value using a field of another local type
-
-```cs
-----------[ Bad ]----------
-
-public string Owner(Dictionary<string, string> owners, ReceiptRoute route)
-{
-    return owners[route.Code];
-}
-
-----------[ Good ]----------
-
-public string PrintLabel(LabelDetails label)
-{
-    return label.Text;
-}
-```
-
 ### keyed-lookup-envy — in Go
 
 A routine looks up a value using a field of another local type
@@ -849,9 +1019,6 @@ public function for(Product $product): ?string
 ----------[ Good ]----------
 
 // in Shop\Catalog\PriorityLabel
-// The default arm throws a named exception, so an unhandled priority fails
-// loudly instead of being swallowed into null.
-
 public function strictFor(Product $product): string
 {
     return match ($product->priority) {
@@ -861,9 +1028,6 @@ public function strictFor(Product $product): string
         default => throw UnknownPriority::for($product->priority),
     };
 }
-
-// What the swallowed `default => null` becomes: the unhandled case, named. A priority nobody
-// mapped is a gap in the mapping, and this is the only thing that says so out loud.
 
 final class UnknownPriority extends RuntimeException
 {
@@ -910,23 +1074,57 @@ The default arm silently returns an absent value
 ```cs
 ----------[ Bad ]----------
 
-public static string? LogoFor(Courier courier) => courier switch
+public static class CarrierLogos
 {
-    Courier.Postal => "postal.svg",
-    Courier.Express => "express.svg",
-    Courier.Freight => "freight.svg",
-    _ => null,
-};
+    public static string? LogoFor(Courier courier) => courier switch
+    {
+        Courier.Postal => "postal.svg",
+        Courier.Express => "express.svg",
+        Courier.Freight => "freight.svg",
+        _ => null,
+    };
+
+    public static string Logo(Courier courier) => courier switch
+    {
+        Courier.Postal => "postal.svg",
+        Courier.Express => "express.svg",
+        Courier.Freight => "freight.svg",
+        _ => throw new ArgumentOutOfRangeException(nameof(courier), courier, null),
+    };
+
+    public static string? TrackingHost(Courier courier) => courier switch
+    {
+        Courier.Express => "track.express.example",
+        _ => null,
+    };
+}
 
 ----------[ Good ]----------
 
-public static string Logo(Courier courier) => courier switch
+public static class CarrierLogos
 {
-    Courier.Postal => "postal.svg",
-    Courier.Express => "express.svg",
-    Courier.Freight => "freight.svg",
-    _ => throw new ArgumentOutOfRangeException(nameof(courier), courier, null),
-};
+    public static string? LogoFor(Courier courier) => courier switch
+    {
+        Courier.Postal => "postal.svg",
+        Courier.Express => "express.svg",
+        Courier.Freight => "freight.svg",
+        _ => null,
+    };
+
+    public static string Logo(Courier courier) => courier switch
+    {
+        Courier.Postal => "postal.svg",
+        Courier.Express => "express.svg",
+        Courier.Freight => "freight.svg",
+        _ => throw new ArgumentOutOfRangeException(nameof(courier), courier, null),
+    };
+
+    public static string? TrackingHost(Courier courier) => courier switch
+    {
+        Courier.Express => "track.express.example",
+        _ => null,
+    };
+}
 ```
 
 ### match-default-returns-null — in Go
@@ -1115,16 +1313,128 @@ A command method is named in the third person
 ```cs
 ----------[ Bad ]----------
 
-public void Dispatches()
+public sealed class ReceiptRouting
 {
-    this.counter = this.counter + 1;
+    private string zone;
+    private string depot;
+    private int counter;
+
+    public ReceiptRouting(string zone, string depot, int counter)
+    {
+        this.zone = zone;
+        this.depot = depot;
+        this.counter = counter;
+    }
+
+    private static bool NeedsReview(bool left, bool right)
+    {
+        return left && !right;
+    }
+
+    public bool Check(ReceiptRoute front, ReceiptRoute back)
+    {
+        var first = NeedsReview(front.Printed, front.Verified);
+        var second = NeedsReview(back.Printed, back.Verified);
+        return first || second;
+    }
+
+    private string Caption(string value,
+        string prefix)
+    {
+        return this.zone + value;
+    }
+
+    public void Dispatches()
+    {
+        this.counter = this.counter + 1;
+    }
+
+    public ReceiptRouting WithCounter(int next)
+    {
+        return new ReceiptRouting(this.zone, this.depot, next);
+    }
+
+    public string Owner(Dictionary<string, string> owners, ReceiptRoute route)
+    {
+        return owners[route.Code];
+    }
+
+    public string Inspect(string probe)
+    {
+        var saved = this.zone;
+        this.zone = probe;
+        var caption = Caption(probe, this.depot);
+        this.zone = saved;
+        return caption;
+    }
+
+    public void ResetCounter()
+    {
+        this.counter = 0;
+    }
 }
 
 ----------[ Good ]----------
 
-public void ResetCounter()
+public sealed class ReceiptRouting
 {
-    this.counter = 0;
+    private string zone;
+    private string depot;
+    private int counter;
+
+    public ReceiptRouting(string zone, string depot, int counter)
+    {
+        this.zone = zone;
+        this.depot = depot;
+        this.counter = counter;
+    }
+
+    private static bool NeedsReview(bool left, bool right)
+    {
+        return left && !right;
+    }
+
+    public bool Check(ReceiptRoute front, ReceiptRoute back)
+    {
+        var first = NeedsReview(front.Printed, front.Verified);
+        var second = NeedsReview(back.Printed, back.Verified);
+        return first || second;
+    }
+
+    private string Caption(string value,
+        string prefix)
+    {
+        return this.zone + value;
+    }
+
+    public void Dispatches()
+    {
+        this.counter = this.counter + 1;
+    }
+
+    public ReceiptRouting WithCounter(int next)
+    {
+        return new ReceiptRouting(this.zone, this.depot, next);
+    }
+
+    public string Owner(Dictionary<string, string> owners, ReceiptRoute route)
+    {
+        return owners[route.Code];
+    }
+
+    public string Inspect(string probe)
+    {
+        var saved = this.zone;
+        this.zone = probe;
+        var caption = Caption(probe, this.depot);
+        this.zone = saved;
+        return caption;
+    }
+
+    public void ResetCounter()
+    {
+        this.counter = 0;
+    }
 }
 ```
 
@@ -1209,17 +1519,12 @@ An arrow repeats the type already inferred from its expression
 ```php
 ----------[ Bad ]----------
 
-// A construction spells the class it builds; the annotation repeats it.
-
 public function factory(): callable
 {
     return fn (): FeatureGate => new FeatureGate($this->environment);
 }
 
 ----------[ Good ]----------
-
-// The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
-// `fn () => $this->overrides` says everything the annotation did.
 
 public function overridesReader(): callable
 {
@@ -1260,30 +1565,6 @@ assessTitle(prefix: string): string {
 
 inspect(value: number): string {
     return value.toString() + this.name
-}
-```
-
-### scratch-state-restore — in C#
-
-A method saves a field, changes it, and restores it
-
-```cs
-----------[ Bad ]----------
-
-public string Inspect(string probe)
-{
-    var saved = this.zone;
-    this.zone = probe;
-    var caption = Caption(probe, this.depot);
-    this.zone = saved;
-    return caption;
-}
-
-----------[ Good ]----------
-
-public string InspectLabel(LabelDetails label, string probe)
-{
-    return probe + label.Text;
 }
 ```
 
@@ -1350,27 +1631,6 @@ def receipt(
 
 def book_title(title: str) -> str:
     return title.title()
-```
-
-### unused-parameter — in C#
-
-The function never reads a declared parameter
-
-```cs
-----------[ Bad ]----------
-
-private string Caption(string value,
-    string prefix)
-{
-    return this.zone + value;
-}
-
-----------[ Good ]----------
-
-public string PrintTitle(string title)
-{
-    return title.Trim();
-}
 ```
 
 ### unused-parameter — in Go

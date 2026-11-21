@@ -31,17 +31,19 @@ public sealed class Provider : Base {}
 
 func TestCrossModuleDependencyUsesNamespaces(t *testing.T) {
 	file := func(name, class, parameterType string) *contract.File {
-		declaration := &contract.Node{ID: 1, Kind: "ClassDeclaration", Field: "Members", Name: name,
-			Is: []string{"type-declaration"}, Facts: &contract.Facts{Symbol: class}}
-		if parameterType != "" {
-			parameter := &contract.Node{ID: 4, Kind: "Parameter", Is: []string{"parameter"}, Field: "Parameters", Name: "warehouse",
-				Resolved: &contract.Type{Kind: "named", Name: parameterType}}
-			list := &contract.Node{ID: 3, Kind: "ParameterList", Field: "ParameterList", Children: []*contract.Node{parameter}}
-			declaration.Children = []*contract.Node{{ID: 2, Kind: "ConstructorDeclaration", Is: []string{"function"}, Name: name, Field: "Members",
-				Children: []*contract.Node{list}}}
+		list := func(role string, nodes ...*contract.Node) contract.Parts {
+			return contract.Parts{{Role: role, List: true, Nodes: nodes}}
 		}
-		return &contract.File{Path: name + ".cs", Language: contract.CSharp,
-			Root: &contract.Node{Kind: "CompilationUnit", Children: []*contract.Node{declaration}}}
+		declaration := &contract.Node{ID: 2, Kind: "type", Facts: &contract.Facts{Name: name, Symbol: class, Form: "class"}}
+		if parameterType != "" {
+			parameter := &contract.Node{ID: 4, Kind: "parameter", Resolved: &contract.Type{Kind: "named", Name: parameterType},
+				Parts: contract.Parts{{Role: "binding", Nodes: []*contract.Node{{ID: 5, Kind: "binding", Facts: &contract.Facts{Name: "warehouse"}}}}}}
+			constructor := &contract.Node{ID: 3, Kind: "function", Facts: &contract.Facts{Name: name, Form: "constructor"}, Parts: list("parameters", parameter)}
+			declaration.Parts = list("writtenMembers", constructor)
+		}
+		module := &contract.Node{ID: 1, Kind: "module", Parts: list("declarations", declaration)}
+
+		return &contract.File{Path: name + ".cs", Language: contract.CSharp, Root: &contract.Node{Kind: "file", Parts: list("modules", module)}}
 	}
 	const warehouse = "global::Shop.Warehouse.WarehouseClient"
 	const status = "global::Shop.StatusStore"

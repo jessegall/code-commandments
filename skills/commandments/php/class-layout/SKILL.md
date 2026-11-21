@@ -56,9 +56,6 @@ A trait use, constant, property, property hook, or enum case declared below a me
 ```php
 ----------[ Bad ]----------
 
-// The ways an order can ship — with `case Pickup` stranded below the behaviour, where a reader scanning
-// the head of the enum for its inventory never sees it.
-
 enum ShippingMethod: string
 {
     case Standard = 'standard';
@@ -79,9 +76,6 @@ enum ShippingMethod: string
 }
 
 ----------[ Good ]----------
-
-// The FIX: the trailing `case Pickup` hoisted up beside the cases it belongs with, so the head of the
-// enum is the whole inventory and the behaviour sits below it.
 
 enum CollectionMethod: string
 {
@@ -106,7 +100,6 @@ The other 1 — one per rule — are in [`reference/examples.md`](reference/exam
 
 - `{{binary}} judge --skill=php/class-layout` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `member-after-method`, `member-out-of-order`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `member-after-method`, `member-out-of-order`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

@@ -3,29 +3,57 @@ package gotree
 import (
 	"go/ast"
 	"go/parser"
-	"sort"
+	"go/scanner"
+	"go/token"
+	"go/types"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 )
 
-func (w *writer) comments(parsed *ast.File) []contract.Comment {
+// comments lists every comment group of the file: a leading one attached to the outermost node starting at the first
+// token after it, unless a blank line comes between, a trailing one to the outermost node ending on its line before it.
+func (w *writer) comments(parsed *ast.File, nodes []*contract.Node) []contract.Comment {
 	documents := documented(parsed)
+	owners := make([]*contract.Node, 0, len(nodes))
+	for _, node := range nodes {
+		if node.Kind != "file" && node.Kind != "module" && node.Kind != "block" {
+			owners = append(owners, node)
+		}
+	}
+	ends := map[int]int{}
+	for _, group := range parsed.Comments {
+		ends[w.fset.Position(group.Pos()).Offset] = w.fset.Position(group.End()).Offset
+	}
 	comments := []contract.Comment{}
 
 	for _, group := range parsed.Comments {
-		start, end, line := w.span(group)
+		start, end := w.fset.Position(group.Pos()), w.fset.Position(group.End())
 		held := contract.Comment{
 			ID:   len(comments),
-			Kind: kindOfComment(group, documents[group]),
-			Text: w.text(group),
-			Span: contract.Span{Start: start, End: end, Line: line},
+			Form: formOf(group, documents[group]),
+			Text: string(w.source[start.Offset:end.Offset]),
+			Span: contract.Span{Start: start.Offset, End: end.Offset, Line: start.Line},
 		}
-		if attached, trailing := w.attachment(group); attached != nil {
-			held.Attached, held.Trailing = attached, trailing
+		lineStart := strings.LastIndexByte(string(w.source[:start.Offset]), '\n') + 1
+		if strings.TrimSpace(string(w.source[lineStart:start.Offset])) != "" {
+			held.Trailing = true
+			for _, node := range owners {
+				if node.Span.End <= start.Offset && node.Span.End > lineStart {
+					held.Attached = &node.ID
+					break
+				}
+			}
+		} else if next, leads := leading(w.source, end.Offset, ends); leads {
+			for _, node := range owners {
+				if node.Span.Start == next && node.Span.End > node.Span.Start {
+					held.Attached = &node.ID
+					break
+				}
+			}
 		}
-		if isGoCode(group) {
-			held.Extras = &contract.CommentExtras{Go: &contract.GoComment{Code: true}}
+		if held.Form != "doc" {
+			held.Fragment = fragment(group)
 		}
 		comments = append(comments, held)
 	}
@@ -33,13 +61,25 @@ func (w *writer) comments(parsed *ast.File) []contract.Comment {
 	return comments
 }
 
-func (w *writer) text(group *ast.CommentGroup) string {
-	start, end, _ := w.span(group)
-	if start < 0 || end > len(w.source) || start >= end {
-		return group.Text()
+// leading is where the code a comment leads starts, other comments skipped; none past a blank line.
+func leading(source []byte, at int, ends map[int]int) (int, bool) {
+	for {
+		breaks := 0
+		for at < len(source) && strings.ContainsRune(" \t\r\n", rune(source[at])) {
+			if source[at] == '\n' {
+				breaks++
+			}
+			at++
+		}
+		if breaks > 1 {
+			return 0, false
+		}
+		skipped, isComment := ends[at]
+		if !isComment {
+			return at, true
+		}
+		at = skipped
 	}
-
-	return string(w.source[start:end])
 }
 
 func documented(parsed *ast.File) map[*ast.CommentGroup]bool {
@@ -67,7 +107,7 @@ func documented(parsed *ast.File) map[*ast.CommentGroup]bool {
 	return documents
 }
 
-func kindOfComment(group *ast.CommentGroup, documents bool) string {
+func formOf(group *ast.CommentGroup, documents bool) string {
 	if documents {
 		return "doc"
 	}
@@ -78,90 +118,33 @@ func kindOfComment(group *ast.CommentGroup, documents bool) string {
 	return "line"
 }
 
-func (w *writer) attachment(group *ast.CommentGroup) (*int, bool) {
-	start, end, line := w.span(group)
-	if trailing := w.endingBefore(start, line); trailing != nil {
-		return trailing, true
-	}
-
-	return w.startingAfter(end), false
-}
-
-func (w *writer) startingAfter(after int) *int {
-	byStart := w.byStart()
-	at := sort.Search(len(byStart), func(i int) bool { return byStart[i].Span.Start >= after })
-	if at == len(byStart) {
-		return nil
-	}
-
-	return &byStart[at].ID
-}
-
-func (w *writer) byStart() []*contract.Node {
-	if w.started != nil {
-		return w.started
-	}
-	w.started = append([]*contract.Node(nil), w.nodes...)
-	sort.SliceStable(w.started, func(a, b int) bool {
-		if w.started[a].Span.Start != w.started[b].Span.Start {
-			return w.started[a].Span.Start < w.started[b].Span.Start
-		}
-
-		return w.started[a].ID < w.started[b].ID
-	})
-
-	return w.started
-}
-
-func (w *writer) endingBefore(before, line int) *int {
-	best := -1
-	for _, at := range w.endingOn(line) {
-		held := w.nodes[at]
-		if held.Span.End > before {
-			continue
-		}
-		if best < 0 || held.Span.End > w.nodes[best].Span.End || (held.Span.End == w.nodes[best].Span.End && held.ID < w.nodes[best].ID) {
-			best = held.ID
-		}
-	}
-	if best < 0 {
-		return nil
-	}
-
-	return &w.nodes[best].ID
-}
-
-func (w *writer) endingOn(line int) []int {
-	if w.ending == nil {
-		w.ending = map[int][]int{}
-		for at, end := range w.ends {
-			w.ending[end] = append(w.ending[end], at)
-		}
-	}
-
-	return w.ending[line]
-}
-
-func isGoCode(group *ast.CommentGroup) bool {
+// fragment is what Go's parser makes of a comment's words read as statements; the shared rule decides whether they
+// are code. A lone expression's kind is what the translation makes of it, as for any expression of the file.
+func fragment(group *ast.CommentGroup) *contract.Fragment {
 	words := strings.TrimSpace(group.Text())
-	if words == "" || strings.Contains(words, "\n") {
-		return false
+	read := &contract.Fragment{Context: "statement"}
+	if words == "" {
+		return read
 	}
-	parsed, err := parser.ParseExpr("func() { " + words + " }")
-	if err != nil {
-		return false
+	source := "func() {\n" + words + "\n}"
+	fset := token.NewFileSet()
+	parsed, err := parser.ParseExprFrom(fset, "", source, 0)
+	if list, isList := err.(scanner.ErrorList); isList {
+		read.Diagnostics = list.Len()
+	} else if err != nil {
+		read.Diagnostics = 1
 	}
 	body, isFunc := parsed.(*ast.FuncLit)
-
-	return isFunc && len(body.Body.List) == 1 && !isLoneName(body.Body.List[0])
-}
-
-func isLoneName(statement ast.Stmt) bool {
-	expression, isExpression := statement.(*ast.ExprStmt)
-	if !isExpression {
-		return false
+	if !isFunc || body.Body == nil {
+		return read
 	}
-	_, isName := expression.X.(*ast.Ident)
+	read.Statements = len(body.Body.List)
+	if len(body.Body.List) == 1 {
+		if statement, isExpression := body.Body.List[0].(*ast.ExprStmt); isExpression {
+			words := &writer{fset: fset, source: []byte(source), types: map[types.Type]*contract.Type{}, imported: map[string]bool{}}
+			read.ExpressionKind = words.expression(statement.X).Kind
+		}
+	}
 
-	return isName
+	return read
 }

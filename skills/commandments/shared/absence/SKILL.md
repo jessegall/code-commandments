@@ -134,30 +134,68 @@ A blank string default stands for a missing required value
 ```cs
 ----------[ Bad ]----------
 
-public static string Of(string heading, string strapline = "")
+// The heading printed at the top of an invoice or a packing slip, with an optional strapline under it.
+public static class Headings
 {
-    if (strapline == "")
+    public static string Of(string heading, string strapline = "")
     {
-        return heading;
+        if (strapline == "")
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
     }
 
-    return $"{heading} — {strapline}";
+    public static string Lined(string heading, string? strapline = null)
+    {
+        if (strapline is null)
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
+    }
+
+    public static string Joined(string[] parts, string separator = "")
+    {
+        return string.Join(separator, parts);
+    }
 }
 
 ----------[ Good ]----------
 
-public static string Lined(string heading, string? strapline = null)
+// The heading printed at the top of an invoice or a packing slip, with an optional strapline under it.
+public static class Headings
 {
-    if (strapline is null)
+    public static string Of(string heading, string strapline = "")
     {
-        return heading;
+        if (strapline == "")
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
     }
 
-    return $"{heading} — {strapline}";
+    public static string Lined(string heading, string? strapline = null)
+    {
+        if (strapline is null)
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
+    }
+
+    public static string Joined(string[] parts, string separator = "")
+    {
+        return string.Join(separator, parts);
+    }
 }
 ```
 
-The other 49 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 47 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
@@ -167,7 +205,7 @@ The other 49 — one per rule — are in [`reference/examples.md`](reference/exa
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 53 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 51 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

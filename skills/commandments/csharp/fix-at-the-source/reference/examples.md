@@ -9,16 +9,38 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 ```cs
 ----------[ Bad ]----------
 
-public string Read(string supplier)
+// Reads the supplier's price feed. The method below takes the answer out of the task by blocking for it, so
+// the thread it stops is the one the read needed back: it works on a quiet morning and deadlocks under load,
+// which is the worst way to find a bug. Below it, the repair: await it, and say async in the signature.
+public sealed class PriceFeedReader(IPriceFeed feed)
 {
-    return feed.ReadAsync(supplier).Result;
+    public string Read(string supplier)
+    {
+        return feed.ReadAsync(supplier).Result;
+    }
+
+    public async Task<string> ReadAsync(string supplier)
+    {
+        return await feed.ReadAsync(supplier);
+    }
 }
 
 ----------[ Good ]----------
 
-public async Task<string> ReadAsync(string supplier)
+// Reads the supplier's price feed. The method below takes the answer out of the task by blocking for it, so
+// the thread it stops is the one the read needed back: it works on a quiet morning and deadlocks under load,
+// which is the worst way to find a bug. Below it, the repair: await it, and say async in the signature.
+public sealed class PriceFeedReader(IPriceFeed feed)
 {
-    return await feed.ReadAsync(supplier);
+    public string Read(string supplier)
+    {
+        return feed.ReadAsync(supplier).Result;
+    }
+
+    public async Task<string> ReadAsync(string supplier)
+    {
+        return await feed.ReadAsync(supplier);
+    }
 }
 ```
 
@@ -29,11 +51,19 @@ a constructor that calls a method on something it was handed and ignores the res
 ```cs
 ----------[ Bad ]----------
 
-public NewsletterPreference(string address, MailingList list)
+// A customer's newsletter preference, built from their account.
+public sealed class NewsletterPreference
 {
-    this.address = address;
+    private readonly string address;
 
-    list.Join(address);
+    public NewsletterPreference(string address, MailingList list)
+    {
+        this.address = address;
+
+        list.Join(address);
+    }
+
+    public string Address() => address;
 }
 
 ----------[ Good ]----------

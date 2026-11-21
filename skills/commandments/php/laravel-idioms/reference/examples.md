@@ -47,15 +47,10 @@ public function search(array $filters): array
 ----------[ Good ]----------
 
 // in Shop\Catalog\CatalogSearchService
-// Injects the typed settings object instead of reading config in the body.
-
 public function searchTop(string $term, string $sort): array
 {
     return $this->run($term, $sort, $this->settings->perPage);
 }
-
-// The config values the catalog actually uses, read once at the edge and typed. Every body that
-// used to reach for `config()` takes this instead, and gets an `int` rather than a `mixed`.
 
 final class CatalogSettings
 {
@@ -164,8 +159,6 @@ public function register(): void
     Event::listen(PriceChanged::class, 'Shop\\Listeners\\RepricePublications');
 }
 
-// The live dispatcher that keeps PriceChanged's listener honest.
-
 final class PriceBroadcaster
 {
     public function announce(string $sku, int $cents): void
@@ -190,9 +183,6 @@ public function idleTimeout(): int
 ----------[ Good ]----------
 
 // in Shop\Support\ShopConfig
-// `config/kiosk.php` owns the default, so the reader states nothing about absence — it asks for
-// the value and there is one place to edit it.
-
 public function idleTimeoutSeconds(): int
 {
     return $this->int('kiosk.idle_timeout');
@@ -337,9 +327,6 @@ public function suspendNamed(Customer $customer, string $reason): void
 }
 
 // in Shop\Models\Customer
-// Where every call site's poking-and-saving went: the transition named once, on the model that
-// owns the columns it writes.
-
 public function suspend(string $reason): void
 {
     $this->suspended = true;
@@ -367,18 +354,10 @@ public function boot(): void
 ----------[ Good ]----------
 
 // in Shop\Providers\ShippingServiceProvider
-// The rates registration went out with the courier that needed it. What is left is wiring a
-// consumer actually asks for: RegionCoverage type-hints a ZoneTable, so this binding answers a
-// resolve.
-
 public function register(): void
 {
     $this->app->singleton(ZoneTable::class);
 }
-
-// A consignment's zone already knows which regions it serves. Asking through a
-// zone table keyed by the consignment's id — then testing membership out here —
-// exiles the answer from where it lives. Move it: `$consignment->covers($region)`.
 
 final class RegionCoverage
 {
@@ -442,9 +421,6 @@ public function search(Request $request): array
 ----------[ Good ]----------
 
 // in Shop\Http\Controllers\ProductController
-// The same search, read through named getters on a `FormRequest` subclass — the key strings and
-// their types live once, in the request, instead of at every call site.
-
 public function searchNamed(SearchProductRequest $request): array
 {
     return Product::query()
@@ -481,9 +457,6 @@ public function search(Request $request): array
 ----------[ Good ]----------
 
 // in Shop\Http\Controllers\TermController
-// The coercion moved onto the typed request as `term()`, so the call site asks a named getter for
-// an already-`string` value instead of recasting an accessor.
-
 public function searchNamed(SearchProductRequest $request): array
 {
     return Product::query()

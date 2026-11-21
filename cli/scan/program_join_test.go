@@ -25,8 +25,8 @@ func TestAFreshProgramReplacesEachSymbolAndTheLoaderWarning(t *testing.T) {
 
 // A symbol a file of the scan declares is never named outside it, however the bridge named it.
 func TestAProgramNamesNothingAFileOfTheScanDeclares(t *testing.T) {
-	order := &contract.Node{ID: 1, Field: "statements", Kind: "class", Name: "Order", Facts: &contract.Facts{Symbol: `Shop\Order`}}
-	file := &contract.File{Path: "/shop/Order.php", Root: &contract.Node{Kind: "file", Children: []*contract.Node{order}}}
+	order := &contract.Node{ID: 1, Kind: "type", Facts: &contract.Facts{Name: "Order", Symbol: `Shop\Order`, Form: "class"}}
+	file := &contract.File{Path: "/shop/Order.php", Root: &contract.Node{Kind: "file", Parts: contract.Parts{{Role: "modules", List: true, Nodes: []*contract.Node{order}}}}}
 	if err := file.Linked(); err != nil {
 		t.Fatal(err)
 	}

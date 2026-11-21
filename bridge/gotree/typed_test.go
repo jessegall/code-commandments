@@ -87,14 +87,14 @@ func TestAnExpressionCarriesTheTypeTheCheckerGave(t *testing.T) {
 func TestAPointerAdmitsAbsenceAndASliceDoesNot(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
-	pointer := typeNamed(t, file, "*string")
+	pointer := typeNamed(t, file, "*example.com/shop/cart.Cart")
 	if !pointer.Nullable {
 		t.Error("a pointer is not written as admitting absence")
 	}
 	if pointer.Kind != "pointer" {
 		t.Errorf("a pointer is written as kind %q", pointer.Kind)
 	}
-	if pointer.Element == nil || pointer.Element.Text != "string" {
+	if pointer.Element == nil || pointer.Element.Text != "example.com/shop/cart.Cart" {
 		t.Errorf("a pointer carries %+v as what it points at", pointer.Element)
 	}
 }
@@ -202,40 +202,10 @@ func TestATypeOutsideTheModuleIsUnknownRatherThanWrong(t *testing.T) {
 	}
 }
 
-func TestAFunctionSaysWhatItReturns(t *testing.T) {
-	root := module(t, map[string]string{
-		"go.mod":  "module example.com/shop\n",
-		"find.go": "package shop\n\nimport \"errors\"\n\nfunc find(id int) (string, error) {\n\tif id == 0 {\n\t\treturn \"\", errors.New(\"no\")\n\t}\n\n\treturn \"one\", nil\n}\n\nfunc count() int { return 1 }\n",
-	})
-
-	var written bytes.Buffer
-	if err := gotree.Write(&written, []string{root}, nil); err != nil {
-		t.Fatal(err)
-	}
-	stream, err := contract.ReadAll(bytes.NewReader(written.Bytes()))
-	if err != nil {
-		t.Fatalf("the stream breaks the contract: %v", err)
-	}
-
-	file := fileNamed(t, stream, "find.go")
-	results := map[string]string{}
-	for _, node := range file.Nodes() {
-		if node.Kind == "FuncDecl" && node.Returns != nil {
-			results[node.Name] = node.Returns.Kind + " " + node.Returns.Text
-		}
-	}
-	if results["find"] != "tuple (string, error)" {
-		t.Errorf("a function of two results says it returns %q", results["find"])
-	}
-	if results["count"] != "keyword int" {
-		t.Errorf("a function of one result says it returns %q", results["count"])
-	}
-}
-
 func typeNamed(t *testing.T, file *contract.File, text string) *contract.Type {
 	t.Helper()
 	for _, node := range file.Nodes() {
-		for _, held := range []*contract.Type{node.Resolved, node.Declared, node.Returns} {
+		for _, held := range []*contract.Type{node.Resolved} {
 			if held != nil && held.Text == text {
 				return held
 			}
@@ -250,7 +220,7 @@ func textsIn(file *contract.File) []string {
 	var texts []string
 	seen := map[string]bool{}
 	for _, node := range file.Nodes() {
-		for _, held := range []*contract.Type{node.Resolved, node.Declared, node.Returns} {
+		for _, held := range []*contract.Type{node.Resolved} {
 			if held == nil || seen[held.Text] {
 				continue
 			}
@@ -292,7 +262,7 @@ func TestAFileThatDoesNotTypeCheckKeepsTheFactsAroundIt(t *testing.T) {
 		t.Error("the file beside the bad one says no resolver ran on it")
 	}
 	typeNamed(t, good, "int")
-	typeNamed(t, fileNamed(t, stream, "bad.go"), "int")
+	typeNamed(t, fileNamed(t, stream, "bad.go"), "untyped string")
 }
 
 func TestTheWholeModuleAlwaysWritesTheSameStream(t *testing.T) {

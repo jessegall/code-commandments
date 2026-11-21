@@ -226,7 +226,7 @@ func limitsIn(stream *contract.Stream) []string {
 		if node.Name == "limit" && node.Resolved != nil {
 			limits = append(limits, node.Resolved.Text)
 		}
-		for _, child := range node.Children {
+		for _, child := range node.Children() {
 			visit(child)
 		}
 	}

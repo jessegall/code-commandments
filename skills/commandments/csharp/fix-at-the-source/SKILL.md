@@ -60,16 +60,38 @@ needs it (usually through the constructor), and the dependency is in the signatu
 ```cs
 ----------[ Bad ]----------
 
-public string Read(string supplier)
+// Reads the supplier's price feed. The method below takes the answer out of the task by blocking for it, so
+// the thread it stops is the one the read needed back: it works on a quiet morning and deadlocks under load,
+// which is the worst way to find a bug. Below it, the repair: await it, and say async in the signature.
+public sealed class PriceFeedReader(IPriceFeed feed)
 {
-    return feed.ReadAsync(supplier).Result;
+    public string Read(string supplier)
+    {
+        return feed.ReadAsync(supplier).Result;
+    }
+
+    public async Task<string> ReadAsync(string supplier)
+    {
+        return await feed.ReadAsync(supplier);
+    }
 }
 
 ----------[ Good ]----------
 
-public async Task<string> ReadAsync(string supplier)
+// Reads the supplier's price feed. The method below takes the answer out of the task by blocking for it, so
+// the thread it stops is the one the read needed back: it works on a quiet morning and deadlocks under load,
+// which is the worst way to find a bug. Below it, the repair: await it, and say async in the signature.
+public sealed class PriceFeedReader(IPriceFeed feed)
 {
-    return await feed.ReadAsync(supplier);
+    public string Read(string supplier)
+    {
+        return feed.ReadAsync(supplier).Result;
+    }
+
+    public async Task<string> ReadAsync(string supplier)
+    {
+        return await feed.ReadAsync(supplier);
+    }
 }
 ```
 

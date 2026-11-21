@@ -1,6 +1,7 @@
 package php_test
 
 import (
+	"github.com/jessegall/code-commandments/engine"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -68,7 +69,7 @@ func TestTheBridgeMarksCommentedOutCodeAsPhpReadsIt(t *testing.T) {
 	marked := 0
 	for _, file := range stream.Files {
 		for _, comment := range file.Comments {
-			flagged := comment.Extras != nil && comment.Extras.PHP != nil && comment.Extras.PHP.Code
+			flagged := engine.Commented{Comment: comment}.IsCode()
 			if flagged != code[comment.Text] {
 				t.Errorf("the bridge marks code %v, PHP reads %v: %q", flagged, code[comment.Text], comment.Text)
 			}

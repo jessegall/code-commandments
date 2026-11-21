@@ -70,8 +70,7 @@ validates against `contract/tree.schema.json` and that every span points into it
 | `log-then-fallback` | 32 | python, typescript | the story holds in every language with a handler; these two show it |
 | `selectors` | section 19, selectors | php, python, csharp, typescript, go, vue | see below |
 | `flags` | section 19, flags | php, python, csharp, typescript, go, vue | see below |
-| `parse-failure` | unknown evidence | python | a file no parser could read |
-| `resolver-not-run` | unknown evidence | go | the error guard of `go-error-guards` with no compiler facts |
+| `parse-failure` | unknown evidence | python | a file no parser could read, so mypy checks nothing (its resolver did not run) |
 | `unresolved-symbol` | unknown evidence, story 54 | typescript | a call of a name nothing declares, with the resolver run |
 
 Stories 20 to 22 and 24 are about how a run uses the tree, not about the tree itself: 20 and 21 are package facts

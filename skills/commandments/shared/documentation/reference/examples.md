@@ -78,13 +78,27 @@ A comment narrates the history of the code
 ```cs
 ----------[ Bad ]----------
 
-// formerly lived in the checkout service, and was extracted here
-public static int Days(bool member) => member ? 60 : 30;
+// How long after delivery a customer may still send an order back.
+public static class RefundWindows
+{
+    // formerly lived in the checkout service, and was extracted here
+    public static int Days(bool member) => member ? 60 : 30;
+
+    /// <summary>Members get longer to decide, since they return far less often.</summary>
+    public static int DaysFor(bool member) => member ? 60 : 30;
+}
 
 ----------[ Good ]----------
 
-/// <summary>Members get longer to decide, since they return far less often.</summary>
-public static int DaysFor(bool member) => member ? 60 : 30;
+// How long after delivery a customer may still send an order back.
+public static class RefundWindows
+{
+    // formerly lived in the checkout service, and was extracted here
+    public static int Days(bool member) => member ? 60 : 30;
+
+    /// <summary>Members get longer to decide, since they return far less often.</summary>
+    public static int DaysFor(bool member) => member ? 60 : 30;
+}
 ```
 
 ### archaeology-comment · negative-space-comment · restated-comment — in Go
@@ -121,12 +135,6 @@ A type has several paragraphs of description
 ```php
 ----------[ Bad ]----------
 
-// Builds the monthly sales report. It pulls orders, groups them by customer and
-// region, applies the tax tables, and renders a spreadsheet that finance imports
-// by hand every month.
-// The grouping logic is shared with the dashboard widgets, so any change here
-// must be mirrored there until the two are unified.
-
 final class LegacyReportBuilder
 {
     public function build(int $month): string
@@ -136,8 +144,6 @@ final class LegacyReportBuilder
 }
 
 ----------[ Good ]----------
-
-// Renders the monthly sales spreadsheet finance imports by hand.
 
 final class MonthlySalesReport
 {
@@ -264,9 +270,6 @@ public function format(int $sequence): string
 
 ----------[ Good ]----------
 
-// Renders the number finance quotes on a remittance — the sequence is zero-padded to six digits
-// so invoices sort lexically in the ledger export.
-
 public function formatForRemittance(int $sequence): string
 {
     return sprintf('%s-%06d', $this->prefix, $sequence);
@@ -332,31 +335,86 @@ A doc comment repeats the function signature
 ```cs
 ----------[ Bad ]----------
 
-/// <summary>
-///
-/// </summary>
-/// <param name="invoiceNumber"></param>
-/// <param name="copies"></param>
-/// <returns></returns>
-public int Queue(string invoiceNumber, int copies)
+public sealed class Reprints
 {
-    for (var copy = 0; copy < copies; copy++)
+    private readonly List<string> queued = [];
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="invoiceNumber"></param>
+    /// <param name="copies"></param>
+    /// <returns></returns>
+    public int Queue(string invoiceNumber, int copies)
     {
-        queued.Add(invoiceNumber);
+        for (var copy = 0; copy < copies; copy++)
+        {
+            queued.Add(invoiceNumber);
+        }
+
+        return queued.Count;
     }
 
-    return queued.Count;
+    /// <summary>Queues a copy for each page the customer asked to see again, and says how many now wait.</summary>
+    /// <param name="copies">How many copies the customer asked for; zero queues nothing.</param>
+    public int QueueFor(string invoiceNumber, int copies)
+    {
+        queued.AddRange(Enumerable.Repeat(invoiceNumber, copies));
+
+        return queued.Count;
+    }
+
+    /// <param name="invoiceNumber">The invoice number.</param>
+    /// <exception cref="ArgumentException">The invoice was never issued.</exception>
+    public void Cancel(string invoiceNumber)
+    {
+        if (!queued.Remove(invoiceNumber))
+        {
+            throw new ArgumentException(invoiceNumber);
+        }
+    }
 }
 
 ----------[ Good ]----------
 
-/// <summary>Queues a copy for each page the customer asked to see again, and says how many now wait.</summary>
-/// <param name="copies">How many copies the customer asked for; zero queues nothing.</param>
-public int QueueFor(string invoiceNumber, int copies)
+public sealed class Reprints
 {
-    queued.AddRange(Enumerable.Repeat(invoiceNumber, copies));
+    private readonly List<string> queued = [];
 
-    return queued.Count;
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="invoiceNumber"></param>
+    /// <param name="copies"></param>
+    /// <returns></returns>
+    public int Queue(string invoiceNumber, int copies)
+    {
+        for (var copy = 0; copy < copies; copy++)
+        {
+            queued.Add(invoiceNumber);
+        }
+
+        return queued.Count;
+    }
+
+    /// <summary>Queues a copy for each page the customer asked to see again, and says how many now wait.</summary>
+    /// <param name="copies">How many copies the customer asked for; zero queues nothing.</param>
+    public int QueueFor(string invoiceNumber, int copies)
+    {
+        queued.AddRange(Enumerable.Repeat(invoiceNumber, copies));
+
+        return queued.Count;
+    }
+
+    /// <param name="invoiceNumber">The invoice number.</param>
+    /// <exception cref="ArgumentException">The invoice was never issued.</exception>
+    public void Cancel(string invoiceNumber)
+    {
+        if (!queued.Remove(invoiceNumber))
+        {
+            throw new ArgumentException(invoiceNumber);
+        }
+    }
 }
 ```
 
@@ -367,19 +425,12 @@ A document reference points at a declaration the project does not have
 ```php
 ----------[ Bad ]----------
 
-// Picks the cheapest carrier. Rates come from {@see \Shop\Shipping\RemovedRateBook} — deleted, so the
-// link is stale.
-
 public function cheapest(string $zone, float $weight): string
 {
     return $weight > 10.0 ? "freight:{$zone}" : "parcel:{$zone}";
 }
 
 ----------[ Good ]----------
-
-// Picks the cheapest carrier for a heavy parcel. Rates come from
-// {@see \Shop\Shipping\ShippingRateRegistry} — the class the rate book became, so the reference
-// resolves.
 
 public function cheapestFreight(string $zone): string
 {
@@ -485,9 +536,6 @@ public function get(string $code): SkuEntry
 
 ----------[ Good ]----------
 
-// The affirmative form of the same note: it states what the registry DOES, so a reader never has
-// to be talked out of a suspicion the code never raised.
-
 public function entry(string $code): SkuEntry
 {
     // an unknown code answers with an empty entry, so a caller never tests for absence
@@ -520,22 +568,44 @@ A comment defends the code against an assumption the reader has no reason to mak
 ```cs
 ----------[ Bad ]----------
 
-public string Winner(int week)
+public sealed class PrizeDraw(IReadOnlyList<string> entrants)
 {
-    // seeded by the week, not random
-    var pick = new Random(week).Next(entrants.Count);
+    public string Winner(int week)
+    {
+        // seeded by the week, not random
+        var pick = new Random(week).Next(entrants.Count);
 
-    return entrants[pick];
+        return entrants[pick];
+    }
+
+    public string RunnerUp(int week)
+    {
+        // the same week always draws the same entrant, so a customer can check the result
+        var pick = new Random(week * 31).Next(entrants.Count);
+
+        return entrants[pick];
+    }
 }
 
 ----------[ Good ]----------
 
-public string RunnerUp(int week)
+public sealed class PrizeDraw(IReadOnlyList<string> entrants)
 {
-    // the same week always draws the same entrant, so a customer can check the result
-    var pick = new Random(week * 31).Next(entrants.Count);
+    public string Winner(int week)
+    {
+        // seeded by the week, not random
+        var pick = new Random(week).Next(entrants.Count);
 
-    return entrants[pick];
+        return entrants[pick];
+    }
+
+    public string RunnerUp(int week)
+    {
+        // the same week always draws the same entrant, so a customer can check the result
+        var pick = new Random(week * 31).Next(entrants.Count);
+
+        return entrants[pick];
+    }
 }
 ```
 
@@ -553,8 +623,6 @@ public function load(int $cartId): void
 }
 
 ----------[ Good ]----------
-
-// The comment now carries what the code cannot: WHY the snapshot is taken once.
 
 public function open(int $cartId): void
 {
@@ -590,21 +658,58 @@ A comment repeats the words of the statement it documents
 ```cs
 ----------[ Bad ]----------
 
-public decimal On(decimal subtotal)
+public sealed class Gratuity(decimal percent)
 {
-    // set the tip from the subtotal and the percent
-    var tip = subtotal * percent / 100;
+    public decimal On(decimal subtotal)
+    {
+        // set the tip from the subtotal and the percent
+        var tip = subtotal * percent / 100;
 
-    return Math.Round(tip, 2);
+        return Math.Round(tip, 2);
+    }
+
+    public long TerminalCents(decimal subtotal)
+    {
+        // card terminals only accept whole cents, so the tip is rounded before it is shown
+        var cents = Math.Round(subtotal * percent, MidpointRounding.AwayFromZero);
+
+        return (long) cents;
+    }
+
+    public string Offered(decimal subtotal)
+    {
+        var suggested = subtotal * percent / 100;
+
+        return suggested.ToString("0.00");
+    }
 }
 
 ----------[ Good ]----------
 
-public string Offered(decimal subtotal)
+public sealed class Gratuity(decimal percent)
 {
-    var suggested = subtotal * percent / 100;
+    public decimal On(decimal subtotal)
+    {
+        // set the tip from the subtotal and the percent
+        var tip = subtotal * percent / 100;
 
-    return suggested.ToString("0.00");
+        return Math.Round(tip, 2);
+    }
+
+    public long TerminalCents(decimal subtotal)
+    {
+        // card terminals only accept whole cents, so the tip is rounded before it is shown
+        var cents = Math.Round(subtotal * percent, MidpointRounding.AwayFromZero);
+
+        return (long) cents;
+    }
+
+    public string Offered(decimal subtotal)
+    {
+        var suggested = subtotal * percent / 100;
+
+        return suggested.ToString("0.00");
+    }
 }
 ```
 
@@ -615,20 +720,12 @@ Several doc comments describe one declaration
 ```php
 ----------[ Bad ]----------
 
-// Writes the report where the export job expects it.
-
-/**
- * The second block PHP never hands to a reader.
- */
 public function save(): void
 {
     // write to disk
 }
 
 ----------[ Good ]----------
-
-// Writes the report where the export job expects it — the second block folded in, so the one
-// block PHP hands a reader says everything both used to.
 
 public function archive(): void
 {

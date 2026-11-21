@@ -178,11 +178,11 @@ func groupedByFile(grouped detectors.Grouped, found []engine.Match) map[string]m
 
 func declarationSources(codebase *engine.Codebase, tag Tag) sources {
 	marked := sources{}
-	for _, attribute := range codebase.WhereKind("Attribute").Get() {
-		if attributeTags[ShortName(attribute.Child("name").Name())] != tag {
+	for _, attribute := range codebase.WhereKind("annotation").Get() {
+		if attributeTags[ShortName(attribute.Name())] != tag {
 			continue
 		}
-		named := markedName(attribute.Child("args").Child("value"))
+		named := markedName(attribute)
 		if named == "" {
 			continue
 		}
@@ -312,7 +312,7 @@ func holding(node engine.Match, start, end int) engine.Match {
 
 func elementAfter(node engine.Match, offset int) (engine.Match, bool) {
 	for _, child := range node.Children() {
-		if child.Kind() == "Element" && child.Node().Span.Start >= offset {
+		if child.Kind() == "element" && child.Node().Span.Start >= offset {
 			return child, true
 		}
 	}

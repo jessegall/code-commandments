@@ -57,7 +57,10 @@ type StaticCallDetector struct{ LoopedNewDetector }
 
 func (StaticCallDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return codebase.
-		WhereKind("Expr_StaticCall").
+		WhereCall().
+		Where(func(m engine.Match) bool {
+			return m.Child("callee").Kind() == "access" && m.Child("callee").Node().Form == "static"
+		}).
 		Get()
 }
 
@@ -74,7 +77,7 @@ func (ShoutingDetector) Sin() sins.Sin { return Shouting{} }
 func (ShoutingDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return codebase.
 		WhereCall().
-		Where(func(m engine.Match) bool { return m.Child("name").Name() == "strtoupper" }).
+		Where(func(m engine.Match) bool { return m.Child("callee").Name() == "strtoupper" }).
 		Get()
 }
 
@@ -247,7 +250,7 @@ func TestAFileHoldsAtMostOneScenarioPerSin(t *testing.T) {
 }
 
 func TestMarkupCommentsMarkTheElementTheyLead(t *testing.T) {
-	file, err := os.Open("../contract/samples/vue.jsonl")
+	file, err := os.Open("testdata/stock-indicator.jsonl")
 	if err != nil {
 		t.Fatal(err)
 	}

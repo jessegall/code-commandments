@@ -45,12 +45,12 @@ func holds(t *testing.T, vocabulary Vocabulary, node *contract.Node, source stri
 		return
 	}
 
-	for name, carried := range map[string][]string{"role": {node.Role}, "is": node.Is, "modifier": node.Modifiers, "flag": node.Flags} {
-		listed := map[string][]string{"role": construct.Roles, "is": construct.Is, "modifier": construct.Modifiers, "flag": construct.Flags}[name]
-		for _, value := range carried {
-			if !slices.Contains(listed, value) {
-				t.Errorf("%s writes %q with the %s %q, which the vocabulary does not list: run the census", source, node.Kind, name, value)
-			}
+	if role := node.InRole(); role != "" && !slices.Contains(construct.Roles, role) {
+		t.Errorf("%s writes %q in the role %q, which the vocabulary does not list: run the census", source, node.Kind, role)
+	}
+	for _, value := range node.Modifiers {
+		if !slices.Contains(construct.Modifiers, value) {
+			t.Errorf("%s writes %q with the modifier %q, which the vocabulary does not list: run the census", source, node.Kind, value)
 		}
 	}
 
@@ -58,9 +58,9 @@ func holds(t *testing.T, vocabulary Vocabulary, node *contract.Node, source stri
 		t.Errorf("%s writes %q with the operator %q, which the vocabulary does not list: run the census", source, node.Kind, node.Operator)
 	}
 
-	for _, child := range node.Children {
-		if child.Field != "" && !slices.Contains(construct.Fields, child.Field) {
-			t.Errorf("%s writes %q with a child in the slot %q, which the vocabulary does not list: run the census", source, node.Kind, child.Field)
+	for _, child := range node.Children() {
+		if role := child.InRole(); !slices.Contains(construct.Fields, role) {
+			t.Errorf("%s writes %q with a child in the role %q, which the vocabulary does not list: run the census", source, node.Kind, role)
 		}
 	}
 }

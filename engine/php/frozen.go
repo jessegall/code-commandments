@@ -2,6 +2,7 @@ package php
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -11,34 +12,23 @@ func init() {
 	engine.Freezes(contract.PHP, declaresFrozen, func(_ string, source []byte) bool { return bytes.Contains(source, []byte("Frozen")) })
 }
 
+// declaresFrozen is a file holding an attribute group written `#[Frozen]`: the group's first attribute, spelled
+// `Frozen` itself, with nothing but whitespace after `#[`.
 func declaresFrozen(file *engine.File) bool {
 	source, err := file.Source()
 	if err != nil {
 		return false
 	}
-	for _, group := range file.File.Nodes() {
-		if group.Kind != "AttributeGroup" || len(group.Children()) == 0 {
+	for _, node := range file.File.Nodes() {
+		if node.Kind != "annotation" {
 			continue
 		}
-		name := firstChildIn(group.Children()[0], "name")
-		if name == nil {
-			continue
-		}
-		opened := engine.Source(source).SkipWhitespace(group.Span.Start+len("#["), name.Span.Start)
-		if opened == name.Span.Start && string(source[name.Span.Start:name.Span.End]) == "Frozen" {
+		written := string(source[node.Span.Start:node.Span.End])
+		opened := strings.HasSuffix(strings.TrimRight(string(source[:node.Span.Start]), " \t\r\n"), "#[")
+		if opened && (written == "Frozen" || strings.HasPrefix(written, "Frozen(")) {
 			return true
 		}
 	}
 
 	return false
-}
-
-func firstChildIn(node *contract.Node, field string) *contract.Node {
-	for _, child := range node.Children() {
-		if child.InRole() == field {
-			return child
-		}
-	}
-
-	return nil
 }

@@ -82,8 +82,8 @@ func TestTheTreeIsTheContractsOwnShape(t *testing.T) {
 	if file.Errors != 0 {
 		t.Errorf("a file that parses whole reports %d errors", file.Errors)
 	}
-	if file.Root.Kind != "File" || file.Root.Name != "shop" {
-		t.Errorf("the root is %s named %q", file.Root.Kind, file.Root.Name)
+	if modules := file.Root.Children(); file.Root.Kind != "file" || len(modules) != 1 || modules[0].Kind != "module" || modules[0].Name != "shop" {
+		t.Errorf("the root is %s holding %v", file.Root.Kind, modules)
 	}
 
 	source, err := os.ReadFile(file.Path)
@@ -97,51 +97,20 @@ func TestTheTreeIsTheContractsOwnShape(t *testing.T) {
 		if node.Span.Line < 1 {
 			t.Fatalf("%s at %d says it is on line %d", node.Kind, node.ID, node.Span.Line)
 		}
-		if node.ID != 0 && node.Field == "" {
-			t.Fatalf("%s at %d fills no field of its parent", node.Kind, node.ID)
-		}
-	}
-}
-
-func TestEveryNodeIsNamedAsGoNamesIt(t *testing.T) {
-	file := streamOf(t, map[string]string{"cart.go": cart}).Files[0]
-
-	method := firstOf(t, file, "FuncDecl")
-	if method.Name != "Cart" && method.Name != "Total" && method.Name != "describe" {
-		t.Errorf("the first function is named %q", method.Name)
-	}
-	if receiver := childIn(method, "recv"); receiver == nil {
-		t.Error("a method carries no receiver, which is the one fact a Go method's type is read through")
-	}
-
-	call := firstOf(t, file, "CallExpr")
-	callee := childIn(call, "fun")
-	if callee == nil {
-		t.Fatal("a call says nothing about what it calls")
-	}
-	if callee.Name == "" && childIn(callee, "sel") == nil {
-		t.Error("a call's callee carries neither a name nor the member it selects")
-	}
-}
-
-func TestTheNeutralQuestionsAnswerForGo(t *testing.T) {
-	file := streamOf(t, map[string]string{"cart.go": cart}).Files[0]
-
-	for _, want := range []string{"function", "loop", "branch", "comparison", "conjunction", "call", "member-access", "assignment", "literal", "import", "block", "return", "bail-out", "identifier", "expression-statement", "type-declaration"} {
-		if !answers(file, want) {
-			t.Errorf("no node answers %q", want)
+		if node.ID != 0 && node.InRole() == "" {
+			t.Fatalf("%s at %d holds no role of its parent", node.Kind, node.ID)
 		}
 	}
 }
 
 func TestAPanicIsAThrowThatLeavesItsBlockAndALookAlikeIsNot(t *testing.T) {
 	builtin := streamOf(t, map[string]string{"go.mod": "module example.com/shop\n", "stop.go": "package shop\n\nfunc stop() {\n\tpanic(\"stopped\")\n}\n"}).Files[0]
-	if !answers(builtin, "throw") || !answers(builtin, "bail-out") {
-		t.Error("the builtin panic is not read as a throw that leaves its block")
+	if !holdsKind(builtin, "throw") {
+		t.Error("the builtin panic is not read as a throw")
 	}
 
 	shadowed := streamOf(t, map[string]string{"go.mod": "module example.com/shop\n", "stop.go": "package shop\n\nfunc panic(reason string) {}\n\nfunc stop() {\n\tpanic(\"stopped\")\n}\n"}).Files[0]
-	if answers(shadowed, "throw") {
+	if holdsKind(shadowed, "throw") {
 		t.Error("a function of the package's own named panic is read as a throw")
 	}
 }
@@ -151,18 +120,21 @@ func TestALiteralCarriesWhatItDecodesTo(t *testing.T) {
 
 	values := map[string]string{}
 	for _, node := range file.Nodes() {
-		if node.Literal == "" {
+		if node.Kind != "literal" || node.Value == nil {
 			continue
 		}
 		text, _ := node.Value.Text()
-		values[node.Literal] = text
+		values[node.LiteralKind] = text
 	}
 
 	if values["string"] != `a "quoted" name` {
 		t.Errorf("a string decodes to %q", values["string"])
 	}
-	if values["int"] != "31" && values["int"] != "120" {
-		t.Errorf("an integer decodes to %q, where 0x1f is 31 and 'x' is 120", values["int"])
+	if values["integer"] != "31" {
+		t.Errorf("an integer decodes to %q, where 0x1f is 31", values["integer"])
+	}
+	if values["character"] != "x" {
+		t.Errorf("a character decodes to %q", values["character"])
 	}
 	if values["float"] != "1.5" {
 		t.Errorf("a float decodes to %q", values["float"])
@@ -174,13 +146,13 @@ func TestACommentSaysWhereItBelongs(t *testing.T) {
 
 	var doc, trailing, code int
 	for _, comment := range file.Comments {
-		if comment.Kind == "doc" {
+		if comment.Form == "doc" {
 			doc++
 		}
 		if comment.Trailing {
 			trailing++
 		}
-		if comment.Extras != nil && comment.Extras.Go != nil && comment.Extras.Go.Code {
+		if fragment := comment.Fragment; fragment != nil && fragment.Diagnostics == 0 && fragment.Statements == 1 && fragment.ExpressionKind == "" {
 			code++
 		}
 		if comment.Attached == nil {
@@ -242,34 +214,10 @@ func TestTheSameFileAlwaysWritesTheSameStream(t *testing.T) {
 	}
 }
 
-func firstOf(t *testing.T, file *contract.File, kind string) *contract.Node {
-	t.Helper()
+func holdsKind(file *contract.File, kind string) bool {
 	for _, node := range file.Nodes() {
 		if node.Kind == kind {
-			return node
-		}
-	}
-	t.Fatalf("the file holds no %s", kind)
-
-	return nil
-}
-
-func childIn(node *contract.Node, field string) *contract.Node {
-	for _, child := range node.Children {
-		if child.Field == field {
-			return child
-		}
-	}
-
-	return nil
-}
-
-func answers(file *contract.File, neutral string) bool {
-	for _, node := range file.Nodes() {
-		for _, is := range node.Is {
-			if is == neutral {
-				return true
-			}
+			return true
 		}
 	}
 

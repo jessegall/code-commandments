@@ -1,6 +1,7 @@
 import ts from 'typescript'
 import * as dom from '@vue/compiler-dom'
-import { TypeScriptWriter } from './typescript.mjs'
+import { Node } from './tree.mjs'
+import { Translator } from './typescript.mjs'
 
 /** A Vue file's SFC parse: its blocks, and the offset range of each script block's content. */
 export class Sfc {
@@ -30,7 +31,7 @@ export function checkedTextOf(text, scripts) {
     return out + blank(text.slice(at))
 }
 
-/** Writes a Vue file as the contract's Component, its scripts as TypeScript from the whole program. */
+/** Writes a Vue file as the version 5 tree: a module per script block, its code translated from the whole program, and a module named `template` for the markup. */
 export class VueWriter {
     constructor(tree, sfc, program, found) {
         this.tree = tree
@@ -39,35 +40,38 @@ export class VueWriter {
         this.program = program
         this.found = found
         this.sourceFile = program.sourceFile(sfc.source.path)
-        this.scripts = new TypeScriptWriter(tree, this.sourceFile, 0, program)
+        this.scripts = new Translator(tree, this.sourceFile, 0, program)
         this.imports = importsOf(this.sourceFile)
         this.errors = sfc.errors + (this.sourceFile.parseDiagnostics?.length ?? 0)
     }
 
     file() {
-        const out = { id: this.tree.number(0, this.source.text.length), kind: 'Component', role: 'markup', span: this.source.span(0, this.source.text.length) }
-        const blocks = []
+        const modules = []
         for (const child of this.sfc.root.children) {
             if (child.type === dom.NodeTypes.COMMENT) this.comment(child)
-            if (child.type === dom.NodeTypes.ELEMENT) blocks.push(this.block(child))
+            if (child.type !== dom.NodeTypes.ELEMENT) continue
+            if (child.tag === 'script' && !hasAttribute(child, 'src')) modules.push(this.script(child))
+            if (child.tag === 'template' && !hasAttribute(child, 'lang')) modules.push(this.markup(child))
         }
-        if (blocks.length) out.children = blocks
 
-        return out
+        return new Node('file', 0, this.source.text.length).holdsAll('modules', modules.filter(Boolean))
     }
 
-    block(block) {
-        const out = this.markup(block, 'Block', 'blocks', { name: block.tag })
-        const children = block.props.map((prop) => this.prop(prop))
-        if (block.tag === 'script' && !hasAttribute(block, 'src')) {
-            const [start, end] = inner(block)
-            children.push(this.scripts.part(start, end, 'children'))
-        } else if (block.tag === 'template' && !hasAttribute(block, 'lang')) {
-            children.push(...block.children.flatMap((child) => this.template(child)))
-        }
-        if (children.length) out.children = children
+    /** A script block's module, spanning its first statement to its last. */
+    script(block) {
+        const [start, end] = inner(block)
+        const statements = this.sourceFile.statements.filter((statement) => statement.getStart(this.sourceFile) >= start && statement.end <= end)
+        if (!statements.length) return new Node('module', start, start)
 
-        return out
+        return this.scripts.module(statements, statements[0].getStart(this.sourceFile), statements.at(-1).end)
+    }
+
+    /** The template block's module, named `template`, spanning its first child to its last. */
+    markup(block) {
+        const children = block.children.flatMap((child) => this.template(child))
+        if (!children.length) return undefined
+
+        return new Node('module', children[0].start, children.at(-1).end).fact('name', 'template').holdsAll('statements', children)
     }
 
     template(node) {
@@ -76,96 +80,82 @@ export class VueWriter {
                 this.comment(node)
                 return []
             case dom.NodeTypes.TEXT:
-                return node.content.trim() === '' ? [] : [this.markup(node, 'Text', 'children', { value: node.content.replace(/\s+/g, ' ').trim() })]
-            case dom.NodeTypes.INTERPOLATION: {
-                const out = this.markup(node, 'Interpolation', 'children')
-                out.children = this.expression(node.content, 'value')
-                return [out]
-            }
+                return node.content.trim() === '' ? [] : [this.at('text', node).said('value', node.content.replace(/\s+/g, ' ').trim())]
+            case dom.NodeTypes.INTERPOLATION:
+                return [this.at('embedded-expression', node).holds('expression', this.expression(node.content))]
             case dom.NodeTypes.ELEMENT: {
-                const out = this.markup(node, 'Element', 'children', { name: node.tag })
-                if (node.tagType === dom.ElementTypes.COMPONENT) out.flags = ['component']
-                const resolves = this.component(node.tag)
-                if (resolves) out.resolves = resolves
-                const children = [...node.props.map((prop) => this.prop(prop)), ...node.children.flatMap((child) => this.template(child))]
-                if (children.length) out.children = children
-                return [out]
+                const element = this.at('element', node)
+                    .fact('tag', node.tag)
+                    .fact('form', node.tagType === dom.ElementTypes.COMPONENT ? 'component' : 'native')
+                    .fact('resolves', this.component(node.tag))
+                element.holdsAll('attributes', node.props.map((prop) => this.prop(prop, element)))
+                element.holdsAll('children', node.children.flatMap((child) => this.template(child)))
+                return [element]
             }
         }
 
         return []
     }
 
-    prop(prop) {
+    prop(prop, element) {
         if (prop.type === dom.NodeTypes.ATTRIBUTE) {
-            const facts = { name: prop.name }
-            if (prop.value) facts.value = prop.value.content
-            return this.markup(prop, 'Attribute', 'attributes', facts)
+            const value = prop.value && new Node('literal', prop.value.loc.start.offset + 1, prop.value.loc.end.offset - 1).fact('literalKind', 'string').said('value', prop.value.content)
+
+            return this.at('attribute', prop).fact('name', prop.name).holds('value', value)
         }
-        const out = this.markup(prop, 'Directive', 'attributes', { name: prop.rawName })
-        if (/^[:@#.]/.test(prop.rawName)) out.flags = ['shorthand']
-        out.extras = { vue: { directive: { name: prop.name, modifiers: prop.modifiers.map((modifier) => modifier.content ?? modifier) } } }
-        const children = []
-        if (prop.arg) children.push(...(prop.arg.isStatic ? [this.argument(prop.arg)] : this.expression(prop.arg, 'arg')))
+        const directive = this.at('directive', prop)
+            .fact('name', prop.name)
+            .fact('modifiers', prop.modifiers.map((modifier) => modifier.content ?? modifier))
+            .fact('shorthand', /^[:@#.]/.test(prop.rawName))
+            .link('body', element)
+        if (prop.arg) directive.holds('argument', prop.arg.isStatic ? this.at('reference', prop.arg).fact('name', prop.arg.content).fact('form', 'name') : this.expression(prop.arg))
         if (prop.forParseResult) {
             const { source, value, key, index } = prop.forParseResult
-            for (const alias of [value, key, index].filter(Boolean)) children.push(this.pattern(alias, 'alias'))
-            children.push(...this.expression(source, 'iterable'))
+            directive.holdsAll('bindings', [value, key, index].filter(Boolean).map((alias) => this.pattern(alias)))
+            directive.holds('iterable', this.expression(source))
         } else if (prop.exp && prop.name === 'slot') {
-            children.push(this.pattern(prop.exp, 'value'))
+            directive.holds('pattern', this.pattern(prop.exp))
         } else if (prop.exp) {
-            children.push(...this.expression(prop.exp, 'value', prop.name === 'on'))
+            directive.holds('value', this.expression(prop.exp, prop.name === 'on'))
         }
-        if (children.length) out.children = children
 
-        return out
+        return directive
     }
 
-    markup(node, kind, field, facts = {}) {
-        const [start, end] = [node.loc.start.offset, node.loc.end.offset]
-        const out = { id: this.tree.number(start, end), kind, role: 'markup', span: this.source.span(start, end), field }
-
-        return Object.assign(out, facts)
-    }
-
-    argument(arg) {
-        const [start, end] = [arg.loc.start.offset, arg.loc.end.offset]
-
-        return { id: this.tree.number(start, end), kind: 'Identifier', role: 'other', span: this.source.span(start, end), field: 'arg', name: arg.content }
+    at(kind, node) {
+        return new Node(kind, node.loc.start.offset, node.loc.end.offset)
     }
 
     /** A template expression, parsed by TypeScript, its spans pointing into the .vue file. An event handler may be statements. */
-    expression(simple, field, handler = false) {
+    expression(simple, handler = false) {
         const start = simple.loc.start.offset
         const text = simple.loc.source
         const wrapped = ts.createSourceFile('expression.ts', `(${text})`, ts.ScriptTarget.ESNext, true)
         const statement = wrapped.statements[0]
         if (!wrapped.parseDiagnostics.length && wrapped.statements.length === 1 && ts.isExpressionStatement(statement)) {
-            return [new TypeScriptWriter(this.tree, wrapped, start - 1).node(statement.expression.expression, field)]
+            return new Translator(this.tree, wrapped, start - 1).expression(statement.expression.expression)
         }
         const statements = ts.createSourceFile('handler.ts', text, ts.ScriptTarget.ESNext, true)
         this.errors += handler ? statements.parseDiagnostics.length : wrapped.parseDiagnostics.length
-        const writer = new TypeScriptWriter(this.tree, statements, start)
+        const translator = new Translator(this.tree, statements, start)
         this.found.push(...scriptComments(statements, start))
 
-        return statements.statements.map((each) => writer.node(each, field))
+        return new Node('block', start, start + text.length).holdsAll('statements', statements.statements.map((each) => translator.statement(each)))
     }
 
     /** A `v-for` alias or a `v-slot` value: a binding pattern, parsed as an arrow function's parameter. */
-    pattern(simple, field) {
+    pattern(simple) {
         const start = simple.loc.start.offset
         const wrapped = ts.createSourceFile('pattern.ts', `(${simple.loc.source}) => 0`, ts.ScriptTarget.ESNext, true)
         this.errors += wrapped.parseDiagnostics.length
         const parameter = wrapped.statements[0]?.expression?.parameters?.[0]
-        if (!parameter) return this.expression(simple, field)[0]
-        const out = new TypeScriptWriter(this.tree, wrapped, start - 1).node(parameter.name, field)
-        out.role = 'pattern'
+        if (!parameter) return this.expression(simple)
 
-        return out
+        return new Translator(this.tree, wrapped, start - 1).binding(parameter.name)
     }
 
     comment(node) {
-        this.found.push({ start: node.loc.start.offset, end: node.loc.end.offset, kind: 'markup' })
+        this.found.push({ start: node.loc.start.offset, end: node.loc.end.offset, form: 'markup' })
     }
 
     /** The file a component tag names through the script's imports: `<OrderRow>` and `<order-row>` for `import OrderRow`. */
@@ -184,7 +174,7 @@ export function scriptComments(sourceFile, offset) {
     const visit = (node) => {
         for (const range of [...(ts.getLeadingCommentRanges(text, node.pos) ?? []), ...(ts.getTrailingCommentRanges(text, node.end) ?? [])]) {
             const raw = text.slice(range.pos, range.end)
-            found.set(range.pos, { start: offset + range.pos, end: offset + range.end, kind: raw.startsWith('/**') && raw !== '/**/' ? 'doc' : raw.startsWith('/*') ? 'block' : 'line' })
+            found.set(range.pos, { start: offset + range.pos, end: offset + range.end, form: raw.startsWith('/**') && raw !== '/**/' ? 'doc' : raw.startsWith('/*') ? 'block' : 'line' })
         }
         ts.forEachChild(node, visit)
     }

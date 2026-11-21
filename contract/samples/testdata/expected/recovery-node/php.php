@@ -5,4 +5,7 @@ function good(): int
     return 1;
 }
 
-function broken( {
+function broken(): int
+{
+    return 1 + ;
+}

@@ -23,9 +23,6 @@ public function carrierNameNamed(Shipment $shipment): string
         ?? throw CarrierMissing::for($shipment->id);
 }
 
-// Where the message went. The failure is named once, so every throw site says WHAT went wrong
-// instead of spelling out a sentence the next site has to spell differently.
-
 final class CarrierMissing extends RuntimeException
 {
     public static function for(int|string $shipment): self
@@ -58,24 +55,6 @@ export function postageInZone(zone: string, rates: Record<string, number>): numb
     }
 
     return rates[zone]
-}
-```
-
-### generic-exception — in Vue
-
-A throw of the language's catch-all failure (`Exception`, `RuntimeException`, `Error`, `RuntimeError`) instead of a named one
-
-```vue
-----------[ Bad ]----------
-
-async (productId: number): Promise<number[]> => {
-    const result = await fetch(`/api/products/${productId}/questions`)
-    if (!result.ok) {
-        throw new Error(result.statusText)
-    }
-    const questions: Entry[] = await result.json()
-    const answered = questions.filter((question) => question.published)
-    return answered.map((question) => question.id)
 }
 ```
 
@@ -113,27 +92,77 @@ A throw of the language's catch-all failure (`Exception`, `RuntimeException`, `E
 ```cs
 ----------[ Bad ]----------
 
-public string Account(string carrier)
+// Looking a carrier up fails with an `Exception` that names nothing — a caller cannot catch "no such
+// carrier" without matching on the text, and every lookup re-words the message.
+public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> accounts)
 {
-    if (!accounts.TryGetValue(carrier, out var account))
+    public string Account(string carrier)
     {
-        throw new Exception($"No carrier is registered as '{carrier}'.");
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw new Exception($"No carrier is registered as '{carrier}'.");
+        }
+
+        return account;
     }
 
-    return account;
+    public string AccountOf(string carrier)
+    {
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw UnknownCarrier.Named(carrier);
+        }
+
+        return account;
+    }
+
+    public string Normalised(string carrier)
+    {
+        if (string.IsNullOrWhiteSpace(carrier))
+        {
+            throw new ArgumentException("A carrier needs a name.", nameof(carrier));
+        }
+
+        return carrier.Trim().ToLowerInvariant();
+    }
 }
 
 ----------[ Good ]----------
 
 // in CarrierDirectory.cs
-public string AccountOf(string carrier)
+// Looking a carrier up fails with an `Exception` that names nothing — a caller cannot catch "no such
+// carrier" without matching on the text, and every lookup re-words the message.
+public sealed class CarrierDirectory(IReadOnlyDictionary<string, string> accounts)
 {
-    if (!accounts.TryGetValue(carrier, out var account))
+    public string Account(string carrier)
     {
-        throw UnknownCarrier.Named(carrier);
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw new Exception($"No carrier is registered as '{carrier}'.");
+        }
+
+        return account;
     }
 
-    return account;
+    public string AccountOf(string carrier)
+    {
+        if (!accounts.TryGetValue(carrier, out var account))
+        {
+            throw UnknownCarrier.Named(carrier);
+        }
+
+        return account;
+    }
+
+    public string Normalised(string carrier)
+    {
+        if (string.IsNullOrWhiteSpace(carrier))
+        {
+            throw new ArgumentException("A carrier needs a name.", nameof(carrier));
+        }
+
+        return carrier.Trim().ToLowerInvariant();
+    }
 }
 
 // in CarrierDirectory.cs
@@ -166,9 +195,6 @@ public function carrierNameOrFail(Shipment $shipment): string
 
     return $carrier->displayName();
 }
-
-// Where the message went. The failure is named once, so every throw site says WHAT went wrong
-// instead of spelling out a sentence the next site has to spell differently.
 
 final class CarrierMissing extends RuntimeException
 {
@@ -237,23 +263,51 @@ A failure's message written as a string at the throw, not by a named constructor
 ```cs
 ----------[ Bad ]----------
 
-public static int NumberOf(string fileName)
+// Old invoices are kept as numbered files; a number that does not parse is a broken archive.
+public static class InvoiceArchive
 {
-    try
+    public static int NumberOf(string fileName)
     {
-        return int.Parse(Path.GetFileNameWithoutExtension(fileName));
+        try
+        {
+            return int.Parse(Path.GetFileNameWithoutExtension(fileName));
+        }
+        catch (FormatException)
+        {
+            throw new ArgumentException($"{fileName} is not an invoice number.", nameof(fileName));
+        }
     }
-    catch (FormatException)
+
+    public static string Contents(string fileName)
     {
-        throw new ArgumentException($"{fileName} is not an invoice number.", nameof(fileName));
+        try
+        {
+            return File.ReadAllText(fileName);
+        }
+        catch (IOException)
+        {
+            throw;
+        }
     }
 }
 
 ----------[ Good ]----------
 
-public static DispatchTicket Decode(string payload)
+public sealed class DispatchManifest(Dictionary<string, DispatchTicket> tickets)
 {
-    return JsonSerializer.Deserialize<DispatchTicket>(payload) ?? throw new ManifestUnreadable();
+    public bool Contains(string reference) => tickets.ContainsKey(reference);
+
+    public void Publish(string reference, Action<DispatchTicket> notify)
+    {
+        notify(tickets[reference]);
+    }
+
+    public DispatchTicket Require(string reference) => tickets[reference];
+
+    public static DispatchTicket Decode(string payload)
+    {
+        return JsonSerializer.Deserialize<DispatchTicket>(payload) ?? throw new ManifestUnreadable();
+    }
 }
 ```
 
@@ -337,23 +391,52 @@ A `catch` whose whole body throws back the failure it caught: it adds nothing, w
 ```cs
 ----------[ Bad ]----------
 
-public void Hold(string sku, int quantity)
+// A hold written to the stock file, under a clause that catches the failure and throws it straight back:
+// the try tells the reader something is handled here, and nothing is. The repair below it is the method
+// with no clause at all, since the failure reaches the caller either way and now that is plain.
+public sealed class StockHolds(string folder)
 {
-    try
+    public void Hold(string sku, int quantity)
+    {
+        try
+        {
+            File.AppendAllText(Path.Combine(folder, "holds.csv"), $"{sku};{quantity}\n");
+        }
+        catch (IOException)
+        {
+            throw;
+        }
+    }
+
+    public void HoldStock(string sku, int quantity)
     {
         File.AppendAllText(Path.Combine(folder, "holds.csv"), $"{sku};{quantity}\n");
-    }
-    catch (IOException)
-    {
-        throw;
     }
 }
 
 ----------[ Good ]----------
 
-public void HoldStock(string sku, int quantity)
+// A hold written to the stock file, under a clause that catches the failure and throws it straight back:
+// the try tells the reader something is handled here, and nothing is. The repair below it is the method
+// with no clause at all, since the failure reaches the caller either way and now that is plain.
+public sealed class StockHolds(string folder)
 {
-    File.AppendAllText(Path.Combine(folder, "holds.csv"), $"{sku};{quantity}\n");
+    public void Hold(string sku, int quantity)
+    {
+        try
+        {
+            File.AppendAllText(Path.Combine(folder, "holds.csv"), $"{sku};{quantity}\n");
+        }
+        catch (IOException)
+        {
+            throw;
+        }
+    }
+
+    public void HoldStock(string sku, int quantity)
+    {
+        File.AppendAllText(Path.Combine(folder, "holds.csv"), $"{sku};{quantity}\n");
+    }
 }
 ```
 
@@ -455,29 +538,87 @@ A `catch` whose body is empty, or only returns `null`/`false`/an empty value or 
 ```cs
 ----------[ Bad ]----------
 
-public Dictionary<string, int>? Load()
+// A stock snapshot is read back — and every failure along the way, a missing file and a bug alike, is
+// caught and turned into "no snapshot".
+public sealed class Snapshots(string folder)
 {
-    try
+    public Dictionary<string, int>? Load()
     {
-        return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
-    catch (Exception)
+
+    public Dictionary<string, int> LoadOrEmpty()
     {
-        return null;
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json"))) ?? [];
+        }
+        catch (FileNotFoundException)
+        {
+            return [];
+        }
+    }
+
+    public Dictionary<string, int>? LoadIfReadable()
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+        }
+        catch (Exception error) when (error is JsonException or FileNotFoundException)
+        {
+            return null;
+        }
     }
 }
 
 ----------[ Good ]----------
 
-public Dictionary<string, int> LoadOrEmpty()
+// A stock snapshot is read back — and every failure along the way, a missing file and a bug alike, is
+// caught and turned into "no snapshot".
+public sealed class Snapshots(string folder)
 {
-    try
+    public Dictionary<string, int>? Load()
     {
-        return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json"))) ?? [];
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
-    catch (FileNotFoundException)
+
+    public Dictionary<string, int> LoadOrEmpty()
     {
-        return [];
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json"))) ?? [];
+        }
+        catch (FileNotFoundException)
+        {
+            return [];
+        }
+    }
+
+    public Dictionary<string, int>? LoadIfReadable()
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+        }
+        catch (Exception error) when (error is JsonException or FileNotFoundException)
+        {
+            return null;
+        }
     }
 }
 ```
@@ -605,29 +746,61 @@ A new failure thrown inside a `catch` without the caught one as its cause: the t
 ```cs
 ----------[ Bad ]----------
 
-public static string Read(string path)
+// Reads the supplier's stock file that arrives each morning.
+public static class StockImport
 {
-    try
+    public static string Read(string path)
     {
-        return File.ReadAllText(path);
+        try
+        {
+            return File.ReadAllText(path);
+        }
+        catch (IOException e)
+        {
+            throw new StockFileUnreadable($"Could not read the stock file: {e.Message}");
+        }
     }
-    catch (IOException e)
+
+    public static string ReadKeepingTheCause(string path)
     {
-        throw new StockFileUnreadable($"Could not read the stock file: {e.Message}");
+        try
+        {
+            return File.ReadAllText(path);
+        }
+        catch (IOException e)
+        {
+            throw new StockFileUnreadable("Could not read the stock file.", e);
+        }
     }
 }
 
 ----------[ Good ]----------
 
-public static string ReadKeepingTheCause(string path)
+// Reads the supplier's stock file that arrives each morning.
+public static class StockImport
 {
-    try
+    public static string Read(string path)
     {
-        return File.ReadAllText(path);
+        try
+        {
+            return File.ReadAllText(path);
+        }
+        catch (IOException e)
+        {
+            throw new StockFileUnreadable($"Could not read the stock file: {e.Message}");
+        }
     }
-    catch (IOException e)
+
+    public static string ReadKeepingTheCause(string path)
     {
-        throw new StockFileUnreadable("Could not read the stock file.", e);
+        try
+        {
+            return File.ReadAllText(path);
+        }
+        catch (IOException e)
+        {
+            throw new StockFileUnreadable("Could not read the stock file.", e);
+        }
     }
 }
 ```

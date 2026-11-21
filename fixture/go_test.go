@@ -101,7 +101,7 @@ func TestAScenarioIsTheFunctionTheFindingSitsIn(t *testing.T) {
 
 func documentedByAMarker(node engine.Match) bool {
 	for _, comment := range node.Comments() {
-		if comment.Kind != "doc" {
+		if comment.Form != "doc" {
 			continue
 		}
 		for _, line := range strings.Split(comment.Text, "\n") {

@@ -97,10 +97,10 @@ func TestEveryTopLevelStatementLivesUnderTheRoot(t *testing.T) {
 	for _, child := range file.Root.Children() {
 		kinds = append(kinds, child.Kind)
 	}
-	if !slices.Equal(kinds, []string{"Stmt_Declare", "Stmt_Namespace"}) {
+	if !slices.Equal(kinds, []string{"module"}) {
 		t.Fatalf("the root holds %v", kinds)
 	}
-	if class := find(file, func(n *contract.Node) bool { return n.Kind == "Stmt_Class" }); class == nil || class.Symbol != `Shop\Cart` {
+	if class := find(file, func(n *contract.Node) bool { return n.Kind == "type" }); class == nil || class.Symbol != `Shop\Cart` {
 		t.Fatalf("the class is %+v", class)
 	}
 }
@@ -153,12 +153,16 @@ final class Till
 			t.Errorf("nothing refers to %s; refers: %v", want, refers)
 		}
 	}
-	returns := find(file, func(n *contract.Node) bool { return n.Kind == "Stmt_ClassMethod" && n.Name == "sum" }).Returns
-	if returns.Text != `?\Money\Parser\Decimal` || returns.Name != `Money\Parser\Decimal` || !returns.Nullable {
+	returns, _ := find(file, func(n *contract.Node) bool { return n.Kind == "function" && named(n, "sum") }).Child("returnType")
+	if element, _ := returns.Child("element"); returns.Form != "nullable" || element == nil || element.Refers != `Money\Parser\Decimal` {
 		t.Errorf("sum returns %+v", returns)
 	}
-	promoted := find(file, func(n *contract.Node) bool { return n.Kind == "Param" && n.Name == "cash" })
-	if promoted.Symbol != `Shop\Till::$cash` || promoted.Written.Name != `Money\Money` {
+	promoted := find(file, func(n *contract.Node) bool {
+		binding, _ := n.Child("binding")
+
+		return n.Kind == "parameter" && binding != nil && named(binding, "cash")
+	})
+	if declared, _ := promoted.Child("declaredType"); len(promoted.Modifiers) == 0 || declared == nil || declared.Refers != `Money\Money` {
 		t.Errorf("the promoted parameter is %+v", promoted)
 	}
 }
@@ -166,7 +170,7 @@ final class Till
 func TestAnAnonymousClassLendsItsMembersNoSymbol(t *testing.T) {
 	folder := written(t, map[string]string{"Outer.php": "<?php\nnamespace Shop;\nclass Outer { public function make() { return new class { public function inner() {} }; } }\n"})
 	file := bridged(t, folder).Files[0]
-	if inner := find(file, func(n *contract.Node) bool { return n.Kind == "Stmt_ClassMethod" && n.Name == "inner" }); inner.Symbol != "" {
+	if inner := find(file, func(n *contract.Node) bool { return n.Kind == "function" && named(n, "inner") }); inner.Symbol != "" {
 		t.Errorf("the anonymous class's method is %s", inner.Symbol)
 	}
 }
@@ -370,12 +374,12 @@ final class Till
 	variable := find(file, func(n *contract.Node) bool {
 		parent, _ := n.Parent()
 
-		return n.Kind == "Expr_Variable" && n.Name == "receipt" && parent.Kind == "Expr_MethodCall"
+		return n.Kind == "reference" && named(n, "receipt") && parent.Kind == "access"
 	})
 	if variable == nil || variable.Resolved == nil || variable.Resolved.Name != `Shop\Receipt` {
 		t.Fatalf("the receiver's resolved type is %+v", variable)
 	}
-	call := find(file, func(n *contract.Node) bool { return n.Kind == "Expr_MethodCall" })
+	call := find(file, func(n *contract.Node) bool { return n.Kind == "call" })
 	if call.Target == nil || call.Target.Symbol != `Shop\Receipt::total()` {
 		t.Fatalf("the call's target is %+v", call.Target)
 	}
@@ -440,4 +444,8 @@ func TestAClassAFileOfTheScanDeclaresIsNeverLoaded(t *testing.T) {
 	if stream.Program != nil && slices.ContainsFunc(stream.Program.Symbols, func(symbol contract.OutsideSymbol) bool { return symbol.Symbol == `App\Order` }) {
 		t.Errorf("Order, which a file of the scan declares, is named outside it")
 	}
+}
+
+func named(node *contract.Node, name string) bool {
+	return node.Facts != nil && node.Name == name
 }

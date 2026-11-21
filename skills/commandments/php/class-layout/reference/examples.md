@@ -9,9 +9,6 @@ A trait use, constant, property, property hook, or enum case declared below a me
 ```php
 ----------[ Bad ]----------
 
-// The ways an order can ship — with `case Pickup` stranded below the behaviour, where a reader scanning
-// the head of the enum for its inventory never sees it.
-
 enum ShippingMethod: string
 {
     case Standard = 'standard';
@@ -32,9 +29,6 @@ enum ShippingMethod: string
 }
 
 ----------[ Good ]----------
-
-// The FIX: the trailing `case Pickup` hoisted up beside the cases it belongs with, so the head of the
-// enum is the whole inventory and the behaviour sits below it.
 
 enum CollectionMethod: string
 {
@@ -84,9 +78,6 @@ final class Itinerary
 }
 
 ----------[ Good ]----------
-
-// The FIX: the same three fields in the one fixed sequence — the static counter first, then the
-// instance state. `$planned` has MOVED UP past the two it arrived after; nothing else changed.
 
 final class PlannedItinerary
 {

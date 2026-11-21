@@ -118,16 +118,15 @@ func resolvedAddress(street string, district string, postcode string) shippingAd
 }
 ```
 
-The other 58 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 54 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=shared/arguments` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-bag-parameter`, `array-return-bag`, `assembled-template`, `bare-state-predicate`, `computed-boolean-argument`, `constructor-side-effect`, `coupled-fields`, `data-clump`, `derived-argument`, `feature-envy`, `filled-parameter`, `flag-argument`, `hand-rolled-wither`, `handed-out-collection`, `keyed-lookup-envy`, `match-default-returns-null`, `member-after-method`, `member-out-of-order`, `mutable-static-state`, `mutable-value-object`, `narrated-command`, `param-resolved-from-param`, `positional-tuple-return`, `redundant-arrow-return-type`, `scratch-state-restore`, `unused-parameter`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `redundant-arrow-return-type`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 60 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 56 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

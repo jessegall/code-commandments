@@ -80,34 +80,6 @@ public sealed class Readings(Project project)
         or SyntaxKind.SingleLineDocumentationCommentTrivia
         or SyntaxKind.MultiLineDocumentationCommentTrivia;
 
-    /// <summary>
-    /// Does this `//` or `/* */` comment hold C# rather than prose — one statement from end to end, with the
-    /// punctuation code has (<c>total += rate</c>, <c>return order.Total()</c>)? Words alone parse as a
-    /// declaration (<c>flush buffers</c>), and read as prose.
-    /// </summary>
-    internal static bool IsCode(SyntaxTrivia trivia)
-    {
-        var text = trivia.ToFullString();
-        var body = trivia.Kind() switch
-        {
-            SyntaxKind.MultiLineCommentTrivia => text[2..^2].Trim(),
-            SyntaxKind.SingleLineCommentTrivia => text[2..].Trim(),
-            _ => "",
-        };
-
-        if (body.Length == 0)
-        {
-            return false;
-        }
-
-        var written = body.EndsWith(';') || body.EndsWith('}') ? body : body + ";";
-        var statement = SyntaxFactory.ParseStatement(written);
-
-        return !statement.ContainsDiagnostics
-            && statement.FullSpan.End >= written.Length
-            && statement.DescendantTokens().Any(token => token.IsKind(SyntaxKind.DotToken) || token.IsKind(SyntaxKind.OpenParenToken) || token.IsKind(SyntaxKind.OpenBracketToken) || SyntaxFacts.IsAssignmentExpressionOperatorToken(token.Kind()) || SyntaxFacts.IsBinaryExpressionOperatorToken(token.Kind()));
-    }
-
     internal static string CommentKind(SyntaxTrivia trivia) => trivia.Kind() switch
     {
         SyntaxKind.SingleLineCommentTrivia => "line",
@@ -146,100 +118,41 @@ public sealed class Readings(Project project)
         _ => 3,
     };
 
-    /// <summary>The length of the UTF-8 byte-order mark <paramref name="path"/> opens with, which the parsed text drops.</summary>
+    /// <summary>The length of the UTF-8 byte-order mark <paramref name="path"/> opens with, which the parsed text drops; none for a tree parsed from text, such as a comment's words.</summary>
     internal static int MarkLength(string path)
     {
+        if (path.Length == 0)
+        {
+            return 0;
+        }
+
         using var file = File.OpenRead(path);
         Span<byte> head = stackalloc byte[3];
 
         return file.Read(head) == 3 && head.SequenceEqual(Encoding.UTF8.Preamble) ? 3 : 0;
     }
 
-    /// <summary>
-    /// What part the node plays — a statement, an expression, a member or type declaration, a type, or
-    /// anything else (a parameter, an argument, a clause) — as Roslyn's own class hierarchy says it.
-    /// </summary>
-    internal static string Role(SyntaxNode node) => node switch
+    /// <summary>Every declaration the member overrides, innermost first, then every interface member it implements.</summary>
+    internal static IEnumerable<ISymbol> Filled(ISymbol member)
     {
-        StatementSyntax => "statement",
-        MemberDeclarationSyntax => "member",
-        TypeSyntax type when SyntaxFacts.IsInTypeOnlyContext(type) => "type",
-        ExpressionSyntax => "expression",
-        _ => "other",
-    };
-
-    /// <summary>
-    /// Has <paramref name="expression"/> a value the compiler fixes — folded; a name bound to an enum
-    /// member or a <c>const</c>, as the right side of <c>x is Status.Paid</c> is, though it stands where
-    /// a type could; or <c>typeof</c> a concrete type. <c>typeof(T)</c> over a type parameter varies.
-    /// </summary>
-    internal static bool IsConstant(ExpressionSyntax expression, SemanticModel model) =>
-        model.GetConstantValue(expression).HasValue
-        || model.GetSymbolInfo(expression).Symbol is IFieldSymbol { HasConstantValue: true }
-        || (expression is TypeOfExpressionSyntax typeOf && model.GetTypeInfo(typeOf.Type).Type is not (null or ITypeParameterSymbol or IErrorTypeSymbol));
-
-    /// <summary>
-    /// Does what <paramref name="operand"/> names — a field, property, local, parameter, or a method's
-    /// return — declare a type that admits null? What a <c>!</c> on it silences, read from the
-    /// declaration, since the operand of a <c>!</c> reports the state after it.
-    /// </summary>
-    internal static bool IsDeclaredNullable(ExpressionSyntax operand, SemanticModel model)
-    {
-        var declared = model.GetSymbolInfo(operand).Symbol switch
+        for (var overridden = Overrides(member); overridden is not null; overridden = Overrides(overridden))
         {
-            IFieldSymbol field => field.Type,
-            IPropertySymbol property => property.Type,
-            ILocalSymbol local => local.Type,
-            IParameterSymbol parameter => parameter.Type,
-            IMethodSymbol method => method.ReturnType,
-            _ => null,
-        };
+            yield return overridden;
+        }
 
-        return declared is { NullableAnnotation: NullableAnnotation.Annotated } || declared is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T };
-    }
-
-    internal static bool ImplementsInterfaceMember(ISymbol member) => Fills(member).Any();
-
-    /// <summary>Whether every declaration the member fills was written outside this solution.</summary>
-    /// <remarks>
-    /// A member that fills a declaration cannot change its own signature, and whether that matters depends on who
-    /// wrote the declaration. A solution can change an interface of its own, wherever in the solution it lives,
-    /// and cannot change one a framework or a package wrote. Only the compiler knows which, since a type of
-    /// another project in the solution compiles from source while a package's type arrives as metadata, and the
-    /// scan a reader sees may hold neither.
-    /// </remarks>
-    internal static bool FillsOutsideTheSolution(ISymbol member)
-    {
-        var filled = Fills(member).ToList();
-
-        return filled.Count > 0 && !filled.Any(declaring => declaring.Locations.Any(location => location.IsInSource));
-    }
-
-    /// <summary>The types declaring what the member implements or overrides.</summary>
-    private static IEnumerable<INamedTypeSymbol> Fills(ISymbol member) => Overridden(member).Concat(Implemented(member));
-
-    /// <summary>The types of the base members the member overrides, innermost first.</summary>
-    private static IEnumerable<INamedTypeSymbol> Overridden(ISymbol member)
-    {
-        var overridden = Overrides(member);
-
-        while (overridden is not null)
+        if (member.ContainingType is not { } type)
         {
-            if (overridden.ContainingType is { } declaring)
+            yield break;
+        }
+
+        foreach (var candidate in type.AllInterfaces.SelectMany(@interface => @interface.GetMembers()))
+        {
+            if (SymbolEqualityComparer.Default.Equals(type.FindImplementationForInterfaceMember(candidate), member))
             {
-                yield return declaring;
+                yield return candidate;
             }
-
-            overridden = Overrides(overridden);
         }
     }
-
-    /// <summary>The interfaces that declare a member this member implements.</summary>
-    private static IEnumerable<INamedTypeSymbol> Implemented(ISymbol member) =>
-        member.ContainingType is not { } type
-            ? []
-            : type.AllInterfaces.Where(@interface => @interface.GetMembers().Any(candidate =>
-                SymbolEqualityComparer.Default.Equals(type.FindImplementationForInterfaceMember(candidate), member)));
 
     private static ISymbol? Overrides(ISymbol member) => member switch
     {

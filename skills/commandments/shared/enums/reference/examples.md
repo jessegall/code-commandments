@@ -9,8 +9,6 @@ A class of constants defines a closed set of cases
 ```php
 ----------[ Bad ]----------
 
-// VAT rates kept as floating-point constants instead of a typed TaxBand enum.
-
 final class TaxBands
 {
     /**
@@ -30,9 +28,6 @@ final class TaxBands
 }
 
 ----------[ Good ]----------
-
-// The sealed set as a native backed enum — the cases now have a home for behaviour
-// and the type proves only a real band can flow through. Rates as basis points.
 
 enum TaxBand: int
 {
@@ -133,9 +128,6 @@ public function clearsImmediatelyClean(PaymentMethod $method): bool
 }
 
 // in Shop\Enums\PaymentMethod
-// The eligible set, sealed where the cases are. The call site used to re-derive it from an
-// or-chain, which is a copy of this answer that no new case can update.
-
 public function isInstant(): bool
 {
     return match ($this) {
@@ -186,14 +178,19 @@ An or-chain asks about several cases of one enum
 ```cs
 ----------[ Bad ]----------
 
-public static string Note(DeliveryStage stage)
+public static class Fulfilment
 {
-    if (stage == DeliveryStage.Shipped || stage == DeliveryStage.Delivered)
+    public static string Note(DeliveryStage stage)
     {
-        return "on its way";
+        if (stage == DeliveryStage.Shipped || stage == DeliveryStage.Delivered)
+        {
+            return "on its way";
+        }
+
+        return "still here";
     }
 
-    return "still here";
+    public static string Noted(DeliveryStage stage) => stage.HasLeftTheWarehouse() ? "on its way" : "still here";
 }
 
 ----------[ Good ]----------
@@ -209,7 +206,20 @@ public static class DeliveryStageRules
 }
 
 // in Fulfilment.cs
-public static string Noted(DeliveryStage stage) => stage.HasLeftTheWarehouse() ? "on its way" : "still here";
+public static class Fulfilment
+{
+    public static string Note(DeliveryStage stage)
+    {
+        if (stage == DeliveryStage.Shipped || stage == DeliveryStage.Delivered)
+        {
+            return "on its way";
+        }
+
+        return "still here";
+    }
+
+    public static string Noted(DeliveryStage stage) => stage.HasLeftTheWarehouse() ? "on its way" : "still here";
+}
 ```
 
 ### in-array-mirrors-enum — in PHP
@@ -288,7 +298,14 @@ A literal membership check repeats declared enum values
 ```cs
 ----------[ Bad ]----------
 
-public static bool Settles(PaymentCallback callback) => new[] { "paid", "shipped" }.Contains(callback.Status);
+public static class PaymentWebhooks
+{
+    public static bool Settles(PaymentCallback callback) => new[] { "paid", "shipped" }.Contains(callback.Status);
+
+    public static bool Settled(PaymentCallback callback) => Enum.TryParse(callback.Status, ignoreCase: true, out OrderStatus status) && status.IsSettled();
+
+    public static bool IsSigned(string algorithm) => new[] { "sha256", "sha512" }.Contains(algorithm);
+}
 
 ----------[ Good ]----------
 
@@ -303,7 +320,14 @@ public static class OrderStatusRules
 }
 
 // in PaymentWebhooks.cs
-public static bool Settled(PaymentCallback callback) => Enum.TryParse(callback.Status, ignoreCase: true, out OrderStatus status) && status.IsSettled();
+public static class PaymentWebhooks
+{
+    public static bool Settles(PaymentCallback callback) => new[] { "paid", "shipped" }.Contains(callback.Status);
+
+    public static bool Settled(PaymentCallback callback) => Enum.TryParse(callback.Status, ignoreCase: true, out OrderStatus status) && status.IsSettled();
+
+    public static bool IsSigned(string algorithm) => new[] { "sha256", "sha512" }.Contains(algorithm);
+}
 ```
 
 ### side-table-trait — in PHP
@@ -621,16 +645,10 @@ public function price(Freightable $freight): int
 ----------[ Good ]----------
 
 // in Shop\Shipping\ConsignmentFee
-// The FIX: one method on the shared interface, implemented per freight type. Each kind answers
-// for itself, so a new kind needs no edit here at all.
-
 public function priceTold(PricedFreight $freight): int
 {
     return $freight->priceCents();
 }
-
-// What the caller actually wants to know. Each kind of freight answers it for itself, so pricing a
-// new kind adds a class rather than a branch.
 
 interface PricedFreight
 {
@@ -703,12 +721,19 @@ Dispatch branches test the same value against several concrete types
 ```cs
 ----------[ Bad ]----------
 
-public static string Label(Promotion promotion) => promotion switch
+public static class PromotionLabels
 {
-    PercentOff p => $"{p.Percent}% off",
-    AmountOff a => $"{a.Amount / 100m:C} off",
-    _ => "",
-};
+    public static string Label(Promotion promotion) => promotion switch
+    {
+        PercentOff p => $"{p.Percent}% off",
+        AmountOff a => $"{a.Amount / 100m:C} off",
+        _ => "",
+    };
+
+    public static int Pay(Promotion promotion, int cents) => cents - promotion.Discount(cents);
+
+    public static string Describe(Promotion promotion) => promotion.Label();
+}
 
 ----------[ Good ]----------
 
@@ -722,11 +747,37 @@ public abstract class Promotion
 }
 
 // in Promotions.cs
-public override string Label() => $"{Percent}% off";
+public sealed class PercentOff(int percent) : Promotion
+{
+    public int Percent { get; } = percent;
+
+    public override int Discount(int cents) => cents * Percent / 100;
+
+    public override string Label() => $"{Percent}% off";
+}
 
 // in Promotions.cs
-public override string Label() => $"{Amount / 100m:C} off";
+public sealed class AmountOff(int amount) : Promotion
+{
+    public int Amount { get; } = amount;
+
+    public override int Discount(int cents) => Math.Min(Amount, cents);
+
+    public override string Label() => $"{Amount / 100m:C} off";
+}
 
 // in Promotions.cs
-public static string Describe(Promotion promotion) => promotion.Label();
+public static class PromotionLabels
+{
+    public static string Label(Promotion promotion) => promotion switch
+    {
+        PercentOff p => $"{p.Percent}% off",
+        AmountOff a => $"{a.Amount / 100m:C} off",
+        _ => "",
+    };
+
+    public static int Pay(Promotion promotion, int cents) => cents - promotion.Discount(cents);
+
+    public static string Describe(Promotion promotion) => promotion.Label();
+}
 ```

@@ -70,7 +70,6 @@ The other 1 — one per rule — are in [`reference/examples.md`](reference/exam
 
 - `{{binary}} judge --skill=php/enums-with-behaviour` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compare-self`, `enum-value-match`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `compare-self`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

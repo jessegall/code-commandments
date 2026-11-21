@@ -77,21 +77,29 @@ a method that loops another object's collection or writes its members, reaching 
 ```cs
 ----------[ Bad ]----------
 
-public int Weigh(Tote tote)
+public sealed class ToteWeigher
 {
-    var grams = 0;
-
-    foreach (var item in tote.Items)
+    public int Weigh(Tote tote)
     {
-        grams += item.Grams;
-    }
+        var grams = 0;
 
-    return grams;
+        foreach (var item in tote.Items)
+        {
+            grams += item.Grams;
+        }
+
+        return grams;
+    }
 }
 
 ----------[ Good ]----------
 
-public int TotalGrams() => Items.Sum(item => item.Grams);
+public sealed class Tote
+{
+    public List<ToteItem> Items { get; } = [];
+
+    public int TotalGrams() => Items.Sum(item => item.Grams);
+}
 ```
 
 ## Commands

@@ -9,27 +9,58 @@ a `foreach` that adds to or removes from the very collection it walks — the en
 ```cs
 ----------[ Bad ]----------
 
-public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
+// A reserve shelf added to the list the foreach is walking, which grows the list it is reading: every shelf
+// added names the next one to add, so the walk never reaches its end.
+public static class AisleBlocks
 {
-    foreach (var shelf in shelves)
+    public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
     {
-        if (below.Contains(shelf))
+        foreach (var shelf in shelves)
         {
-            shelves.Add($"{shelf}-reserve");
+            if (below.Contains(shelf))
+            {
+                shelves.Add($"{shelf}-reserve");
+            }
         }
+
+        return shelves;
     }
 
-    return shelves;
+    public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
+    {
+        var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
+        shelves.AddRange(reserves);
+
+        return shelves;
+    }
 }
 
 ----------[ Good ]----------
 
-public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
+// A reserve shelf added to the list the foreach is walking, which grows the list it is reading: every shelf
+// added names the next one to add, so the walk never reaches its end.
+public static class AisleBlocks
 {
-    var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
-    shelves.AddRange(reserves);
+    public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
+    {
+        foreach (var shelf in shelves)
+        {
+            if (below.Contains(shelf))
+            {
+                shelves.Add($"{shelf}-reserve");
+            }
+        }
 
-    return shelves;
+        return shelves;
+    }
+
+    public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
+    {
+        var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
+        shelves.AddRange(reserves);
+
+        return shelves;
+    }
 }
 ```
 
@@ -40,17 +71,41 @@ a `?? throw` inside a call's argument or in front of a member call — the check
 ```cs
 ----------[ Bad ]----------
 
-public static string Upper(string? country)
+// The country an address ships to, as the carrier's two-letter code.
+public static class CountryCodes
 {
-    return Normalise(country ?? throw new AddressIncomplete("country"));
+    public static string Upper(string? country)
+    {
+        return Normalise(country ?? throw new AddressIncomplete("country"));
+    }
+
+    public static string CheckedUpper(string? country)
+    {
+        var given = country ?? throw new AddressIncomplete("country");
+
+        return Normalise(given);
+    }
+
+    private static string Normalise(string country) => country.Trim().ToUpperInvariant();
 }
 
 ----------[ Good ]----------
 
-public static string CheckedUpper(string? country)
+// The country an address ships to, as the carrier's two-letter code.
+public static class CountryCodes
 {
-    var given = country ?? throw new AddressIncomplete("country");
+    public static string Upper(string? country)
+    {
+        return Normalise(country ?? throw new AddressIncomplete("country"));
+    }
 
-    return Normalise(given);
+    public static string CheckedUpper(string? country)
+    {
+        var given = country ?? throw new AddressIncomplete("country");
+
+        return Normalise(given);
+    }
+
+    private static string Normalise(string country) => country.Trim().ToUpperInvariant();
 }
 ```

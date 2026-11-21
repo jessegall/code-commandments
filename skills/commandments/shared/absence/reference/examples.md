@@ -77,26 +77,64 @@ A blank string default stands for a missing required value
 ```cs
 ----------[ Bad ]----------
 
-public static string Of(string heading, string strapline = "")
+// The heading printed at the top of an invoice or a packing slip, with an optional strapline under it.
+public static class Headings
 {
-    if (strapline == "")
+    public static string Of(string heading, string strapline = "")
     {
-        return heading;
+        if (strapline == "")
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
     }
 
-    return $"{heading} — {strapline}";
+    public static string Lined(string heading, string? strapline = null)
+    {
+        if (strapline is null)
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
+    }
+
+    public static string Joined(string[] parts, string separator = "")
+    {
+        return string.Join(separator, parts);
+    }
 }
 
 ----------[ Good ]----------
 
-public static string Lined(string heading, string? strapline = null)
+// The heading printed at the top of an invoice or a packing slip, with an optional strapline under it.
+public static class Headings
 {
-    if (strapline is null)
+    public static string Of(string heading, string strapline = "")
     {
-        return heading;
+        if (strapline == "")
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
     }
 
-    return $"{heading} — {strapline}";
+    public static string Lined(string heading, string? strapline = null)
+    {
+        if (strapline is null)
+        {
+            return heading;
+        }
+
+        return $"{heading} — {strapline}";
+    }
+
+    public static string Joined(string[] parts, string separator = "")
+    {
+        return string.Join(separator, parts);
+    }
 }
 ```
 
@@ -161,11 +199,27 @@ A fallback compared against the same value it falls back to (`(name ?? '') !== '
 ```cs
 ----------[ Bad ]----------
 
-public static bool HasPostcode(string? postcode) => (postcode ?? "") != "";
+// Whether an address form was filled in far enough to quote a delivery.
+public static class PostcodeChecks
+{
+    public static bool HasPostcode(string? postcode) => (postcode ?? "") != "";
+
+    public static bool IsGiven(string? postcode) => postcode is not null && postcode != "";
+
+    public static string Shown(string? postcode) => (postcode ?? "unknown") + " (checked)";
+}
 
 ----------[ Good ]----------
 
-public static bool IsGiven(string? postcode) => postcode is not null && postcode != "";
+// Whether an address form was filled in far enough to quote a delivery.
+public static class PostcodeChecks
+{
+    public static bool HasPostcode(string? postcode) => (postcode ?? "") != "";
+
+    public static bool IsGiven(string? postcode) => postcode is not null && postcode != "";
+
+    public static string Shown(string? postcode) => (postcode ?? "unknown") + " (checked)";
+}
 ```
 
 ### capability-probe-hub — in PHP
@@ -174,8 +228,6 @@ Several methods each ask the same field if it has a capability before using it
 
 ```php
 ----------[ Bad ]----------
-
-// One installed shop plugin, and what it adds to the admin screens.
 
 final class PluginSlot
 {
@@ -199,8 +251,6 @@ final class PluginSlot
 
 ----------[ Good ]----------
 
-// A shop plugin: it answers every contribution itself, none by default.
-
 abstract class Plugin
 {
     public function widgetCount(): int
@@ -218,8 +268,6 @@ abstract class Plugin
         return 0;
     }
 }
-
-// One installed shop plugin, told for what it adds to the admin screens.
 
 final class PluginBay
 {
@@ -329,7 +377,22 @@ public sealed class BillingProbe(object source)
 
 ----------[ Good ]----------
 
-public bool Contains(string reference) => tickets.ContainsKey(reference);
+public sealed class DispatchManifest(Dictionary<string, DispatchTicket> tickets)
+{
+    public bool Contains(string reference) => tickets.ContainsKey(reference);
+
+    public void Publish(string reference, Action<DispatchTicket> notify)
+    {
+        notify(tickets[reference]);
+    }
+
+    public DispatchTicket Require(string reference) => tickets[reference];
+
+    public static DispatchTicket Decode(string payload)
+    {
+        return JsonSerializer.Deserialize<DispatchTicket>(payload) ?? throw new ManifestUnreadable();
+    }
+}
 ```
 
 ### capability-probe-hub — in Go
@@ -432,35 +495,72 @@ The loop header replaces a missing collection with an empty one
 ```cs
 ----------[ Bad ]----------
 
-public static List<string> Lines(List<string>? skus)
+// Prints the pick list a picker walks the aisles with.
+public static class PickLists
 {
-    var lines = new List<string>();
-
-    foreach (var sku in skus ?? [])
+    public static List<string> Lines(List<string>? skus)
     {
-        lines.Add($"[ ] {sku}");
+        var lines = new List<string>();
+
+        foreach (var sku in skus ?? [])
+        {
+            lines.Add($"[ ] {sku}");
+        }
+
+        return lines;
     }
 
-    return lines;
+    public static List<string> GuardedLines(List<string>? skus)
+    {
+        if (skus is null)
+        {
+            return [];
+        }
+
+        var lines = new List<string>();
+
+        foreach (var sku in skus)
+        {
+            lines.Add($"[ ] {sku}");
+        }
+
+        return lines;
+    }
 }
 
 ----------[ Good ]----------
 
-public static List<string> GuardedLines(List<string>? skus)
+// Prints the pick list a picker walks the aisles with.
+public static class PickLists
 {
-    if (skus is null)
+    public static List<string> Lines(List<string>? skus)
     {
-        return [];
+        var lines = new List<string>();
+
+        foreach (var sku in skus ?? [])
+        {
+            lines.Add($"[ ] {sku}");
+        }
+
+        return lines;
     }
 
-    var lines = new List<string>();
-
-    foreach (var sku in skus)
+    public static List<string> GuardedLines(List<string>? skus)
     {
-        lines.Add($"[ ] {sku}");
-    }
+        if (skus is null)
+        {
+            return [];
+        }
 
-    return lines;
+        var lines = new List<string>();
+
+        foreach (var sku in skus)
+        {
+            lines.Add($"[ ] {sku}");
+        }
+
+        return lines;
+    }
 }
 ```
 
@@ -550,17 +650,11 @@ public function byBarcode(string $barcode): ?Product
 ----------[ Good ]----------
 
 // in Shop\Catalog\ProductFinder
-// Resolve-or-throw: a scanned barcode must exist, so the absence is decided
-// once at the source and the return type tells the truth.
-
 public function requireByBarcode(string $barcode): Product
 {
     return Product::query()->where('barcode', $barcode)->first()
         ?? throw ProductNotFound::forBarcode($barcode);
 }
-
-// The absence the finder used to hand back as null, decided once and named. Every caller that
-// de-nulled the `?Product` is now spared the question.
 
 final class ProductNotFound extends RuntimeException
 {
@@ -622,11 +716,25 @@ Every caller takes a nullable result as present
 ```cs
 ----------[ Bad ]----------
 
-public CouponCode? Find(string code) => byCode.GetValueOrDefault(code);
+public sealed class CouponBook
+{
+    private readonly Dictionary<string, CouponCode> byCode = new(StringComparer.OrdinalIgnoreCase);
+
+    public CouponCode? Find(string code) => byCode.GetValueOrDefault(code);
+
+    public CouponCode Get(string code) => byCode.TryGetValue(code, out var coupon) ? coupon : throw new KeyNotFoundException(code);
+}
 
 ----------[ Good ]----------
 
-public CouponCode Get(string code) => byCode.TryGetValue(code, out var coupon) ? coupon : throw new KeyNotFoundException(code);
+public sealed class CouponBook
+{
+    private readonly Dictionary<string, CouponCode> byCode = new(StringComparer.OrdinalIgnoreCase);
+
+    public CouponCode? Find(string code) => byCode.GetValueOrDefault(code);
+
+    public CouponCode Get(string code) => byCode.TryGetValue(code, out var coupon) ? coupon : throw new KeyNotFoundException(code);
+}
 ```
 
 ### manufactured-fake-fill — in PHP
@@ -652,10 +760,6 @@ public function import(array $rows): void
 ----------[ Good ]----------
 
 // in Shop\Legacy\LegacyOrderImporter
-// The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
-// throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
-// that fake all the way to the import — the throw stops the row here, where the truth is known.
-
 public function importStrictly(array $rows): void
 {
     foreach ($rows as $row) {
@@ -718,10 +822,6 @@ public function accepts(string $sku): bool
 
 ----------[ Good ]----------
 
-// The FIX for {@see GradeSelector}: the invariant is made CERTAIN instead of masked — the batch is
-// held non-nullable (a grading pass without one cannot be constructed), so the read is a plain
-// `$this->batch->permits($sku)` with no `?->` and no fake `?? false` answering an impossible state.
-
 final class OpenGradeSelector
 {
     public function __construct(private readonly ActiveBatch $batch) {}
@@ -776,23 +876,72 @@ def run(self, markdown: Markdown, skus: list[str]) -> list[str]:
     return [sku for sku in skus if markdown.applies_to(sku)]
 ```
 
-### masked-invariant — in C#
+### masked-invariant · phantom-nullable — in C#
 
-Masking an optional field behind a literal hides a value the design requires
+_masked-invariant_ — Masking an optional field behind a literal hides a value the design requires
+
+_phantom-nullable_ — Every dereference assumes the declared optional value is present
 
 ```cs
 ----------[ Bad ]----------
 
-public string DraftValue()
+public sealed class BillingState
 {
-    return this.Draft?.Memo ?? "";
+    public Invoice? Draft { get; private set; }
+    public Invoice? Active { get; init; }
+    private readonly Dictionary<string, Invoice> records = new();
+
+    public void Prepare(Invoice supplied)
+    {
+        this.Draft = supplied;
+    }
+
+    public string DraftValue()
+    {
+        return this.Draft?.Memo ?? "";
+    }
+
+    public string ActiveValue()
+    {
+        return this.Active.Memo;
+    }
+
+    public void Announce(Action? notify = null)
+    {
+        if (notify != null)
+        {
+            notify();
+        }
+    }
+
+    public Invoice? Find(string key)
+    {
+        return this.records.GetValueOrDefault(key);
+    }
+
+    public JsonDocument Read(string written)
+    {
+        return JsonDocument.Parse(written);
+    }
+
+    public Invoice Parse(string written)
+    {
+        return JsonSerializer.Deserialize<Invoice>(written) ?? throw new FormatException();
+    }
 }
 
 ----------[ Good ]----------
 
-public DateTime? EstimatedDispatch()
+public sealed class DispatchSession(DispatchTicket? held)
 {
-    return active?.DispatchAt;
+    private DispatchTicket? active = held;
+
+    public DateTime? EstimatedDispatch()
+    {
+        return active?.DispatchAt;
+    }
+
+    public void Release() => this.active = null;
 }
 ```
 
@@ -881,26 +1030,77 @@ def close_till_then(till, after: Callable[[], None] = noop) -> float:
     return total
 ```
 
-### nullable-callback — in C#
+### nullable-callback · nullable-registry-lookup — in C#
 
-A callback is declared optional, checked for absence, and then invoked
+_nullable-callback_ — A callback is declared optional, checked for absence, and then invoked
+
+_nullable-registry-lookup_ — A keyed store returns absence on a miss
 
 ```cs
 ----------[ Bad ]----------
 
-public void Announce(Action? notify = null)
+public sealed class BillingState
 {
-    if (notify != null)
+    public Invoice? Draft { get; private set; }
+    public Invoice? Active { get; init; }
+    private readonly Dictionary<string, Invoice> records = new();
+
+    public void Prepare(Invoice supplied)
     {
-        notify();
+        this.Draft = supplied;
+    }
+
+    public string DraftValue()
+    {
+        return this.Draft?.Memo ?? "";
+    }
+
+    public string ActiveValue()
+    {
+        return this.Active.Memo;
+    }
+
+    public void Announce(Action? notify = null)
+    {
+        if (notify != null)
+        {
+            notify();
+        }
+    }
+
+    public Invoice? Find(string key)
+    {
+        return this.records.GetValueOrDefault(key);
+    }
+
+    public JsonDocument Read(string written)
+    {
+        return JsonDocument.Parse(written);
+    }
+
+    public Invoice Parse(string written)
+    {
+        return JsonSerializer.Deserialize<Invoice>(written) ?? throw new FormatException();
     }
 }
 
 ----------[ Good ]----------
 
-public void Publish(string reference, Action<DispatchTicket> notify)
+public sealed class DispatchManifest(Dictionary<string, DispatchTicket> tickets)
 {
-    notify(tickets[reference]);
+    public bool Contains(string reference) => tickets.ContainsKey(reference);
+
+    public void Publish(string reference, Action<DispatchTicket> notify)
+    {
+        notify(tickets[reference]);
+    }
+
+    public DispatchTicket Require(string reference) => tickets[reference];
+
+    public static DispatchTicket Decode(string payload)
+    {
+        return JsonSerializer.Deserialize<DispatchTicket>(payload) ?? throw new ManifestUnreadable();
+    }
 }
 ```
 
@@ -919,16 +1119,10 @@ public function get(string $key): ?object
 ----------[ Good ]----------
 
 // in Shop\Support\NotificationChannels
-// The FIX: the store resolves-or-throws. A missing key is a named failure at the source
-// (`UnknownChannel::forKey($key)`), never a `null` every caller has to re-decide about.
-
 public function resolve(string $key): object
 {
     return $this->channels[$key] ?? throw UnknownChannel::forKey($key);
 }
-
-// The failure the nullable lookup used to hand back as null. Naming it is what lets the store
-// resolve-or-throw, so no caller re-decides what a missing channel means.
 
 final class UnknownChannel extends RuntimeException
 {
@@ -981,33 +1175,12 @@ def __contains__(self, till: str) -> bool:
     return till in self._printers
 ```
 
-### nullable-registry-lookup — in C#
-
-A keyed store returns absence on a miss
-
-```cs
-----------[ Bad ]----------
-
-public Invoice? Find(string key)
-{
-    return this.records.GetValueOrDefault(key);
-}
-
-----------[ Good ]----------
-
-public DispatchTicket Require(string reference) => tickets[reference];
-```
-
 ### phantom-nullable — in PHP
 
 Every dereference assumes the declared optional value is present
 
 ```php
 ----------[ Bad ]----------
-
-// An order entering fulfillment. `$shipTo` is typed `?ShippingAddress`, but staging copies it onto the
-// pick list, which copies it onto the packing slip, onto the label, onto the manifest — five records
-// across five files — where it is finally read as present, and no step ever guards the null.
 
 final class Order
 {
@@ -1023,10 +1196,6 @@ final class Order
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see Order}: `$shipTo` is typed `ShippingAddress` — NOT nullable. Every reader
-// already assumed it, so the type now says so and construction fails hard on a real miss instead
-// of carrying a null nobody ever guards.
 
 final class ConfirmedOrder
 {
@@ -1068,66 +1237,6 @@ class PromotedTag:
         return self.promotion.upper()
 ```
 
-### phantom-nullable — in C#
-
-Every dereference assumes the declared optional value is present
-
-```cs
-----------[ Bad ]----------
-
-public sealed class BillingState
-{
-    public Invoice? Draft { get; private set; }
-    public Invoice? Active { get; init; }
-    private readonly Dictionary<string, Invoice> records = new();
-
-    public void Prepare(Invoice supplied)
-    {
-        this.Draft = supplied;
-    }
-
-    public string DraftValue()
-    {
-        return this.Draft?.Memo ?? "";
-    }
-
-    public string ActiveValue()
-    {
-        return this.Active.Memo;
-    }
-
-    public void Announce(Action? notify = null)
-    {
-        if (notify != null)
-        {
-            notify();
-        }
-    }
-
-    public Invoice? Find(string key)
-    {
-        return this.records.GetValueOrDefault(key);
-    }
-
-    public JsonDocument Read(string written)
-    {
-        return JsonDocument.Parse(written);
-    }
-
-    public Invoice Parse(string written)
-    {
-        return JsonSerializer.Deserialize<Invoice>(written) ?? throw new FormatException();
-    }
-}
-
-----------[ Good ]----------
-
-public DateTime? EstimatedDispatch()
-{
-    return active?.DispatchAt;
-}
-```
-
 ### phantom-nullable — in Go
 
 Every dereference assumes the declared optional value is present
@@ -1135,13 +1244,13 @@ Every dereference assumes the declared optional value is present
 ```go
 ----------[ Bad ]----------
 
-BillingState struct {
+type BillingState struct {
 	Active *BillingResult
 }
 
 ----------[ Good ]----------
 
-retainedReceipt struct {
+type retainedReceipt struct {
 	active *VerifiedReceipt
 }
 ```
@@ -1160,10 +1269,6 @@ public function activate(string $slug): WorkflowRowData
 
 ----------[ Good ]----------
 
-// The FIX for {@see ActivateWorkflow}: the required `updatedAt` slot is handed the REAL value — the
-// command holds the clock that owns the timestamp and reads it, instead of filling the promise with
-// `''` to satisfy the signature.
-
 final class StampedActivateWorkflow
 {
     public function __construct(private readonly WorkflowClock $clock) {}
@@ -1179,8 +1284,6 @@ final class StampedActivateWorkflow
         );
     }
 }
-
-// The source of the timestamp the fixed activation asks for.
 
 final class WorkflowClock
 {
@@ -1238,7 +1341,12 @@ A blank string fills a required string field in a data type
 ```cs
 ----------[ Bad ]----------
 
-public static Payout Queued(string sellerId, int cents) => new Payout(sellerId, cents, "");
+public static class Payouts
+{
+    public static Payout Queued(string sellerId, int cents) => new Payout(sellerId, cents, "");
+
+    public static PendingPayout Queue(string sellerId, int cents) => new PendingPayout(sellerId, cents);
+}
 
 ----------[ Good ]----------
 
@@ -1246,7 +1354,12 @@ public static Payout Queued(string sellerId, int cents) => new Payout(sellerId, 
 public sealed record PendingPayout(string SellerId, int Cents);
 
 // in Payouts.cs
-public static PendingPayout Queue(string sellerId, int cents) => new PendingPayout(sellerId, cents);
+public static class Payouts
+{
+    public static Payout Queued(string sellerId, int cents) => new Payout(sellerId, cents, "");
+
+    public static PendingPayout Queue(string sellerId, int cents) => new PendingPayout(sellerId, cents);
+}
 ```
 
 ### raw-decoded-array-return — in PHP
@@ -1278,9 +1391,6 @@ public function ratesTyped(string $base, array $symbols): RateTable
 
     return RateTable::from(json_decode($this->http->get("https://fx.test/latest?{$query}"), true));
 }
-
-// The shape the wire actually has, declared. A decoded response handed back raw asks every caller
-// to know the payload's keys; this states them once, at the boundary that read them.
 
 final class RateTable
 {
@@ -1348,16 +1458,96 @@ A function returns decoded data before checking and giving it a type
 ```cs
 ----------[ Bad ]----------
 
-public JsonDocument Read(string written)
+public sealed class BillingState
 {
-    return JsonDocument.Parse(written);
+    public Invoice? Draft { get; private set; }
+    public Invoice? Active { get; init; }
+    private readonly Dictionary<string, Invoice> records = new();
+
+    public void Prepare(Invoice supplied)
+    {
+        this.Draft = supplied;
+    }
+
+    public string DraftValue()
+    {
+        return this.Draft?.Memo ?? "";
+    }
+
+    public string ActiveValue()
+    {
+        return this.Active.Memo;
+    }
+
+    public void Announce(Action? notify = null)
+    {
+        if (notify != null)
+        {
+            notify();
+        }
+    }
+
+    public Invoice? Find(string key)
+    {
+        return this.records.GetValueOrDefault(key);
+    }
+
+    public JsonDocument Read(string written)
+    {
+        return JsonDocument.Parse(written);
+    }
+
+    public Invoice Parse(string written)
+    {
+        return JsonSerializer.Deserialize<Invoice>(written) ?? throw new FormatException();
+    }
 }
 
 ----------[ Good ]----------
 
-public Invoice Parse(string written)
+public sealed class BillingState
 {
-    return JsonSerializer.Deserialize<Invoice>(written) ?? throw new FormatException();
+    public Invoice? Draft { get; private set; }
+    public Invoice? Active { get; init; }
+    private readonly Dictionary<string, Invoice> records = new();
+
+    public void Prepare(Invoice supplied)
+    {
+        this.Draft = supplied;
+    }
+
+    public string DraftValue()
+    {
+        return this.Draft?.Memo ?? "";
+    }
+
+    public string ActiveValue()
+    {
+        return this.Active.Memo;
+    }
+
+    public void Announce(Action? notify = null)
+    {
+        if (notify != null)
+        {
+            notify();
+        }
+    }
+
+    public Invoice? Find(string key)
+    {
+        return this.records.GetValueOrDefault(key);
+    }
+
+    public JsonDocument Read(string written)
+    {
+        return JsonDocument.Parse(written);
+    }
+
+    public Invoice Parse(string written)
+    {
+        return JsonSerializer.Deserialize<Invoice>(written) ?? throw new FormatException();
+    }
 }
 ```
 

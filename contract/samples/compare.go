@@ -278,7 +278,8 @@ func (c *comparison) attached(where string, expected *contract.File, want, got c
 }
 
 // Placed copies the expected tree's source where a bridge reads it: under root, in a folder named for the construct
-// with its dashes as underscores, so every language's module path is a valid name.
+// with its dashes as underscores, so every language's module path is a valid name; a Python folder is a package, so
+// the module is named for the construct too.
 func (e Expected) Placed(root string) (string, error) {
 	source, err := os.ReadFile(e.Source)
 	if err != nil {
@@ -289,6 +290,17 @@ func (e Expected) Placed(root string) (string, error) {
 		return "", err
 	}
 	placed := filepath.Join(folder, filepath.Base(e.Source))
+	if e.Language == contract.Python {
+		if err := os.WriteFile(filepath.Join(folder, "__init__.py"), nil, 0o644); err != nil {
+			return "", err
+		}
+	}
+	// A Go file is type-checked only inside a module, so a tree whose resolver ran is placed in the module it names.
+	if e.Language == contract.Go && e.File.Resolver != nil && e.File.Resolver.Ran {
+		if err := os.WriteFile(filepath.Join(folder, "go.mod"), []byte("module "+e.File.Module+"\n"), 0o644); err != nil {
+			return "", err
+		}
+	}
 
 	return placed, os.WriteFile(placed, source, 0o644)
 }

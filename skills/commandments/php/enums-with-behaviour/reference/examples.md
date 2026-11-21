@@ -46,17 +46,12 @@ public function colour(Product $product): string
 ----------[ Good ]----------
 
 // in Shop\Catalog\StockBadge
-// The mapping lives ON the enum; the call site just asks for the colour.
-
 public function colourViaEnum(Product $product): string
 {
     return $product->category->badgeColour();
 }
 
 // in Shop\Enums\ProductCategory
-// Where the call site's re-match went. The knowledge is keyed off the cases, so it belongs
-// with them — and a case added here cannot be forgotten at a call site that no longer decides.
-
 public function badgeColour(): string
 {
     return match ($this) {

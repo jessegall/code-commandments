@@ -7,24 +7,28 @@ namespace CodeCommandments\PhpBridge;
 use JsonSerializable;
 
 /**
- * One file as the stream's file line writes it, and the writer that read it, which knows what it declared and named.
+ * One file as the stream's file line writes it, and the translator that read it, which knows what it declared and named.
  */
 final readonly class ParsedFile implements JsonSerializable
 {
     /**
      * @param  array<string, mixed>  $root
-     * @param  list<Comment>  $comments
+     * @param  list<array<string, mixed>>  $comments
      */
     public function __construct(
         public string $path,
         public int $errors,
+        public ?string $module,
         public array $root,
         public array $comments,
-        public TreeWriter $writer,
+        public Translator $translator,
     ) {}
 
     public function jsonSerialize(): array
     {
-        return ['path' => $this->path, 'language' => 'php', 'errors' => $this->errors, 'root' => $this->root, 'comments' => $this->comments];
+        return array_filter([
+            'path' => $this->path, 'language' => 'php', 'errors' => $this->errors, 'module' => $this->module,
+            'resolver' => ['tool' => 'php-parser', 'ran' => true], 'root' => $this->root, 'comments' => $this->comments,
+        ], static fn (mixed $value): bool => $value !== null);
     }
 }

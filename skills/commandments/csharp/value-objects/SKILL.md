@@ -74,12 +74,16 @@ a method that returns `new Dictionary<string, object> { ["sku"] = …, ["qty"] =
 ```cs
 ----------[ Bad ]----------
 
-public static Dictionary<string, object> Footer(string orderId, int totalCents, DateOnly paidOn) => new()
+// The lines printed at the foot of a receipt.
+public static class Receipts
 {
-    ["order"] = orderId,
-    ["total"] = totalCents,
-    ["paid"] = paidOn,
-};
+    public static Dictionary<string, object> Footer(string orderId, int totalCents, DateOnly paidOn) => new()
+    {
+        ["order"] = orderId,
+        ["total"] = totalCents,
+        ["paid"] = paidOn,
+    };
+}
 
 ----------[ Good ]----------
 
@@ -87,7 +91,10 @@ public static Dictionary<string, object> Footer(string orderId, int totalCents, 
 public sealed record ReceiptFooter(string OrderId, int TotalCents, DateOnly PaidOn);
 
 // in Receipts.cs
-public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
+public static class TypedReceipts
+{
+    public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
+}
 ```
 
 The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).

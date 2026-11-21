@@ -74,9 +74,6 @@ public function bind(string $node): WireMessage
 ----------[ Good ]----------
 
 // in Shop\Wire\HotkeyBinding
-// The FIX: the parameter is declared in the currency the caller holds, and the conversion lives on
-// the far side of the call.
-
 public function bindDirect(string $node): WireMessage
 {
     return WireMessage::raiseFor(HotkeyPressed::class, $node);
@@ -206,15 +203,73 @@ Most callers convert a value the same way for one parameter
 ----------[ Bad ]----------
 
 // in Barcodes.cs
-public string Top(Parcel parcel) => barcodes.Encode(parcel.Id.ToString());
+public sealed class DispatchSheet(BarcodeSheet barcodes)
+{
+    public string Top(Parcel parcel) => barcodes.Encode(parcel.Id.ToString());
 
-// in Barcodes.cs
-public IEnumerable<string> All(IEnumerable<Parcel> parcels) =>
-    parcels.Select(parcel => barcodes.Encode(parcel.Id.ToString()));
+    public IEnumerable<string> All(IEnumerable<Parcel> parcels) =>
+        parcels.Select(parcel => barcodes.Encode(parcel.Id.ToString()));
+}
+
+// in CreditNotes.cs
+public static class CreditNoteBuilder
+{
+    public static CreditNote For(IReadOnlyList<ReturnedLine> lines)
+    {
+        var note = new CreditNote();
+
+        foreach (var line in lines)
+        {
+            note.Credit((decimal) line.Refunded);
+        }
+
+        return note;
+    }
+
+    public static CreditNote Single(ReturnedLine line)
+    {
+        var note = new CreditNote();
+        note.Credit((decimal) line.Refunded);
+
+        return note;
+    }
+}
+
+// in CreditSummaries.cs
+public sealed class CreditSummary
+{
+    public decimal Credited(IEnumerable<ReturnedLine> lines, CreditNote note)
+    {
+        foreach (var line in lines.Where(line => line.Refunded > 0))
+        {
+            note.Credit((decimal) line.Refunded);
+        }
+
+        return note.Total;
+    }
+}
+
+// in BinImports.cs
+public sealed class BinImport(RackMap rack)
+{
+    public int Load(IEnumerable<BinRow> rows)
+    {
+        return rows.Count(row => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level)));
+    }
+
+    public bool Reload(BinRow row) => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level));
+
+    public bool Corner() => rack.Claim(int.Parse("1"), 1);
+}
 
 ----------[ Good ]----------
 
-public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";
+public sealed class ParcelBarcodes
+{
+    public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";
+
+    public string Top(Parcel parcel) => Encode(parcel.Id);
+}
 ```
 
 ### converted-argument — in Go
@@ -236,6 +291,26 @@ func freightCollectionPrice(invoice FreightArgumentCode) string {
 	return freightLabel(string(invoice))
 }
 
+// in rebate_arguments.go
+func rebateLetThrough(amount RebateArgumentCode, floor int64) bool {
+	return rebateLabel(int64(amount)) >= floor
+}
+
+// in rebate_arguments.go
+func rebateChange(previous RebateArgumentCode, current RebateArgumentCode) int64 {
+	delta := current - previous
+	return rebateLabel(int64(delta))
+}
+
+// in registry_arguments.go
+func registryLabels(numbers []RegistrationArgumentCode) int {
+	if len(numbers) < 2 {
+		return 0
+	}
+	initial := registryLabel(int(numbers[0]))
+	return initial - registryLabel(int(numbers[len(numbers)-1]))
+}
+
 ----------[ Good ]----------
 
 func composeCheckoutLabel(label checkoutLabel) string {
@@ -243,7 +318,7 @@ func composeCheckoutLabel(label checkoutLabel) string {
 }
 ```
 
-The other 40 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 39 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
@@ -253,5 +328,5 @@ The other 40 — one per rule — are in [`reference/examples.md`](reference/exa
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 45 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 44 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

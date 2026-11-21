@@ -2,11 +2,10 @@ import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import ts from 'typescript'
-import { declarations } from './declares.mjs'
 import { Source } from './source.mjs'
 import { Program } from './program.mjs'
-import { Tree } from './tree.mjs'
-import { TypeScriptWriter } from './typescript.mjs'
+import { Node, Tree } from './tree.mjs'
+import { fragment, Translator } from './typescript.mjs'
 import { Sfc, VueWriter, scriptComments } from './vue.mjs'
 import { once } from 'node:events'
 import { lineOf } from './json.mjs'
@@ -49,15 +48,16 @@ export async function stream({ paths, write = [], contents = {} }, emit) {
     const readBy = readsOf(program, sources, scripts, everywhere)
     const language = scripts.size ? 'vue' : 'typescript'
     const totals = { expressions: 0, typed: 0, calls: 0, resolved: 0 }
-    await emit({ header: { contract: 'tree', version: 1, language, bridge: { name: NAME, version: VERSION, reads: true }, roots: roots.map((root) => program.shown(root)) } })
+    await emit({ header: { contract: 'tree', version: 5, language, bridge: { name: NAME, version: VERSION, reads: true }, roots: roots.map((root) => program.shown(root)) } })
     for (const path of asked) {
         const tree = new Tree(sources.get(path))
         const { root, found, errors } = scripts.has(path) ? vueFile(tree, sfcOf(path), program) : typeScriptFile(tree, program)
         const file = { path: program.shown(path), language: languageOf(path), errors }
         file.reads = readBy(path).map((read) => program.shown(read))
         file.resolver = { tool: 'tsc', ran: tree.checked }
-        file.root = root
-        file.comments = tree.comments(found)
+        const nodes = root.numbered()
+        file.root = root.written(tree.source)
+        file.comments = tree.comments(found, nodes, fragment)
         if (tree.types.length) file.types = tree.types
         await emit({ file })
         for (const key of Object.keys(totals)) totals[key] += tree[key]
@@ -114,9 +114,9 @@ function readsOf(program, sources, scripts, everywhere) {
 
 function typeScriptFile(tree, program) {
     const sourceFile = program.sourceFile(tree.source.path)
-    const root = new TypeScriptWriter(tree, sourceFile, 0, program).node(sourceFile, undefined)
-    root.span = tree.source.span(0, tree.source.text.length)
-    tree.spans[0].start = 0
+    const whole = tree.source.text.length
+    const module = new Translator(tree, sourceFile, 0, program).module(sourceFile.statements, 0, whole)
+    const root = new Node('file', 0, whole).holdsAll('modules', [module])
 
     return { root, found: scriptComments(sourceFile, 0), errors: sourceFile.parseDiagnostics?.length ?? 0 }
 }
@@ -166,11 +166,6 @@ function parse(argv) {
 }
 
 async function main() {
-    // The one ask besides a tree: what this bridge can emit, one declaration per language it writes.
-    if (process.argv.slice(2).includes('--declares')) {
-        for (const declared of declarations()) process.stdout.write(JSON.stringify(declared) + '\n')
-        return
-    }
     const request = parse(process.argv.slice(2))
     // A line is written a piece at a time, waiting for the reader to take each: a reader parsing as it reads would
     // otherwise leave the whole stream queued in this process's memory.

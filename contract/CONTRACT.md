@@ -106,6 +106,7 @@ without making it a second child, so a derived view never inserts an executable 
 | `effective` | what the language makes of them: `{"visibility": "public"\|"protected"\|"private"\|"internal"\|"package", "static", "abstract", "final", "readonly"}`. Go's capitalisation and TypeScript's implicit `public` land here, never in `modifiers` | parser |
 | `obligations` | for a member: every declaration it overrides or implements, `[{"symbol", "origin": "project"\|"external"}]`. `external` means the signature is fixed outside the project (a package, the framework) | compiler |
 | `incomplete` | `true` on a node the parser recovered from an error: its optional roles are unknown, not known-empty | parser |
+| `conversion` | the format conversion of an interpolated expression, on that expression: `!r` in a Python `f"{x!r}"` | parser |
 
 **Unknown, known-empty and inapplicable.** These are three different answers and a rule never confuses them:
 
@@ -184,7 +185,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   `constructor`, `get`, `set`, `closure`, `arrow`, `lambda`, `local`), `async`, `generator`. A closure's
   `captures[]` are the bindings it takes from outside as written (PHP `use`). A closure, arrow and lambda open
   their own scope.
-- **`parameter`**: `binding`, `declaredType?`, `default?`, `attributes[]`. Facts `passing` (`value`,
+- **`parameter`**: `binding?` (absent only for an unnamed parameter of a function type: Go's `func(int) error`),
+  `declaredType?`, `default?`, `attributes[]`. Facts `passing` (`value`,
   `reference`, `out`, `in`), `collects` (`none`, `rest`, `keywords`), `position` (`either`, `positional`,
   `keyword`), `optional` (TypeScript `x?`), `evaluated` (when its default is evaluated: `call`, or
   `definition` for Python). A promoted constructor parameter (PHP, a TypeScript parameter property) is
@@ -306,7 +308,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   `element?` (an array's or pointer's element), `parameters[]` and `returnType?` (a function type). Facts
   `form` (`named`, `keyword`, `union`, `intersection`, `nullable`, `array`, `function`, `literal`,
   `parameter`, `pointer`, `map`, `opaque`), `refers` (a named type's id), `written` (the type as structure, see
-  *Types*). `?T` is form `nullable`.
+  *Types*). `?T` is form `nullable`. A `keyword` type carries the keyword as written as its `name` (`int`, `void`,
+  `string`, `None`), so two keyword types are told apart without a resolver.
 - **`tuple-type`**: `elements[]` (`tuple-element`). Separate from a `return` of several values, so a single
   tuple-valued expression and two result expressions stay distinguishable.
 - **`tuple-element`**: `type`. Fact `label?`.
@@ -315,7 +318,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 
 - **`pattern`**: a destructuring target or a case pattern. `subpatterns[]`, `bindings[]`, `constrainedType?`,
   `value?`. Fact `form` (`wildcard`, `binding`, `value`, `type`, `sequence`, `mapping`, `record`, `or`, `and`,
-  `not`, `relational`, `rest`).
+  `not`, `relational`, `rest`), and `operator` on a relational pattern, the comparison it makes (`greater`, as in C#'s
+  `> 0`).
 
 ### Markup (Vue templates)
 

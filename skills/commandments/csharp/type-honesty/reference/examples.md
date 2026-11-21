@@ -9,9 +9,30 @@ a method returning nothing that writes a property of an object it was handed, wh
 ```cs
 ----------[ Bad ]----------
 
-private void ApplyPlan(DealerRecord record)
+// The facts a dealer's record is built from, gathered by steps that each write one field onto the record they
+// were handed. The gatherer reads every field straight back off, so each step's signature says the record goes
+// in and says nothing at all about what comes out of it. Below them, the repair: each step answers with its
+// field and the gatherer puts it where it belongs.
+public sealed class DealerFactsGatherer(IReadOnlyDictionary<string, string> plans, IReadOnlyDictionary<string, string> languages)
 {
-    record.Plan = plans.TryGetValue(record.DealerId, out var plan) ? plan : "free";
+    public string Gather(string dealerId)
+    {
+        var record = new DealerRecord(dealerId);
+        this.ApplyPlan(record);
+        this.ApplyLanguage(record);
+
+        return $"{record.DealerId}:{record.Plan}:{record.Language}";
+    }
+
+    private void ApplyPlan(DealerRecord record)
+    {
+        record.Plan = plans.TryGetValue(record.DealerId, out var plan) ? plan : "free";
+    }
+
+    private void ApplyLanguage(DealerRecord record)
+    {
+        record.Language = languages.TryGetValue(record.DealerId, out var language) ? language : "nl";
+    }
 }
 
 ----------[ Good ]----------
@@ -36,17 +57,83 @@ public sealed class DealerFactsReader(IReadOnlyDictionary<string, string> plans,
 ```cs
 ----------[ Bad ]----------
 
-public bool HasTranslation(Language language)
+// Translations of one string, asked for by language. The first method answers false when the language is null,
+// which its own type says cannot happen: either the type is wrong and callers do pass null, or nobody needed
+// the check and every reader has to work that out. Below it the repair, and the two look-alikes that are not
+// the sin: a guard that asserts the contract and dies, and one on a parameter typed as it really is.
+public sealed class LanguageTexts(IReadOnlyDictionary<string, string> texts)
 {
-    if (language == null)
+    public bool HasTranslation(Language language)
     {
-        return false;
+        if (language == null)
+        {
+            return false;
+        }
+
+        return texts.ContainsKey(language.Code);
     }
 
-    return texts.ContainsKey(language.Code);
+    public bool HasTextIn(Language language) => texts.ContainsKey(language.Code);
+
+    public string TextIn(Language language)
+    {
+        if (language == null)
+        {
+            throw new ArgumentNullException(nameof(language));
+        }
+
+        return texts[language.Code];
+    }
+
+    public string TextOrPrimary(Language? language, string primary)
+    {
+        if (language == null)
+        {
+            return primary;
+        }
+
+        return texts.TryGetValue(language.Code, out var text) ? text : primary;
+    }
 }
 
 ----------[ Good ]----------
 
-public bool HasTextIn(Language language) => texts.ContainsKey(language.Code);
+// Translations of one string, asked for by language. The first method answers false when the language is null,
+// which its own type says cannot happen: either the type is wrong and callers do pass null, or nobody needed
+// the check and every reader has to work that out. Below it the repair, and the two look-alikes that are not
+// the sin: a guard that asserts the contract and dies, and one on a parameter typed as it really is.
+public sealed class LanguageTexts(IReadOnlyDictionary<string, string> texts)
+{
+    public bool HasTranslation(Language language)
+    {
+        if (language == null)
+        {
+            return false;
+        }
+
+        return texts.ContainsKey(language.Code);
+    }
+
+    public bool HasTextIn(Language language) => texts.ContainsKey(language.Code);
+
+    public string TextIn(Language language)
+    {
+        if (language == null)
+        {
+            throw new ArgumentNullException(nameof(language));
+        }
+
+        return texts[language.Code];
+    }
+
+    public string TextOrPrimary(Language? language, string primary)
+    {
+        if (language == null)
+        {
+            return primary;
+        }
+
+        return texts.TryGetValue(language.Code, out var text) ? text : primary;
+    }
+}
 ```

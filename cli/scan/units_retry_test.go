@@ -45,7 +45,7 @@ func TestABridgeThatDiesIsAskedOnceMore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	header := `{"header": {"contract": "tree", "version": 1, "language": "csharp", "bridge": {"name": "test", "version": "1"}, "roots": ["` + project + `"]}}`
+	header := `{"header": {"contract": "tree", "version": 5, "language": "csharp", "bridge": {"name": "test", "version": "1"}, "roots": ["` + project + `"]}}`
 	command, runs := bridgeDyingOnce(t, header)
 	t.Setenv("COMMANDMENTS_ROSLYN", command)
 

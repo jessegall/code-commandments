@@ -27,7 +27,7 @@ description: "Dispatch on a single value with the published <SwitchCase :value> 
 A `v-if` / `v-else-if` / `v-else` / `v-for` is STRUCTURE — which DOM renders — and it
 belongs on a `<template>` wrapper, not bolted onto the element it happens to guard.
 The element reads as one thing (content + styling), the `<template>` as another
-(when / how-many). `repent` auto-wraps these — a `v-for` takes its `:key` along.
+(when / how-many). Wrap the element in a `<template>` for the condition; a `v-for` takes its `:key` along.
 (`v-show` is exempt: it toggles `display` on a real node and can't live on a
 `<template>`, which renders nothing.)
 ### A case that tests its value again
@@ -57,7 +57,7 @@ not a repeated test.
 ```vue
 ----------[ Bad ]----------
 
-<span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+<span v-else-if="status === 'pending'" class="badge badge-amber">Pending</span>
 
 ----------[ Good ]----------
 
@@ -72,7 +72,6 @@ The other 4 — one per rule — are in [`reference/examples.md`](reference/exam
 
 - `{{binary}} judge --skill=vue/vue-control-flow` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `control-flow-on-element`, `index-as-key`, `loop-with-condition`, `re-tested-switch-case`, `switch-case`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `control-flow-on-element`, `switch-case`. Review it with `--dry-run` first.
 - `{{binary}} scaffold --sin=<sin>` — generate the helper the fix reaches for, for `switch-case`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 

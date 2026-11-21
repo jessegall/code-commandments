@@ -100,32 +100,7 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a
 
 ----------[ Good ]----------
 
-<!-- in ReaderPairingPanel.vue -->
 <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
-
-<!-- in ReaderPairingDialog.vue -->
-<Dialog :open="open" @update:open="$emit('update:open', $event)">
-  <DialogContent class="pairing-dialog">
-    <DialogHeader>
-      <DialogTitle>Pair Reader</DialogTitle>
-    </DialogHeader>
-
-    <form class="pairing-form" @submit.prevent="$emit('submit')">
-      <Label class="pairing-form__label" for="device">Device name</Label>
-      <Input id="device" v-model="form.name" placeholder="Front counter" />
-
-      <Label class="pairing-form__label" for="model">Reader model</Label>
-      <select id="model" v-model="form.model" class="pairing-form__select">
-        <option value="s1">SumUp Solo</option>
-        <option value="s2">SumUp Air</option>
-      </select>
-
-      <DialogFooter>
-        <Button type="submit">Pair reader</Button>
-      </DialogFooter>
-    </form>
-  </DialogContent>
-</Dialog>
 ```
 
 The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
@@ -134,7 +109,6 @@ The other 8 — one per rule — are in [`reference/examples.md`](reference/exam
 
 - `{{binary}} judge --skill=vue/vue-components` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`, `inline-case-views`, `near-duplicate-element`, `oversized-component`, `prop-drilling`, `prop-mutation`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

@@ -33,10 +33,10 @@ func TestGoReachesTheEngineThroughTheOneFunnel(t *testing.T) {
 
 	var methods, loops int
 	for _, node := range files[0].File.Nodes() {
-		if node.Answers("function") {
+		if node.Kind == "function" {
 			methods++
 		}
-		if node.Answers("loop") {
+		if node.Kind == "loop" {
 			loops++
 		}
 	}

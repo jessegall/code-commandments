@@ -40,9 +40,6 @@ public function bind(string $node): WireMessage
 ----------[ Good ]----------
 
 // in Shop\Wire\HotkeyBinding
-// The FIX: the parameter is declared in the currency the caller holds, and the conversion lives on
-// the far side of the call.
-
 public function bindDirect(string $node): WireMessage
 {
     return WireMessage::raiseFor(HotkeyPressed::class, $node);
@@ -172,15 +169,73 @@ Most callers convert a value the same way for one parameter
 ----------[ Bad ]----------
 
 // in Barcodes.cs
-public string Top(Parcel parcel) => barcodes.Encode(parcel.Id.ToString());
+public sealed class DispatchSheet(BarcodeSheet barcodes)
+{
+    public string Top(Parcel parcel) => barcodes.Encode(parcel.Id.ToString());
 
-// in Barcodes.cs
-public IEnumerable<string> All(IEnumerable<Parcel> parcels) =>
-    parcels.Select(parcel => barcodes.Encode(parcel.Id.ToString()));
+    public IEnumerable<string> All(IEnumerable<Parcel> parcels) =>
+        parcels.Select(parcel => barcodes.Encode(parcel.Id.ToString()));
+}
+
+// in CreditNotes.cs
+public static class CreditNoteBuilder
+{
+    public static CreditNote For(IReadOnlyList<ReturnedLine> lines)
+    {
+        var note = new CreditNote();
+
+        foreach (var line in lines)
+        {
+            note.Credit((decimal) line.Refunded);
+        }
+
+        return note;
+    }
+
+    public static CreditNote Single(ReturnedLine line)
+    {
+        var note = new CreditNote();
+        note.Credit((decimal) line.Refunded);
+
+        return note;
+    }
+}
+
+// in CreditSummaries.cs
+public sealed class CreditSummary
+{
+    public decimal Credited(IEnumerable<ReturnedLine> lines, CreditNote note)
+    {
+        foreach (var line in lines.Where(line => line.Refunded > 0))
+        {
+            note.Credit((decimal) line.Refunded);
+        }
+
+        return note.Total;
+    }
+}
+
+// in BinImports.cs
+public sealed class BinImport(RackMap rack)
+{
+    public int Load(IEnumerable<BinRow> rows)
+    {
+        return rows.Count(row => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level)));
+    }
+
+    public bool Reload(BinRow row) => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level));
+
+    public bool Corner() => rack.Claim(int.Parse("1"), 1);
+}
 
 ----------[ Good ]----------
 
-public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";
+public sealed class ParcelBarcodes
+{
+    public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";
+
+    public string Top(Parcel parcel) => Encode(parcel.Id);
+}
 ```
 
 ### converted-argument — in Go
@@ -200,6 +255,26 @@ func freightLabels(first FreightArgumentCode, second FreightArgumentCode) [2]str
 // in freight_collection.go
 func freightCollectionPrice(invoice FreightArgumentCode) string {
 	return freightLabel(string(invoice))
+}
+
+// in rebate_arguments.go
+func rebateLetThrough(amount RebateArgumentCode, floor int64) bool {
+	return rebateLabel(int64(amount)) >= floor
+}
+
+// in rebate_arguments.go
+func rebateChange(previous RebateArgumentCode, current RebateArgumentCode) int64 {
+	delta := current - previous
+	return rebateLabel(int64(delta))
+}
+
+// in registry_arguments.go
+func registryLabels(numbers []RegistrationArgumentCode) int {
+	if len(numbers) < 2 {
+		return 0
+	}
+	initial := registryLabel(int(numbers[0]))
+	return initial - registryLabel(int(numbers[len(numbers)-1]))
 }
 
 ----------[ Good ]----------
@@ -301,8 +376,6 @@ public function rows(string $path): array
 }
 
 ----------[ Good ]----------
-
-// The same question, asked through the one place that knows a root has to be resolved first.
 
 public function evidenceUnder(string $file, string $root): string
 {
@@ -446,30 +519,110 @@ Two functions share most of their uncommon steps, but one misses a step the othe
 ```cs
 ----------[ Bad ]----------
 
-// in ParcelReadiness.cs
-public void DispatchParcel(IParcelReadinessSteps job)
+// in CashReconcile.cs
+public sealed class CashReconcile
 {
-    job.Weigh();
-    job.Wrap();
-    job.Label();
-    job.Stage();
+    public void ReconcileTill(ICashReconcileSteps job)
+    {
+        job.OpenTill();
+        job.CountNotes();
+        job.MatchReceipts();
+        job.CloseDrawer();
+    }
 }
 
 // in ParcelReadiness.cs
-public void DispatchInsuredParcel(IParcelReadinessSteps job)
+public sealed class ParcelReadiness
 {
-    job.Weigh();
-    job.Wrap();
-    job.Label();
-    job.Stage();
-    job.Insure();
+    public void DispatchParcel(IParcelReadinessSteps job)
+    {
+        job.Weigh();
+        job.Wrap();
+        job.Label();
+        job.Stage();
+    }
+
+    public void DispatchInsuredParcel(IParcelReadinessSteps job)
+    {
+        job.Weigh();
+        job.Wrap();
+        job.Label();
+        job.Stage();
+        job.Insure();
+    }
+
+    public void SendInsured(IParcelReadinessSteps job)
+    {
+        DispatchInsuredParcel(job);
+    }
+}
+
+// in StockDelivery.cs
+public sealed class StockDelivery
+{
+    public void ReceiveStock(IStockDeliverySteps job)
+    {
+        job.ScanCrate();
+        job.Unpack();
+        job.CheckQuantity();
+        job.UpdateStock();
+    }
+
+    public void ReceiveOrderStock(IStockDeliverySteps job)
+    {
+        job.ScanCrate();
+        job.Unpack();
+        job.CheckQuantity();
+        job.UpdateStock();
+        job.NotifyBuyer();
+    }
+}
+
+// in TillAudit.cs
+public sealed class TillAudit
+{
+    public void AuditTill(ICashReconcileSteps job)
+    {
+        job.OpenTill();
+        job.CountNotes();
+        job.MatchReceipts();
+        job.CloseDrawer();
+        job.RecordDifference();
+    }
+
+    public void CloseWithReceipt(ICashReconcileSteps job, Action<int> record, int drawer)
+    {
+        job.MatchReceipts();
+        record(drawer);
+        job.CloseDrawer();
+    }
 }
 
 ----------[ Good ]----------
 
-public void SendInsured(IParcelReadinessSteps job)
+public sealed class ParcelReadiness
 {
-    DispatchInsuredParcel(job);
+    public void DispatchParcel(IParcelReadinessSteps job)
+    {
+        job.Weigh();
+        job.Wrap();
+        job.Label();
+        job.Stage();
+    }
+
+    public void DispatchInsuredParcel(IParcelReadinessSteps job)
+    {
+        job.Weigh();
+        job.Wrap();
+        job.Label();
+        job.Stage();
+        job.Insure();
+    }
+
+    public void SendInsured(IParcelReadinessSteps job)
+    {
+        DispatchInsuredParcel(job);
+    }
 }
 ```
 
@@ -479,6 +632,23 @@ Two functions share most of their uncommon steps, but one misses a step the othe
 
 ```go
 ----------[ Bad ]----------
+
+// in drawer_reconcile.go
+func balanceTill(work DrawerWork) {
+	work.OpenTill()
+	work.CountNotes()
+	work.MatchReceipts()
+	work.CloseDrawer()
+}
+
+// in drawer_reconcile.go
+func auditDrawer(work DrawerWork) {
+	work.OpenTill()
+	work.CountNotes()
+	work.MatchReceipts()
+	work.CloseDrawer()
+	work.RecordDifference()
+}
 
 // in insured_parcel.go
 func stageInsuredParcel(work ParcelWork) {
@@ -495,6 +665,23 @@ func stageParcel(work ParcelWork) {
 	work.Wrap()
 	work.Label()
 	work.Stage()
+}
+
+// in stock_receive.go
+func receiveStock(work StockWork) {
+	work.ScanCrate()
+	work.Unpack()
+	work.CheckQuantity()
+	work.UpdateStock()
+}
+
+// in stock_receive.go
+func receiveOrderedStock(work StockWork) {
+	work.ScanCrate()
+	work.Unpack()
+	work.CheckQuantity()
+	work.UpdateStock()
+	work.NotifyBuyer()
 }
 
 ----------[ Good ]----------
@@ -602,36 +789,6 @@ lineItems(lines: Line[]): string[] {
 
 // in stock-lookup.ts
 export async function loadStockLevels(sku: string): Promise<number[]> {
-    const response = await fetch(`/api/stock/${sku}`)
-    if (!response.ok) {
-        throw new Error(response.statusText)
-    }
-    const levels: StockLevel[] = await response.json()
-    return levels.map((level) => level.available)
-}
-
-// in NewsletterSignup.vue
-async function subscribe(): Promise<void> {
-    failed.value = false
-    try {
-        await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: email.value }) })
-    } catch {
-        failed.value = true
-    }
-}
-
-// in NewsletterSignup.vue
-async function resubscribe(): Promise<void> {
-    failed.value = false
-    try {
-        await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: email.value }) })
-    } catch {
-        failed.value = true
-    }
-}
-
-// in RestockNotice.vue
-const fetchAvailability = async (sku: string): Promise<number[]> => {
     const response = await fetch(`/api/stock/${sku}`)
     if (!response.ok) {
         throw new Error(response.statusText)
@@ -800,6 +957,28 @@ Two functions repeat the same body
 ```go
 ----------[ Bad ]----------
 
+// in collection_desk.go
+func collectionDeskLabel(title string, item Return, reference string) string {
+	var label strings.Builder
+	label.WriteString(strings.TrimSpace(title))
+	label.WriteString(": ")
+	label.WriteString(strings.ToUpper(reference))
+	label.WriteString(" / ")
+	label.WriteString(item.Reason)
+	return label.String()
+}
+
+// in exchange_desk.go
+func exchangeDeskLabel(title string, item Return, reference string) string {
+	var label strings.Builder
+	label.WriteString(strings.TrimSpace(title))
+	label.WriteString(": ")
+	label.WriteString(strings.ToUpper(reference))
+	label.WriteString(" / ")
+	label.WriteString(item.Reason)
+	return label.String()
+}
+
 // in label_archive.go
 func archivePrice(sizes []int) int {
 	total := 0
@@ -839,6 +1018,32 @@ func reprintPrice(sizes []int) int {
 	return total
 }
 
+// in loading_bay.go
+func loadingBaysByCapacity(bays map[string][]int, floor int) map[string]int {
+	usable := make(map[string]int)
+	for bay, weights := range bays {
+		for _, grams := range weights {
+			if grams >= floor {
+				usable[bay] += grams
+			}
+		}
+	}
+	return usable
+}
+
+// in unloading_bay.go
+func unloadingBaysByCapacity(bays map[string][]int, floor int) map[string]int {
+	usable := make(map[string]int)
+	for bay, weights := range bays {
+		for _, grams := range weights {
+			if grams >= floor {
+				usable[bay] += grams
+			}
+		}
+	}
+	return usable
+}
+
 ----------[ Good ]----------
 
 func sharedArchivePrice(sizes []int) int {
@@ -866,8 +1071,6 @@ public function daily(): array
 }
 
 ----------[ Good ]----------
-
-// Hands the till every step its Steps folder declares, so a new step needs no second edit.
 
 final class TillStepFinder
 {
@@ -922,16 +1125,32 @@ A hand-written class list repeats every concrete class of one type in its folder
 ```cs
 ----------[ Bad ]----------
 
-public static Type[] All()
+public static class CouponSourceCatalog
 {
-    return [typeof(CounterCouponSource), typeof(NewsletterCouponSource), typeof(AppCouponSource), typeof(ReferralCouponSource), typeof(CatalogueCouponSource)];
+    public static Type[] All()
+    {
+        return [typeof(CounterCouponSource), typeof(NewsletterCouponSource), typeof(AppCouponSource), typeof(ReferralCouponSource), typeof(CatalogueCouponSource)];
+    }
+
+    public static Type[] ForKiosk()
+    {
+        return [typeof(CounterCouponSource), typeof(NewsletterCouponSource)];
+    }
 }
 
 ----------[ Good ]----------
 
-public static Type[] ForKiosk()
+public static class CouponSourceCatalog
 {
-    return [typeof(CounterCouponSource), typeof(NewsletterCouponSource)];
+    public static Type[] All()
+    {
+        return [typeof(CounterCouponSource), typeof(NewsletterCouponSource), typeof(AppCouponSource), typeof(ReferralCouponSource), typeof(CatalogueCouponSource)];
+    }
+
+    public static Type[] ForKiosk()
+    {
+        return [typeof(CounterCouponSource), typeof(NewsletterCouponSource)];
+    }
 }
 ```
 
@@ -985,9 +1204,6 @@ public function estimateFrom(int $surcharge): int
 }
 
 ----------[ Good ]----------
-
-// The duplicated scorers collapsed into one parameterised pass — the per-entry
-// weight is an argument, so there is no rhyming twin to extract.
 
 public function scoreFrom(int $start, int $weight): int
 {
@@ -1068,39 +1284,6 @@ export async function loadReviews(productId: number): Promise<number[]> {
     return shown.map((review) => review.id)
 }
 
-// in PickListActions.vue
-async function release(): Promise<void> {
-    if (props.pickListId === null) {
-        return
-    }
-    const response = await fetch(`/api/pick-lists/${props.pickListId}/release`, { method: 'POST' })
-    if (response.ok) {
-        emit('close')
-    }
-}
-
-// in PickListActions.vue
-async function pause(): Promise<void> {
-    if (props.pickListId === null) {
-        return
-    }
-    const response = await fetch(`/api/pick-lists/${props.pickListId}/pause`, { method: 'POST' })
-    if (response.ok) {
-        emit('close')
-    }
-}
-
-// in QuestionFeed.vue
-const loadQuestions = async (productId: number): Promise<number[]> => {
-    const result = await fetch(`/api/products/${productId}/questions`)
-    if (!result.ok) {
-        throw new Error(result.statusText)
-    }
-    const questions: Entry[] = await result.json()
-    const answered = questions.filter((question) => question.published)
-    return answered.map((question) => question.id)
-}
-
 ----------[ Good ]----------
 
 // in parcel-pricing.ts
@@ -1118,121 +1301,6 @@ quote(parcel: Parcel): number {
 // in parcel-pricing.ts
 quote(parcel: Parcel): number {
     return priceParcel(parcel, { base: 950, perKilo: 85, oversizeFee: 700, heavyFrom: 30, heavyFactor: 1.1 })
-}
-```
-
-### near-duplicate-function — in Vue
-
-Two functions run the same code with different names or data
-
-```vue
-----------[ Bad ]----------
-
-// in carrier-rates.ts
-quote(parcel: Parcel): number {
-    let cents = 695 + Math.ceil(parcel.kilos) * 120
-    if (parcel.oversized) {
-        cents += 450
-    }
-    if (parcel.kilos > 20) {
-        cents = Math.round(cents * 1.15)
-    }
-    return cents
-}
-
-// in carrier-rates.ts
-quote(parcel: Parcel): number {
-    let price = 950 + Math.ceil(parcel.kilos) * 85
-    if (parcel.oversized) {
-        price += 700
-    }
-    if (parcel.kilos > 30) {
-        price = Math.round(price * 1.1)
-    }
-    return price
-}
-
-// in map-loaders.ts
-async function loadMaps(): Promise<unknown> {
-    if (typeof window === 'undefined') {
-        throw new Error('Maps load only in the browser')
-    }
-    ensureOptions()
-    return await importLibrary('maps')
-}
-
-// in map-loaders.ts
-async function loadPlaces(): Promise<unknown> {
-    if (typeof window === 'undefined') {
-        throw new Error('Maps load only in the browser')
-    }
-    ensureOptions()
-    return await importLibrary('places')
-}
-
-// in map-loaders.ts
-async function loadMarker(): Promise<unknown> {
-    if (typeof window === 'undefined') {
-        throw new Error('Maps load only in the browser')
-    }
-    ensureOptions()
-    return await importLibrary('marker')
-}
-
-// in review-feed.ts
-export async function loadReviews(productId: number): Promise<number[]> {
-    const response = await fetch(`/api/products/${productId}/reviews`)
-    if (!response.ok) {
-        throw new Error(response.statusText)
-    }
-    const reviews: Entry[] = await response.json()
-    const shown = reviews.filter((review) => review.published)
-    return shown.map((review) => review.id)
-}
-
-// in PickListActions.vue
-async function release(): Promise<void> {
-    if (props.pickListId === null) {
-        return
-    }
-    const response = await fetch(`/api/pick-lists/${props.pickListId}/release`, { method: 'POST' })
-    if (response.ok) {
-        emit('close')
-    }
-}
-
-// in PickListActions.vue
-async function pause(): Promise<void> {
-    if (props.pickListId === null) {
-        return
-    }
-    const response = await fetch(`/api/pick-lists/${props.pickListId}/pause`, { method: 'POST' })
-    if (response.ok) {
-        emit('close')
-    }
-}
-
-// in QuestionFeed.vue
-const loadQuestions = async (productId: number): Promise<number[]> => {
-    const result = await fetch(`/api/products/${productId}/questions`)
-    if (!result.ok) {
-        throw new Error(result.statusText)
-    }
-    const questions: Entry[] = await result.json()
-    const answered = questions.filter((question) => question.published)
-    return answered.map((question) => question.id)
-}
-
-----------[ Good ]----------
-
-async function post(action: string): Promise<void> {
-    if (props.pickListId === null) {
-        return
-    }
-    const response = await fetch(`/api/pick-lists/${props.pickListId}/${action}`, { method: 'POST' })
-    if (response.ok) {
-        emit('done', action)
-    }
 }
 ```
 
@@ -1309,6 +1377,28 @@ Two functions run the same code with different names or data
 ```go
 ----------[ Bad ]----------
 
+// in collection_desk.go
+func joinCollectionNotes(notes []string, counter string) string {
+	var printed strings.Builder
+	printed.WriteString(counter + " collection")
+	for _, note := range notes {
+		printed.WriteString(" | ")
+		printed.WriteString(strings.TrimSpace(note))
+	}
+	return printed.String()
+}
+
+// in exchange_desk.go
+func joinExchangeNotes(notices []string, desk string) string {
+	var printed strings.Builder
+	printed.WriteString(desk + " exchange")
+	for _, notice := range notices {
+		printed.WriteString(" / ")
+		printed.WriteString(strings.TrimSpace(notice))
+	}
+	return printed.String()
+}
+
 // in label_archive.go
 func archiveScore(labels []string) int {
 	score := 15
@@ -1346,6 +1436,32 @@ func reprintScore(labels []string) int {
 		}
 	}
 	return score * 2
+}
+
+// in loading_bay.go
+func countLoadedCrates(crates map[string][]int) int {
+	total := 0
+	for _, weights := range crates {
+		for _, weight := range weights {
+			if weight >= 1000 {
+				total += 2
+			}
+		}
+	}
+	return total
+}
+
+// in unloading_bay.go
+func estimateUnloadCapacity(pallets map[string][]int) int {
+	capacity := 0
+	for _, weights := range pallets {
+		for _, weight := range weights {
+			if weight >= 350 {
+				capacity += 3
+			}
+		}
+	}
+	return capacity
 }
 
 ----------[ Good ]----------
@@ -1452,16 +1568,36 @@ One folder is spelled out at three or more sites across separate scopes
 ```cs
 ----------[ Bad ]----------
 
-public void Write(byte[] printed)
+public sealed class LabelArchive(Action<string, byte[]> save)
 {
-    save(Path.Combine("warehouse", "saved-labels", "archive.pdf"), printed);
+    private static readonly string SavedLabels = Path.Combine("warehouse", "saved-labels");
+
+    public void Write(byte[] printed)
+    {
+        save(Path.Combine("warehouse", "saved-labels", "archive.pdf"), printed);
+    }
+
+    public void WriteToArchive(byte[] printed)
+    {
+        save(Path.Combine(SavedLabels, "archive.pdf"), printed);
+    }
 }
 
 ----------[ Good ]----------
 
-public void WriteToArchive(byte[] printed)
+public sealed class LabelArchive(Action<string, byte[]> save)
 {
-    save(Path.Combine(SavedLabels, "archive.pdf"), printed);
+    private static readonly string SavedLabels = Path.Combine("warehouse", "saved-labels");
+
+    public void Write(byte[] printed)
+    {
+        save(Path.Combine("warehouse", "saved-labels", "archive.pdf"), printed);
+    }
+
+    public void WriteToArchive(byte[] printed)
+    {
+        save(Path.Combine(SavedLabels, "archive.pdf"), printed);
+    }
 }
 ```
 
@@ -1509,12 +1645,61 @@ public function audit($user, $account): string
     return $live && $ok ? 'granted' : 'denied';
 }
 
+// in Shop\Domain\FrameLookup
+public function get(string $node, string $port): mixed
+{
+    if (array_key_exists($node, $this->frames) && array_key_exists($port, $this->frames[$node])) {
+        return $this->frames[$node][$port];
+    }
+
+    return null;
+}
+
+// in Shop\Domain\FrameLookup
+public function has(string $node, string $port): bool
+{
+    return array_key_exists($node, $this->frames) && array_key_exists($port, $this->frames[$node]);
+}
+
+// in Shop\Domain\PublishGate
+public function visible($item): bool
+{
+    return $item->published && $item->approved;
+}
+
+// in Shop\Domain\RangeFilter
+public function inside($value, $bound): bool
+{
+    return $value >= $bound->min && $value <= $bound->max;
+}
+
+// in Shop\Domain\RangeFilter
+public function clamp($value, $bound): mixed
+{
+    if ($value <= $bound->max && $value >= $bound->min) {
+        return $value;
+    }
+
+    return $value < $bound->min ? $bound->min : $bound->max;
+}
+
+// in Shop\Domain\ReviewQueue
+public function promote(array $items): array
+{
+    $ready = [];
+
+    foreach ($items as $item) {
+        if ($item->published && $item->approved) {
+            $ready[] = $item;
+        }
+    }
+
+    return $ready;
+}
+
 ----------[ Good ]----------
 
 // in Shop\Domain\AccessPolicy
-// The guard promoted to a NAME: `isLocked()` spells `$user->suspended && $account->frozen` once and
-// every site asks the predicate, so the condition has one home and moves in one place.
-
 public function review($user, $account): string
 {
     return $this->isLocked($user, $account) ? 'locked' : 'open';
@@ -1573,6 +1758,31 @@ A compound condition about an object is written out at more than one site
 ```py
 ----------[ Bad ]----------
 
+# in courier_pickups.py
+def load(van: list[Parcel], parcel: Parcel) -> None:
+    if parcel.labelled and parcel.weight_grams > 0:
+        van.append(parcel)
+
+# in dispatch_desk.py
+def outgoing(self) -> list[Parcel]:
+    return [parcel for parcel in self.parcels if parcel.labelled and parcel.weight_grams > 0]
+
+# in dispatch_desk.py
+def may_leave(self, parcel: Parcel) -> bool:
+    return parcel.labelled and parcel.weight_grams > 0
+
+# in events.py
+def on_event(self, event) -> None:
+    if event.kind == "order" and event.action in ("created", "updated"):
+        self.handle(event)
+        event.acknowledge(self.__class__.__name__)
+
+# in events.py
+def on_event(self, event) -> None:
+    if event.kind == "order" and event.action in ("created", "updated"):
+        self.handle(event)
+        event.acknowledge(self.__class__.__name__)
+
 # in loyalty_points.py
 def redeem(member: Member, cost: int) -> int:
     if member.points >= cost and not member.frozen:
@@ -1607,27 +1817,86 @@ A compound condition about an object is written out at more than one site
 ```cs
 ----------[ Bad ]----------
 
+// in LabelFooters.cs
+// The tracking link printed at the foot of a shipping label.
+public static class LabelPrinter
+{
+    public static string Footer(Uri link)
+    {
+        if (link.Scheme != Uri.UriSchemeHttp && link.Scheme != Uri.UriSchemeHttps)
+        {
+            return "";
+        }
+
+        return link.ToString();
+    }
+}
+
 // in Promises.cs
-public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
+// What the customer desk can promise about an order that has not left yet.
+public static class CustomerDesk
+{
+    public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
+
+    public static bool NeedsChasing(Dispatchable order) => !order.Paid && order.Lines > 0;
+}
 
 // in Dispatch.cs
-public static string Status(Dispatchable order)
+public static class Warehouse
 {
-    if (order.Paid && !order.OnHold && order.Lines > 0)
+    public static string Status(Dispatchable order)
     {
-        return "pick";
+        if (order.Paid && !order.OnHold && order.Lines > 0)
+        {
+            return "pick";
+        }
+
+        return "wait";
     }
 
-    return "wait";
+    public static string Label(Dispatchable order) => order.IsReady ? "pick" : "wait";
+}
+
+// in TrackingLinks.cs
+// Checks a courier's tracking link before it is shown to a customer.
+public static class TrackingLinks
+{
+    public static bool IsShowable(Uri link)
+    {
+        return link.Scheme != Uri.UriSchemeHttp && link.Scheme != Uri.UriSchemeHttps ? false : link.Host.Length > 0;
+    }
 }
 
 ----------[ Good ]----------
 
 // in Dispatch.cs
-public bool IsReady => Paid && !OnHold && Lines > 0;
+// An order ready to leave, as the warehouse and the customer desk see it.
+public sealed class Dispatchable(bool paid, bool onHold, int lines)
+{
+    public bool Paid { get; } = paid;
+
+    public bool OnHold { get; } = onHold;
+
+    public int Lines { get; } = lines;
+
+    public bool IsReady => Paid && !OnHold && Lines > 0;
+}
 
 // in Dispatch.cs
-public static string Label(Dispatchable order) => order.IsReady ? "pick" : "wait";
+public static class Warehouse
+{
+    public static string Status(Dispatchable order)
+    {
+        if (order.Paid && !order.OnHold && order.Lines > 0)
+        {
+            return "pick";
+        }
+
+        return "wait";
+    }
+
+    public static string Label(Dispatchable order) => order.IsReady ? "pick" : "wait";
+}
 ```
 
 ### repeated-guard — in Go
@@ -1678,6 +1947,35 @@ The same compound type check is written out at more than one site
 ```php
 ----------[ Bad ]----------
 
+// in Shop\Domain\EdgeRouter
+public function routable($e): bool
+{
+    return $e instanceof Wire && $e->from instanceof Port && $e->to instanceof Port;
+}
+
+// in Shop\Domain\EdgeRouter
+public function tag($e): string
+{
+    $wired = $e instanceof Wire && $e->from instanceof Port && $e->to instanceof Port;
+
+    return $wired ? 'wired' : 'loose';
+}
+
+// in Shop\Domain\InvoiceRules
+public function taxable($line): bool
+{
+    return $line instanceof SaleLine && $line->product instanceof TaxedGood;
+}
+
+// in Shop\Domain\InvoiceRules
+public function band($line): string
+{
+    return match ($line instanceof SaleLine && $line->product instanceof TaxedGood) {
+        true => 'vat',
+        default => 'net',
+    };
+}
+
 // in Shop\Domain\TokenScanner
 public function opens($t): bool
 {
@@ -1696,12 +1994,25 @@ public function pairs(array $tokens): int
     return $count;
 }
 
+// in Shop\Domain\TreeGuard
+public function graftable($node): bool
+{
+    return $node instanceof Leaf && $node->parent instanceof Branch;
+}
+
+// in Shop\Domain\TreePruner
+public function keep($node): bool
+{
+    if ($node instanceof Leaf && $node->parent instanceof Branch) {
+        return false;
+    }
+
+    return true;
+}
+
 ----------[ Good ]----------
 
 // in Shop\Domain\TokenScanner
-// The narrowing promoted to a NAME: `isBalancedBrace()` holds `$t instanceof Brace &&
-// $t->close instanceof Brace` once, and every site asks the predicate instead of copying the chain.
-
 public function balanced(array $tokens): int
 {
     return count(array_filter($tokens, $this->isBalancedBrace(...)));
@@ -1784,6 +2095,16 @@ def refund_cents(event: object, limit_cents: int) -> int:
         return 0
     return limit_cents
 
+# in report_cells.py
+def render(self, cell: object) -> str:
+    if isinstance(cell, Cell) and isinstance(cell.content, Table):
+        return f"<table rows={len(cell.content.rows)}>"
+    return str(cell)
+
+# in report_cells.py
+def export(self, cells: list) -> list:
+    return [cell.content.rows for cell in cells if isinstance(cell, Cell) and isinstance(cell.content, Table)]
+
 ----------[ Good ]----------
 
 # in payment_events.py
@@ -1806,45 +2127,79 @@ The same compound type check is written out at more than one site
 ----------[ Bad ]----------
 
 // in Damage.cs
-public static int ToInspect(IEnumerable<Package> arrived, int alreadyChecked)
+// Counts the packages the weekly damage report has to inspect by hand.
+public static class DamageReport
 {
-    var total = 0;
-
-    foreach (var package in arrived)
+    public static int ToInspect(IEnumerable<Package> arrived, int alreadyChecked)
     {
-        total += package is Crate crate && crate.Lid is ScrewLid ? 1 : 0;
-    }
+        var total = 0;
 
-    return total - alreadyChecked;
+        foreach (var package in arrived)
+        {
+            total += package is Crate crate && crate.Lid is ScrewLid ? 1 : 0;
+        }
+
+        return total - alreadyChecked;
+    }
 }
 
 // in Crates.cs
-public static string Instructions(Package package)
+public static class CrateHandling
 {
-    if (package is Crate crate && crate.Lid is ScrewLid)
+    public static string Instructions(Package package)
     {
-        return "use the drill";
+        if (package is Crate crate && crate.Lid is ScrewLid)
+        {
+            return "use the drill";
+        }
+
+        return "lift by hand";
     }
 
-    return "lift by hand";
+    public static string Handling(Package package) => package.IsScrewedCrate ? "use the drill" : "lift by hand";
+
+    public static bool IsCrate(Package package) => package is Crate;
 }
 
 // in Palletising.cs
-public int SlotsFor(Package package)
+// How many pallet slots a package takes when it is stacked in the warehouse.
+public sealed class PalletPlan(int slotsFree)
 {
-    var needsRoom = package is Crate crate && crate.Lid is ScrewLid;
-    var slots = needsRoom ? 2 : 1;
+    public int SlotsFor(Package package)
+    {
+        var needsRoom = package is Crate crate && crate.Lid is ScrewLid;
+        var slots = needsRoom ? 2 : 1;
 
-    return Math.Min(slots, slotsFree);
+        return Math.Min(slots, slotsFree);
+    }
 }
 
 ----------[ Good ]----------
 
 // in Crates.cs
-public bool IsScrewedCrate => this is Crate crate && crate.Lid is ScrewLid;
+// What goods travel in, and the lids a crate can be closed with.
+public abstract class Package
+{
+    public bool IsScrewedCrate => this is Crate crate && crate.Lid is ScrewLid;
+}
 
 // in Crates.cs
-public static string Handling(Package package) => package.IsScrewedCrate ? "use the drill" : "lift by hand";
+public static class CrateHandling
+{
+    public static string Instructions(Package package)
+    {
+        if (package is Crate crate && crate.Lid is ScrewLid)
+        {
+            return "use the drill";
+        }
+
+        return "lift by hand";
+    }
+
+    public static string Handling(Package package) => package.IsScrewedCrate ? "use the drill" : "lift by hand";
+
+    public static bool IsCrate(Package package) => package is Crate;
+}
 ```
 
 ### unnamed-vocabulary-literal — in PHP
@@ -1864,18 +2219,12 @@ public function heading(string $title): string
 ----------[ Good ]----------
 
 // in Shop\Labels\ReceiptPrinter
-// The RESOLUTION — the glyph written under the name that already holds it.
-
 public function separator(): string
 {
     $this->emit(ReceiptGlyph::RULE);
 
     return $this->emit(ReceiptGlyph::BULLET);
 }
-
-// The characters a printed receipt is built from, and what the printer does with them. Named once so
-// a layout reads as intent rather than punctuation — the vocabulary the printers below are meant to
-// spell their rows with.
 
 final class ReceiptGlyph
 {
@@ -1947,11 +2296,25 @@ A string literal fills a parameter that already has a named constant for that va
 ```cs
 ----------[ Bad ]----------
 
-public int EndOfMonth() => runner.Run("monthly");
+public sealed class ReportSchedule(ReportRunner runner)
+{
+    public int Morning() => runner.Run(ReportKind.Daily);
+
+    public int EndOfMonth() => runner.Run("monthly");
+
+    public int Close() => runner.Run(ReportKind.Monthly);
+}
 
 ----------[ Good ]----------
 
-public int Close() => runner.Run(ReportKind.Monthly);
+public sealed class ReportSchedule(ReportRunner runner)
+{
+    public int Morning() => runner.Run(ReportKind.Daily);
+
+    public int EndOfMonth() => runner.Run("monthly");
+
+    public int Close() => runner.Run(ReportKind.Monthly);
+}
 ```
 
 ### unnamed-vocabulary-literal — in Go

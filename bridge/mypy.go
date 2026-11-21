@@ -16,7 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/walk"
 )
 
-//go:embed mypy/tree.py mypy/session.py mypy/requirements.txt
+//go:embed mypy/tree.py mypy/translate.py mypy/session.py mypy/requirements.txt
 var mypy embed.FS
 
 var mypyTree = bundle.Embedded("mypy-tree", mypy, "mypy")

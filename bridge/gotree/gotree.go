@@ -2,17 +2,14 @@
 package gotree
 
 import (
-	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"go/types"
 	"io"
-	"reflect"
 	"runtime"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -26,7 +23,7 @@ func Version() string {
 	return strings.TrimPrefix(runtime.Version(), "go")
 }
 
-const contractVersion = 4
+const contractVersion = 5
 
 func Write(out io.Writer, paths, write []string) error {
 	stream, err := Stream(paths, write)
@@ -34,17 +31,7 @@ func Write(out io.Writer, paths, write []string) error {
 		return err
 	}
 
-	lines := json.NewEncoder(out)
-	if err := lines.Encode(map[string]any{"header": stream.Header}); err != nil {
-		return err
-	}
-	for _, file := range stream.Files {
-		if err := lines.Encode(map[string]any{"file": file}); err != nil {
-			return err
-		}
-	}
-
-	return lines.Encode(map[string]any{"trailer": stream.Trailer})
+	return contract.Write(out, stream)
 }
 
 func Stream(paths, write []string) (*contract.Stream, error) {
@@ -100,7 +87,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 		if parsed == nil {
 			return nil, fmt.Errorf("%s: %w", path, parseErr)
 		}
-		file, err := fileLine(fset, parsed, path, "", nil, false)
+		file, err := fileLine(fset, parsed, path, parsed.Name.Name, nil, false)
 		if err != nil {
 			return nil, err
 		}
@@ -124,9 +111,10 @@ func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts 
 		return nil, err
 	}
 
-	tree := &writer{fset: fset, source: source, facts: facts, index: map[string]int{}, module: module}
+	tree := &writer{fset: fset, source: source, facts: facts, module: module, types: map[types.Type]*contract.Type{}, imported: map[string]bool{}}
 	tree.owners = ownersIn(parsed, facts, module)
-	root := tree.node(parsed, "", false)
+	root := tree.file(parsed)
+	nodes := tree.numbered(root)
 
 	return &contract.File{
 		Path:     path,
@@ -136,188 +124,8 @@ func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts 
 		Module:   module,
 		Resolver: &contract.Resolver{Tool: "go/types", Ran: facts != nil},
 		Root:     root,
-		Comments: tree.comments(parsed),
-		Types:    tree.types,
+		Comments: tree.comments(parsed, nodes),
 	}, nil
-}
-
-// writer holds what every node of one file is read against: the positions the parser keeps, the file's bytes, and the numbers handed out in the order a pre-order walk meets the nodes.
-type writer struct {
-	fset    *token.FileSet
-	source  []byte
-	next    int
-	nodes   []*contract.Node
-	ends    []int
-	facts   *types.Info
-	module  string
-	types   []*contract.Type
-	index   map[string]int
-	owners  map[*ast.Ident]string
-	started []*contract.Node
-	ending  map[int][]int
-}
-
-func (w *writer) node(held ast.Node, field string, inType bool) *contract.Node {
-	start, end, line := w.span(held)
-	built := contract.NewNode(contract.Node{
-		ID:    w.next,
-		Kind:  kindOf(held),
-		Role:  roleOf(held, inType),
-		Is:    append(neutralOf(held), w.panicking(held)...),
-		Span:  contract.Span{Start: start, End: end, Line: line},
-		Field: field,
-		Name:  nameOf(held),
-	})
-	w.next++
-	w.nodes = append(w.nodes, built)
-	w.ends = append(w.ends, w.endLine(held))
-
-	if operator := operatorOf(held); operator != "" {
-		built.Own().Operator = operator
-	}
-	if flags := flagsOf(held); len(flags) > 0 {
-		built.Own().Modifiers = flags
-	}
-	if literal, value := literalOf(held); literal != "" {
-		built.Own().LiteralKind = literal
-		built.Own().Value = value
-	}
-	w.typed(held, built)
-
-	for _, slot := range w.slots(held) {
-		if parameter, ok := slot.held.(*ast.Field); ok && field == "params" {
-			built.Children = append(built.Children, w.parameters(parameter, slot.field, inType)...)
-			continue
-		}
-		child := w.node(slot.held, slot.field, inType || isTypeField(slot.field))
-		built.Children = append(built.Children, child)
-	}
-
-	return built
-}
-
-func (w *writer) parameters(field *ast.Field, slot string, inType bool) []*contract.Node {
-	if len(field.Names) <= 1 {
-		parameter := w.node(field, slot, inType)
-		parameter.Is = append(parameter.Is, "parameter")
-		return []*contract.Node{parameter}
-	}
-	var parameters []*contract.Node
-	for _, name := range field.Names {
-		written := *field
-		written.Names = []*ast.Ident{name}
-		parameter := w.node(&written, slot, inType)
-		parameter.Is = append(parameter.Is, "parameter")
-		parameters = append(parameters, parameter)
-	}
-	return parameters
-}
-
-// slot is one child and the field of its parent it fills.
-type slot struct {
-	held  ast.Node
-	field string
-}
-
-func (w *writer) slots(held ast.Node) []slot {
-	value := reflect.ValueOf(held)
-	if value.Kind() == reflect.Pointer {
-		if value.IsNil() {
-			return nil
-		}
-		value = value.Elem()
-	}
-	if value.Kind() != reflect.Struct {
-		return nil
-	}
-
-	var slots []slot
-	for i := range value.NumField() {
-		field := value.Type().Field(i)
-		if !field.IsExported() || skippedField(held, field.Name) {
-			continue
-		}
-		name := lowerFirst(field.Name)
-		for _, child := range nodesIn(value.Field(i)) {
-			slots = append(slots, slot{held: child, field: name})
-		}
-	}
-	sort.SliceStable(slots, func(a, b int) bool { return slots[a].held.Pos() < slots[b].held.Pos() })
-
-	return slots
-}
-
-func nodesIn(value reflect.Value) []ast.Node {
-	switch value.Kind() {
-	case reflect.Interface, reflect.Pointer:
-		if value.IsNil() {
-			return nil
-		}
-		held, isNode := value.Interface().(ast.Node)
-		if !isNode || isComment(held) {
-			return nil
-		}
-
-		return []ast.Node{held}
-	case reflect.Slice:
-		var nodes []ast.Node
-		for i := range value.Len() {
-			nodes = append(nodes, nodesIn(value.Index(i))...)
-		}
-
-		return nodes
-	}
-
-	return nil
-}
-
-func skippedField(held ast.Node, field string) bool {
-	if _, isFile := held.(*ast.File); isFile {
-		return field == "Unresolved" || field == "Comments" || field == "Scope"
-	}
-
-	return field == "Doc" || field == "Comment"
-}
-
-func isComment(held ast.Node) bool {
-	switch held.(type) {
-	case *ast.Comment, *ast.CommentGroup:
-		return true
-	}
-
-	return false
-}
-
-func (w *writer) span(held ast.Node) (int, int, int) {
-	start := w.fset.Position(held.Pos())
-	end := start
-	if held.End().IsValid() {
-		end = w.fset.Position(held.End())
-	}
-
-	return start.Offset, max(start.Offset, end.Offset), start.Line
-}
-
-func (w *writer) endLine(held ast.Node) int {
-	if !held.End().IsValid() {
-		return w.fset.Position(held.Pos()).Line
-	}
-
-	return w.fset.Position(held.End()).Line
-}
-
-func kindOf(held ast.Node) string {
-	name := reflect.TypeOf(held).String()
-
-	return strings.TrimPrefix(strings.TrimPrefix(name, "*"), "ast.")
-}
-
-func lowerFirst(name string) string {
-	if name == "" {
-		return ""
-	}
-
-	return strings.ToLower(name[:1]) + name[1:]
 }
 
 func errorsIn(parsed *ast.File, source []byte) int {

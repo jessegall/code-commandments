@@ -82,10 +82,6 @@ a method whose whole body branches on a `bool` parameter — or on whether a nul
 ```php
 ----------[ Bad ]----------
 
-// The flag in its commonest disguise: `$kind` was required, then widened to nullable so that
-// leaving it out means "all of them". Two questions behind one name, and the call site that asks
-// the second one says nothing at all — `labels()` — which is even less than a bare `true`.
-
 public function labels(?string $kind = null): array
 {
     if ($kind === null) {
@@ -98,8 +94,6 @@ public function labels(?string $kind = null): array
 ----------[ Good ]----------
 
 // in Shop\Dispatch\CrateInspector
-// The same two questions, each with its own name, so the call site says which it asked.
-
 public function allLabels(): array
 {
     return array_merge(...array_values($this->labels));

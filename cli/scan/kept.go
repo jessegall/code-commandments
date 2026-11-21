@@ -560,11 +560,12 @@ func joinedPrograms(kept contract.Program, fresh *contract.Program) contract.Pro
 		return kept
 	}
 	return contract.Program{
-		Symbols:    onceBy(kept.Symbols, fresh.Symbols, func(symbol contract.OutsideSymbol) string { return symbol.Symbol }),
-		Unreadable: onceBy(kept.Unreadable, fresh.Unreadable, func(symbol contract.UnreadableSymbol) string { return symbol.Symbol }),
-		Packages:   onceBy(kept.Packages, fresh.Packages, func(name string) string { return name }),
-		Aliases:    onceBy(kept.Aliases, fresh.Aliases, func(alias contract.Alias) string { return alias.Prefix }),
-		Loader:     fresh.Loader,
+		Symbols:        onceBy(kept.Symbols, fresh.Symbols, func(symbol contract.OutsideSymbol) string { return symbol.Symbol }),
+		Unreadable:     onceBy(kept.Unreadable, fresh.Unreadable, func(symbol contract.UnreadableSymbol) string { return symbol.Symbol }),
+		Packages:       onceBy(kept.Packages, fresh.Packages, func(held contract.Package) string { return held.Ecosystem + "\x00" + held.Name }),
+		PackageFolders: onceBy(kept.PackageFolders, fresh.PackageFolders, func(folder string) string { return folder }),
+		Aliases:        onceBy(kept.Aliases, fresh.Aliases, func(alias contract.Alias) string { return alias.Prefix }),
+		Loader:         fresh.Loader,
 	}
 }
 

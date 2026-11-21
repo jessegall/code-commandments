@@ -17,25 +17,15 @@ require __DIR__ . '/parser/autoload.php';
 require __DIR__ . '/src/BadRequest.php';
 require __DIR__ . '/src/Request.php';
 require __DIR__ . '/src/Sources.php';
-require __DIR__ . '/src/Nullability.php';
-require __DIR__ . '/src/WrittenType.php';
-require __DIR__ . '/src/NodeSpan.php';
-require __DIR__ . '/src/Attachment.php';
-require __DIR__ . '/src/Comment.php';
-require __DIR__ . '/src/TreeWriter.php';
+require __DIR__ . '/src/TreeNode.php';
+require __DIR__ . '/src/Translator.php';
 require __DIR__ . '/src/ParsedFile.php';
 require __DIR__ . '/src/UnreadableSymbol.php';
 require __DIR__ . '/src/OutsideType.php';
 require __DIR__ . '/src/OutsideSymbols.php';
 require __DIR__ . '/src/Stream.php';
-require __DIR__ . '/src/Declaration.php';
 
 try {
-    // The one ask besides a tree: what php-parser can emit, which a census of recorded streams cannot say.
-    if (in_array('--declares', array_slice($argv, 1), true)) {
-        fwrite(STDOUT, json_encode(Declaration::written(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . "\n");
-        exit(0);
-    }
     $request = Request::fromArguments(array_slice($argv, 1));
     if (! $request->serve) {
         (new Stream($request))->write(STDOUT);

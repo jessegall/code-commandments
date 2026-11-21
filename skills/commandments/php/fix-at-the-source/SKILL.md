@@ -128,9 +128,6 @@ A constructor that performs a side effect on a collaborator and throws away the 
 ```php
 ----------[ Bad ]----------
 
-// Warms the export the moment anyone builds one, so merely HAVING a LedgerExport costs a request
-// — and nothing in the code that constructed it asked for that.
-
 final class LedgerExport
 {
     public function __construct(private readonly HttpClient $client, private readonly string $period)
@@ -145,9 +142,6 @@ final class LedgerExport
 }
 
 ----------[ Good ]----------
-
-// The same export, built for free. It holds the client and does the fetching when someone asks
-// for rows, which is the moment the caller chose.
 
 final class LazyLedgerExport
 {

@@ -18,7 +18,7 @@ from mypy.find_sources import InvalidSourceList, create_source_list
 from mypy.modulefinder import BuildSource
 from mypy.build import BuildResult, State
 from mypy.errors import CompileError
-from mypy.nodes import Expression
+from mypy.nodes import Expression, MypyFile, TypeInfo
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
 from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
@@ -247,3 +247,34 @@ def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule
         if resolved is not None and span not in found:
             found[span] = resolved
     return TypedModule(len(written), found)
+
+
+@dataclass(frozen=True)
+class Named:
+    """What a dotted name written in a module resolves to through mypy's symbol tables: its full name, and whether it
+    names a class, so a call of it builds one."""
+
+    fullname: str
+    is_class: bool
+
+
+def resolver(state: State | None):
+    """Resolves a dotted name as written at a module's top level, through the module's own names and then the builtins:
+    the name a caught type, a base, an annotation or a callee refers to. With no checked module it resolves nothing."""
+    if state is None or state.tree is None:
+        return lambda dotted: None
+    builtins = state.manager.modules.get("builtins")
+
+    def resolve(dotted: str) -> Named | None:
+        head, *rest = dotted.split(".")
+        symbol = state.tree.names.get(head) or (builtins.names.get(head) if builtins is not None else None)
+        node = symbol.node if symbol is not None else None
+        for part in rest:
+            table = node.names if isinstance(node, (MypyFile, TypeInfo)) else None
+            symbol = table.get(part) if table is not None else None
+            node = symbol.node if symbol is not None else None
+        if node is None or not getattr(node, "fullname", ""):
+            return None
+        return Named(node.fullname, isinstance(node, TypeInfo))
+
+    return resolve

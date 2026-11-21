@@ -78,19 +78,76 @@ A class locates a service through IServiceProvider
 ```cs
 ----------[ Bad ]----------
 
-public bool PublishProjection(string gate)
+public sealed class ParcelSnapshotReader(IServiceProvider source, Action<string> intake)
 {
-    if (gate.Length == 0) return false;
-    var projection = this.intakeServices.GetRequiredService<ParcelSnapshotProjection>();
-    intake(gate + ": " + projection.GetType().Name);
-    return true;
+    private readonly IServiceProvider intakeServices = source;
+
+    public bool PublishProjection(string gate)
+    {
+        if (gate.Length == 0) return false;
+        var projection = this.intakeServices.GetRequiredService<ParcelSnapshotProjection>();
+        intake(gate + ": " + projection.GetType().Name);
+        return true;
+    }
+
+    public decimal ReadParcels(DbSet<ParcelSnapshotProjection> parcels, Queue<int> queue, decimal running)
+    {
+        var total = running;
+        while (queue.TryDequeue(out var next))
+        {
+            var label = parcels.Find(next);
+            total += label.Length;
+            intake(label);
+        }
+        return total;
+    }
+
+    public string ReadOne(DbSet<ParcelSnapshotProjection> rows, int identifier)
+    {
+        return rows.Find(identifier);
+    }
+
+    public string ProjectionName(ParcelSnapshotProjection projection)
+    {
+        return projection.GetType().Name;
+    }
 }
 
 ----------[ Good ]----------
 
-public string ProjectionName(ParcelSnapshotProjection projection)
+public sealed class ParcelSnapshotReader(IServiceProvider source, Action<string> intake)
 {
-    return projection.GetType().Name;
+    private readonly IServiceProvider intakeServices = source;
+
+    public bool PublishProjection(string gate)
+    {
+        if (gate.Length == 0) return false;
+        var projection = this.intakeServices.GetRequiredService<ParcelSnapshotProjection>();
+        intake(gate + ": " + projection.GetType().Name);
+        return true;
+    }
+
+    public decimal ReadParcels(DbSet<ParcelSnapshotProjection> parcels, Queue<int> queue, decimal running)
+    {
+        var total = running;
+        while (queue.TryDequeue(out var next))
+        {
+            var label = parcels.Find(next);
+            total += label.Length;
+            intake(label);
+        }
+        return total;
+    }
+
+    public string ReadOne(DbSet<ParcelSnapshotProjection> rows, int identifier)
+    {
+        return rows.Find(identifier);
+    }
+
+    public string ProjectionName(ParcelSnapshotProjection projection)
+    {
+        return projection.GetType().Name;
+    }
 }
 ```
 

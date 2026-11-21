@@ -62,11 +62,27 @@ a call that hands over an object and a projection of it — `Persist(request, re
 ```cs
 ----------[ Bad ]----------
 
-public void Move(StockMove move) => log.Record(move, move.Sku);
+public sealed class Mover(MoveLog log)
+{
+    public void Move(StockMove move) => log.Record(move, move.Sku);
+
+    public void Undo(StockMove move)
+    {
+        var back = move with { FromBin = move.ToBin, ToBin = move.FromBin };
+        log.Record(back, back.Sku);
+    }
+}
 
 ----------[ Good ]----------
 
-public void RecordMove(StockMove move) => lines.Add($"{move.Sku}: {move.Quantity} {move.FromBin}->{move.ToBin}");
+public sealed class MoveLog
+{
+    private readonly List<string> lines = [];
+
+    public void Record(StockMove move, string sku) => lines.Add($"{sku}: {move.Quantity} {move.FromBin}->{move.ToBin}");
+
+    public void RecordMove(StockMove move) => lines.Add($"{move.Sku}: {move.Quantity} {move.FromBin}->{move.ToBin}");
+}
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

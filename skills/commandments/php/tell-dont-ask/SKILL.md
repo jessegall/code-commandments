@@ -155,9 +155,6 @@ public function suspendByTelling(Customer $customer, string $reason): void
 }
 
 // in Shop\Models\Customer
-// Where every call site's poking-and-saving went: the transition named once, on the model that
-// owns the columns it writes.
-
 public function suspend(string $reason): void
 {
     $this->suspended = true;

@@ -37,8 +37,6 @@ A class of constants defines a closed set of cases
 ```php
 ----------[ Bad ]----------
 
-// VAT rates kept as floating-point constants instead of a typed TaxBand enum.
-
 final class TaxBands
 {
     /**
@@ -58,9 +56,6 @@ final class TaxBands
 }
 
 ----------[ Good ]----------
-
-// The sealed set as a native backed enum — the cases now have a home for behaviour
-// and the type proves only a real band can flow through. Rates as basis points.
 
 enum TaxBand: int
 {

@@ -9,10 +9,6 @@ A parameter that's just true/false, computed by every caller from the same objec
 ```php
 ----------[ Bad ]----------
 
-// Told, not asked: the editor is what this is ABOUT, yet the signature names only the answer.
-// Every caller has to remember which of the editor's modes count — and the one that forgets
-// the panel leaves the corners tucked in mid-mode.
-
 public static function of(bool $tucked): string
 {
     return $tucked ? 'tight' : 'wide';
@@ -21,10 +17,6 @@ public static function of(bool $tucked): string
 ----------[ Good ]----------
 
 // in Shop\Kiosk\CornerInset
-// The FIX: take the SUBJECT the callers already hold. `CornerInset::for($editor)` asks the editor
-// itself, so the rule about which modes tuck the corners in lives here once — no call site holds a
-// half-remembered copy of it, and none can forget the panel.
-
 public static function for(KioskEditor $editor): string
 {
     return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
@@ -56,8 +48,6 @@ public function dispatch(Waybill $waybill): string
 ----------[ Good ]----------
 
 // in Shop\Dispatch\ParcelDispatch
-// The FIX: hand over the waybill and let the courier read what it needs off it.
-
 public function dispatchWhole(Waybill $waybill): string
 {
     return $this->courier->bookWaybill($waybill);
@@ -89,9 +79,6 @@ public function priceFor(ProductCatalogue $catalogue, string $sku): int
 ----------[ Good ]----------
 
 // in Shop\Catalog\VariantPricer
-// Demands the resolved variant — the caller resolves it once by sku and owns
-// the "not found" failure, so this only prices what it is handed.
-
 public function priceForVariant(Variant $variant): int
 {
     return $variant->basePriceCents() + $this->markupCents;

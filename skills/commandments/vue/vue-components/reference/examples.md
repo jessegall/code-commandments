@@ -37,32 +37,7 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a
 
 ----------[ Good ]----------
 
-<!-- in ReaderPairingPanel.vue -->
 <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
-
-<!-- in ReaderPairingDialog.vue -->
-<Dialog :open="open" @update:open="$emit('update:open', $event)">
-  <DialogContent class="pairing-dialog">
-    <DialogHeader>
-      <DialogTitle>Pair Reader</DialogTitle>
-    </DialogHeader>
-
-    <form class="pairing-form" @submit.prevent="$emit('submit')">
-      <Label class="pairing-form__label" for="device">Device name</Label>
-      <Input id="device" v-model="form.name" placeholder="Front counter" />
-
-      <Label class="pairing-form__label" for="model">Reader model</Label>
-      <select id="model" v-model="form.model" class="pairing-form__select">
-        <option value="s1">SumUp Solo</option>
-        <option value="s2">SumUp Air</option>
-      </select>
-
-      <DialogFooter>
-        <Button type="submit">Pair reader</Button>
-      </DialogFooter>
-    </form>
-  </DialogContent>
-</Dialog>
 ```
 
 ### deep-data-reach
@@ -81,16 +56,7 @@ A group of elements in a sizeable template that all reach deep into the same nes
 
 ----------[ Good ]----------
 
-<!-- in OrderDetailPanel.vue -->
 <OrderCustomer :customer="order.customer" />
-
-<!-- in OrderCustomer.vue -->
-<section class="order-customer">
-  <h2 class="section-title">Customer</h2>
-  <p class="customer-name">{{ customer.fullName }}</p>
-  <p class="customer-email">{{ customer.email }}</p>
-  <p class="customer-phone">{{ customer.phone }}</p>
-</section>
 ```
 
 ### deep-nested
@@ -127,16 +93,7 @@ Template markup nested far too deep — extract a subtree as its own component
 
 ----------[ Good ]----------
 
-<!-- in SettingsAccordionCard.vue -->
 <SettingsCardBody :settings="settings" />
-
-<!-- in SettingsCardBody.vue -->
-<div class="settings-card__body">
-  <div class="field-group">
-    <label class="field__label">{{ settings.profile.displayName }}</label>
-    <input class="field__input" :value="settings.profile.handle" />
-  </div>
-</div>
 ```
 
 ### duplicate-element
@@ -145,6 +102,44 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
 
 ```vue
 ----------[ Bad ]----------
+
+<!-- in BasketPromoBanner.vue -->
+<div class="promo-strip">
+  <span class="promo-icon">%</span>
+  <strong class="promo-headline">Free shipping this week</strong>
+  <small class="promo-terms">On orders over 50.</small>
+</div>
+
+<!-- in CheckoutPromoBanner.vue -->
+<div class="promo-strip">
+  <span class="promo-icon">%</span>
+  <strong class="promo-headline">Free shipping this week</strong>
+  <small class="promo-terms">On orders over 50.</small>
+</div>
+
+<!-- in FilterSidebar.vue -->
+<fieldset class="filter-group">
+  <legend class="filter-legend">Brand</legend>
+  <label class="filter-option"><input type="checkbox" /> Any brand</label>
+</fieldset>
+
+<!-- in FilterSidebar.vue -->
+<fieldset class="filter-group">
+  <legend class="filter-legend">Brand</legend>
+  <label class="filter-option"><input type="checkbox" /> Any brand</label>
+</fieldset>
+
+<!-- in OrderLineItems.vue -->
+<tr class="line-item">
+  <td class="line-item__name">Sample product</td>
+  <td class="line-item__qty">1</td>
+</tr>
+
+<!-- in OrderLineItems.vue -->
+<tr class="line-item">
+  <td class="line-item__name">Sample product</td>
+  <td class="line-item__qty">1</td>
+</tr>
 
 <!-- in ProductReviewList.vue -->
 <article class="review-card">
@@ -182,66 +177,13 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
 A dispatch whose cases each render a whole view inline — one component doing a job per case
 
 ```vue
-----------[ Bad ]----------
-
-<SwitchCase :value="shipment.stage">
-  <template #packing>
-    <section class="stage">
-      <h3>Packing</h3>
-      <ul class="parcels">
-        <template v-for="parcel in shipment.parcels" :key="parcel.id">
-          <li>
-            <span class="label">{{ parcel.label }}</span>
-            <span class="kilos">{{ parcel.kilos }} kg</span>
-          </li>
-        </template>
-      </ul>
-      <p class="note">Packed by {{ shipment.packer }}</p>
-    </section>
-  </template>
-  <template #in_transit>
-    <article class="transit">
-      <header>
-        <strong>{{ shipment.carrier }}</strong>
-        <time>{{ shipment.eta }}</time>
-      </header>
-      <ol class="stops">
-        <template v-for="stop in shipment.stops" :key="stop">
-          <li><em>{{ stop }}</em></li>
-        </template>
-      </ol>
-    </article>
-  </template>
-  <template #default>
-    <p>Delivered</p>
-  </template>
-</SwitchCase>
-
 ----------[ Good ]----------
 
-<!-- in ShipmentTracker.vue -->
 <SwitchCase :value="shipment.stage">
   <template #packing><ShipmentPacking :parcels="shipment.parcels" :packer="shipment.packer" /></template>
   <template #in_transit><ShipmentInTransit :carrier="shipment.carrier" :eta="shipment.eta" :stops="shipment.stops" /></template>
   <template #default><p>Delivered</p></template>
 </SwitchCase>
-
-<!-- in ShipmentInTransit.vue -->
-<article class="in-transit">
-  <h4>{{ carrier }}, arriving <time>{{ eta }}</time></h4>
-  <template v-for="stop in stops" :key="stop">
-    <span class="stop">{{ stop }}</span>
-  </template>
-</article>
-
-<!-- in ShipmentPacking.vue -->
-<section class="packing">
-  <h3>Packing</h3>
-  <template v-for="parcel in parcels" :key="parcel.id">
-    <p class="parcel"><span>{{ parcel.label }}</span> <span>{{ parcel.kilos }} kg</span></p>
-  </template>
-  <footer>Packed by {{ packer }}</footer>
-</section>
 ```
 
 ### near-duplicate-element
@@ -251,153 +193,60 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
 ```vue
 ----------[ Bad ]----------
 
-<!-- in BillingAddressPage.vue -->
-<section class="address-page billing">
-    <header class="address-head">
-        <h2>Billing address</h2>
-        <p>Where we send your invoice.</p>
-    </header>
-    <form class="address-form">
-        <label class="address-field">Street<input v-model="billing.street" name="billing-street" /></label>
-        <label class="address-field">Town<input v-model="billing.city" name="billing-town" /></label>
-    </form>
-</section>
-
-<!-- in ShippingAddressPage.vue -->
-<section class="address-page">
-    <header class="address-head">
-        <h2>Shipping address</h2>
-        <p>Where we deliver your order.</p>
-    </header>
-    <form class="address-form">
-        <label class="address-field">Street<input v-model="shipping.street" name="shipping-street" /></label>
-        <label class="address-field">City<input v-model="shipping.city" name="shipping-city" /></label>
-    </form>
-</section>
-
-----------[ Good ]----------
-
-<!-- in DeliveryOptionCard.vue -->
+<!-- in DeliverySlots.vue -->
 <article class="slot">
-    <h3>{{ option.title }}</h3>
-    <strong class="slot-price">{{ option.price }}</strong>
+    <h3>Standard</h3>
+    <strong class="slot-price">{{ standard.price }}</strong>
     <ul class="slot-perks">
-        <template v-for="perk in option.perks" :key="perk">
-            <li>{{ perk }}</li>
-        </template>
+        <li>{{ standard.days }} working days</li>
+        <li>Tracked parcel</li>
     </ul>
-    <button type="button" @click="emit('choose', option.key)">Choose {{ option.title }}</button>
+    <button type="button" @click="emit('choose', 'standard')">Choose standard</button>
 </article>
 
-<!-- in DeliveryOptions.vue -->
-<div class="slots">
-    <DeliveryOptionCard :option="standard" />
-    <DeliveryOptionCard :option="express" />
-</div>
-```
-
-### oversized-component
-
-A component whose template renders more elements than the project's declared budget — one component doing several jobs
-
-```vue
-----------[ Bad ]----------
-
-<!-- @sin OversizedComponent --><section class="account">
-  <header class="account__header">
-    <h1 class="account__title">My account</h1>
-    <span class="account__id">#{{ customer.id }}</span>
-  </header>
-
-  <div class="account__profile">
-    <h2 class="account__section">Profile</h2>
-    <!-- Righteous: a LONE deep reach (one field off customer.profile) is no cluster. -->
-    <p class="account__name">{{ customer.profile.displayName }}</p>
-    <p class="account__handle">{{ customer.handle }}</p>
-  </div>
-
-  <div class="account__contact">
-    <h2 class="account__section">Contact</h2>
-    <p class="account__email">{{ customer.email }}</p>
-    <p class="account__phone">{{ customer.phone }}</p>
-  </div>
-
-  <!-- A cluster: customer.billing read in three fields → extract <AccountBilling :billing>. -->
-  <!-- @sin DeepDataReach -->
-  <div class="account__billing">
-    <h2 class="account__section">Billing</h2>
-    <p class="account__plan">{{ customer.billing.plan }}</p>
-    <p class="account__amount">{{ customer.billing.amount }}</p>
-    <p class="account__renews">{{ customer.billing.renewsAt }}</p>
-  </div>
-
-  <div class="account__preferences">
-    <h2 class="account__section">Preferences</h2>
-    <ul class="account__prefs">
-      <!-- @sin ControlFlowOnElement -->
-      <li v-for="pref in customer.preferences" :key="pref.id" class="account__pref">
-        <span class="account__pref-name">{{ pref.label }}</span>
-        <span class="account__pref-value">{{ pref.enabled }}</span>
-      </li>
+<!-- in DeliverySlots.vue -->
+<article class="slot slot-express">
+    <h3>Express</h3>
+    <strong class="slot-price">{{ express.price }}</strong>
+    <ul class="slot-perks">
+        <li>{{ express.days }} working day</li>
+        <li>Signed for on delivery</li>
     </ul>
-  </div>
+    <button type="button" @click="emit('choose', 'express')">Choose express</button>
+</article>
 
-  <div class="account__orders">
-    <h2 class="account__section">Recent orders</h2>
-    <ul class="account__order-list">
-      <!-- @sin IndexAsKey -->
-      <template v-for="(order, index) in orders" :key="index">
-        <li class="account__order">{{ order.reference }}</li>
-      </template>
-    </ul>
-  </div>
+<!-- in StockTables.vue -->
+<tbody>
+    <tr class="loading-row">
+        <td colspan="4">
+            <div role="status" class="loading">
+                <span class="spinner" />
+                <span class="sr-only">Loading stock</span>
+                <small class="loading-hint">Counting the shelves</small>
+            </div>
+        </td>
+    </tr>
+</tbody>
 
-  <div class="account__addresses">
-    <h2 class="account__section">Addresses</h2>
-    <ul class="account__address-list">
-      <!-- @fixed IndexAsKey -->
-      <!-- @righteous IndexAsKey -->
-      <template v-for="(address, index) in customer.addresses" :key="address.id">
-        <li class="account__address">{{ address.line }}</li>
-      </template>
-    </ul>
-  </div>
-
-  <footer class="account__footer">
-    <button class="account__save" type="button">Save changes</button>
-    <button class="account__signout" type="button">Sign out</button>
-  </footer>
-</section>
+<!-- in StockTables.vue -->
+<tbody>
+    <tr class="loading-row">
+        <td colspan="6">
+            <div role="status" class="loading">
+                <span class="spinner" />
+                <span class="sr-only">Loading orders</span>
+                <small class="loading-hint">Fetching this week's orders</small>
+            </div>
+        </td>
+    </tr>
+</tbody>
 
 ----------[ Good ]----------
 
-<!-- in AccountHistory.vue -->
-<ol class="history">
-  <template v-for="order in orders" :key="order.reference">
-    <li>{{ order.reference }}</li>
-  </template>
-</ol>
-
-<!-- in AccountIdentity.vue -->
-<dl class="identity">
-  <dt>Name</dt>
-  <dd>{{ customer.handle }}</dd>
-  <dt>Email</dt>
-  <dd><a :href="`mailto:${customer.email}`">{{ customer.email }}</a></dd>
-</dl>
-
-<!-- in AccountOverview.vue -->
-<section class="account">
-  <h1 class="account__title">My account</h1>
-  <AccountIdentity :customer="customer" />
-  <AccountPlan :billing="customer.billing" />
-  <AccountHistory :orders="orders" />
-</section>
-
-<!-- in AccountPlan.vue -->
-<aside class="plan">
-  <strong>{{ billing.plan }}</strong>
-  <small>{{ billing.amount }}, renews {{ billing.renewsAt }}</small>
+<aside class="slot-note">
+    <h3>Collect in store</h3>
+    <p>Free, ready in two hours.</p>
+    <a href="/stores">Find a store</a>
 </aside>
 ```
 
@@ -412,11 +261,7 @@ A prop forwarded through a chain of 2+ components, none of which read it — pas
 
 ----------[ Good ]----------
 
-<!-- in AccountMenu.vue -->
 <UserAvatar :src="avatarUrl" />
-
-<!-- in UserAvatar.vue -->
-<img :src="src" alt="" />
 ```
 
 ### prop-mutation

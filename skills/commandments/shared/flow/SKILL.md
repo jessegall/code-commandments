@@ -115,9 +115,6 @@ public function resolve(Product $product, array $overrides, string $region): int
 
 ----------[ Good ]----------
 
-// The same resolution flattened: preconditions become guard clauses, so the
-// happy path runs unindented at the top level.
-
 public function resolveFlat(Product $product, array $overrides, string $region): int
 {
     if (! array_key_exists($region, $overrides)) {
@@ -197,40 +194,79 @@ A decision sits deep inside other decisions in one function
 ```cs
 ----------[ Bad ]----------
 
-public IReadOnlyList<string> Reorders()
+// Restocking walks every warehouse's shelves and decides, four choices deep, what to reorder — the
+// decision that matters is buried under the ones that only filter.
+public sealed class Restock(IReadOnlyDictionary<string, IReadOnlyList<Shelf>> warehouses)
 {
-    var reorders = new List<string>();
-
-    foreach (var (warehouse, shelves) in warehouses)
+    public IReadOnlyList<string> Reorders()
     {
-        foreach (var shelf in shelves)
+        var reorders = new List<string>();
+
+        foreach (var (warehouse, shelves) in warehouses)
         {
-            if (shelf.OnHand < shelf.Minimum)
+            foreach (var shelf in shelves)
             {
-                if (shelf.Supplier is not null)
+                if (shelf.OnHand < shelf.Minimum)
                 {
-                    reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                    if (shelf.Supplier is not null)
+                    {
+                        reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                    }
                 }
             }
         }
+
+        return reorders;
     }
 
-    return reorders;
+    public IReadOnlyList<string> ReordersFlat() =>
+        warehouses
+            .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
+            .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
+            .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
+            .ToList();
+
+    private static string Reorder(string warehouse, Shelf shelf) =>
+        $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
 }
 
 ----------[ Good ]----------
 
-// in Restock.cs
-public IReadOnlyList<string> ReordersFlat() =>
-    warehouses
-        .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
-        .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
-        .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
-        .ToList();
+// Restocking walks every warehouse's shelves and decides, four choices deep, what to reorder — the
+// decision that matters is buried under the ones that only filter.
+public sealed class Restock(IReadOnlyDictionary<string, IReadOnlyList<Shelf>> warehouses)
+{
+    public IReadOnlyList<string> Reorders()
+    {
+        var reorders = new List<string>();
 
-// in Restock.cs
-private static string Reorder(string warehouse, Shelf shelf) =>
-    $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
+        foreach (var (warehouse, shelves) in warehouses)
+        {
+            foreach (var shelf in shelves)
+            {
+                if (shelf.OnHand < shelf.Minimum)
+                {
+                    if (shelf.Supplier is not null)
+                    {
+                        reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                    }
+                }
+            }
+        }
+
+        return reorders;
+    }
+
+    public IReadOnlyList<string> ReordersFlat() =>
+        warehouses
+            .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
+            .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
+            .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
+            .ToList();
+
+    private static string Reorder(string warehouse, Shelf shelf) =>
+        $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
+}
 ```
 
 ### deep-nesting — in Go
@@ -273,18 +309,17 @@ func (b *Bay) Sent(bays []*Bay) int {
 }
 ```
 
-The other 51 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 50 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=shared/flow` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-nesting`, `duplicated-branch-tail`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `query-in-loop`, `reassigned-parameter`, `redundant-else`, `short-circuit-statement`, `subject-ladder`, `ternary-statement`, `unnamed-condition`, `unreachable-statement`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 56 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 55 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

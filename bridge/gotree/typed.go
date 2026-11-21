@@ -3,71 +3,9 @@ package gotree
 import (
 	"go/ast"
 	"go/types"
-	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 )
-
-func (w *writer) typed(held ast.Node, built *contract.Node) {
-	if w.facts == nil {
-		return
-	}
-
-	if expression, isExpression := held.(ast.Expr); isExpression {
-		if facts, found := w.facts.Types[expression]; found {
-			if at := w.typeIndex(typeOf(facts.Type, "compiler")); at != nil {
-				built.ResolvedType = at
-			}
-			if facts.Value != nil {
-				built.Own().Constant = true
-			}
-		}
-	}
-
-	switch node := held.(type) {
-	case *ast.Ident:
-		if _, absent := w.facts.Uses[node].(*types.Nil); absent {
-			built.Own().Literal = "null"
-		}
-		w.say(built, func(facts *contract.Facts) { facts.Refers = w.refers(node) })
-	case *ast.CallExpr:
-		if reached := w.target(node); reached != nil {
-			built.Own().Target = reached
-		}
-	case *ast.FuncDecl:
-		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.symbol(node.Name) })
-		w.sayType(built, func(facts *contract.Facts) { facts.Returns = w.resultType(node.Type) })
-	case *ast.FuncLit:
-		w.sayType(built, func(facts *contract.Facts) { facts.Returns = w.resultType(node.Type) })
-	case *ast.TypeSpec:
-		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.symbol(node.Name) })
-		w.readMethods(node, built)
-	case *ast.ValueSpec:
-		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.oneSymbol(node.Names) })
-		w.sayType(built, func(facts *contract.Facts) { facts.Declared = w.writtenType(node.Type) })
-	case *ast.Field:
-		w.say(built, func(facts *contract.Facts) { facts.Symbol = w.oneSymbol(node.Names) })
-		w.sayType(built, func(facts *contract.Facts) { facts.Declared = w.writtenType(node.Type) })
-	}
-}
-
-func (w *writer) say(built *contract.Node, write func(*contract.Facts)) {
-	held := &contract.Facts{}
-	write(held)
-	if held.Symbol == "" && held.Refers == "" {
-		return
-	}
-	write(built.Own())
-}
-
-func (w *writer) sayType(built *contract.Node, write func(*contract.Facts)) {
-	held := &contract.Facts{}
-	write(held)
-	if held.Declared == nil && held.Returns == nil {
-		return
-	}
-	write(built.Own())
-}
 
 func (w *writer) refers(name *ast.Ident) string {
 	object, used := w.facts.Uses[name]
@@ -177,65 +115,6 @@ func calleeIdent(callee ast.Expr) *ast.Ident {
 	}
 
 	return nil
-}
-
-func (w *writer) writtenType(written ast.Expr) *contract.Type {
-	if written == nil {
-		return nil
-	}
-	facts, found := w.facts.Types[written]
-	if !found {
-		return nil
-	}
-
-	return typeOf(facts.Type, "written")
-}
-
-func (w *writer) resultType(signature *ast.FuncType) *contract.Type {
-	if signature == nil || signature.Results == nil || len(signature.Results.List) == 0 {
-		return nil
-	}
-
-	var results []*contract.Type
-	for _, field := range signature.Results.List {
-		written := w.writtenType(field.Type)
-		if written == nil {
-			return nil
-		}
-		for range max(1, len(field.Names)) {
-			results = append(results, written)
-		}
-	}
-	if len(results) == 1 {
-		return results[0]
-	}
-
-	return &contract.Type{Text: "(" + textsOf(results) + ")", Kind: "tuple", Members: results, Origin: "written"}
-}
-
-func textsOf(types []*contract.Type) string {
-	texts := make([]string, 0, len(types))
-	for _, held := range types {
-		texts = append(texts, held.Text)
-	}
-
-	return strings.Join(texts, ", ")
-}
-
-func (w *writer) typeIndex(held *contract.Type) *int {
-	if held == nil {
-		return nil
-	}
-
-	key := held.Origin + "\x00" + held.Kind + "\x00" + held.Text
-	if at, seen := w.index[key]; seen {
-		return &at
-	}
-	at := len(w.types)
-	w.types = append(w.types, held)
-	w.index[key] = at
-
-	return &at
 }
 
 func ownersIn(parsed *ast.File, facts *types.Info, module string) map[*ast.Ident]string {

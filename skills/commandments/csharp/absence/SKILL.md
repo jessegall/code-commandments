@@ -61,11 +61,25 @@ The null-forgiving `!` on a value declared nullable — the compiler told the ca
 ```cs
 ----------[ Bad ]----------
 
-public IReadOnlyList<string> Emails() => customers.Where(customer => customer.Email != null).Select(customer => customer.Email!).ToList();
+// The mailing list keeps the customers who gave an address — it filters out the nulls, then tells the
+// compiler with `!` what the filter already proved, instead of letting the filter say it.
+public sealed class Mailing(IReadOnlyList<Customer> customers)
+{
+    public IReadOnlyList<string> Emails() => customers.Where(customer => customer.Email != null).Select(customer => customer.Email!).ToList();
+
+    public IReadOnlyList<string> Addresses() => customers.Select(customer => customer.Email).OfType<string>().ToList();
+}
 
 ----------[ Good ]----------
 
-public IReadOnlyList<string> Addresses() => customers.Select(customer => customer.Email).OfType<string>().ToList();
+// The mailing list keeps the customers who gave an address — it filters out the nulls, then tells the
+// compiler with `!` what the filter already proved, instead of letting the filter say it.
+public sealed class Mailing(IReadOnlyList<Customer> customers)
+{
+    public IReadOnlyList<string> Emails() => customers.Where(customer => customer.Email != null).Select(customer => customer.Email!).ToList();
+
+    public IReadOnlyList<string> Addresses() => customers.Select(customer => customer.Email).OfType<string>().ToList();
+}
 ```
 
 ## Commands

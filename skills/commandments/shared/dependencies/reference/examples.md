@@ -9,10 +9,7 @@ A constructor takes another module's concrete service
 ```php
 ----------[ Bad ]----------
 
-public function __construct(
-    private CropCalendar $crops,
-    private WaterSchedule $water,
-) {}
+public function __construct(private readonly ProductRepository $products) {}
 
 ----------[ Good ]----------
 
@@ -87,20 +84,48 @@ A constructor takes another module's concrete service
 ```cs
 ----------[ Bad ]----------
 
-public ParcelSettingsTreeOwner(
-    ParcelSettingsTreeImportedService reader)
+public sealed class ParcelSettingsTreeOwner
 {
-    this.reader = reader;
+    private readonly ParcelSettingsTreeImportedService reader;
+
+    public ParcelSettingsTreeOwner(
+        ParcelSettingsTreeImportedService reader)
+    {
+        this.reader = reader;
+    }
+
+    public string Record() { return this.reader.Read() + "!"; }
 }
 
 ----------[ Good ]----------
 
-public ReceiptJob(
-    IReceiptFormatter formatter,
-    string reference)
+public sealed class ReceiptJob
 {
-    this.formatter = formatter;
-    this.reference = reference;
+    private readonly IReceiptFormatter formatter;
+    private readonly string reference;
+
+    public ReceiptJob(
+        IReceiptFormatter formatter,
+        string reference)
+    {
+        this.formatter = formatter;
+        this.reference = reference;
+    }
+
+    public string Caption()
+    {
+        return "Customer copy: " + this.FormatCurrent();
+    }
+
+    private string FormatCurrent()
+    {
+        return this.formatter.FormatNumber(this.reference);
+    }
+
+    public string Key
+    {
+        get { return this.reference; }
+    }
 }
 ```
 
@@ -192,24 +217,32 @@ A caller checks another object's state before telling it to act
 ```cs
 ----------[ Bad ]----------
 
-public void Dispatch(ParcelSettingsTreeBatch batch)
+public sealed class ParcelSettingsTreeSender
 {
-    if (batch.Stage != ParcelSettingsTreeStage.Open)
+    public void Dispatch(ParcelSettingsTreeBatch batch)
     {
-        throw new InvalidOperationException();
+        if (batch.Stage != ParcelSettingsTreeStage.Open)
+        {
+            throw new InvalidOperationException();
+        }
+        batch.Seal();
     }
-    batch.Seal();
 }
 
 ----------[ Good ]----------
 
-public void Dispatch()
+public sealed class ReceiptDispatch
 {
-    if (!this.queued)
+    private bool queued = true;
+
+    public void Dispatch()
     {
-        throw new System.InvalidOperationException();
+        if (!this.queued)
+        {
+            throw new System.InvalidOperationException();
+        }
+        this.queued = false;
     }
-    this.queued = false;
 }
 ```
 
@@ -418,8 +451,6 @@ An interface has only one local implementation
 ```php
 ----------[ Bad ]----------
 
-// Prints the label on a warehouse bin.
-
 interface BinLabeller
 {
     public function label(string $bin): string;
@@ -430,8 +461,6 @@ interface BinLabeller
 }
 
 ----------[ Good ]----------
-
-// Replaces a lost voucher with a new code, depending on the one generator the shop has.
 
 final class VoucherReissuer
 {
@@ -587,9 +616,33 @@ public sealed class ParcelSettingsTreeForwarder
 
 ----------[ Good ]----------
 
-public string Caption()
+public sealed class ReceiptJob
 {
-    return "Customer copy: " + this.FormatCurrent();
+    private readonly IReceiptFormatter formatter;
+    private readonly string reference;
+
+    public ReceiptJob(
+        IReceiptFormatter formatter,
+        string reference)
+    {
+        this.formatter = formatter;
+        this.reference = reference;
+    }
+
+    public string Caption()
+    {
+        return "Customer copy: " + this.FormatCurrent();
+    }
+
+    private string FormatCurrent()
+    {
+        return this.formatter.FormatNumber(this.reference);
+    }
+
+    public string Key
+    {
+        get { return this.reference; }
+    }
 }
 ```
 
@@ -680,13 +733,19 @@ An override only throws
 ```cs
 ----------[ Bad ]----------
 
-public override string Read() { throw new NotSupportedException(); }
+public sealed class ParcelSettingsTreeBroken : ParcelSettingsTreeSource
+{
+    public override string Read() { throw new NotSupportedException(); }
+}
 
 ----------[ Good ]----------
 
-public override string FormatNumber(string reference)
+public sealed class LongReceipt : PlainReceipt
 {
-    return "Customer copy: " + base.FormatNumber(reference);
+    public override string FormatNumber(string reference)
+    {
+        return "Customer copy: " + base.FormatNumber(reference);
+    }
 }
 ```
 
@@ -735,16 +794,29 @@ A chain reaches through three local types
 ```cs
 ----------[ Bad ]----------
 
-public string Read(ParcelSettingsTreeShelf shelf)
+public sealed class ParcelSettingsTreeDisplay
 {
-    return shelf.Bin.Label.Text;
+    public string Read(ParcelSettingsTreeShelf shelf)
+    {
+        return shelf.Bin.Label.Text;
+    }
+
+    private string Draft() { return "parcel"; }
+
+    public int Weight
+    {
+        get { return 8; }
+    }
 }
 
 ----------[ Good ]----------
 
-public string ReceiptCaption(ReceiptJob job)
+public sealed class ReceiptIdentity
 {
-    return job.Caption();
+    public string ReceiptCaption(ReceiptJob job)
+    {
+        return job.Caption();
+    }
 }
 ```
 
@@ -816,7 +888,7 @@ A collaborator is stored and never read
 ```go
 ----------[ Bad ]----------
 
-BicycleVoucherReport struct {
+type BicycleVoucherReport struct {
 	issuedToday uint
 	redeemed    uint
 	totals      []int64
@@ -825,7 +897,7 @@ BicycleVoucherReport struct {
 
 ----------[ Good ]----------
 
-receiptJob struct {
+type receiptJob struct {
 	renderer receiptRenderer
 }
 ```
@@ -865,20 +937,59 @@ def _format_current(self) -> str:
     return self.receipt.format_number(self.reference)
 ```
 
-### unused-private-member — in C#
+### unused-private-member · useless-property-hook — in C#
 
-A private member has no readers
+_unused-private-member_ — A private member has no readers
+
+_useless-property-hook_ — A getter reads no state on its object
 
 ```cs
 ----------[ Bad ]----------
 
-private string Draft() { return "parcel"; }
+public sealed class ParcelSettingsTreeDisplay
+{
+    public string Read(ParcelSettingsTreeShelf shelf)
+    {
+        return shelf.Bin.Label.Text;
+    }
+
+    private string Draft() { return "parcel"; }
+
+    public int Weight
+    {
+        get { return 8; }
+    }
+}
 
 ----------[ Good ]----------
 
-private string FormatCurrent()
+public sealed class ReceiptJob
 {
-    return this.formatter.FormatNumber(this.reference);
+    private readonly IReceiptFormatter formatter;
+    private readonly string reference;
+
+    public ReceiptJob(
+        IReceiptFormatter formatter,
+        string reference)
+    {
+        this.formatter = formatter;
+        this.reference = reference;
+    }
+
+    public string Caption()
+    {
+        return "Customer copy: " + this.FormatCurrent();
+    }
+
+    private string FormatCurrent()
+    {
+        return this.formatter.FormatNumber(this.reference);
+    }
+
+    public string Key
+    {
+        get { return this.reference; }
+    }
 }
 ```
 
@@ -917,18 +1028,4 @@ get weight(): number {
 get key(): string {
     return this.reference
 }
-```
-
-### useless-property-hook — in C#
-
-A getter reads no state on its object
-
-```cs
-----------[ Bad ]----------
-
-get { return 8; }
-
-----------[ Good ]----------
-
-get { return this.reference; }
 ```

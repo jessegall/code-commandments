@@ -53,10 +53,7 @@ A constructor takes another module's concrete service
 ```php
 ----------[ Bad ]----------
 
-public function __construct(
-    private CropCalendar $crops,
-    private WaterSchedule $water,
-) {}
+public function __construct(private readonly ProductRepository $products) {}
 
 ----------[ Good ]----------
 
@@ -131,20 +128,48 @@ A constructor takes another module's concrete service
 ```cs
 ----------[ Bad ]----------
 
-public ParcelSettingsTreeOwner(
-    ParcelSettingsTreeImportedService reader)
+public sealed class ParcelSettingsTreeOwner
 {
-    this.reader = reader;
+    private readonly ParcelSettingsTreeImportedService reader;
+
+    public ParcelSettingsTreeOwner(
+        ParcelSettingsTreeImportedService reader)
+    {
+        this.reader = reader;
+    }
+
+    public string Record() { return this.reader.Read() + "!"; }
 }
 
 ----------[ Good ]----------
 
-public ReceiptJob(
-    IReceiptFormatter formatter,
-    string reference)
+public sealed class ReceiptJob
 {
-    this.formatter = formatter;
-    this.reference = reference;
+    private readonly IReceiptFormatter formatter;
+    private readonly string reference;
+
+    public ReceiptJob(
+        IReceiptFormatter formatter,
+        string reference)
+    {
+        this.formatter = formatter;
+        this.reference = reference;
+    }
+
+    public string Caption()
+    {
+        return "Customer copy: " + this.FormatCurrent();
+    }
+
+    private string FormatCurrent()
+    {
+        return this.formatter.FormatNumber(this.reference);
+    }
+
+    public string Key
+    {
+        get { return this.reference; }
+    }
 }
 ```
 
@@ -178,7 +203,7 @@ func NewReceiptJob(
 }
 ```
 
-The other 37 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 36 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
@@ -188,5 +213,5 @@ The other 37 — one per rule — are in [`reference/examples.md`](reference/exa
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 42 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 41 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

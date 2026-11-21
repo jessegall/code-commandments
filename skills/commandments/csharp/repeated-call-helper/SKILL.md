@@ -69,38 +69,63 @@ the same `with` copy — `order with { Status = OrderStatus.Shipped }` — writt
 ----------[ Bad ]----------
 
 // in OrderStages.cs
-public static StagedOrder Dispatch(StagedOrder order) => order with { Stage = Stage.Shipped, Note = "on its way" };
+public static class Fulfilment2
+{
+    public static StagedOrder Dispatch(StagedOrder order) => order with { Stage = Stage.Shipped, Note = "on its way" };
+
+    public static StagedOrder Send(StagedOrder order) => order.Shipped();
+
+    public static StagedOrder Annotate(StagedOrder order, string note) => order with { Note = note };
+}
 
 // in Backfills.cs
-public static IReadOnlyList<StagedOrder> Repaired(IEnumerable<StagedOrder> stuck, DateOnly today, IReadOnlyDictionary<string, DateOnly> packedOn)
+// Repairs old orders the weekly report found stuck in packing for more than a fortnight.
+public static class Backfills
 {
-    var overdue = stuck.Where(order => order.Stage == Stage.Packed && packedOn[order.Id].AddDays(14) < today);
+    public static IReadOnlyList<StagedOrder> Repaired(IEnumerable<StagedOrder> stuck, DateOnly today, IReadOnlyDictionary<string, DateOnly> packedOn)
+    {
+        var overdue = stuck.Where(order => order.Stage == Stage.Packed && packedOn[order.Id].AddDays(14) < today);
 
-    return overdue.Select(order => order with { Stage = Stage.Shipped, Note = "on its way" }).ToList();
+        return overdue.Select(order => order with { Stage = Stage.Shipped, Note = "on its way" }).ToList();
+    }
 }
 
 // in Handover.cs
-public StagedOrder Scanned(StagedOrder order, string courier)
+// The courier scan that marks an order as handed over, and logs who scanned it.
+public sealed class Handover(List<string> scanLog)
 {
-    scanLog.Add($"{courier} scanned {order.Id}");
-
-    var shipped = order with { Note = "on its way", Stage = Stage.Shipped };
-
-    if (scanLog.Count > 100)
+    public StagedOrder Scanned(StagedOrder order, string courier)
     {
-        scanLog.RemoveAt(0);
-    }
+        scanLog.Add($"{courier} scanned {order.Id}");
 
-    return shipped;
+        var shipped = order with { Note = "on its way", Stage = Stage.Shipped };
+
+        if (scanLog.Count > 100)
+        {
+            scanLog.RemoveAt(0);
+        }
+
+        return shipped;
+    }
 }
 
 ----------[ Good ]----------
 
 // in OrderStages.cs
-public StagedOrder Shipped() => this with { Stage = Stage.Shipped, Note = "on its way" };
+public sealed record StagedOrder(string Id, Stage Stage, string Note)
+{
+    public StagedOrder Shipped() => this with { Stage = Stage.Shipped, Note = "on its way" };
+}
 
 // in OrderStages.cs
-public static StagedOrder Send(StagedOrder order) => order.Shipped();
+public static class Fulfilment2
+{
+    public static StagedOrder Dispatch(StagedOrder order) => order with { Stage = Stage.Shipped, Note = "on its way" };
+
+    public static StagedOrder Send(StagedOrder order) => order.Shipped();
+
+    public static StagedOrder Annotate(StagedOrder order, string note) => order with { Note = note };
+}
 ```
 
 ## Commands

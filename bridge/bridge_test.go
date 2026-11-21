@@ -29,14 +29,14 @@ func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
 	if len(stream.Files) == 0 {
 		t.Error("the stream holds no file")
 	}
-	if stream.Program == nil || len(stream.Program.Packages) == 0 {
-		t.Error("the program line names no package")
+	if stream.Program == nil || len(stream.Program.PackageFolders) == 0 {
+		t.Error("the program line names no package folder")
 	}
 	code := 0
 	for _, file := range stream.Files {
 		inSourceOrder(t, file)
 		for _, comment := range file.Comments {
-			if comment.Extras != nil && comment.Extras.Python != nil && comment.Extras.Python.Code {
+			if fragment := comment.Fragment; fragment != nil && fragment.Diagnostics == 0 && fragment.Statements == 1 && fragment.ExpressionKind != "reference" && fragment.ExpressionKind != "literal" {
 				code++
 			}
 		}
@@ -53,9 +53,13 @@ func inSourceOrder(t *testing.T, file *contract.File) {
 		if ok && (node.Span.Start < parent.Span.Start || node.Span.End > parent.Span.End) {
 			t.Errorf("%s: node %d %v lies outside its parent %d %v", file.Path, node.ID, node.Span, parent.ID, parent.Span)
 		}
-		for at := 1; at < len(node.Children); at++ {
-			if node.Children[at].Span.Start < node.Children[at-1].Span.End {
-				t.Errorf("%s: node %d starts before its sibling %d ends", file.Path, node.Children[at].ID, node.Children[at-1].ID)
+		// A role's nodes are in source order by where they start; they may overlap, as a property's accessors lie
+		// inside the property beside them in writtenMembers.
+		for _, part := range node.Parts {
+			for at := 1; at < len(part.Nodes); at++ {
+				if part.Nodes[at].Span.Start < part.Nodes[at-1].Span.Start {
+					t.Errorf("%s: node %d starts before its sibling %d in %s", file.Path, part.Nodes[at].ID, part.Nodes[at-1].ID, part.Role)
+				}
 			}
 		}
 	}

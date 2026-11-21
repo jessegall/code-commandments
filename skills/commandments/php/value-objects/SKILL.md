@@ -39,7 +39,7 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
 - [ ] Fields that always change together are really one type — extract them into a value object and use it directly; don't keep a field that just duplicates a nested object's property.
       _Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property._
 - [ ] A wither should only say what changes: `clone($this, ['x' => $x])` states the intent, while re-listing every field just repeats the constructor in every wither.
-      _Replace `new self($this->a, $this->b, $changed)` with `clone($this, ['c' => $changed])` — `repent` does it for you._
+      _Replace `new self($this->a, $this->b, $changed)` with `clone($this, ['c' => $changed])`._
 - [ ] Make a value immutable: build it complete and derive a NEW one to change it; never write its fields after construction.
       _`readonly` on the class, and a `with…()`/named derivation that returns a new instance (PHP 8.5's `clone with`)._
 - [ ] Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
@@ -68,16 +68,10 @@ public function normalize(array $row): void
 ----------[ Good ]----------
 
 // in Shop\Catalog\ImportRowNormalizer
-// The same import row, given its type the moment it arrives: `ImportRow::from($row)` names the
-// fields ONCE at the boundary, so nothing downstream reads `$row['sku']` off a loose array.
-
 public function ingest(array $row): void
 {
     $this->persist(ImportRow::from($row));
 }
-
-// The same row with its required fields non-nullable: `::from()` fails hard on a
-// real miss, so a valid row can't be confused with a malformed one.
 
 final class ImportRow extends Data
 {
@@ -101,7 +95,6 @@ The other 7 — one per rule — are in [`reference/examples.md`](reference/exam
 
 - `{{binary}} judge --skill=php/value-objects` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-bag-parameter`, `array-return-bag`, `coupled-fields`, `hand-rolled-wither`, `mutable-value-object`, `positional-tuple-return`, `flat-field-cluster`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `hand-rolled-wither`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

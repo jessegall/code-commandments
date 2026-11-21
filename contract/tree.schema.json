@@ -466,7 +466,15 @@
                 "$ref": "#/$defs/type"
               },
               "flags": {
-                "$ref": "#/$defs/node/properties/flags"
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "variadic",
+                    "by-ref",
+                    "promoted"
+                  ]
+                },
+                "uniqueItems": true
               }
             },
             "required": [
@@ -1415,7 +1423,7 @@
     },
     "parameter": {
       "roles": {
-        "binding": "1",
+        "binding": "?",
         "declaredType": "?",
         "default": "?",
         "attributes": "[]"
@@ -1939,8 +1947,7 @@
     },
     "text": {
       "facts": [
-        "value",
-        "conversion"
+        "value"
       ],
       "roles": {},
       "links": {},
@@ -1998,7 +2005,8 @@
         "value": "?"
       },
       "facts": [
-        "form"
+        "form",
+        "operator"
       ],
       "required": [
         "form"
@@ -2220,7 +2228,8 @@
     "modifiers",
     "effective",
     "obligations",
-    "incomplete"
+    "incomplete",
+    "conversion"
   ],
   "categories": {
     "declaration": [

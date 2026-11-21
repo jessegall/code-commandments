@@ -67,8 +67,6 @@ public function post(int $cents): void
 
 ----------[ Good ]----------
 
-// The report's view of a ledger: it holds one and offers only what a report may do, so it has nothing to refuse.
-
 final class LedgerReport
 {
     public function __construct(private readonly LedgerBook $ledger) {}
@@ -98,9 +96,6 @@ public function revalue(string $basis): void
 }
 
 ----------[ Good ]----------
-
-// The FIX: the basis is this call's input, so it stays a PARAMETER and is read from there —
-// `$this->basis` is never written, and the save/restore pair disappears with it.
 
 public function revalueOn(string $basis, int $lots): void
 {
@@ -144,8 +139,6 @@ private function average(): float
 
 ----------[ Good ]----------
 
-// The digest with only what it uses.
-
 final class SalesSummary
 {
     /**
@@ -167,10 +160,6 @@ A `get` hook that reads nothing from `$this` — a stored property wearing compu
 ```php
 ----------[ Bad ]----------
 
-// Implements the contract by copying the interface's hook syntax — but neither body reads
-// `$this`, so both are stored properties wearing computed syntax: the constant belongs in a
-// property default, the constructed value in the constructor.
-
 final class TileAnimation implements AnimatedTile
 {
     public ?string $enterEffect { get => null; }
@@ -183,10 +172,6 @@ final class TileAnimation implements AnimatedTile
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see TileAnimation}: the same tile with both hooks made STORED properties — the
-// constant body became a property default, the constructed one is assigned ONCE in the constructor.
-// A plain property satisfies the interface's `{ get; }` just as well as a hook did.
 
 final class StoredTileAnimation implements AnimatedTile
 {

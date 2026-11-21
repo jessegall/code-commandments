@@ -44,15 +44,6 @@ func write() error {
 		}
 	}
 
-	for language, declared := range declarations() {
-		held, seen := census[language]
-		if !seen {
-			held = &counted{constructs: map[string]*rule.Construct{}}
-			census[language] = held
-		}
-		held.declares(declared)
-	}
-
 	for language, held := range census {
 		if err := held.written(language); err != nil {
 			return err
@@ -60,31 +51,6 @@ func write() error {
 	}
 
 	return nil
-}
-
-func declarations() map[contract.Language]contract.Declaration {
-	found := map[contract.Language]contract.Declaration{}
-	files, err := filepath.Glob(filepath.Join(rule.DeclarationsFolder, "*.json"))
-	if err != nil {
-		return found
-	}
-
-	for _, file := range files {
-		handle, err := os.Open(file)
-		if err != nil {
-			continue
-		}
-		declared, err := contract.ReadDeclarations(handle)
-		handle.Close()
-		if err != nil {
-			continue
-		}
-		for _, one := range declared {
-			found[one.Language] = one
-		}
-	}
-
-	return found
 }
 
 func read(source string) (*contract.Stream, error) {
@@ -141,16 +107,14 @@ func (c *counted) count(node *contract.Node, path string) {
 		c.constructs[node.Kind] = construct
 	}
 
-	add(&construct.Roles, node.Role)
-	add(&construct.Is, node.Is...)
+	add(&construct.Roles, node.InRole())
 	if node.Facts != nil {
 		add(&construct.Operators, node.Operator)
 		add(&construct.Modifiers, node.Modifiers...)
-		add(&construct.Flags, node.Flags...)
 	}
 
-	for _, child := range node.Children {
-		add(&construct.Fields, child.Field)
+	for _, child := range node.Children() {
+		add(&construct.Fields, child.InRole())
 	}
 }
 
@@ -159,27 +123,6 @@ func add(into *[]string, values ...string) {
 		if value != "" && !slices.Contains(*into, value) {
 			*into = append(*into, value)
 		}
-	}
-}
-
-func (c *counted) declares(declared contract.Declaration) {
-	c.parser = declared.Parser
-	c.from = declared.From
-	c.fields = declared.Fields
-
-	c.answeredFor = []string{"kind"}
-	if len(declared.DeclaredFields()) > 0 {
-		c.answeredFor = append(c.answeredFor, "field")
-	}
-
-	for _, kind := range declared.Kinds {
-		construct, seen := c.constructs[kind.Kind]
-		if !seen {
-			construct = &rule.Construct{Kind: kind.Kind, Spells: rule.Spelling(kind.Kind)}
-			c.constructs[kind.Kind] = construct
-		}
-		add(&construct.Vouched, "declared")
-		add(&construct.Fields, kind.Fields...)
 	}
 }
 

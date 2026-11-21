@@ -1,8 +1,8 @@
-using Bill = Billing.Invoice;
+using Money = System.Decimal;
 
 namespace Orders;
 
 public static class Totals
 {
-    public static int Of(Bill bill) => 0;
+    public static int Of(Money amount) => 0;
 }

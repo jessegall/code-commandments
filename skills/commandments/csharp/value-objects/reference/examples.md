@@ -9,12 +9,16 @@ a method that returns `new Dictionary<string, object> { ["sku"] = …, ["qty"] =
 ```cs
 ----------[ Bad ]----------
 
-public static Dictionary<string, object> Footer(string orderId, int totalCents, DateOnly paidOn) => new()
+// The lines printed at the foot of a receipt.
+public static class Receipts
 {
-    ["order"] = orderId,
-    ["total"] = totalCents,
-    ["paid"] = paidOn,
-};
+    public static Dictionary<string, object> Footer(string orderId, int totalCents, DateOnly paidOn) => new()
+    {
+        ["order"] = orderId,
+        ["total"] = totalCents,
+        ["paid"] = paidOn,
+    };
+}
 
 ----------[ Good ]----------
 
@@ -22,7 +26,10 @@ public static Dictionary<string, object> Footer(string orderId, int totalCents, 
 public sealed record ReceiptFooter(string OrderId, int TotalCents, DateOnly PaidOn);
 
 // in Receipts.cs
-public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
+public static class TypedReceipts
+{
+    public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
+}
 ```
 
 ### csharp-coupled-fields
@@ -58,15 +65,36 @@ A string-keyed dictionary or JSON object read by keys written in the source — 
 ```cs
 ----------[ Bad ]----------
 
-public int Units(IReadOnlyDictionary<string, string> row)
+// An import row arrives as a dictionary and stays one — each use reads the same keys by name, a record
+// nobody declared, with its field names repeated as strings wherever it is read.
+public sealed class ImportRows
 {
-    return int.Parse(row["units"]) * 2;
+    public int Units(IReadOnlyDictionary<string, string> row)
+    {
+        return int.Parse(row["units"]) * 2;
+    }
+
+    public int UnitsOf(ImportRow row) => row.Units * 2;
+
+    public int OnHand(IReadOnlyDictionary<string, int> stock, string sku) => stock.GetValueOrDefault(sku);
 }
 
 ----------[ Good ]----------
 
 // in ImportRows.cs
-public int UnitsOf(ImportRow row) => row.Units * 2;
+// An import row arrives as a dictionary and stays one — each use reads the same keys by name, a record
+// nobody declared, with its field names repeated as strings wherever it is read.
+public sealed class ImportRows
+{
+    public int Units(IReadOnlyDictionary<string, string> row)
+    {
+        return int.Parse(row["units"]) * 2;
+    }
+
+    public int UnitsOf(ImportRow row) => row.Units * 2;
+
+    public int OnHand(IReadOnlyDictionary<string, int> stock, string sku) => stock.GetValueOrDefault(sku);
+}
 
 // in ImportRows.cs
 public sealed record ImportRow(string Sku, int Units)
@@ -82,7 +110,17 @@ a property or method whose whole body returns the type's own `List`, `Dictionary
 ```cs
 ----------[ Bad ]----------
 
-public List<string> Notes => this.notes;
+// The notes pinned to one board, kept in a list the board builds. The property hands that very list back, so
+// any caller can pin or unpin without the board knowing, and the board cannot keep its own order. Below it,
+// the repair: the caller is given something it cannot change, and the pinning stays with the board.
+public sealed class NoteBoard
+{
+    private readonly List<string> notes = new();
+
+    public void Pin(string note) => this.notes.Add(note);
+
+    public List<string> Notes => this.notes;
+}
 
 ----------[ Good ]----------
 
@@ -111,7 +149,6 @@ public sealed record Basket(string ShopperId)
 
 ----------[ Good ]----------
 
-// in Baskets.cs
 // A basket held for a shopper: a value, so a change is a new one.
 public sealed record HeldBasket(string ShopperId)
 {
@@ -128,12 +165,28 @@ a method that returns `(decimal, decimal, string)` — unnamed values the caller
 ```cs
 ----------[ Bad ]----------
 
-public static (decimal, decimal, string) Split(decimal gross, decimal rate, string currency) => (gross / (1 + rate), gross - gross / (1 + rate), currency);
+// An order total split into what the shop keeps and what it owes in tax.
+public static class VatSplits
+{
+    public static (decimal, decimal, string) Split(decimal gross, decimal rate, string currency) => (gross / (1 + rate), gross - gross / (1 + rate), currency);
+
+    public static VatSplit Divided(decimal gross, decimal rate) => new(gross / (1 + rate), gross - gross / (1 + rate));
+
+    public static (VatSplit, string) Labelled(decimal gross, decimal rate) => (Divided(gross, rate), $"{rate:P0} VAT");
+}
 
 ----------[ Good ]----------
 
 // in VatSplits.cs
-public static VatSplit Divided(decimal gross, decimal rate) => new(gross / (1 + rate), gross - gross / (1 + rate));
+// An order total split into what the shop keeps and what it owes in tax.
+public static class VatSplits
+{
+    public static (decimal, decimal, string) Split(decimal gross, decimal rate, string currency) => (gross / (1 + rate), gross - gross / (1 + rate), currency);
+
+    public static VatSplit Divided(decimal gross, decimal rate) => new(gross / (1 + rate), gross - gross / (1 + rate));
+
+    public static (VatSplit, string) Labelled(decimal gross, decimal rate) => (Divided(gross, rate), $"{rate:P0} VAT");
+}
 
 // in VatSplits.cs
 public sealed record VatSplit(decimal Net, decimal Vat);

@@ -31,7 +31,7 @@ if the codebase already uses them — structural, not narrative.) Everything els
 ## Rules
 
 - [ ] Write a docblock as a block: the opening delimiter on its own line, one star per line of content, the closing delimiter on its own line.
-      _expand it — `repent` does this for you_
+      _expand it to a multi-line docblock_
 
 ## Worked example
 
@@ -42,7 +42,6 @@ A docblock whose delimiter shares a line with its text — a one-liner, or a blo
 ```php
 ----------[ Bad ]----------
 
-/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
 final class LogLine
 {
     public string $level = 'info';
@@ -74,9 +73,6 @@ final class LogLine
 
 ----------[ Good ]----------
 
-/**
- * A node in a test log tree — it holds its own children, so a failure is knowledge it could answer.
- */
 final class LogEntry
 {
     public string $level = 'info';
@@ -97,7 +93,6 @@ final class LogEntry
 
 - `{{binary}} judge --skill=php/documentation` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `inline-docblock`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `inline-docblock`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

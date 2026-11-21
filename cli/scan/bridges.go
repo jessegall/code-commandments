@@ -40,13 +40,26 @@ type Bridge struct {
 	Identity     func() string
 }
 
-// identity is what the bridge's kept lines are keyed on: its own code where it can name it, else the whole binary.
+// identity is what the bridge's kept lines are keyed on: its own code where it can name it, else the whole binary, and
+// the tree it writes, so a change of contract or schema keeps no line of the tree before it, whatever the bridge.
 func (b Bridge) identity() string {
+	return keyedOn(b.code(), treeIdentity())
+}
+
+// treeIdentity names the tree this binary reads; a test swaps it for the tree of another contract.
+var treeIdentity = contract.Identity
+
+func (b Bridge) code() string {
 	if b.Identity == nil {
 		return bridge.Build()
 	}
 
 	return b.Identity()
+}
+
+// keyedOn is a kept line's key: the code that wrote it and the tree it was written in.
+func keyedOn(code, tree string) string {
+	return code + "+" + tree
 }
 
 // RunsAsAProcess says whether the bridge is a program of its own, which a service can keep up; one the binary carries

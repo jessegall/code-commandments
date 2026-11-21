@@ -9,9 +9,6 @@ All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the tru
 ```php
 ----------[ Bad ]----------
 
-// A row from the legacy CSV importer — every field nullable, so a malformed row is
-// indistinguishable from a valid one and every consumer must re-validate.
-
 final class LegacyImportRow extends Data
 {
     public function __construct(
@@ -28,11 +25,6 @@ final class LegacyImportRow extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see LegacyImportRow}: every field retyped to the truth. The three the importer cannot
-// work without are non-nullable and undefaulted, so `::from()` fails hard on a malformed row; the one
-// that is GENUINELY absent-or-present is `string|Optional = new Optional()`, which the wire OMITS
-// rather than shipping as `null`. No `?? 0` is needed anywhere downstream.
 
 final class RetypedImportRow extends Data
 {
@@ -62,10 +54,6 @@ Every field of a `Data` object is `T|Optional` — the type promises nothing is 
 ```php
 ----------[ Bad ]----------
 
-/*
- * Scenario 1 — a layout box where every dimension is Optional. A grid with no columns is not a grid; the
- * optionality belongs on the parent's `GridBox|Optional $grid`, and these leaves want concrete defaults.
- */
 final class GridBox extends Data
 {
     public function __construct(
@@ -101,11 +89,6 @@ final class GridBox extends Data
 
 ----------[ Good ]----------
 
-// The FIX for {@see GridBox}: every leaf gets a CONCRETE default — a box always has a column count,
-// a span and a gap — and the optionality moves UP to the container field where the box itself may be
-// absent (`LayoutBox|Optional $grid = new Optional()`). Present means valid; absent is one question,
-// asked once, at the place that owns it.
-
 final class LayoutBox extends Data
 {
     public function __construct(
@@ -124,8 +107,6 @@ final class LayoutBox extends Data
         return $rows * $this->columns;
     }
 }
-
-// The container that carries the absence the leaves used to scatter.
 
 final class LayoutPanel extends Data
 {
@@ -148,9 +129,6 @@ A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Col
 ```php
 ----------[ Bad ]----------
 
-/*
- * Scenario 1 — a season roster typed `DataCollection`. Should be `array` + `#[DataCollectionOf]`.
- */
 final class RosterPage extends Data
 {
     /**
@@ -175,10 +153,6 @@ final class RosterPage extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see RosterPage}: the roster is typed `array` and declares its element type with
-// `#[DataCollectionOf(Member::class)]`. The element typing drives hydration and nested validation,
-// and the generated TypeScript is a clean `Member[]` instead of `undefined<number, Member>`.
 
 final class SquadPage extends Data
 {
@@ -206,8 +180,6 @@ final class SquadPage extends Data
 ```php
 ----------[ Bad ]----------
 
-// Typed invoice view, built from an order.
-
 final class InvoiceData extends Data
 {
     public function __construct(
@@ -228,10 +200,6 @@ final class InvoiceData extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see InvoiceData}: the `@method` tag names the INVISIBLE magic `from()` — the one
-// method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
-// below it, so no hint re-declares a real method.
 
 final class CreditNoteData extends Data
 {
@@ -259,10 +227,6 @@ A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads 
 ```php
 ----------[ Bad ]----------
 
-/*
- * Scenario 1 — a get-only hook projecting a collaborator's list, no `#[Computed]`. Spatie reads `docks`
- * as a hydration input and expects it in `::from()`, which a get-only hook cannot receive.
- */
 final class DockShell extends Data
 {
     public array $docks { get => $this->dockSet->all(); }
@@ -284,9 +248,6 @@ final class DockShell extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see DockShell}: the get-only hook is stamped `#[Computed]`, so Spatie treats `docks`
-// as an OUTPUT-only value it derives after hydration — it is no longer expected in `::from()`.
 
 final class ComputedDockShell extends Data
 {
@@ -326,16 +287,10 @@ public function map(array $rows): array
 ----------[ Good ]----------
 
 // in Shop\Catalog\ProductImportMapper
-// The FIX for {@see map()}: one pass, no loop — `::collect()` maps every row itself, and the
-// element type is declared once on the receiving `#[DataCollectionOf(ProductData::class)]` slot.
-
 public function collectAll(array $rows): mixed
 {
     return ProductData::collect($rows);
 }
-
-// The slot `collectAll()` fills. The element type is declared ONCE, here, which is what lets
-// `::collect()` map every row without a loop naming `ProductData` again at the call site.
 
 final class ProductImportBatch extends Data
 {
@@ -362,10 +317,6 @@ public function __construct(
 
 ----------[ Good ]----------
 
-// The FIX for {@see InboundOrderData}: the `simple → complex` mapping moves ONTO the property as a
-// `#[WithCast(MoneyCast::class)]`, so every call site hands `::from()` the RAW cents (see
-// {@see InboundControllers::castOrder()}) and the cast builds the `Money` in one place.
-
 final class CastInboundOrderData extends Data
 {
     public function __construct(
@@ -378,8 +329,6 @@ final class CastInboundOrderData extends Data
         return $this->price->formatted();
     }
 }
-
-// The one home of the raw → `Money` mapping.
 
 final class MoneyCast
 {
@@ -397,11 +346,6 @@ A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself
 ```php
 ----------[ Bad ]----------
 
-/*
- * A COLLECTION-shaped scenario, unlike the nullable-object gauges — a roster board whose seats are a
- * `#[DataCollectionOf]` list of a nested `Seat` Data that lacks `#[TypeScript]`. The transformer emits the
- * element as `undefined`, so the whole `seats` array is malformed on the frontend.
- */
 #[TypeScript]
 final class RosterBoard extends Data
 {
@@ -430,9 +374,6 @@ final class RosterBoard extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see RosterBoard}: the nested Data the wire reaches is itself stamped `#[TypeScript]`,
-// so the transformer generates a real `CrewSeat` type instead of `undefined` for every element.
 
 #[TypeScript]
 final class CrewBoard extends Data
@@ -483,15 +424,10 @@ public function legacyPresent(Order $order): OrderData
 ----------[ Good ]----------
 
 // in Shop\Http\Presenters\OrderPresenter
-// The FIX for {@see legacyPresent()}: the same order presented through the magic factory —
-// `OrderData::from($order)` runs the casts, mappers and validation a raw `new` skips.
-
 public function present(Order $order): OrderData
 {
     return OrderData::from($order);
 }
-
-// Typed view of an order for the API.
 
 final class OrderData extends Data
 {
@@ -511,8 +447,6 @@ Data class not `final` / props not `readonly` promoted
 
 ```php
 ----------[ Bad ]----------
-
-// A customer profile DTO that forgot to seal itself.
 
 class OpenProfileData extends Data
 {
@@ -545,9 +479,6 @@ class OpenProfileData extends Data
 
 ----------[ Good ]----------
 
-// The FIX for {@see OpenProfileData}: the same profile SEALED — `final`, with `readonly` promoted
-// properties. A DTO is a leaf value, not a base to extend or mutate.
-
 final class SealedProfileData extends Data
 {
     public function __construct(
@@ -578,21 +509,11 @@ public function position(): OptCoords|Optional
 ----------[ Good ]----------
 
 // in Shop\Http\Pages\Hydration\MoveRequest
-// The FIX: the null→`Optional` map lives in ONE named factory — `OptCoords::optionalOrMissing()`
-// (the scaffolded `OptionalOrMissing` trait) — so no producer re-derives it with a ternary.
-
 public function requestedPosition(): OptCoords|Optional
 {
     return OptCoords::optionalOrMissing($this->rawPosition);
 }
 
-/*
- * Righteous twin: the shared `optionalOrMissing()` home ITSELF — the ONE named factory the rule tells
- * producers to create (the scaffolded trait). Its whole job is the null→Optional map, so the map living
- * here is correct, not a sin. The tell that separates it from a producer is `static::from` — it hydrates
- * its OWN type from a generic payload, where a producer names a concrete OTHER type or coalesces a value.
- * Must NOT flag.
- */
 trait OptionalOrMissing
 {
     public static function optionalOrMissing(mixed $payload): static|Optional
@@ -609,10 +530,6 @@ A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships
 ```php
 ----------[ Bad ]----------
 
-/*
- * Scenario 2 — a frontend-bound gauge. Its optional threshold band is a nullable ENUM, mapped to a colour
- * ramp; a bounded-arithmetic shape distinct from the trail, panel, and metric scenarios.
- */
 #[TypeScript]
 final class WireNode extends Data
 {
@@ -646,10 +563,6 @@ final class WireNode extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see WireNode}: the genuinely-absent band is typed `Band|Optional = new Optional()`,
-// not `?Band = null`. The wire now OMITS the key entirely when there is no band — which is what the
-// frontend's `gauge.band?.` reads as "absent" — instead of shipping `"band": null`.
 
 #[TypeScript]
 final class WireDial extends Data
@@ -690,10 +603,6 @@ public function latest(): OptTag|Optional
 }
 
 ----------[ Good ]----------
-
-// The FIX: Spatie's own `Optional::create()` factory replaces the raw `new Optional` — a static
-// call is legal here, so the factory is what belongs (only a parameter/property DEFAULT, where a
-// call is illegal, keeps `new Optional`).
 
 public function lastKnown(): OptTag|Optional
 {

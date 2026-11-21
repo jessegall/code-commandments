@@ -273,9 +273,6 @@ All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the tru
 ```php
 ----------[ Bad ]----------
 
-// A row from the legacy CSV importer — every field nullable, so a malformed row is
-// indistinguishable from a valid one and every consumer must re-validate.
-
 final class LegacyImportRow extends Data
 {
     public function __construct(
@@ -292,11 +289,6 @@ final class LegacyImportRow extends Data
 }
 
 ----------[ Good ]----------
-
-// The FIX for {@see LegacyImportRow}: every field retyped to the truth. The three the importer cannot
-// work without are non-nullable and undefaulted, so `::from()` fails hard on a malformed row; the one
-// that is GENUINELY absent-or-present is `string|Optional = new Optional()`, which the wire OMITS
-// rather than shipping as `null`. No `?? 0` is needed anywhere downstream.
 
 final class RetypedImportRow extends Data
 {
@@ -325,7 +317,6 @@ The other 12 — one per rule — are in [`reference/examples.md`](reference/exa
 
 - `{{binary}} judge --skill=php/spatie-data` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `all-nullable-data`, `all-optional-data`, `data-collection-type`, `data-method-hint-collision`, `hook-missing-computed`, `manual-hydration-loop`, `manual-input-cast`, `nested-type-missing-typescript`, `new-data-object`, `non-final-data`, `null-to-optional-map`, `nullable-wire-object`, `prefer-optional-create`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `all-nullable-data`, `data-collection-type`, `hook-missing-computed`, `manual-hydration-loop`, `nested-type-missing-typescript`, `new-data-object`, `non-final-data`, `prefer-optional-create`. Review it with `--dry-run` first.
 - `{{binary}} scaffold --sin=<sin>` — generate the helper the fix reaches for, for `null-to-optional-map`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 

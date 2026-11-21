@@ -52,11 +52,27 @@ a `bool` about the object's own state named as a claim â€” `Binds()`, `Spins` â€
 ```cs
 ----------[ Bad ]----------
 
-public bool Accepts() => open && freeSlots > 0;
+// A parcel locker a customer can collect from.
+public sealed class Locker(int freeSlots, bool open)
+{
+    public bool Accepts() => open && freeSlots > 0;
+
+    public bool IsAccepting => open && freeSlots > 0;
+
+    public bool Fits(int parcels) => open && parcels <= freeSlots;
+}
 
 ----------[ Good ]----------
 
-public bool IsAccepting => open && freeSlots > 0;
+// A parcel locker a customer can collect from.
+public sealed class Locker(int freeSlots, bool open)
+{
+    public bool Accepts() => open && freeSlots > 0;
+
+    public bool IsAccepting => open && freeSlots > 0;
+
+    public bool Fits(int parcels) => open && parcels <= freeSlots;
+}
 ```
 
 ## Commands

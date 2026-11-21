@@ -1,10 +1,6 @@
 import ts from 'typescript'
-
-/** The name TypeScript gives every SyntaxKind, its markers (FirstX, LastX) left out. */
-export const KINDS = {}
-for (const [name, value] of Object.entries(ts.SyntaxKind)) {
-    if (typeof value === 'number' && !/^(First|Last)/.test(name) && !(value in KINDS)) KINDS[value] = name
-}
+import { Node, Tree } from './tree.mjs'
+import { Source } from './source.mjs'
 
 /** Declarations the contract gives role `member`, and a symbol id. */
 const MEMBERS = new Set([
@@ -15,16 +11,6 @@ const MEMBERS = new Set([
     ts.SyntaxKind.EnumMember,
 ])
 
-/** Properties of a node that are not child slots: bookkeeping, and tokens, which the contract never makes nodes. */
-const SKIPPED_KEYS = new Set(['parent', 'pos', 'end', 'flags', 'kind', 'modifierFlagsCache', 'transformFlags', 'jsDoc', 'symbol',
-    'localSymbol', 'locals', 'nextContainer', 'flowNode', 'emitNode', 'id', 'original', 'modifiers', 'questionToken',
-    'dotDotDotToken', 'asteriskToken', 'exclamationToken', 'equalsGreaterThanToken', 'operatorToken', 'questionDotToken',
-    'endFlowNode', 'returnFlowNode', 'nextToken', 'endOfFileToken', 'awaitModifier', 'colonToken', 'equalsToken',
-    'readonlyToken'])
-
-const COMPARISONS = new Set([ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken,
-    ts.SyntaxKind.EqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsToken, ts.SyntaxKind.LessThanToken,
-    ts.SyntaxKind.GreaterThanToken, ts.SyntaxKind.LessThanEqualsToken, ts.SyntaxKind.GreaterThanEqualsToken])
 
 const KEYWORD_TYPES = ts.TypeFlags.String | ts.TypeFlags.Number | ts.TypeFlags.Boolean | ts.TypeFlags.Void
     | ts.TypeFlags.Undefined | ts.TypeFlags.Null | ts.TypeFlags.Unknown | ts.TypeFlags.Never | ts.TypeFlags.BigInt
@@ -33,11 +19,53 @@ const KEYWORD_TYPES = ts.TypeFlags.String | ts.TypeFlags.Number | ts.TypeFlags.B
 /** How deep a type's structure is written before the rest is left opaque. */
 const TYPE_DEPTH = 3
 
+
+
+const COMPARISONS = new Map([
+    [ts.SyntaxKind.EqualsEqualsEqualsToken, 'identical'], [ts.SyntaxKind.ExclamationEqualsEqualsToken, 'not-identical'],
+    [ts.SyntaxKind.EqualsEqualsToken, 'equal'], [ts.SyntaxKind.ExclamationEqualsToken, 'not-equal'],
+    [ts.SyntaxKind.LessThanToken, 'less'], [ts.SyntaxKind.LessThanEqualsToken, 'less-or-equal'],
+    [ts.SyntaxKind.GreaterThanToken, 'greater'], [ts.SyntaxKind.GreaterThanEqualsToken, 'greater-or-equal'],
+    [ts.SyntaxKind.InKeyword, 'in'],
+])
+
+const BINARIES = new Map([
+    [ts.SyntaxKind.PlusToken, 'add'], [ts.SyntaxKind.MinusToken, 'subtract'], [ts.SyntaxKind.AsteriskToken, 'multiply'],
+    [ts.SyntaxKind.SlashToken, 'divide'], [ts.SyntaxKind.PercentToken, 'modulo'], [ts.SyntaxKind.AsteriskAsteriskToken, 'power'],
+    [ts.SyntaxKind.AmpersandToken, 'bit-and'], [ts.SyntaxKind.BarToken, 'bit-or'], [ts.SyntaxKind.CaretToken, 'bit-xor'],
+    [ts.SyntaxKind.LessThanLessThanToken, 'shift-left'], [ts.SyntaxKind.GreaterThanGreaterThanToken, 'shift-right'],
+    [ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken, 'shift-right'],
+])
+
+const COMPOUNDS = new Map([
+    [ts.SyntaxKind.PlusEqualsToken, 'add'], [ts.SyntaxKind.MinusEqualsToken, 'subtract'], [ts.SyntaxKind.AsteriskEqualsToken, 'multiply'],
+    [ts.SyntaxKind.SlashEqualsToken, 'divide'], [ts.SyntaxKind.PercentEqualsToken, 'modulo'], [ts.SyntaxKind.AsteriskAsteriskEqualsToken, 'power'],
+    [ts.SyntaxKind.AmpersandEqualsToken, 'bit-and'], [ts.SyntaxKind.BarEqualsToken, 'bit-or'], [ts.SyntaxKind.CaretEqualsToken, 'bit-xor'],
+    [ts.SyntaxKind.LessThanLessThanEqualsToken, 'shift-left'], [ts.SyntaxKind.GreaterThanGreaterThanEqualsToken, 'shift-right'],
+    [ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken, 'shift-right'],
+    [ts.SyntaxKind.BarBarEqualsToken, 'or'], [ts.SyntaxKind.AmpersandAmpersandEqualsToken, 'and'],
+])
+
+const UNARIES = new Map([
+    [ts.SyntaxKind.ExclamationToken, 'not'], [ts.SyntaxKind.MinusToken, 'negate'], [ts.SyntaxKind.PlusToken, 'plus'],
+    [ts.SyntaxKind.TildeToken, 'bit-not'],
+])
+
+const KEYWORD_NODES = new Set([
+    ts.SyntaxKind.StringKeyword, ts.SyntaxKind.NumberKeyword, ts.SyntaxKind.BooleanKeyword, ts.SyntaxKind.VoidKeyword,
+    ts.SyntaxKind.AnyKeyword, ts.SyntaxKind.UnknownKeyword, ts.SyntaxKind.NeverKeyword, ts.SyntaxKind.UndefinedKeyword,
+    ts.SyntaxKind.ObjectKeyword, ts.SyntaxKind.BigIntKeyword, ts.SyntaxKind.SymbolKeyword, ts.SyntaxKind.NullKeyword,
+])
+
+/** Modifiers the node's own kind and facts say: `async` is the fact of that name, `default` the export's name. */
+const SAID_ELSEWHERE = new Set([ts.SyntaxKind.AsyncKeyword])
+
 /**
- * Writes TypeScript nodes as the contract's nodes. `offset` is where the parsed text starts in the file, in UTF-16
- * units; the program's checker is there for script files and absent for template expressions, which no checker types.
+ * TypeScript translated into the version 5 generic tree (contract/CONTRACT.md). `offset` is where the parsed text
+ * starts in the file, in UTF-16 units; the program's checker is there for script files and absent for template
+ * expressions, which no checker types.
  */
-export class TypeScriptWriter {
+export class Translator {
     constructor(tree, sourceFile, offset, program) {
         this.tree = tree
         this.sourceFile = sourceFile
@@ -46,79 +74,491 @@ export class TypeScriptWriter {
         this.checker = program?.checker
     }
 
-    node(node, field) {
-        const start = this.offset + node.getStart(this.sourceFile)
-        const end = this.offset + node.end
-        const out = { id: this.tree.number(start, end), kind: KINDS[node.kind], role: role(node, field) }
-        const is = neutral(node)
-        if (is.length) out.is = is
-        out.span = this.tree.source.span(start, end)
-        if (field) out.field = field
-        Object.assign(out, this.facts(node))
-        const children = []
-        ts.forEachChild(node, (child) => {
-            const slot = fieldOf(node, child)
-            if (slot) children.push(this.node(child, slot))
-        })
-        if (children.length) out.children = children
-
-        return out
+    new(kind, node) {
+        return new Node(kind, this.offset + node.getStart(this.sourceFile), this.offset + node.end)
     }
 
-    /** The statements of `sourceFile` that fall inside `[start, end)`, as one SourceFile node spanning that range. */
-    part(start, end, field) {
-        const out = { id: this.tree.number(start, end), kind: 'SourceFile', role: 'other', span: this.tree.source.span(start, end), field }
-        const children = this.sourceFile.statements
-            .filter((statement) => statement.getStart(this.sourceFile) >= start && statement.end <= end)
-            .map((statement) => this.node(statement, 'statements'))
-        if (children.length) out.children = children
-
-        return out
+    between(kind, start, end) {
+        return new Node(kind, this.offset + start, this.offset + end)
     }
 
-    facts(node) {
-        const facts = {}
-        const name = nameOf(node)
-        if (name !== undefined) facts.name = name
-        Object.assign(facts, literal(node))
-        if (ts.isBinaryExpression(node)) facts.operator = ts.tokenToString(node.operatorToken.kind)
-        if (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) facts.operator = ts.tokenToString(node.operator)
-        if (ts.isTypeOfExpression(node)) facts.operator = 'typeof'
-        if (ts.isAwaitExpression(node)) facts.operator = 'await'
-        if (ts.isDeleteExpression(node)) facts.operator = 'delete'
-        if (ts.isVoidExpression(node)) facts.operator = 'void'
-        if (ts.isHeritageClause(node)) facts.operator = ts.tokenToString(node.token)
-        const modifiers = (ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined) ?? []
-        if (modifiers.length) facts.modifiers = modifiers.map((modifier) => ts.tokenToString(modifier.kind))
-        const flags = flagsOf(node, modifiers)
-        if (flags.length) facts.flags = flags
-        if (ts.isImportDeclaration(node) && node.importClause?.isTypeOnly) facts.extras = { typescript: { typeOnly: true } }
-        if (!this.checker) return facts
+    binding(name) {
+        if (ts.isIdentifier(name) || ts.isPrivateIdentifier(name)) return this.new('binding', name).fact('name', name.text)
 
-        if (declaresType(node) && node.type) facts.declared = this.type(this.checker.getTypeFromTypeNode(node.type), 'written')
-        if (ts.isCatchClause(node) && node.variableDeclaration?.type) {
-            facts.declared = this.type(this.checker.getTypeFromTypeNode(node.variableDeclaration.type), 'written')
+        return this.pattern(name)
+    }
+
+    // The module ------------------------------------------------------------------------------------------------
+
+    /** A module of `statements`, spanning `[start, end)` of the file. */
+    module(statements, start, end) {
+        const module = new Node('module', start, end)
+        const imports = []
+        const declarations = []
+        const written = []
+        for (const statement of statements) {
+            if (ts.isImportDeclaration(statement)) imports.push(this.import(statement))
+            else if (declares(statement)) declarations.push(this.statement(statement))
+            else written.push(this.statement(statement))
         }
-        if (ts.isFunctionLike(node) && node.type) facts.returns = this.type(this.checker.getTypeFromTypeNode(node.type), 'written')
-        const symbol = this.symbolOf(node)
-        if (symbol) facts.symbol = symbol
-        if (this.tree.checked && typed(node)) {
+
+        return module.holdsAll('imports', imports).holdsAll('declarations', declarations).holdsAll('statements', written)
+    }
+
+    import(declaration) {
+        const clause = declaration.importClause
+        const source = ts.isStringLiteral(declaration.moduleSpecifier) ? declaration.moduleSpecifier.text : declaration.moduleSpecifier.getText(this.sourceFile)
+        const named = clause?.namedBindings
+        const form = !clause ? 'side-effect' : named && ts.isNamespaceImport(named) ? 'module' : 'names'
+        const node = this.new('import', declaration).fact('source', source).fact('form', form).fact('typeOnly', clause?.isTypeOnly)
+        const resolves = this.checker && ts.isStringLiteral(declaration.moduleSpecifier) ? this.program.resolve(source, this.sourceFile.fileName) : undefined
+        node.fact('resolves', resolves)
+        const bindings = []
+        if (clause?.name) bindings.push(this.new('import-binding', clause.name).fact('name', 'default').fact('refers', this.refersOf(clause.name)).holds('alias', this.binding(clause.name)))
+        if (named && ts.isNamespaceImport(named)) node.holds('alias', this.binding(named.name))
+        if (named && ts.isNamedImports(named)) {
+            for (const element of named.elements) {
+                const binding = this.new('import-binding', element).fact('name', (element.propertyName ?? element.name).text).fact('refers', this.refersOf(element.name))
+                if (element.propertyName) binding.holds('alias', this.binding(element.name))
+                bindings.push(binding)
+            }
+        }
+
+        return node.holdsAll('bindings', bindings)
+    }
+
+    // Declarations ----------------------------------------------------------------------------------------------
+
+    modifiers(node) {
+        return ((ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined) ?? [])
+            .filter((modifier) => !SAID_ELSEWHERE.has(modifier.kind))
+            .map((modifier) => ts.tokenToString(modifier.kind))
+    }
+
+    async(node) {
+        return ((ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword)
+    }
+
+    attributes(node) {
+        return (ts.canHaveDecorators(node) ? ts.getDecorators(node) ?? [] : []).map((decorator) => {
+            const callee = ts.isCallExpression(decorator.expression) ? decorator.expression.expression : decorator.expression
+
+            return this.new('annotation', decorator)
+                .fact('name', callee.getText(this.sourceFile))
+                .fact('refers', this.checker ? this.refersOf(ts.isPropertyAccessExpression(callee) ? callee : callee) : undefined)
+                .holds('callee', this.expression(callee))
+                .holdsAll('arguments', ts.isCallExpression(decorator.expression) ? decorator.expression.arguments.map((argument) => this.argument(argument)) : [])
+        })
+    }
+
+    function(node, form) {
+        const name = node.kind === ts.SyntaxKind.Constructor ? 'constructor' : node.name && !ts.isComputedPropertyName(node.name) ? node.name.text : undefined
+        const out = this.new('function', node)
+            .fact('name', name === '' ? undefined : name)
+            .fact('symbol', this.checker ? this.symbolOf(node) : undefined)
+            .fact('form', form)
+            .fact('modifiers', this.modifiers(node))
+            .fact('async', this.async(node))
+            .fact('generator', node.asteriskToken !== undefined)
+            .fact('incomplete', this.incomplete(node))
+            .holdsAll('attributes', this.attributes(node))
+            .holdsAll('typeParameters', (node.typeParameters ?? []).map((parameter) => this.new('type-parameter', parameter).fact('name', parameter.name.text)
+                .holds('constraint', parameter.constraint && this.type(parameter.constraint)).holds('default', parameter.default && this.type(parameter.default))))
+            .holdsAll('parameters', node.parameters.map((parameter) => this.parameter(parameter)))
+            .holds('returnType', node.type && this.type(node.type))
+        if (node.body) out.holds('body', ts.isBlock(node.body) ? this.block(node.body) : this.expression(node.body))
+
+        return out
+    }
+
+    parameter(parameter) {
+        return this.new('parameter', parameter)
+            .fact('collects', parameter.dotDotDotToken ? 'rest' : undefined)
+            .fact('optional', parameter.questionToken !== undefined)
+            .fact('modifiers', this.modifiers(parameter))
+            .holdsAll('attributes', this.attributes(parameter))
+            .holds('binding', this.binding(parameter.name))
+            .holds('declaredType', parameter.type && this.type(parameter.type))
+            .holds('default', parameter.initializer && this.expression(parameter.initializer))
+    }
+
+    type(node) {
+        if (ts.isParenthesizedTypeNode(node)) return this.type(node.type)
+        if (KEYWORD_NODES.has(node.kind)) return this.new('type-expression', node).fact('form', node.kind === ts.SyntaxKind.NullKeyword ? 'literal' : 'keyword').fact('name', node.getText(this.sourceFile))
+        if (ts.isLiteralTypeNode(node)) return this.new('type-expression', node).fact('form', 'literal')
+        if (ts.isUnionTypeNode(node)) return this.new('type-expression', node).fact('form', 'union').holdsAll('members', node.types.map((member) => this.type(member)))
+        if (ts.isIntersectionTypeNode(node)) return this.new('type-expression', node).fact('form', 'intersection').holdsAll('members', node.types.map((member) => this.type(member)))
+        if (ts.isArrayTypeNode(node)) return this.new('type-expression', node).fact('form', 'array').holds('element', this.type(node.elementType))
+        if (ts.isTypeReferenceNode(node) || ts.isExpressionWithTypeArguments(node)) {
+            const name = ts.isTypeReferenceNode(node) ? node.typeName : node.expression
+
+            return this.new('type-expression', node)
+                .fact('form', 'named')
+                .fact('refers', this.checker ? this.refersOf(ts.isQualifiedName(name) ? name.right : name) : undefined)
+                .holdsAll('typeArguments', (node.typeArguments ?? []).map((argument) => this.type(argument)))
+        }
+        if (ts.isFunctionTypeNode(node) || ts.isConstructorTypeNode(node)) {
+            return this.new('type-expression', node).fact('form', 'function')
+                .holdsAll('parameters', node.parameters.map((parameter) => this.parameter(parameter)))
+                .holds('returnType', node.type && this.type(node.type))
+        }
+        if (ts.isTupleTypeNode(node)) {
+            return this.new('tuple-type', node).holdsAll('elements', node.elements.map((element) => ts.isNamedTupleMember(element)
+                ? this.new('tuple-element', element).fact('label', element.name.text).holds('type', this.type(element.type))
+                : this.new('tuple-element', element).holds('type', this.type(element))))
+        }
+        if (ts.isTypeQueryNode(node) || ts.isTypeReferenceNode(node)) return this.new('type-expression', node).fact('form', 'named')
+
+        return this.new('type-expression', node).fact('form', 'opaque')
+    }
+
+    type_declaration(node, form) {
+        const heritage = (token) => (node.heritageClauses ?? []).filter((clause) => clause.token === token).flatMap((clause) => clause.types.map((type) => this.type(type)))
+        const members = []
+        const implicit = []
+        for (const member of node.members ?? []) {
+            const written = this.member(member)
+            if (!written) continue
+            members.push(written)
+            if (member.kind === ts.SyntaxKind.Constructor) {
+                for (const [index, parameter] of member.parameters.entries()) {
+                    if (ts.isParameterPropertyDeclaration(parameter, member)) implicit.push(written.parts.parameters[index])
+                }
+            }
+        }
+        const out = this.new('type', node)
+            .fact('name', node.name?.text)
+            .fact('symbol', this.checker ? this.symbolOf(node) : undefined)
+            .fact('form', form)
+            .fact('modifiers', this.modifiers(node))
+            .holdsAll('attributes', this.attributes(node))
+            .holdsAll('typeParameters', (node.typeParameters ?? []).map((parameter) => this.new('type-parameter', parameter).fact('name', parameter.name.text)))
+            .holdsAll('bases', heritage(ts.SyntaxKind.ExtendsKeyword))
+            .holdsAll('interfaces', heritage(ts.SyntaxKind.ImplementsKeyword))
+            .holdsAll('writtenMembers', members)
+        if (implicit.length) out.link('implicitMembers', implicit)
+
+        return out
+    }
+
+    member(member) {
+        if (ts.isMethodDeclaration(member) || ts.isMethodSignature(member)) return this.function(member, 'method')
+        if (member.kind === ts.SyntaxKind.Constructor) return this.function(member, 'constructor')
+        if (ts.isGetAccessorDeclaration(member)) return this.function(member, 'get')
+        if (ts.isSetAccessorDeclaration(member)) return this.function(member, 'set')
+        if (ts.isPropertyDeclaration(member) || ts.isPropertySignature(member)) {
+            const end = member.initializer?.end ?? member.type?.end ?? member.name.end
+
+            return this.new('field', member)
+                .fact('modifiers', this.modifiers(member))
+                .holdsAll('attributes', this.attributes(member))
+                .holds('declaredType', member.type && this.type(member.type))
+                .holdsAll('declarators', [this.between('declarator', member.name.getStart(this.sourceFile), end)
+                    .holds('binding', this.new('binding', member.name).fact('name', ts.isComputedPropertyName(member.name) ? undefined : member.name.text).fact('symbol', this.checker ? this.symbolOf(member) : undefined))
+                    .holds('initializer', member.initializer && this.expression(member.initializer))])
+        }
+        if (ts.isEnumMember(member)) {
+            return this.new('enum-case', member).fact('name', ts.isComputedPropertyName(member.name) ? undefined : member.name.text)
+                .fact('symbol', this.checker ? this.symbolOf(member) : undefined).holds('value', member.initializer && this.expression(member.initializer))
+        }
+        if (ts.isSemicolonClassElement(member)) return undefined
+
+        return this.unsupported(member, 'member')
+    }
+
+    // Statements ------------------------------------------------------------------------------------------------
+
+    block(block) {
+        return this.new('block', block).holdsAll('statements', block.statements.map((statement) => this.statement(statement)))
+    }
+
+    statement(node) {
+        if (ts.isBlock(node)) return this.block(node)
+        if (ts.isVariableStatement(node)) return this.variable(node, node.declarationList).fact('modifiers', this.modifiers(node))
+        if (ts.isExpressionStatement(node)) return this.new('expression-statement', node).holds('expression', this.expression(node.expression))
+        if (ts.isIfStatement(node)) {
+            return this.new('if', node).holds('condition', this.expression(node.expression)).holds('then', this.statement(node.thenStatement))
+                .holds('else', node.elseStatement && this.statement(node.elseStatement))
+        }
+        if (ts.isForStatement(node)) {
+            const initializer = node.initializer && (ts.isVariableDeclarationList(node.initializer) ? this.variable(node.initializer, node.initializer) : this.expression(node.initializer))
+
+            return this.new('loop', node).fact('form', 'for').holdsAll('initializer', [initializer])
+                .holds('condition', node.condition && this.expression(node.condition))
+                .holdsAll('steps', [node.incrementor && this.expression(node.incrementor)])
+                .holds('body', this.statement(node.statement))
+        }
+        if (ts.isForOfStatement(node) || ts.isForInStatement(node)) {
+            const bindings = ts.isVariableDeclarationList(node.initializer) ? node.initializer.declarations.map((declaration) => this.binding(declaration.name)) : [this.expression(node.initializer)]
+
+            return this.new('loop', node).fact('form', 'for-each').fact('async', ts.isForOfStatement(node) && node.awaitModifier !== undefined)
+                .holdsAll('bindings', bindings).holds('iterable', this.expression(node.expression)).holds('body', this.statement(node.statement))
+        }
+        if (ts.isWhileStatement(node)) return this.new('loop', node).fact('form', 'while').holds('condition', this.expression(node.expression)).holds('body', this.statement(node.statement))
+        if (ts.isDoStatement(node)) return this.new('loop', node).fact('form', 'do-while').holds('body', this.statement(node.statement)).holds('condition', this.expression(node.expression))
+        if (ts.isReturnStatement(node)) return this.new('return', node).holdsAll('values', [node.expression && this.expression(node.expression)])
+        if (ts.isThrowStatement(node)) return this.new('throw', node).holds('value', this.expression(node.expression))
+        if (ts.isBreakStatement(node) || ts.isContinueStatement(node)) {
+            return this.new(ts.isBreakStatement(node) ? 'break' : 'continue', node).holds('label', node.label && this.new('reference', node.label).fact('name', node.label.text).fact('form', 'name'))
+        }
+        if (ts.isTryStatement(node)) {
+            const clause = node.catchClause
+            const handler = clause && this.new('handler', clause).fact('catchForm', 'catch-all')
+                .holds('binding', clause.variableDeclaration && this.binding(clause.variableDeclaration.name)).holds('body', this.block(clause.block))
+
+            return this.new('try', node).holds('body', this.block(node.tryBlock)).holdsAll('handlers', [handler]).holds('finally', node.finallyBlock && this.block(node.finallyBlock))
+        }
+        if (ts.isSwitchStatement(node)) return this.switch(node)
+        if (ts.isLabeledStatement(node)) return this.new('label', node).holds('binding', this.binding(node.label)).holds('statement', this.statement(node.statement))
+        if (ts.isEmptyStatement(node)) return this.new('no-op', node)
+        if (ts.isFunctionDeclaration(node)) return this.function(node, 'function')
+        if (ts.isClassDeclaration(node)) return this.type_declaration(node, 'class')
+        if (ts.isInterfaceDeclaration(node)) return this.type_declaration(node, 'interface')
+        if (ts.isEnumDeclaration(node)) return this.type_declaration(node, 'enum')
+        if (ts.isTypeAliasDeclaration(node)) {
+            return this.new('alias', node).fact('name', node.name.text).fact('symbol', this.checker ? this.symbolOf(node) : undefined)
+                .holdsAll('typeParameters', (node.typeParameters ?? []).map((parameter) => this.new('type-parameter', parameter).fact('name', parameter.name.text)))
+                .holds('underlyingType', this.type(node.type))
+        }
+        if (ts.isModuleDeclaration(node) && node.body && ts.isModuleBlock(node.body)) {
+            return this.new('type', node).fact('name', ts.isIdentifier(node.name) ? node.name.text : node.name.text).fact('form', 'object')
+                .fact('modifiers', this.modifiers(node)).holdsAll('writtenMembers', node.body.statements.map((statement) => this.statement(statement)))
+        }
+        if (ts.isImportDeclaration(node)) return this.import(node)
+
+        return this.unsupported(node, kindName(node))
+    }
+
+    variable(node, list) {
+        const form = list.flags & ts.NodeFlags.Const ? 'const' : list.flags & ts.NodeFlags.Let ? 'let' : list.flags & ts.NodeFlags.Using ? 'using' : 'var'
+        const typed = list.declarations.find((declaration) => declaration.type)
+
+        return this.new('variable', node).fact('form', form)
+            .holds('declaredType', typed && this.type(typed.type))
+            .holdsAll('declarators', list.declarations.map((declaration) => this.new('declarator', declaration)
+                .holds('binding', this.binding(declaration.name).fact('symbol', this.checker ? this.symbolOf(declaration) : undefined))
+                .holds('initializer', declaration.initializer && this.expression(declaration.initializer))))
+    }
+
+    switch(node) {
+        const clauses = node.caseBlock.clauses
+        const jumps = (statement) => statement && (ts.isBreakStatement(statement) || ts.isReturnStatement(statement) || ts.isThrowStatement(statement) || ts.isContinueStatement(statement))
+        const arms = clauses.map((clause, index) => {
+            const statements = clause.statements.map((statement) => this.statement(statement))
+            const body = statements.length === 1 && statements[0].kind === 'block' ? statements[0]
+                : statements.length ? new Node('block', statements[0].start, statements.at(-1).end).holdsAll('statements', statements)
+                    : new Node('block', this.offset + clause.end, this.offset + clause.end)
+            const patterns = ts.isCaseClause(clause) ? [this.new('pattern', clause.expression).fact('form', 'value').holds('value', this.expression(clause.expression))] : []
+
+            return this.new('arm', clause).fact('default', ts.isDefaultClause(clause)).holdsAll('patterns', patterns).holds('body', body)
+                .fact('fallsThrough', index < clauses.length - 1 && !jumps(clause.statements.at(-1)))
+        })
+
+        return this.new('dispatch', node).fact('form', 'switch').holds('subject', this.expression(node.expression)).holdsAll('arms', arms)
+    }
+
+    unsupported(node, construct) {
+        const parts = []
+        ts.forEachChild(node, (child) => {
+            if (ts.isExpression(child) && !ts.isIdentifier(child)) parts.push(this.expression(child))
+        })
+
+        return this.new('unsupported', node).fact('construct', construct).holdsAll('parts', parts)
+    }
+
+    // Expressions -----------------------------------------------------------------------------------------------
+
+    expression(node) {
+        const out = this.translated(node)
+        if (this.checker && this.tree.checked && typed(node) && out.kind !== 'unsupported') {
             this.tree.expressions++
             const type = this.checker.getTypeAtLocation(node)
             if (!(type.flags & ts.TypeFlags.Any) && !isErrorType(type)) {
                 this.tree.typed++
-                facts.resolvedType = this.tree.typeIndex(type, () => this.type(type, 'compiler'))
+                out.fact('resolvedType', this.tree.typeIndex(type, () => this.describedType(type, 'compiler')))
             }
         }
-        const refers = this.refersOf(node)
-        if (refers) facts.refers = refers
-        if (ts.isCallExpression(node) || ts.isNewExpression(node) || ts.isDecorator(node)) Object.assign(facts, this.target(node))
-        if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
-            const resolves = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier) ? this.program.resolve(node.moduleSpecifier.text, this.sourceFile.fileName) : undefined
-            if (resolves) facts.resolves = resolves
+
+        return out
+    }
+
+    translated(node) {
+        if (ts.isParenthesizedExpression(node)) return this.expression(node.expression)
+        if (ts.isIdentifier(node)) {
+            if (node.text === 'undefined') return this.new('literal', node).fact('literalKind', 'undefined')
+
+            return this.new('reference', node).fact('name', node.text).fact('form', 'name').fact('refers', this.checker ? this.refersOf(node) : undefined)
+        }
+        if (ts.isPrivateIdentifier(node)) return this.new('reference', node).fact('name', node.text).fact('form', 'name')
+        if (node.kind === ts.SyntaxKind.ThisKeyword) return this.new('reference', node).fact('name', 'this').fact('form', 'self')
+        if (node.kind === ts.SyntaxKind.SuperKeyword) return this.new('reference', node).fact('name', 'super').fact('form', 'parent')
+        if (ts.isPropertyAccessExpression(node)) {
+            return this.new('access', node).fact('form', this.isStatic(node.expression) ? 'static' : 'instance').fact('nullConditional', node.questionDotToken !== undefined)
+                .holds('subject', this.expression(node.expression))
+                .holds('member', this.new('reference', node.name).fact('name', node.name.text).fact('form', 'name').fact('refers', this.checker ? this.refersOf(node) : undefined))
+        }
+        if (ts.isElementAccessExpression(node)) {
+            return this.new('index', node).fact('nullConditional', node.questionDotToken !== undefined)
+                .holds('subject', this.expression(node.expression)).holds('key', this.expression(node.argumentExpression))
+        }
+        if (ts.isCallExpression(node)) {
+            return this.new('call', node).fact('target', this.checker ? this.target(node) : undefined)
+                .holds('callee', this.expression(node.expression)).holdsAll('arguments', node.arguments.map((argument) => this.argument(argument)))
+        }
+        if (ts.isNewExpression(node)) {
+            const named = ts.isIdentifier(node.expression) || ts.isPropertyAccessExpression(node.expression)
+            const type = named && this.new('type-expression', node.expression).fact('form', 'named').fact('refers', this.checker ? this.refersOf(node.expression) : undefined)
+                .holdsAll('typeArguments', (node.typeArguments ?? []).map((argument) => this.type(argument)))
+
+            return this.new('construction', node).fact('target', this.checker ? this.target(node) : undefined)
+                .holds('type', type || undefined).holds('callee', named ? undefined : this.expression(node.expression))
+                .holdsAll('arguments', (node.arguments ?? []).map((argument) => this.argument(argument)))
+        }
+        if (ts.isBinaryExpression(node)) return this.binary(node)
+        if (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) {
+            if (node.operator === ts.SyntaxKind.PlusPlusToken || node.operator === ts.SyntaxKind.MinusMinusToken) {
+                return this.new('assignment', node).fact('mode', node.operator === ts.SyntaxKind.PlusPlusToken ? 'increment' : 'decrement')
+                    .fact('prefix', ts.isPrefixUnaryExpression(node)).holdsAll('targets', [this.expression(node.operand)])
+            }
+
+            return this.new('unary', node).fact('operator', UNARIES.get(node.operator)).holds('operand', this.expression(node.operand))
+        }
+        if (ts.isNonNullExpression(node)) return this.new('unary', node).fact('operator', 'assert-present').holds('operand', this.expression(node.expression))
+        if (ts.isTypeOfExpression(node)) return this.new('unary', node).fact('operator', 'typeof').holds('operand', this.expression(node.expression))
+        if (ts.isDeleteExpression(node)) return this.new('unary', node).fact('operator', 'delete').holds('operand', this.expression(node.expression))
+        if (ts.isVoidExpression(node)) return this.new('unary', node).fact('operator', 'void').holds('operand', this.expression(node.expression))
+        if (ts.isConditionalExpression(node)) {
+            return this.new('conditional', node).holds('condition', this.expression(node.condition))
+                .holds('consequent', this.expression(node.whenTrue)).holds('alternative', this.expression(node.whenFalse))
+        }
+        if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return this.new('literal', node).fact('literalKind', 'string').said('value', node.text)
+        if (ts.isNumericLiteral(node)) {
+            return this.new('literal', node).fact('literalKind', /[.eE]/.test(node.text) && !/^0[xob]/i.test(node.text) ? 'float' : 'integer').said('value', String(Number(node.text)))
+        }
+        if (ts.isBigIntLiteral(node)) return this.new('literal', node).fact('literalKind', 'integer').said('value', node.text.slice(0, -1))
+        if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword) {
+            return this.new('literal', node).fact('literalKind', 'boolean').said('value', node.kind === ts.SyntaxKind.TrueKeyword)
+        }
+        if (node.kind === ts.SyntaxKind.NullKeyword) return this.new('literal', node).fact('literalKind', 'null')
+        if (ts.isTemplateExpression(node)) {
+            const parts = []
+            if (node.head.text) parts.push(this.new('text', node.head).said('value', node.head.text))
+            for (const span of node.templateSpans) {
+                parts.push(this.expression(span.expression))
+                if (span.literal.text) parts.push(this.new('text', span.literal).said('value', span.literal.text))
+            }
+
+            return this.new('interpolation', node).holdsAll('parts', parts)
+        }
+        if (ts.isArrowFunction(node)) return this.function(node, 'arrow')
+        if (ts.isFunctionExpression(node)) return this.function(node, 'closure')
+        if (ts.isClassExpression(node)) return this.type_declaration(node, 'class')
+        if (ts.isObjectLiteralExpression(node)) return this.new('collection', node).fact('form', 'object').holdsAll('entries', node.properties.map((property) => this.entry(property)))
+        if (ts.isArrayLiteralExpression(node)) {
+            return this.new('collection', node).fact('form', 'list').holdsAll('entries', node.elements.map((element) => ts.isSpreadElement(element)
+                ? this.new('entry', element).fact('expansion', 'positional').holds('value', this.expression(element.expression))
+                : ts.isOmittedExpression(element) ? undefined : this.new('entry', element).holds('value', this.expression(element))))
+        }
+        if (ts.isAwaitExpression(node)) return this.new('await', node).holds('operand', this.expression(node.expression))
+        if (ts.isYieldExpression(node)) return this.new('yield', node).fact('delegates', node.asteriskToken !== undefined).holds('value', node.expression && this.expression(node.expression))
+        if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node) || ts.isSatisfiesExpression(node)) {
+            return this.new('cast', node).fact('form', 'assertion').holds('operand', this.expression(node.expression)).holds('targetType', this.type(node.type))
+        }
+        if (ts.isSpreadElement(node)) return this.expression(node.expression)
+
+        return this.unsupported(node, kindName(node))
+    }
+
+    isStatic(subject) {
+        // The checker resolves `this` to its class, but `this.x` and `super.x` read the instance.
+        if (!this.checker || subject.kind === ts.SyntaxKind.ThisKeyword || subject.kind === ts.SyntaxKind.SuperKeyword) return false
+        const symbol = this.checker.getSymbolAtLocation(subject)
+        const target = symbol && symbol.flags & ts.SymbolFlags.Alias ? this.checker.getAliasedSymbol(symbol) : symbol
+
+        return target !== undefined && (target.flags & (ts.SymbolFlags.Class | ts.SymbolFlags.Enum | ts.SymbolFlags.Module)) !== 0
+    }
+
+    argument(argument) {
+        if (ts.isSpreadElement(argument)) return this.new('argument', argument).fact('spread', 'positional').holds('value', this.expression(argument.expression))
+
+        return this.new('argument', argument).holds('value', this.expression(argument))
+    }
+
+    entry(property) {
+        if (ts.isSpreadAssignment(property)) return this.new('entry', property).fact('expansion', 'keyed').holds('value', this.expression(property.expression))
+        if (ts.isShorthandPropertyAssignment(property)) {
+            return this.new('entry', property).holds('key', this.new('reference', property.name).fact('name', property.name.text).fact('form', 'name'))
+                .holds('value', this.new('reference', property.name).fact('name', property.name.text).fact('form', 'name').fact('refers', this.checker ? this.refersOf(property.name) : undefined))
+        }
+        const key = ts.isComputedPropertyName(property.name) ? this.expression(property.name.expression)
+            : ts.isIdentifier(property.name) || ts.isPrivateIdentifier(property.name) ? this.new('reference', property.name).fact('name', property.name.text).fact('form', 'name')
+                : this.expression(property.name)
+        const value = ts.isPropertyAssignment(property) ? this.expression(property.initializer)
+            : ts.isMethodDeclaration(property) ? this.function(property, 'method')
+                : ts.isGetAccessorDeclaration(property) ? this.function(property, 'get') : this.function(property, 'set')
+
+        return this.new('entry', property).holds('key', key).holds('value', value)
+    }
+
+    binary(node) {
+        const operator = node.operatorToken.kind
+        if (operator === ts.SyntaxKind.EqualsToken) return this.new('assignment', node).fact('mode', 'assign').holdsAll('targets', [this.expression(node.left)]).holdsAll('values', [this.expression(node.right)])
+        if (operator === ts.SyntaxKind.QuestionQuestionEqualsToken) return this.new('assignment', node).fact('mode', 'fallback').holdsAll('targets', [this.expression(node.left)]).holdsAll('values', [this.expression(node.right)])
+        if (COMPOUNDS.has(operator)) {
+            return this.new('assignment', node).fact('mode', 'compound').fact('operator', COMPOUNDS.get(operator))
+                .holdsAll('targets', [this.expression(node.left)]).holdsAll('values', [this.expression(node.right)])
+        }
+        if (operator === ts.SyntaxKind.QuestionQuestionToken) return this.new('fallback', node).fact('trigger', 'null').holds('subject', this.expression(node.left)).holds('replacement', this.expression(node.right))
+        if (operator === ts.SyntaxKind.AmpersandAmpersandToken || operator === ts.SyntaxKind.BarBarToken) {
+            return this.new('logical', node).fact('operator', operator === ts.SyntaxKind.AmpersandAmpersandToken ? 'and' : 'or')
+                .holds('left', this.expression(node.left)).holds('right', this.expression(node.right))
+        }
+        if (COMPARISONS.has(operator)) {
+            const [left, right] = [this.expression(node.left), this.expression(node.right)]
+            const comparison = COMPARISONS.get(operator)
+
+            return this.new('comparison', node).fact('operators', [comparison]).fact('operator', comparison).holdsAll('operands', [left, right]).link('left', left).link('right', right)
+        }
+        if (operator === ts.SyntaxKind.InstanceOfKeyword) {
+            return this.new('type-test', node).fact('form', 'instanceof').holds('subject', this.expression(node.left))
+                .holds('testedType', this.new('type-expression', node.right).fact('form', 'named').fact('refers', this.checker ? this.refersOf(node.right) : undefined))
+        }
+        if (BINARIES.has(operator)) return this.new('binary', node).fact('operator', BINARIES.get(operator)).holds('left', this.expression(node.left)).holds('right', this.expression(node.right))
+
+        return this.unsupported(node, 'comma')
+    }
+
+    // Patterns --------------------------------------------------------------------------------------------------
+
+    pattern(name) {
+        if (ts.isObjectBindingPattern(name) || ts.isArrayBindingPattern(name)) {
+            const elements = name.elements.filter((element) => !ts.isOmittedExpression(element))
+
+            return this.new('pattern', name).fact('form', ts.isObjectBindingPattern(name) ? 'mapping' : 'sequence')
+                .holdsAll('subpatterns', elements.map((element) => {
+                    const inner = this.binding(element.name)
+                    if (element.dotDotDotToken) return this.new('pattern', element).fact('form', 'rest').holdsAll('bindings', [inner])
+
+                    return element.initializer || element.propertyName
+                        ? this.new('pattern', element).fact('form', 'binding').holdsAll('bindings', [inner]).holds('value', element.initializer && this.expression(element.initializer))
+                        : inner
+                }))
         }
 
-        return facts
+        return this.new('binding', name).fact('name', name.text)
+    }
+
+    /** Whether the parser recovered the declaration from an error: it flags the node, or an error sits in its header. */
+    incomplete(node) {
+        if ((node.flags & ts.NodeFlags.ThisNodeHasError) !== 0) return true
+        const start = node.getStart(this.sourceFile)
+        const end = node.body ? node.body.getStart(this.sourceFile) : node.end
+
+        return (this.sourceFile.parseDiagnostics ?? []).some((diagnostic) => diagnostic.start >= start && diagnostic.start <= end)
+    }
+
+    describedType(type, origin, depth) {
+        return this.typeOf(type, origin, depth)
     }
 
     /** The symbol id this node declares, when it is a declaration the contract names. */
@@ -166,9 +606,9 @@ export class TypeScriptWriter {
     target(node) {
         this.tree.calls++
         const declaration = this.checker.getResolvedSignature(node)?.declaration
-        if (!declaration || ts.isJSDocSignature(declaration)) return {}
+        if (!declaration || ts.isJSDocSignature(declaration)) return undefined
         const symbol = this.idOf(declaration)
-        if (!symbol) return {}
+        if (!symbol) return undefined
         this.tree.resolved++
         const target = { symbol, name: declaredName(declaration) ?? (ts.isConstructSignatureDeclaration(declaration) ? 'new' : 'constructor') }
         const container = declaration.parent
@@ -177,10 +617,10 @@ export class TypeScriptWriter {
             if (type) target.type = type
         }
 
-        return { target }
+        return target
     }
 
-    type(type, origin, depth = 0) {
+    typeOf(type, origin, depth = 0) {
         const key = `${origin}:${depth}`
         const known = this.program.described.get(type)?.get(key)
         if (known) return known
@@ -212,22 +652,22 @@ export class TypeScriptWriter {
     }
 
     shape(type, origin, depth) {
-        if (type.isUnion()) return { kind: 'union', members: type.types.map((member) => this.type(member, origin, depth)) }
-        if (type.isIntersection()) return { kind: 'intersection', members: type.types.map((member) => this.type(member, origin, depth)) }
+        if (type.isUnion()) return { kind: 'union', members: type.types.map((member) => this.typeOf(member, origin, depth)) }
+        if (type.isIntersection()) return { kind: 'intersection', members: type.types.map((member) => this.typeOf(member, origin, depth)) }
         if (type.isStringLiteral()) return { kind: 'literal', value: type.value }
         if (type.isNumberLiteral()) return { kind: 'literal', value: String(type.value) }
         if (type.flags & ts.TypeFlags.BooleanLiteral) return { kind: 'literal', value: this.checker.typeToString(type) === 'true' }
         if (type.isTypeParameter()) return { kind: 'parameter', name: this.checker.typeToString(type) }
         if (type.flags & KEYWORD_TYPES) return { kind: 'keyword', name: this.checker.typeToString(type) }
-        if (this.checker.isArrayType(type)) return { kind: 'array', args: [this.type(this.checker.getTypeArguments(type)[0], origin, depth)] }
-        if (this.checker.isTupleType(type)) return { kind: 'tuple', members: this.checker.getTypeArguments(type).map((member) => this.type(member, origin, depth)) }
+        if (this.checker.isArrayType(type)) return { kind: 'array', args: [this.typeOf(this.checker.getTypeArguments(type)[0], origin, depth)] }
+        if (this.checker.isTupleType(type)) return { kind: 'tuple', members: this.checker.getTypeArguments(type).map((member) => this.typeOf(member, origin, depth)) }
         if (!(type.flags & ts.TypeFlags.Object)) return { kind: 'opaque' }
         const declaration = (type.aliasSymbol ?? type.getSymbol())?.declarations?.[0]
         const name = declaration && namesItsScope(declaration) ? this.idOf(declaration) : undefined
         if (name) {
             const args = type.aliasTypeArguments ?? (type.objectFlags & ts.ObjectFlags.Reference ? this.checker.getTypeArguments(type) : [])
             const out = { kind: 'named', name }
-            if (args.length) out.args = args.map((argument) => this.type(argument, origin, depth))
+            if (args.length) out.args = args.map((argument) => this.typeOf(argument, origin, depth))
 
             return out
         }
@@ -237,8 +677,8 @@ export class TypeScriptWriter {
 
             return {
                 kind: 'function',
-                parameters: signature.getParameters().map((parameter) => this.type(this.checker.getTypeOfSymbol(parameter), origin, depth)),
-                returns: this.type(signature.getReturnType(), origin, depth),
+                parameters: signature.getParameters().map((parameter) => this.typeOf(this.checker.getTypeOfSymbol(parameter), origin, depth)),
+                returns: this.typeOf(signature.getReturnType(), origin, depth),
             }
         }
         if (type.objectFlags & ts.ObjectFlags.Anonymous || type.objectFlags & ts.ObjectFlags.Mapped) {
@@ -250,7 +690,7 @@ export class TypeScriptWriter {
             // in a file the project wrote, so it is described as before.
             if (ambient(type)) return { kind: 'opaque' }
             const fields = type.getProperties().map((property) => {
-                const field = { name: this.fieldName(property), type: this.type(this.checker.getTypeOfSymbol(property), origin, depth) }
+                const field = { name: this.fieldName(property), type: this.typeOf(this.checker.getTypeOfSymbol(property), origin, depth) }
                 if (property.flags & ts.SymbolFlags.Optional) field.optional = true
 
                 return field
@@ -274,107 +714,6 @@ function ambient(type) {
     return declarations.length === 0 || declarations.every((each) => each.getSourceFile().isDeclarationFile)
 }
 
-/** The slot `child` fills in `parent`; none for a token, which the contract never makes a node. */
-function fieldOf(parent, child) {
-    for (const [key, value] of Object.entries(parent)) {
-        if (value !== child && !(Array.isArray(value) && value.includes(child))) continue
-        if (key === 'modifiers' && ts.isDecorator(child)) return key
-        if (SKIPPED_KEYS.has(key)) return undefined
-
-        return key
-    }
-    throw new Error(`${KINDS[child.kind]} fills no field of ${KINDS[parent.kind]}`)
-}
-
-function role(node, field) {
-    if (MEMBERS.has(node.kind)) return 'member'
-    if (ts.isTypeNode(node)) return 'type'
-    if (ts.isObjectBindingPattern(node) || ts.isArrayBindingPattern(node)) return 'pattern'
-    if (ts.isStatement(node) || ts.isImportDeclaration(node)) return 'statement'
-    if (field === 'name' && ts.isIdentifier(node)) return 'other'
-    if (ts.isExpression(node) || ts.isIdentifier(node)) return 'expression'
-
-    return 'other'
-}
-
-function neutral(node) {
-    const answers = {
-        function: ts.isFunctionLike(node) && node.body !== undefined,
-        'type-declaration': ts.isClassDeclaration(node) || ts.isClassExpression(node) || ts.isInterfaceDeclaration(node)
-            || ts.isTypeAliasDeclaration(node) || ts.isEnumDeclaration(node),
-        parameter: ts.isParameter(node),
-        block: ts.isBlock(node) || ts.isModuleBlock(node),
-        branch: ts.isIfStatement(node) || ts.isSwitchStatement(node) || ts.isConditionalExpression(node),
-        loop: ts.isIterationStatement(node, false),
-        return: ts.isReturnStatement(node),
-        throw: ts.isThrowStatement(node),
-        'bail-out': ts.isReturnStatement(node) || ts.isThrowStatement(node) || ts.isBreakOrContinueStatement(node),
-        'expression-statement': ts.isExpressionStatement(node),
-        call: ts.isCallExpression(node),
-        construction: ts.isNewExpression(node),
-        'member-access': ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node),
-        'null-safe': (ts.isPropertyAccessExpression(node) || ts.isCallExpression(node) || ts.isElementAccessExpression(node))
-            && node.questionDotToken !== undefined,
-        'self-reference': node.kind === ts.SyntaxKind.ThisKeyword,
-        identifier: ts.isIdentifier(node) && isNameRead(node),
-        assignment: ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
-            && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment,
-        comparison: ts.isBinaryExpression(node) && COMPARISONS.has(node.operatorToken.kind),
-        conjunction: ts.isBinaryExpression(node)
-            && [ts.SyntaxKind.AmpersandAmpersandToken, ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind),
-        literal: ts.isLiteralExpression(node) || ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)
-            || [ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword, ts.SyntaxKind.NullKeyword].includes(node.kind),
-        import: ts.isImportDeclaration(node) || ts.isImportEqualsDeclaration(node),
-        catch: ts.isCatchClause(node),
-    }
-
-    return Object.keys(answers).filter((name) => answers[name])
-}
-
-function nameOf(node) {
-    if (ts.isIdentifier(node) || ts.isPrivateIdentifier(node)) return written(node.text)
-    if (node.kind === ts.SyntaxKind.Constructor) return 'constructor'
-    const name = node.name
-    if (name && (ts.isIdentifier(name) || ts.isPrivateIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name))) return written(name.text)
-
-    return undefined
-}
-
-/** A name as written, or undefined for an empty one: the key `""`, or the identifier a parse error left missing. */
-function written(text) {
-    return text === '' ? undefined : text
-}
-
-function literal(node) {
-    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return { literal: 'string', value: node.text }
-    if (ts.isNumericLiteral(node)) return { literal: /[.eE]/.test(node.text) && !/^0[xob]/i.test(node.text) ? 'float' : 'int', value: String(Number(node.text)) }
-    if (ts.isBigIntLiteral(node)) return { literal: 'int', value: node.text.slice(0, -1) }
-    if (ts.isTemplateExpression(node)) return { literal: 'interpolated' }
-    if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword) return { literal: 'bool', value: node.kind === ts.SyntaxKind.TrueKeyword }
-    if (node.kind === ts.SyntaxKind.NullKeyword) return { literal: 'null', value: null }
-    if (ts.isIdentifier(node) && node.text === 'undefined' && isNameRead(node)) return { literal: 'undefined' }
-
-    return {}
-}
-
-function flagsOf(node, modifiers) {
-    const flags = []
-    if (ts.isVariableDeclaration(node) && ts.isVariableDeclarationList(node.parent) && (node.parent.flags & ts.NodeFlags.Const)) flags.push('constant')
-    if (ts.isParameter(node) && node.dotDotDotToken) flags.push('variadic')
-    if ((ts.isParameter(node) || ts.isPropertySignature(node) || ts.isPropertyDeclaration(node) || ts.isMethodSignature(node)
-        || ts.isMethodDeclaration(node)) && node.questionToken) flags.push('optional')
-    if (ts.isSpreadElement(node) || ts.isSpreadAssignment(node) || (ts.isBindingElement(node) && node.dotDotDotToken)) flags.push('spread')
-    if (modifiers.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword)) flags.push('async')
-    if (ts.isFunctionLike(node) && node.asteriskToken) flags.push('generator')
-
-    return flags
-}
-
-/** Declarations that take the contract's `declared`: a parameter, property, field or variable with a written type. */
-function declaresType(node) {
-    return ts.isParameter(node) || ts.isPropertySignature(node) || ts.isPropertyDeclaration(node) || ts.isVariableDeclaration(node)
-}
-
 /** Whether `node` is a declaration the contract gives a symbol id: a type, a function, a member, a module-level variable. */
 function declaresSymbol(node) {
     if (MEMBERS.has(node.kind)) return declaredName(node) !== undefined || isDefaultExport(node)
@@ -393,7 +732,7 @@ function namesItsScope(node) {
 
 function declaredName(node) {
     if (node.kind === ts.SyntaxKind.Constructor) return 'constructor'
-    if (node.name && (ts.isIdentifier(node.name) || ts.isPrivateIdentifier(node.name) || ts.isStringLiteral(node.name))) return written(node.name.text)
+    if (node.name && (ts.isIdentifier(node.name) || ts.isPrivateIdentifier(node.name) || ts.isStringLiteral(node.name))) return node.name.text === '' ? undefined : node.name.text
     if (isDefaultExport(node)) return 'default'
 
     return undefined
@@ -446,4 +785,32 @@ function nullable(type) {
 
 function isErrorType(type) {
     return type.intrinsicName === 'error'
+}
+
+/** Whether a top-level statement declares: a function, a class, an interface, an enum, a type alias or a namespace. */
+function declares(statement) {
+    return ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement) || ts.isInterfaceDeclaration(statement)
+        || ts.isEnumDeclaration(statement) || ts.isTypeAliasDeclaration(statement) || ts.isModuleDeclaration(statement)
+}
+
+
+function kindName(node) {
+    return ts.SyntaxKind[node.kind].replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+}
+
+/**
+ * What TypeScript's parser makes of a comment's words read as statements; the shared rule decides whether they are code.
+ * A lone expression's kind is what the translation makes of it, as for any expression of the file.
+ */
+export function fragment(raw) {
+    const words = raw.replace(/^(?:\/\/|\/\*+)/, '').replace(/\*\/$/, '').trim()
+    if (!words) return { context: 'statement', diagnostics: 0, statements: 0 }
+    const parsed = ts.createSourceFile('comment.ts', words, ts.ScriptTarget.ESNext, true)
+    const read = { context: 'statement', diagnostics: parsed.parseDiagnostics.length, statements: parsed.statements.length }
+    const [lone] = parsed.statements
+    if (parsed.statements.length === 1 && ts.isExpressionStatement(lone)) {
+        read.expressionKind = new Translator(new Tree(new Source('comment.ts', words)), parsed, 0, undefined).expression(lone.expression).kind
+    }
+
+    return read
 }

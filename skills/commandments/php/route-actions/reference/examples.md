@@ -21,16 +21,10 @@ public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, 
 ----------[ Good ]----------
 
 // in Shop\Mcp\PrintLabelTool
-// The FIX: render-queue-record is hoisted into `LabelPrinting`, the ONE home for the operation, and
-// every face calls it. What is left at this boundary is the only work that is genuinely its own —
-// translating the protocol and shaping the answer an agent reads.
-
 public function handleDelegating(string $sku, LabelPrinting $printing): string
 {
     return $this->answer($printing->print($sku));
 }
-
-// The one home for "print a label" — the shared service every face should call.
 
 final class LabelPrinting
 {
@@ -58,9 +52,6 @@ A `route('x')` lookup naming a route no registration mints — a stringly cross-
 ```php
 ----------[ Bad ]----------
 
-// A misspelt name buried in a menu array: every other entry resolves, so the page renders until a
-// user clicks THIS one.
-
 public function menu(): array
 {
     return [
@@ -70,10 +61,6 @@ public function menu(): array
 }
 
 ----------[ Good ]----------
-
-// The FIX: the same menu, with every `route(...)` naming a route the table actually registers —
-// `dashbord` was pointed back at a name `routes/web.php` mints (`reports.daily`). The vocabulary is
-// closed, so the reference and the registration are renamed in the same breath.
 
 public function registeredMenu(): array
 {
@@ -99,10 +86,6 @@ public function feed(): void
 
 ----------[ Good ]----------
 
-// The FIX: `[CatalogueListController, 'list']` is registered ONCE. The second URL survives as a
-// REDIRECT, so there is a single handler — and its name, middleware and constraints have no twin
-// to drift away from.
-
 public function catalogue(): void
 {
     Route::get('/catalogue', [CatalogueListController::class, 'list'])->name('catalogue');
@@ -116,8 +99,6 @@ Two route actions in different controllers thinly delegate to the SAME operation
 
 ```php
 ----------[ Bad ]----------
-
-// One of two doors onto `ReportBuilder::build` — `AnalyticsExportController::build` is the other.
 
 public function build(ReportExportRequest $request): string
 {
@@ -156,10 +137,6 @@ public function run(string $id): string
 ----------[ Good ]----------
 
 // in Shop\Http\Controllers\Delegated\AdminExportController
-// The FIX: the wrapper is gone. This action delegates INTO the domain — the same `WorkflowExporter`
-// the export controller calls — with the admin translation (`exportForAudit`) named on the service,
-// so there is no second HTTP door hanging off another controller.
-
 public function audit(string $id): string
 {
     return $this->exporter->exportForAudit($id);

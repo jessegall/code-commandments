@@ -27,13 +27,11 @@ A string written out as the path of a route the server declares by name
 ```vue
 ----------[ Bad ]----------
 
-function openBoard(): void {
-    window.location.assign('/plans')
-}
+<a :href="'/plans/' + card.id">{{ card.title }}</a>
 
 ----------[ Good ]----------
 
-const planAddress = route('plans.show', { plan: props.card.number })
+<a href="https://help.example.com/plans/archive">Help</a>
 ```
 
 ### raw-fetch-in-component — in Vue
@@ -41,18 +39,12 @@ const planAddress = route('plans.show', { plan: props.card.number })
 A Vue component calls the global `fetch` itself instead of the one client module
 
 ```vue
-----------[ Bad ]----------
-
-async function subscribe(): Promise<void> {
-    rejected.value = false
-    await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: address.value }) })
-        .catch(() => { rejected.value = true })
-}
-
 ----------[ Good ]----------
 
-async function refresh(): Promise<void> {
-    const levels = await stockLevels(props.sku)
-    left.value = levels.reduce((total, level) => total + level, 0)
+// The one place the shop's stock screens ask the server for stock: the path, the header and the parsing live here.
+export async function stockLevels(sku: string): Promise<number[]> {
+    const response = await fetch(`/api/stock/${sku}`, { headers: { Accept: 'application/json' } })
+
+    return response.json()
 }
 ```

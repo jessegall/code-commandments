@@ -24,9 +24,6 @@ public function resolve(Product $product, array $overrides, string $region): int
 
 ----------[ Good ]----------
 
-// The same resolution flattened: preconditions become guard clauses, so the
-// happy path runs unindented at the top level.
-
 public function resolveFlat(Product $product, array $overrides, string $region): int
 {
     if (! array_key_exists($region, $overrides)) {
@@ -106,40 +103,79 @@ A decision sits deep inside other decisions in one function
 ```cs
 ----------[ Bad ]----------
 
-public IReadOnlyList<string> Reorders()
+// Restocking walks every warehouse's shelves and decides, four choices deep, what to reorder — the
+// decision that matters is buried under the ones that only filter.
+public sealed class Restock(IReadOnlyDictionary<string, IReadOnlyList<Shelf>> warehouses)
 {
-    var reorders = new List<string>();
-
-    foreach (var (warehouse, shelves) in warehouses)
+    public IReadOnlyList<string> Reorders()
     {
-        foreach (var shelf in shelves)
+        var reorders = new List<string>();
+
+        foreach (var (warehouse, shelves) in warehouses)
         {
-            if (shelf.OnHand < shelf.Minimum)
+            foreach (var shelf in shelves)
             {
-                if (shelf.Supplier is not null)
+                if (shelf.OnHand < shelf.Minimum)
                 {
-                    reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                    if (shelf.Supplier is not null)
+                    {
+                        reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                    }
                 }
             }
         }
+
+        return reorders;
     }
 
-    return reorders;
+    public IReadOnlyList<string> ReordersFlat() =>
+        warehouses
+            .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
+            .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
+            .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
+            .ToList();
+
+    private static string Reorder(string warehouse, Shelf shelf) =>
+        $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
 }
 
 ----------[ Good ]----------
 
-// in Restock.cs
-public IReadOnlyList<string> ReordersFlat() =>
-    warehouses
-        .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
-        .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
-        .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
-        .ToList();
+// Restocking walks every warehouse's shelves and decides, four choices deep, what to reorder — the
+// decision that matters is buried under the ones that only filter.
+public sealed class Restock(IReadOnlyDictionary<string, IReadOnlyList<Shelf>> warehouses)
+{
+    public IReadOnlyList<string> Reorders()
+    {
+        var reorders = new List<string>();
 
-// in Restock.cs
-private static string Reorder(string warehouse, Shelf shelf) =>
-    $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
+        foreach (var (warehouse, shelves) in warehouses)
+        {
+            foreach (var shelf in shelves)
+            {
+                if (shelf.OnHand < shelf.Minimum)
+                {
+                    if (shelf.Supplier is not null)
+                    {
+                        reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                    }
+                }
+            }
+        }
+
+        return reorders;
+    }
+
+    public IReadOnlyList<string> ReordersFlat() =>
+        warehouses
+            .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
+            .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
+            .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
+            .ToList();
+
+    private static string Reorder(string warehouse, Shelf shelf) =>
+        $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
+}
 ```
 
 ### deep-nesting — in Go
@@ -276,33 +312,114 @@ Every branch of an `if`/`else` ends with the same statement: it runs whichever w
 ```cs
 ----------[ Bad ]----------
 
-public void Restock(ReturnedParcel parcel)
+// ParcelReturns shelves and refunds the parcels customers send back.
+public sealed class ParcelReturns
 {
-    if (parcel.Opened)
+    public List<string> Log { get; } = new();
+
+    public int Seconds { get; private set; }
+
+    public int Fresh { get; private set; }
+
+    public void Restock(ReturnedParcel parcel)
     {
-        Seconds++;
+        if (parcel.Opened)
+        {
+            Seconds++;
+            Log.Add(parcel.Reason);
+        }
+        else
+        {
+            Fresh++;
+            Log.Add(parcel.Reason);
+        }
+    }
+
+    public int Refund(int cents)
+    {
+        if (cents <= 0)
+        {
+            throw new NothingToRefund(cents);
+            cents = 0;
+        }
+
+        return cents;
+    }
+
+    public void RestockOnce(ReturnedParcel parcel)
+    {
+        if (parcel.Opened)
+        {
+            Seconds++;
+        }
+        else
+        {
+            Fresh++;
+        }
         Log.Add(parcel.Reason);
     }
-    else
+
+    public string RefundNote(string reason)
     {
-        Fresh++;
-        Log.Add(parcel.Reason);
+        reason = reason.Trim().ToLowerInvariant();
+        return $"refund: {reason}";
     }
 }
 
 ----------[ Good ]----------
 
-public void RestockOnce(ReturnedParcel parcel)
+// ParcelReturns shelves and refunds the parcels customers send back.
+public sealed class ParcelReturns
 {
-    if (parcel.Opened)
+    public List<string> Log { get; } = new();
+
+    public int Seconds { get; private set; }
+
+    public int Fresh { get; private set; }
+
+    public void Restock(ReturnedParcel parcel)
     {
-        Seconds++;
+        if (parcel.Opened)
+        {
+            Seconds++;
+            Log.Add(parcel.Reason);
+        }
+        else
+        {
+            Fresh++;
+            Log.Add(parcel.Reason);
+        }
     }
-    else
+
+    public int Refund(int cents)
     {
-        Fresh++;
+        if (cents <= 0)
+        {
+            throw new NothingToRefund(cents);
+            cents = 0;
+        }
+
+        return cents;
     }
-    Log.Add(parcel.Reason);
+
+    public void RestockOnce(ReturnedParcel parcel)
+    {
+        if (parcel.Opened)
+        {
+            Seconds++;
+        }
+        else
+        {
+            Fresh++;
+        }
+        Log.Add(parcel.Reason);
+    }
+
+    public string RefundNote(string reason)
+    {
+        reason = reason.Trim().ToLowerInvariant();
+        return $"refund: {reason}";
+    }
 }
 ```
 
@@ -446,40 +563,116 @@ A loop whose whole body is one `if` (no `else`) around real work: the iteration 
 ```cs
 ----------[ Bad ]----------
 
-public long Bill(Order order, List<string> journal)
+// Invoicing only bills lines that were actually ordered — and says so by wrapping the whole loop body
+// in that condition, so the billing sits a level deeper than the loop needs.
+public sealed class Invoicing
 {
-    long billed = 0;
-
-    foreach (var line in order.Lines)
+    public long Bill(Order order, List<string> journal)
     {
-        if (line.Quantity > 0)
+        long billed = 0;
+
+        foreach (var line in order.Lines)
         {
+            if (line.Quantity > 0)
+            {
+                billed += line.Subtotal.Cents;
+                journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
+            }
+        }
+
+        return billed;
+    }
+
+    public long BillFlat(Order order, List<string> journal)
+    {
+        long billed = 0;
+
+        foreach (var line in order.Lines)
+        {
+            if (line.Quantity <= 0)
+            {
+                continue;
+            }
+
             billed += line.Subtotal.Cents;
             journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
         }
+
+        return billed;
     }
 
-    return billed;
+    public string? FirstBackordered(Order order)
+    {
+        string? found = null;
+
+        foreach (var line in order.Lines)
+        {
+            if (line.Quantity > 99)
+            {
+                found = line.Sku;
+                break;
+            }
+        }
+
+        return found;
+    }
 }
 
 ----------[ Good ]----------
 
-public long BillFlat(Order order, List<string> journal)
+// Invoicing only bills lines that were actually ordered — and says so by wrapping the whole loop body
+// in that condition, so the billing sits a level deeper than the loop needs.
+public sealed class Invoicing
 {
-    long billed = 0;
-
-    foreach (var line in order.Lines)
+    public long Bill(Order order, List<string> journal)
     {
-        if (line.Quantity <= 0)
+        long billed = 0;
+
+        foreach (var line in order.Lines)
         {
-            continue;
+            if (line.Quantity > 0)
+            {
+                billed += line.Subtotal.Cents;
+                journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
+            }
         }
 
-        billed += line.Subtotal.Cents;
-        journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
+        return billed;
     }
 
-    return billed;
+    public long BillFlat(Order order, List<string> journal)
+    {
+        long billed = 0;
+
+        foreach (var line in order.Lines)
+        {
+            if (line.Quantity <= 0)
+            {
+                continue;
+            }
+
+            billed += line.Subtotal.Cents;
+            journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
+        }
+
+        return billed;
+    }
+
+    public string? FirstBackordered(Order order)
+    {
+        string? found = null;
+
+        foreach (var line in order.Lines)
+        {
+            if (line.Quantity > 99)
+            {
+                found = line.Sku;
+                break;
+            }
+        }
+
+        return found;
+    }
 }
 ```
 
@@ -528,9 +721,6 @@ private function band(int $score): string
 }
 
 ----------[ Good ]----------
-
-// The same decision as a `match (true)` — each band reads on its own line, no
-// precedence trap.
 
 private function bandMatched(int $score): string
 {
@@ -589,16 +779,33 @@ A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: 
 ```cs
 ----------[ Bad ]----------
 
-public static string Of(int grams) => grams < 500 ? "small" : grams < 5000 ? "medium" : "large";
+// The size class printed on a parcel label, by weight.
+public static class ParcelSizes
+{
+    public static string Of(int grams) => grams < 500 ? "small" : grams < 5000 ? "medium" : "large";
+
+    public static string Classed(int grams) => grams switch
+    {
+        < 500 => "small",
+        < 5000 => "medium",
+        _ => "large",
+    };
+}
 
 ----------[ Good ]----------
 
-public static string Classed(int grams) => grams switch
+// The size class printed on a parcel label, by weight.
+public static class ParcelSizes
 {
-    < 500 => "small",
-    < 5000 => "medium",
-    _ => "large",
-};
+    public static string Of(int grams) => grams < 500 ? "small" : grams < 5000 ? "medium" : "large";
+
+    public static string Classed(int grams) => grams switch
+    {
+        < 500 => "small",
+        < 5000 => "medium",
+        _ => "large",
+    };
+}
 ```
 
 ### non-counting-for — in PHP
@@ -672,34 +879,62 @@ A `for` loop whose step assigns the next item instead of moving a counter: a wal
 ```cs
 ----------[ Bad ]----------
 
-public static List<string> Approvers(Approval first)
+public static class Approvals
 {
-    var names = new List<string>();
-
-    for (Approval? step = first; step != null; step = step.Next)
+    public static List<string> Approvers(Approval first)
     {
-        names.Add(step.Approver);
+        var names = new List<string>();
+
+        for (Approval? step = first; step != null; step = step.Next)
+        {
+            names.Add(step.Approver);
+        }
+
+        return names;
     }
 
-    return names;
+    public static List<string> Signed(Approval first) => first.Chain().Select(step => step.Approver).ToList();
 }
 
 ----------[ Good ]----------
 
 // in Approvals.cs
-public IEnumerable<Approval> Chain()
+// One sign-off in the chain an order passes before it ships.
+public sealed class Approval(string approver, Approval? next)
 {
-    Approval? current = this;
+    public string Approver { get; } = approver;
 
-    while (current != null)
+    public Approval? Next { get; } = next;
+
+    public IEnumerable<Approval> Chain()
     {
-        yield return current;
-        current = current.Next;
+        Approval? current = this;
+
+        while (current != null)
+        {
+            yield return current;
+            current = current.Next;
+        }
     }
 }
 
 // in Approvals.cs
-public static List<string> Signed(Approval first) => first.Chain().Select(step => step.Approver).ToList();
+public static class Approvals
+{
+    public static List<string> Approvers(Approval first)
+    {
+        var names = new List<string>();
+
+        for (Approval? step = first; step != null; step = step.Next)
+        {
+            names.Add(step.Approver);
+        }
+
+        return names;
+    }
+
+    public static List<string> Signed(Approval first) => first.Chain().Select(step => step.Approver).ToList();
+}
 ```
 
 ### non-counting-for — in Go
@@ -771,23 +1006,76 @@ A database query runs on each iteration
 ```cs
 ----------[ Bad ]----------
 
-public decimal ReadParcels(DbSet<ParcelSnapshotProjection> parcels, Queue<int> queue, decimal running)
+public sealed class ParcelSnapshotReader(IServiceProvider source, Action<string> intake)
 {
-    var total = running;
-    while (queue.TryDequeue(out var next))
+    private readonly IServiceProvider intakeServices = source;
+
+    public bool PublishProjection(string gate)
     {
-        var label = parcels.Find(next);
-        total += label.Length;
-        intake(label);
+        if (gate.Length == 0) return false;
+        var projection = this.intakeServices.GetRequiredService<ParcelSnapshotProjection>();
+        intake(gate + ": " + projection.GetType().Name);
+        return true;
     }
-    return total;
+
+    public decimal ReadParcels(DbSet<ParcelSnapshotProjection> parcels, Queue<int> queue, decimal running)
+    {
+        var total = running;
+        while (queue.TryDequeue(out var next))
+        {
+            var label = parcels.Find(next);
+            total += label.Length;
+            intake(label);
+        }
+        return total;
+    }
+
+    public string ReadOne(DbSet<ParcelSnapshotProjection> rows, int identifier)
+    {
+        return rows.Find(identifier);
+    }
+
+    public string ProjectionName(ParcelSnapshotProjection projection)
+    {
+        return projection.GetType().Name;
+    }
 }
 
 ----------[ Good ]----------
 
-public string ReadOne(DbSet<ParcelSnapshotProjection> rows, int identifier)
+public sealed class ParcelSnapshotReader(IServiceProvider source, Action<string> intake)
 {
-    return rows.Find(identifier);
+    private readonly IServiceProvider intakeServices = source;
+
+    public bool PublishProjection(string gate)
+    {
+        if (gate.Length == 0) return false;
+        var projection = this.intakeServices.GetRequiredService<ParcelSnapshotProjection>();
+        intake(gate + ": " + projection.GetType().Name);
+        return true;
+    }
+
+    public decimal ReadParcels(DbSet<ParcelSnapshotProjection> parcels, Queue<int> queue, decimal running)
+    {
+        var total = running;
+        while (queue.TryDequeue(out var next))
+        {
+            var label = parcels.Find(next);
+            total += label.Length;
+            intake(label);
+        }
+        return total;
+    }
+
+    public string ReadOne(DbSet<ParcelSnapshotProjection> rows, int identifier)
+    {
+        return rows.Find(identifier);
+    }
+
+    public string ProjectionName(ParcelSnapshotProjection projection)
+    {
+        return projection.GetType().Name;
+    }
 }
 ```
 
@@ -860,18 +1148,144 @@ A parameter overwritten inside its function, so one name holds the value the cal
 ```cs
 ----------[ Bad ]----------
 
-public int PostageCents(int grams, int zone)
+// ParcelPostage labels parcels by weight and counts what a belt can take.
+public sealed class ParcelPostage
 {
-    grams = Math.Max(grams, 100);
-    return grams * zone;
+    public List<string> Labels { get; } = new();
+
+    public int Zone { get; private set; }
+
+    public void Label(int grams)
+    {
+        if (grams > 2000)
+        {
+            Labels.Add("heavy");
+            Zone = Math.Max(Zone, 1);
+        }
+        else if (grams > 500)
+        {
+            Labels.Add("medium");
+            Zone = Math.Max(Zone, 1);
+        }
+        else
+        {
+            Zone = Math.Max(Zone, 1);
+        }
+    }
+
+    public int Sorted(IEnumerable<int> weights)
+    {
+        var taken = 0;
+        foreach (var grams in weights)
+        {
+            if (grams > 30000)
+            {
+                continue;
+                taken--;
+            }
+            taken++;
+        }
+
+        return taken;
+    }
+
+    public void Weigh(int grams)
+    {
+        if (grams > 2000)
+        {
+            Labels.Add("heavy");
+        }
+        Zone = Math.Max(Zone, 1);
+    }
+
+    public int PostageCents(int grams, int zone)
+    {
+        grams = Math.Max(grams, 100);
+        return grams * zone;
+    }
+
+    public int BilledPostageCents(int grams, int zone)
+    {
+        var billed = Math.Max(grams, 100);
+        return billed * zone;
+    }
+
+    public bool TryWeigh(string label, out int grams)
+    {
+        grams = label.Length * 100;
+        return grams > 0;
+    }
 }
 
 ----------[ Good ]----------
 
-public int BilledPostageCents(int grams, int zone)
+// ParcelPostage labels parcels by weight and counts what a belt can take.
+public sealed class ParcelPostage
 {
-    var billed = Math.Max(grams, 100);
-    return billed * zone;
+    public List<string> Labels { get; } = new();
+
+    public int Zone { get; private set; }
+
+    public void Label(int grams)
+    {
+        if (grams > 2000)
+        {
+            Labels.Add("heavy");
+            Zone = Math.Max(Zone, 1);
+        }
+        else if (grams > 500)
+        {
+            Labels.Add("medium");
+            Zone = Math.Max(Zone, 1);
+        }
+        else
+        {
+            Zone = Math.Max(Zone, 1);
+        }
+    }
+
+    public int Sorted(IEnumerable<int> weights)
+    {
+        var taken = 0;
+        foreach (var grams in weights)
+        {
+            if (grams > 30000)
+            {
+                continue;
+                taken--;
+            }
+            taken++;
+        }
+
+        return taken;
+    }
+
+    public void Weigh(int grams)
+    {
+        if (grams > 2000)
+        {
+            Labels.Add("heavy");
+        }
+        Zone = Math.Max(Zone, 1);
+    }
+
+    public int PostageCents(int grams, int zone)
+    {
+        grams = Math.Max(grams, 100);
+        return grams * zone;
+    }
+
+    public int BilledPostageCents(int grams, int zone)
+    {
+        var billed = Math.Max(grams, 100);
+        return billed * zone;
+    }
+
+    public bool TryWeigh(string label, out int grams)
+    {
+        grams = label.Length * 100;
+        return grams > 0;
+    }
 }
 ```
 
@@ -921,9 +1335,6 @@ public function inStock(array $products): array
 }
 
 ----------[ Good ]----------
-
-// The guard handles the absent case and `continue`s; the happy path runs
-// unindented with no redundant `else`.
 
 public function available(array $products): array
 {
@@ -998,32 +1409,100 @@ An `else` after an `if` branch that already left (it returns, throws, breaks or 
 ```cs
 ----------[ Bad ]----------
 
-public Money Charge(Order order, string currency)
+// Checkout refuses an empty order and then carries the whole checkout inside an `else` the `throw`
+// already made unnecessary.
+public sealed class Checkout
 {
-    if (order.Lines.Count == 0)
+    public Money Charge(Order order, string currency)
     {
-        throw EmptyOrder.For(order);
+        if (order.Lines.Count == 0)
+        {
+            throw EmptyOrder.For(order);
+        }
+        else
+        {
+            var total = order.Total(currency);
+
+            return total with { Cents = total.Cents + 250 };
+        }
     }
-    else
+
+    public Money ChargeFlat(Order order, string currency)
     {
+        if (order.Lines.Count == 0)
+        {
+            throw EmptyOrder.For(order);
+        }
+
         var total = order.Total(currency);
 
         return total with { Cents = total.Cents + 250 };
+    }
+
+    public string Greeting(Order order, bool returning)
+    {
+        string text;
+
+        if (returning)
+        {
+            text = $"Welcome back — order {order.Reference}";
+        }
+        else
+        {
+            text = $"Thanks for your first order, {order.Reference}";
+        }
+
+        return text;
     }
 }
 
 ----------[ Good ]----------
 
-public Money ChargeFlat(Order order, string currency)
+// Checkout refuses an empty order and then carries the whole checkout inside an `else` the `throw`
+// already made unnecessary.
+public sealed class Checkout
 {
-    if (order.Lines.Count == 0)
+    public Money Charge(Order order, string currency)
     {
-        throw EmptyOrder.For(order);
+        if (order.Lines.Count == 0)
+        {
+            throw EmptyOrder.For(order);
+        }
+        else
+        {
+            var total = order.Total(currency);
+
+            return total with { Cents = total.Cents + 250 };
+        }
     }
 
-    var total = order.Total(currency);
+    public Money ChargeFlat(Order order, string currency)
+    {
+        if (order.Lines.Count == 0)
+        {
+            throw EmptyOrder.For(order);
+        }
 
-    return total with { Cents = total.Cents + 250 };
+        var total = order.Total(currency);
+
+        return total with { Cents = total.Cents + 250 };
+    }
+
+    public string Greeting(Order order, bool returning)
+    {
+        string text;
+
+        if (returning)
+        {
+            text = $"Welcome back — order {order.Reference}";
+        }
+        else
+        {
+            text = $"Thanks for your first order, {order.Reference}";
+        }
+
+        return text;
+    }
 }
 ```
 
@@ -1187,39 +1666,81 @@ An `if`/`else if` chain of four or more rungs that each test the same subject fo
 ```cs
 ----------[ Bad ]----------
 
-public static string Colour(OrderStatus status)
+// A badge colour is picked by testing the status against one member after another — a dispatch
+// written as a ladder, so a new status is a new rung someone has to remember to add.
+public static class StatusBadge
 {
-    if (status == OrderStatus.Placed)
+    public static string Colour(OrderStatus status)
     {
-        return "grey";
-    }
-    else if (status == OrderStatus.Paid)
-    {
-        return "blue";
-    }
-    else if (status == OrderStatus.Shipped)
-    {
-        return "orange";
-    }
-    else if (status == OrderStatus.Delivered)
-    {
-        return "green";
+        if (status == OrderStatus.Placed)
+        {
+            return "grey";
+        }
+        else if (status == OrderStatus.Paid)
+        {
+            return "blue";
+        }
+        else if (status == OrderStatus.Shipped)
+        {
+            return "orange";
+        }
+        else if (status == OrderStatus.Delivered)
+        {
+            return "green";
+        }
+
+        return "red";
     }
 
-    return "red";
+    public static string ColourOf(OrderStatus status) => status switch
+    {
+        OrderStatus.Placed => "grey",
+        OrderStatus.Paid => "blue",
+        OrderStatus.Shipped => "orange",
+        OrderStatus.Delivered => "green",
+        OrderStatus.Cancelled => "red",
+        _ => throw new ArgumentOutOfRangeException(nameof(status)),
+    };
 }
 
 ----------[ Good ]----------
 
-public static string ColourOf(OrderStatus status) => status switch
+// A badge colour is picked by testing the status against one member after another — a dispatch
+// written as a ladder, so a new status is a new rung someone has to remember to add.
+public static class StatusBadge
 {
-    OrderStatus.Placed => "grey",
-    OrderStatus.Paid => "blue",
-    OrderStatus.Shipped => "orange",
-    OrderStatus.Delivered => "green",
-    OrderStatus.Cancelled => "red",
-    _ => throw new ArgumentOutOfRangeException(nameof(status)),
-};
+    public static string Colour(OrderStatus status)
+    {
+        if (status == OrderStatus.Placed)
+        {
+            return "grey";
+        }
+        else if (status == OrderStatus.Paid)
+        {
+            return "blue";
+        }
+        else if (status == OrderStatus.Shipped)
+        {
+            return "orange";
+        }
+        else if (status == OrderStatus.Delivered)
+        {
+            return "green";
+        }
+
+        return "red";
+    }
+
+    public static string ColourOf(OrderStatus status) => status switch
+    {
+        OrderStatus.Placed => "grey",
+        OrderStatus.Paid => "blue",
+        OrderStatus.Shipped => "orange",
+        OrderStatus.Delivered => "green",
+        OrderStatus.Cancelled => "red",
+        _ => throw new ArgumentOutOfRangeException(nameof(status)),
+    };
+}
 ```
 
 ### subject-ladder — in Go
@@ -1400,20 +1921,6 @@ export function pickupMessage(order: { packed: boolean }, window: { open: boolea
 }
 ```
 
-### unnamed-condition — in Vue
-
-A condition of three or more parts over two or more objects whose decision has no name
-
-```vue
-----------[ Bad ]----------
-
-<aside v-if="order.ready && counter.staffed && counter.tickets > 0">You can collect your order.</aside>
-
-----------[ Good ]----------
-
-<p v-if="counter.staffed && counter.tickets > 0">Take a ticket.</p>
-```
-
 ### unnamed-condition — in Python
 
 A condition of three or more parts over two or more objects whose decision has no name
@@ -1446,28 +1953,72 @@ A condition of three or more parts over two or more objects whose decision has n
 ```cs
 ----------[ Bad ]----------
 
-public void Dispatch(Crate crate)
+public sealed class BayDispatcher(LoadingBay bay)
 {
-    if (crate.Packed && crate.Labelled && bay.IsFree())
+    private readonly List<string> sent = [];
+
+    public void Dispatch(Crate crate)
     {
-        bay.Take(crate);
-        sent.Add(crate.Reference);
+        if (crate.Packed && crate.Labelled && bay.IsFree())
+        {
+            bay.Take(crate);
+            sent.Add(crate.Reference);
+        }
     }
+
+    public void DispatchTold(Crate crate)
+    {
+        if (crate.ReadyFor(bay))
+        {
+            bay.Take(crate);
+            sent.Add(crate.Reference);
+        }
+    }
+
+    public IReadOnlyList<string> Sent() => sent;
 }
 
 ----------[ Good ]----------
 
 // in BayLoading.cs
-public bool ReadyFor(LoadingBay bay) => Packed && Labelled && bay.IsFree();
+// Loading a crate out of a bay. The condition asks the crate two things and the bay a third, and a reader has
+// to hold all three in mind to see that it means "ready to load". Below it, the FIX: the crate answers that
+// question under its own name, and each object answers for its own part of it.
+public sealed class Crate(string reference, bool packed, bool labelled)
+{
+    public string Reference { get; } = reference;
+
+    public bool Packed { get; } = packed;
+
+    public bool Labelled { get; } = labelled;
+
+    public bool ReadyFor(LoadingBay bay) => Packed && Labelled && bay.IsFree();
+}
 
 // in BayLoading.cs
-public void DispatchTold(Crate crate)
+public sealed class BayDispatcher(LoadingBay bay)
 {
-    if (crate.ReadyFor(bay))
+    private readonly List<string> sent = [];
+
+    public void Dispatch(Crate crate)
     {
-        bay.Take(crate);
-        sent.Add(crate.Reference);
+        if (crate.Packed && crate.Labelled && bay.IsFree())
+        {
+            bay.Take(crate);
+            sent.Add(crate.Reference);
+        }
     }
+
+    public void DispatchTold(Crate crate)
+    {
+        if (crate.ReadyFor(bay))
+        {
+            bay.Take(crate);
+            sent.Add(crate.Reference);
+        }
+    }
+
+    public IReadOnlyList<string> Sent() => sent;
 }
 ```
 
@@ -1582,26 +2133,128 @@ A statement after a return, throw, break or continue in the same block: it can n
 ```cs
 ----------[ Bad ]----------
 
-public void Expire(bool lapsed)
+// LoyaltyPoints spends and expires the points a member collects.
+public sealed class LoyaltyPoints
 {
-    if (!lapsed)
+    public int Points { get; private set; }
+
+    public string Tier { get; private set; } = "bronze";
+
+    public string Redeem(int cost)
     {
-        return;
+        string result;
+        if (Points < cost)
+        {
+            Console.WriteLine(Points);
+            result = "spent";
+        }
+        else
+        {
+            Points -= cost;
+            result = "spent";
+        }
+
+        return result;
     }
-    Points = 0;
-    return;
-    Tier = "bronze";
+
+    public void Expire(bool lapsed)
+    {
+        if (!lapsed)
+        {
+            return;
+        }
+        Points = 0;
+        return;
+        Tier = "bronze";
+    }
+
+    public void ExpireLapsed(bool lapsed)
+    {
+        if (!lapsed)
+        {
+            return;
+        }
+        Points = 0;
+    }
+
+    public string Render()
+    {
+        return Describe(Tier);
+
+        static string Describe(string tier) => tier.ToUpperInvariant();
+    }
+
+    public int PointsFor(IEnumerable<int> spent, int bonus)
+    {
+        foreach (var amount in spent)
+        {
+            bonus += amount / 10;
+        }
+        return bonus;
+    }
 }
 
 ----------[ Good ]----------
 
-public void ExpireLapsed(bool lapsed)
+// LoyaltyPoints spends and expires the points a member collects.
+public sealed class LoyaltyPoints
 {
-    if (!lapsed)
+    public int Points { get; private set; }
+
+    public string Tier { get; private set; } = "bronze";
+
+    public string Redeem(int cost)
     {
-        return;
+        string result;
+        if (Points < cost)
+        {
+            Console.WriteLine(Points);
+            result = "spent";
+        }
+        else
+        {
+            Points -= cost;
+            result = "spent";
+        }
+
+        return result;
     }
-    Points = 0;
+
+    public void Expire(bool lapsed)
+    {
+        if (!lapsed)
+        {
+            return;
+        }
+        Points = 0;
+        return;
+        Tier = "bronze";
+    }
+
+    public void ExpireLapsed(bool lapsed)
+    {
+        if (!lapsed)
+        {
+            return;
+        }
+        Points = 0;
+    }
+
+    public string Render()
+    {
+        return Describe(Tier);
+
+        static string Describe(string tier) => tier.ToUpperInvariant();
+    }
+
+    public int PointsFor(IEnumerable<int> spent, int bonus)
+    {
+        foreach (var amount in spent)
+        {
+            bonus += amount / 10;
+        }
+        return bonus;
+    }
 }
 ```
 

@@ -102,20 +102,12 @@ public function hold(BadgeCopy $badge, string $status): BadgeHolder
 ----------[ Good ]----------
 
 // in Shop\Http\Pages\Hydration\BadgeHolderBuilder
-// The FIX: the `badge` slot is typed `BadgeCopy`, so it takes the object as-is — no `->toArray()`,
-// no rebuild.
-
 public function holdReady(BadgeCopy $badge, string $status): BadgeHolder
 {
     $toned = new BadgeCopy($badge->label, $this->toneFor($status));
 
     return BadgeHolder::from(['badge' => $toned]);
 }
-
-/*
- * Shared leaf Data classes, enums, and stubs the hydration-site fixtures nest, derive, and cast. Declared
- * once here (no findings of their own); the per-scenario site files reference them.
- */
 
 final class BadgeCopy extends Data
 {
@@ -129,7 +121,6 @@ The other 5 — one per rule — are in [`reference/examples.md`](reference/exam
 
 - `{{binary}} judge --skill=php/spatie-data-hydration` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `data-to-array-roundtrip`, `derived-collection-cast`, `hand-key-remap`, `redundant-enum-unwrap`, `redundant-native-cast`, `redundant-nested-from`.
-- `{{binary}} repent --sin=<sin>` — auto-fix, for `data-to-array-roundtrip`, `redundant-enum-unwrap`, `redundant-native-cast`, `redundant-nested-from`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

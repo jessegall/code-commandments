@@ -54,12 +54,12 @@ func Markers(codebase *engine.Codebase) []Marker {
 
 func attributeMarkers(codebase *engine.Codebase) []Marker {
 	var markers []Marker
-	for _, attribute := range codebase.WhereKind("Attribute").Get() {
-		tag, ok := attributeTags[ShortName(attribute.Child("name").Name())]
+	for _, attribute := range codebase.WhereKind("annotation").Get() {
+		tag, ok := attributeTags[ShortName(attribute.Name())]
 		if !ok {
 			continue
 		}
-		named := markedName(attribute.Child("args").Child("value"))
+		named := markedName(attribute)
 		if named == "" {
 			continue
 		}
@@ -80,9 +80,15 @@ func attributeMarkers(codebase *engine.Codebase) []Marker {
 	return markers
 }
 
-func markedName(argument engine.Match) string {
-	if class := argument.Child("class"); class.Exists() {
-		return ShortName(class.Name())
+// markedName is the sin an attribute marks, its first argument: a class constant `Sin::class` or a string.
+func markedName(attribute engine.Match) string {
+	arguments := attribute.ChildrenIn("arguments")
+	if len(arguments) == 0 {
+		return ""
+	}
+	argument := arguments[0].Child("value")
+	if argument.Kind() == "access" && argument.Child("member").Name() == "class" {
+		return ShortName(argument.Child("subject").Name())
 	}
 	if text, ok := argument.Text(); ok {
 		return ShortName(text)

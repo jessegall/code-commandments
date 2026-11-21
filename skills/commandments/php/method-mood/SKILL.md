@@ -67,17 +67,12 @@ A `bool` about the object's own state named as a bare verb — `binds()`, `spins
 ```php
 ----------[ Bad ]----------
 
-// A bool about the line itself, named as a claim instead of a question.
-
 public function reports(): bool
 {
     return $this->level === 'error';
 }
 
 ----------[ Good ]----------
-
-// The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
-// reads as English at the call site, where `if ($line->reports())` reads as a claim.
 
 public function isErrored(): bool
 {

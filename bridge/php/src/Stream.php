@@ -15,7 +15,7 @@ use PhpParser\ParserFactory;
  */
 final readonly class Stream
 {
-    public const string VERSION = '1';
+    public const string VERSION = '8.0.0';
 
     public function __construct(private Request $request) {}
 
@@ -27,7 +27,7 @@ final readonly class Stream
         $files = Sources::in($this->request->paths, $this->request->contents);
         $this->line($out, ['header' => [
             'contract' => 'tree',
-            'version' => 1,
+            'version' => 5,
             'language' => 'php',
             'bridge' => ['name' => 'php-bridge', 'version' => self::VERSION, 'reads' => true],
             'roots' => $this->request->paths,
@@ -43,8 +43,8 @@ final readonly class Stream
             $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
             $file = $this->parsed($path, $this->request->contents[$path] ?? (string) file_get_contents($path), $parser);
             $this->line($out, ['file' => $file]);
-            $referenced += $file->writer->referenced;
-            $declared += $file->writer->declared;
+            $referenced += $file->translator->referenced;
+            $declared += $file->translator->declared;
             $written++;
         }
         $this->writeProgram($out, $declared, $referenced);
@@ -56,16 +56,39 @@ final readonly class Stream
         $errors = new Collecting();
         $statements = $parser->parse($code, $errors) ?? [];
         $statements = (new NodeTraverser(new NameResolver($errors)))->traverse($statements);
-        $writer = new TreeWriter($code);
-        $root = $writer->root($statements);
+        $translator = new Translator($code, $parser->getTokens());
+        $root = $translator->file($statements);
+        $nodes = $root->numbered();
+        $modules = $root->parts['modules'];
+        foreach ($errors->getErrors() as $error) {
+            $this->recovered($nodes, $error->getAttributes()['startFilePos'] ?? strlen($code));
+        }
 
         return new ParsedFile(
             $path,
             count($errors->getErrors()),
-            $root,
-            $writer->comments($parser->getTokens()),
-            $writer,
+            count($modules) === 1 ? ($modules[0]->facts['name'] ?? null) : null,
+            $root->written($translator->line(...)),
+            $translator->comments($nodes),
+            $translator,
         );
+    }
+
+    /**
+     * Marks the innermost node around a parse error incomplete: the parser dropped what it could not read there, so
+     * its roles are unknown rather than empty. Nodes are in pre-order, so the last one holding the offset is innermost.
+     *
+     * @param  list<TreeNode>  $nodes
+     */
+    private function recovered(array $nodes, int $offset): void
+    {
+        $innermost = $nodes[min(1, count($nodes) - 1)];
+        foreach ($nodes as $node) {
+            if ($node->start <= $offset && $offset < $node->end) {
+                $innermost = $node;
+            }
+        }
+        $innermost->facts['incomplete'] = true;
     }
 
     /**

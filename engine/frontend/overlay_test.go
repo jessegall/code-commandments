@@ -45,7 +45,7 @@ func TestAServedBridgeReadsDraftedTextInPlaceOfTheDisk(t *testing.T) {
 		t.Fatalf("got %d files", len(files))
 	}
 	var tags []string
-	for _, element := range codebase.WhereKind("Element").Get() {
+	for _, element := range codebase.WhereKind("element").Get() {
 		span, err := element.Span()
 		if err != nil {
 			t.Fatal(err)

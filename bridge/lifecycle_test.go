@@ -11,7 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-const header = `{"header": {"contract": "tree", "version": 1, "language": "php", "bridge": {"name": "test", "version": "1"}, "roots": ["/abs/src"]}}`
+const header = `{"header": {"contract": "tree", "version": 5, "language": "php", "bridge": {"name": "test", "version": "1"}, "roots": ["/abs/src"]}}`
 
 func finishes(t *testing.T, limit time.Duration, run func()) {
 	t.Helper()

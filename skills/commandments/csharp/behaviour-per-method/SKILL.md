@@ -66,25 +66,51 @@ a method whose whole body branches on a `bool` parameter — `if (compact) … e
 ```cs
 ----------[ Bad ]----------
 
-public static string Line(string orderId, int cents, bool forCustomer)
+// The line an order is summed up in, on an invoice or a packing slip.
+public static class Summaries
 {
-    if (forCustomer)
+    public static string Line(string orderId, int cents, bool forCustomer)
     {
-        return $"Order {orderId}: {cents / 100m:C}";
+        if (forCustomer)
+        {
+            return $"Order {orderId}: {cents / 100m:C}";
+        }
+        else
+        {
+            return $"{orderId};{cents}";
+        }
     }
-    else
-    {
-        return $"{orderId};{cents}";
-    }
+
+    public static string CustomerLine(string orderId, int cents) => $"Order {orderId}: {cents / 100m:C}";
+
+    public static string LedgerLine(string orderId, int cents) => $"{orderId};{cents}";
+
+    public static string Heading(string? title) => title is null ? "Order" : $"Order — {title}";
 }
 
 ----------[ Good ]----------
 
-// in Summaries.cs
-public static string CustomerLine(string orderId, int cents) => $"Order {orderId}: {cents / 100m:C}";
+// The line an order is summed up in, on an invoice or a packing slip.
+public static class Summaries
+{
+    public static string Line(string orderId, int cents, bool forCustomer)
+    {
+        if (forCustomer)
+        {
+            return $"Order {orderId}: {cents / 100m:C}";
+        }
+        else
+        {
+            return $"{orderId};{cents}";
+        }
+    }
 
-// in Summaries.cs
-public static string LedgerLine(string orderId, int cents) => $"{orderId};{cents}";
+    public static string CustomerLine(string orderId, int cents) => $"Order {orderId}: {cents / 100m:C}";
+
+    public static string LedgerLine(string orderId, int cents) => $"{orderId};{cents}";
+
+    public static string Heading(string? title) => title is null ? "Order" : $"Order — {title}";
+}
 ```
 
 ## Commands

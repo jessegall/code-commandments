@@ -2,7 +2,9 @@ package contract
 
 import (
 	"bytes"
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -16,6 +18,18 @@ import (
 
 //go:embed tree.schema.json
 var schemaSource []byte
+
+// Identity names the tree a reader reads: the contract versions it reads and the schema it validates against. A kept
+// line written under another names another tree, so a cache keyed on it never serves it.
+var Identity = sync.OnceValue(func() string {
+	digest := sha256.New()
+	for _, version := range SupportedVersions {
+		digest.Write([]byte(strconv.Itoa(version) + "\x00"))
+	}
+	digest.Write(schemaSource)
+
+	return "tree-" + hex.EncodeToString(digest.Sum(nil)[:8])
+})
 
 var annotations = map[string]bool{"$schema": true, "$id": true, "title": true, "description": true, "$defs": true,
 	"kinds": true, "facts": true, "universalFacts": true, "categories": true}

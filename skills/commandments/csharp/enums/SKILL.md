@@ -64,32 +64,82 @@ A `switch` or an `if` ladder dispatching on strings that are the names of an enu
 ```cs
 ----------[ Bad ]----------
 
-public void Handle(string reference, string status)
+// An order feed arrives with its status as text, and the feed decides what to do by matching that text
+// against the names OrderStatus already declares — the enum, spelled out again as strings.
+public sealed class StatusFeed(Action<string> notify)
 {
-    switch (status)
+    public void Handle(string reference, string status)
     {
-        case "shipped":
-            notify($"{reference} is on its way");
-            break;
-        case "delivered":
-            notify($"{reference} has arrived");
-            break;
+        switch (status)
+        {
+            case "shipped":
+                notify($"{reference} is on its way");
+                break;
+            case "delivered":
+                notify($"{reference} has arrived");
+                break;
+        }
     }
+
+    public void HandleParsed(string reference, string status)
+    {
+        switch (Enum.Parse<OrderStatus>(status, ignoreCase: true))
+        {
+            case OrderStatus.Shipped:
+                notify($"{reference} is on its way");
+                break;
+            case OrderStatus.Delivered:
+                notify($"{reference} has arrived");
+                break;
+        }
+    }
+
+    public string Channel(string source) => source switch
+    {
+        "email" => "mail",
+        "paid" => "billing",
+        _ => "web",
+    };
 }
 
 ----------[ Good ]----------
 
-public void HandleParsed(string reference, string status)
+// An order feed arrives with its status as text, and the feed decides what to do by matching that text
+// against the names OrderStatus already declares — the enum, spelled out again as strings.
+public sealed class StatusFeed(Action<string> notify)
 {
-    switch (Enum.Parse<OrderStatus>(status, ignoreCase: true))
+    public void Handle(string reference, string status)
     {
-        case OrderStatus.Shipped:
-            notify($"{reference} is on its way");
-            break;
-        case OrderStatus.Delivered:
-            notify($"{reference} has arrived");
-            break;
+        switch (status)
+        {
+            case "shipped":
+                notify($"{reference} is on its way");
+                break;
+            case "delivered":
+                notify($"{reference} has arrived");
+                break;
+        }
     }
+
+    public void HandleParsed(string reference, string status)
+    {
+        switch (Enum.Parse<OrderStatus>(status, ignoreCase: true))
+        {
+            case OrderStatus.Shipped:
+                notify($"{reference} is on its way");
+                break;
+            case OrderStatus.Delivered:
+                notify($"{reference} has arrived");
+                break;
+        }
+    }
+
+    public string Channel(string source) => source switch
+    {
+        "email" => "mail",
+        "paid" => "billing",
+        _ => "web",
+    };
 }
 ```
 
