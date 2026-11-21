@@ -152,18 +152,6 @@ type Grouped interface {
 	GroupKey(match engine.Match) (string, bool)
 }
 
-// Aggregating is a detector whose verdict on a candidate weighs the candidates of the whole program: a group that recurs, a slot every call fills alike.
-type Aggregating interface {
-	Candidates(codebase *engine.Codebase) []Candidate
-	Decide(candidates []Candidate) []int
-}
-
-// Candidate is one place a rule weighs, and what its verdict needs to know of it.
-type Candidate struct {
-	At     engine.Match
-	Record any
-}
-
 // SameSin says whether two detectors find one sin: the same name under the same engine. A sin is compared by what
 // it is, never by its value, since a rule's sin holds lists.
 func SameSin(one, other Detector) bool {

@@ -28,12 +28,18 @@ type Units struct {
 	rooted  func(*engine.Codebase) *engine.Codebase
 }
 
-// unit is one project's lines on disk.
+// unit is one project's lines on disk, and how many bytes of lines it holds unzipped.
 type unit struct {
 	owner string
 	path  string
 	files int
+	bytes int
 }
+
+// wholeBudget is how many bytes of tree lines a solution may hold to be judged whole: the C# stream writes about 115
+// bytes a node, and a capped 3 GB container judges about 1.3 million nodes at once (docs/memory.md). A solution past it
+// is judged a project at a time, so a rule reading across projects reads one project.
+const wholeBudget = 150 << 20
 
 // Units reads the files of the bridge that reads in units, cut a project at a time.
 func (s Sources) Units(complete func(*engine.Codebase) error) (*Units, error) {
@@ -159,24 +165,47 @@ func (u *Units) Files(at int) int {
 }
 
 func (u *Units) Load(at int) (*engine.Codebase, error) {
-	held := u.units[at]
-	file, err := os.Open(held.path)
-	if err != nil {
-		return nil, err
+	return u.loaded(u.units[at : at+1])
+}
+
+// FitWhole is whether the solution's lines are few enough to judge every project as one codebase.
+func (u *Units) FitWhole() bool {
+	total := 0
+	for _, held := range u.units {
+		total += held.bytes
 	}
-	defer file.Close()
-	unzipped, err := gzip.NewReader(file)
-	if err != nil {
-		return nil, err
+
+	return total <= wholeBudget
+}
+
+// LoadWhole is every project of the solution as one codebase, so a rule reading across projects reads them all.
+func (u *Units) LoadWhole() (*engine.Codebase, error) {
+	return u.loaded(u.units)
+}
+
+func (u *Units) loaded(held []unit) (*engine.Codebase, error) {
+	lines := []io.Reader{bytes.NewReader(u.header)}
+	files := 0
+	for _, each := range held {
+		file, err := os.Open(each.path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		unzipped, err := gzip.NewReader(file)
+		if err != nil {
+			return nil, err
+		}
+		lines = append(lines, unzipped)
+		files += each.files
 	}
-	lines := []io.Reader{bytes.NewReader(u.header), unzipped}
 	if u.program != nil {
 		lines = append(lines, bytes.NewReader(u.program))
 	}
-	lines = append(lines, bytes.NewReader(fmt.Appendf(nil, "{\"trailer\":{\"files\":%d}}\n", held.files)))
+	lines = append(lines, bytes.NewReader(fmt.Appendf(nil, "{\"trailer\":{\"files\":%d}}\n", files)))
 	stream, err := contract.ReadAll(io.MultiReader(lines...))
 	if err != nil {
-		return nil, fmt.Errorf("unit %s: %w", held.owner, err)
+		return nil, fmt.Errorf("units %s: %w", held[0].owner, err)
 	}
 
 	return u.rooted(engine.Load(stream)), nil
@@ -268,6 +297,7 @@ func (c *cutter) cutStanding(owner string) error {
 
 func (c *cutter) cut(file *contract.File, raw []byte) error {
 	c.files = append(c.files, file)
+	c.units.units[len(c.units.units)-1].bytes += len(raw) + 1
 	if _, err := c.buffered.Write(raw); err != nil {
 		return err
 	}

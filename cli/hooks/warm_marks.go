@@ -55,9 +55,6 @@ func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []
 		}
 
 		asked := narrowed
-		if _, weighs := rule.(detectors.Aggregating); weighs {
-			asked = codebase
-		}
 
 		for _, match := range safely(rule, asked) {
 			if match.File() != file {

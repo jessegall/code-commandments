@@ -1,33 +1,18 @@
 package judge
 
 import (
-	"fmt"
-	"runtime/debug"
 	"slices"
 
-	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// weighed is a candidate an aggregating rule read in one unit: its record, and its finding when the verdict picks it, made while its unit was held.
-type weighed struct {
-	record  any
-	finding engine.Finding
-}
-
 func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, options options, progress *cli.Progress, console cli.Console) (Judgement, int, error) {
 	var clean []bool
-	set := newCSharpSet(sources.Checkout())
 	units, err := sources.Units(func(codebase *engine.Codebase) error {
-		set.add(codebase)
-		clean = append(clean, !slices.ContainsFunc(rules, func(rule detectors.Detector) bool {
-			_, weighs := rule.(detectors.Aggregating)
-
-			return !weighs && !detectors.KnownClean(rule, codebase)
-		}))
+		clean = append(clean, !slices.ContainsFunc(rules, func(rule detectors.Detector) bool { return !detectors.KnownClean(rule, codebase) }))
 
 		return nil
 	})
@@ -39,77 +24,48 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 	}
 	defer units.Close()
 
-	var ordinary []detectors.Detector
-	var aggregating []detectors.Detector
 	var judgement Judgement
-	for _, rule := range rules {
-		if _, weighs := rule.(detectors.Aggregating); !weighs {
-			ordinary = append(ordinary, rule)
-
-			continue
-		}
-
-		if found, remembered := set.recall(rule); remembered {
-			judgement.Findings = append(judgement.Findings, found...)
-
-			continue
-		}
-
-		aggregating = append(aggregating, rule)
-	}
-	read := make([][]weighed, len(aggregating))
 	files := 0
-	for at := range units.Count() {
-		if len(aggregating) == 0 && at < len(clean) && clean[at] {
-			files += units.Files(at)
-			engine.CountedRemembered(units.Files(at) * len(ordinary))
-
-			continue
-		}
-
-		codebase, err := units.Load(at)
-		if err != nil {
-			return Judgement{}, 0, err
-		}
+	judge := func(codebase *engine.Codebase) {
 		files += len(codebase.Files())
-		tasks := make([]Task, len(ordinary))
-		for i, rule := range ordinary {
+		tasks := make([]Task, len(rules))
+		for i, rule := range rules {
 			tasks[i] = Task{rule, codebase}
 		}
 		progress.Plan(len(tasks))
 		part := Run(tasks, options.parallel, progress, console.Err)
 		judgement.Findings = append(judgement.Findings, part.Findings...)
 		judgement.Skipped = joined(judgement.Skipped, part.Skipped...)
-		for i, rule := range aggregating {
-			candidates, failure := candidatesOf(rule, codebase)
-			if failure != nil {
-				fmt.Fprintf(console.Err, "⚠ %s failed and was skipped — everything else still ran: %v\n", catalog.Name(rule), failure)
-				judgement.Skipped = joined(judgement.Skipped, catalog.Name(rule))
+	}
+	switch {
+	case !slices.Contains(clean, false):
+		for at := range units.Count() {
+			files += units.Files(at)
+			engine.CountedRemembered(units.Files(at) * len(rules))
+		}
+	case units.FitWhole():
+		whole, err := units.LoadWhole()
+		if err != nil {
+			return Judgement{}, 0, err
+		}
+		judge(whole)
+	default:
+		for at := range units.Count() {
+			if at < len(clean) && clean[at] {
+				files += units.Files(at)
+				engine.CountedRemembered(units.Files(at) * len(rules))
 
 				continue
 			}
-			for _, candidate := range candidates {
-				read[i] = append(read[i], weighedOf(rule, candidate))
+			codebase, err := units.Load(at)
+			if err != nil {
+				return Judgement{}, 0, err
 			}
+			judge(codebase)
 		}
 	}
 	progress.Finish()
 
-	for i, rule := range aggregating {
-		if slices.Contains(judgement.Skipped, catalog.Name(rule)) {
-			continue
-		}
-		records := make([]detectors.Candidate, len(read[i]))
-		for at, held := range read[i] {
-			records[at] = detectors.Candidate{Record: held.record}
-		}
-		var found []engine.Finding
-		for _, chosen := range rule.(detectors.Aggregating).Decide(records) {
-			found = append(found, read[i][chosen].finding)
-		}
-		set.keep(rule, found)
-		judgement.Findings = append(judgement.Findings, found...)
-	}
 	judgement.Findings = Twinned(judgement.Findings)
 	if files == 0 {
 		judgement.Skipped = joined(judgement.Skipped, unreadUnits(sources)...)
@@ -128,25 +84,6 @@ func unreadUnits(sources scan.Sources) []string {
 	}
 
 	return unread
-}
-
-func weighedOf(rule detectors.Detector, candidate detectors.Candidate) weighed {
-	held := weighed{record: candidate.Record}
-	if candidate.At.Exists() {
-		held.finding = findings(rule, []engine.Match{candidate.At})[0]
-	}
-
-	return held
-}
-
-func candidatesOf(rule detectors.Detector, codebase *engine.Codebase) (candidates []detectors.Candidate, failure any) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			failure = fmt.Sprintf("%v\n%s", recovered, debug.Stack())
-		}
-	}()
-
-	return rule.(detectors.Aggregating).Candidates(codebase), nil
 }
 
 func joined(names []string, others ...string) []string {

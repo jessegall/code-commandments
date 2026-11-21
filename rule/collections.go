@@ -310,12 +310,9 @@ func init() {
 			if !read || e.codebase == nil {
 				return unknown
 			}
-			symbol := declared.Node().Symbol
 			var found []value
-			for _, each := range e.codebase.WhereKind("type").Get() {
-				if above, _ := e.supertypes(each); slices.Contains(above, symbol) {
-					found = append(found, known(each))
-				}
+			for _, each := range e.subtypesBySupertype()[declared.Node().Symbol] {
+				found = append(found, known(each))
 			}
 
 			return known(found)
@@ -827,6 +824,24 @@ func (e evaluation) typeDeclared(v value) (engine.Match, bool) {
 
 // supertypes is the symbol of every type a declaration reaches upward, nearest first, and whether every one of them is
 // declared in the codebase.
+// subtypesBySupertype is every type declaration of the codebase under each type it extends, implements or mixes in, at
+// any depth: read once a codebase, so asking for the subtypes of many types costs one walk of the types.
+func (e evaluation) subtypesBySupertype() map[string][]engine.Match {
+	return engine.Analysis(e.codebase, subtypesKey{}, func(*engine.Codebase) map[string][]engine.Match {
+		below := map[string][]engine.Match{}
+		for _, each := range e.codebase.WhereKind("type").Get() {
+			above, _ := e.supertypes(each)
+			for _, symbol := range above {
+				below[symbol] = append(below[symbol], each)
+			}
+		}
+
+		return below
+	})
+}
+
+type subtypesKey struct{}
+
 func (e evaluation) supertypes(declared engine.Match) ([]string, bool) {
 	var found []string
 	complete := true

@@ -17,11 +17,6 @@ type wholeTreeDetector struct{ plainDetector }
 
 func (wholeTreeDetector) WholeTree() {}
 
-type weighingDetector struct{ plainDetector }
-
-func (weighingDetector) Candidates(*engine.Codebase) []Candidate { return nil }
-func (weighingDetector) Decide([]Candidate) []int                { return nil }
-
 type settledDetector struct {
 	plainDetector
 	threshold int
@@ -74,14 +69,8 @@ func TestOnlyAWholeTreeDetectorStandsOnTheWholeTree(t *testing.T) {
 	if !standsOnTheTree(wholeTreeDetector{}) {
 		t.Error("a whole-tree answer must be asked again when any file changes")
 	}
-	if standsOnTheTree(plainDetector{}) || standsOnTheTree(weighingDetector{}) {
+	if standsOnTheTree(plainDetector{}) {
 		t.Error("a rule that is not whole-tree keeps its answers under the files it read")
-	}
-}
-
-func TestADetectorThatWeighsItsCandidatesRemembersAcrossTheTree(t *testing.T) {
-	if !remembers(weighingDetector{}) || !readsAcross(weighingDetector{}) {
-		t.Error("a weighed answer holds as long as the tree's contents do")
 	}
 }
 

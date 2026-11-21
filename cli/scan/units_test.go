@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rules"
 )
 
 func TestASolutionIsCutIntoOneUnitPerProject(t *testing.T) {
@@ -96,4 +98,50 @@ func ownersOf(paths []string) []string {
 	}
 
 	return owners
+}
+
+// A solution under the budget is judged as one codebase, so a rule reading across its projects (a cycle between
+// namespaces, a function or a parameter group repeated in two projects) finds in its units what it finds whole.
+func TestASolutionThatFitsIsJudgedThroughItsUnitsAsOneCodebase(t *testing.T) {
+	root, err := filepath.Abs("testdata/solution")
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, _ = filepath.EvalSymlinks(root)
+	bridgetest.Roslyn(t, root)
+	sources := scan.Walk([]string{root}, source.Excluded{}).Only(source.CSharp)
+	units, err := sources.Units(func(*engine.Codebase) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer units.Close()
+	if !units.FitWhole() {
+		t.Fatal("a two-project solution was read as too large to judge whole")
+	}
+	together, err := units.LoadWhole()
+	if err != nil {
+		t.Fatal(err)
+	}
+	whole, err := sources.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := pathsOf(together), pathsOf(whole); !slices.Equal(got, want) {
+		t.Fatalf("the units together hold %v, the whole solution %v", got, want)
+	}
+	for _, rule := range rules.Of(catalog.CSharp) {
+		if got, want := locationsOf(rule.Find(together)), locationsOf(rule.Find(whole)); !slices.Equal(got, want) {
+			t.Errorf("%s finds %v through the units, %v whole", catalog.Name(rule), got, want)
+		}
+	}
+}
+
+func locationsOf(matches []engine.Match) []string {
+	var at []string
+	for _, match := range matches {
+		at = append(at, match.Location())
+	}
+	slices.Sort(at)
+
+	return at
 }

@@ -94,9 +94,7 @@ func KnownClean(detector Detector, codebase *engine.Codebase) bool {
 }
 
 func readsAcross(detector Detector) bool {
-	_, weighs := detector.(Aggregating)
-
-	return weighs || ReadsBeyondOneFile(detector)
+	return ReadsBeyondOneFile(detector)
 }
 
 // standsOnTheTree is a rule whose answer for a file can turn on any file of the tree, not only the files that file read,

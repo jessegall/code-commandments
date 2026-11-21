@@ -78,19 +78,27 @@ tool's findings (see *Every finding accounted for* below for the three it found 
 
 ## Judging a whole solution
 
-Compaction alone leaves Chronos at about 1.8 GB of trees, so a C# solution is judged a project at a time. The
-Roslyn bridge is asked once for the whole solution; it compiles each project once, dependencies first, and streams
-them project by project. As the stream is read it is cut into one unit per project — a file belongs to the deepest
-folder above it holding a `.csproj` — each kept gzipped on disk, and each unit's summary is taken as it closes:
-every fact a rule asks of the whole program, as names, counts and flags (`engine/csharp/summary.go`). The summaries
-merge, and each unit is then read back alone and judged with the merged summary as its program, so a rule reading
-the program answers as it would over the whole solution. The rules that weigh candidates across the program
-(duplicates, data clumps, repeated guards and calls, converted and derived arguments) hand over a record per
-candidate, and decide over every unit's records once the last is read. Every other language is read whole, and
-every bridge's stream is decoded as it is written.
+Every language is read whole, and so is a C# solution that fits: the rules read the whole program through its own
+tree, its joins, groupings and relations, so a solution judged as one codebase is judged exactly. Only a solution too
+large to hold is judged a project at a time.
 
-`TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds` holds this to the whole answer: the C# fixture judged in
-two halves finds, for every C# rule, exactly what the fixture judged whole finds.
+The Roslyn bridge is asked once for the whole solution; it compiles each project once, dependencies first, and streams
+them project by project. As the stream is read it is cut into one unit per project — a file belongs to the deepest
+folder above it holding a `.csproj` — each kept gzipped on disk, with the bytes of tree lines it holds counted. When
+the units together hold at most 150 MiB of lines, they are read back as one codebase and judged whole
+(`cli/scan/units.go`, `wholeBudget`). The figure is the budget turned into lines: the C# stream writes about 115 bytes
+a node, the C# tree settles at about 757 bytes a node and a judge peaks at about 2.4 times its settled heap, so a
+capped 3 GB container judges about 1.3 million C# nodes at once. Past the budget each unit is read back alone and
+judged alone, and a rule that reads across projects (a cycle between namespaces, a repeated function or parameter
+group, a lone implementer) reads one project: what spans two projects is not found. That is the cost of a solution
+this size, and the one place in the judge that cuts units is cli/judge/units.go over cli/scan/units.go.
+
+Units are kept for C# only. Every other language's largest measured project (smart-farmers-pos, 864,489 nodes, a
+1,198 MiB peak for the 7.20.30 judge) fits whole with room to spare, and its bridge streams files one at a time with
+no project to cut on.
+
+`TestASolutionThatFitsIsJudgedThroughItsUnitsAsOneCodebase` holds this to the whole answer: the two-project solution,
+read through its units as one codebase, finds for every C# rule exactly what the solution read whole finds.
 
 | Codebase | Commit | Files | Findings | Time | Peak memory in the capped dev container |
 |---|---|---|---|---|---|
