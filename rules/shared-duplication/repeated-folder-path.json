@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "repeated-folder-path",
+    "aliases": [
+      "RepeatedFolderPathDetector",
+      "RepeatedFolderPath"
+    ],
+    "skill": "shared/duplication",
+    "description": "One folder is spelled out at three or more sites across separate scopes",
+    "rule": "Name a folder in one place and share that name wherever code reaches it.",
+    "suggestion": "Put the folder in a shared constant or a method and use it to build paths within that folder.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

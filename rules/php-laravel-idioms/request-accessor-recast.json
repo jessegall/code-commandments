@@ -1,0 +1,51 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "request-accessor-recast",
+    "aliases": [
+      "RequestAccessorRecastDetector",
+      "RequestAccessorRecast"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method.",
+    "rule": "Use `toString()` to read a plain string from the typed request accessor.",
+    "suggestion": "Call `$request->string('id')->toString()` for the string value.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "laravel.named",
+        "$c",
+        "string"
+      ],
+      [
+        "=",
+        "$c.parent.kind",
+        "cast"
+      ],
+      [
+        "=",
+        "$c.parent.targetType.name",
+        "string"
+      ]
+    ],
+    "having": [
+      "laravel.request",
+      "$c"
+    ],
+    "emit": "$c"
+  }
+}

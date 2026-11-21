@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "hard-coded-route-path",
+    "aliases": [
+      "HardCodedRoutePathDetector",
+      "HardCodedRoutePath"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "A path written out by hand where a named route already declares it",
+    "rule": "A route's path is declared once, in its registration; everywhere else builds it from the route's name.",
+    "suggestion": "Build the URL with `route('name', $parameters)` so a changed path changes every link with it.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

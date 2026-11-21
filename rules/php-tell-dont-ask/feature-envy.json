@@ -1,0 +1,183 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "feature-envy",
+    "aliases": [
+      "FeatureEnvyDetector",
+      "FeatureEnvy",
+      "csharp-feature-envy",
+      "python-feature-envy"
+    ],
+    "skill": "php/tell-dont-ask",
+    "description": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
+    "rule": "Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.",
+    "suggestion": "Move the method onto the object (`$node->edges()`).",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "envied": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$x.subject.kind",
+          "reference"
+        ],
+        [
+          "not",
+          [
+            "and",
+            [
+              "=",
+              "$x.parent.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$x.role",
+              "callee"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "!=",
+        "$f.form",
+        "constructor"
+      ],
+      [
+        "not",
+        "$f.file.test"
+      ]
+    ],
+    "let": [
+      [
+        "body",
+        [
+          "ownDescendants",
+          "$f.body"
+        ]
+      ],
+      [
+        "reads",
+        [
+          "filter",
+          "$body",
+          "x",
+          [
+            "envied",
+            "$x"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "none",
+        "$body",
+        "x",
+        [
+          "tree.selfField",
+          "$x"
+        ]
+      ],
+      [
+        "some",
+        "$reads",
+        "r",
+        [
+          "and",
+          [
+            ">=",
+            [
+              "distinctCount",
+              [
+                "map",
+                [
+                  "filter",
+                  "$reads",
+                  "o",
+                  [
+                    "=",
+                    "$o.subject.name",
+                    "$r.subject.name"
+                  ]
+                ],
+                "o",
+                "$o.member.name"
+              ]
+            ],
+            3
+          ],
+          [
+            "some",
+            "$reads",
+            "o",
+            [
+              "and",
+              [
+                "=",
+                "$o.subject.name",
+                "$r.subject.name"
+              ],
+              [
+                "or",
+                [
+                  "=",
+                  "$o.parent.kind",
+                  "loop"
+                ],
+                [
+                  "and",
+                  [
+                    "=",
+                    "$o.parent.kind",
+                    "access"
+                  ],
+                  [
+                    "=",
+                    "$o.role",
+                    "subject"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "exists",
+            [
+              "declarationOf",
+              "$r.subject"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

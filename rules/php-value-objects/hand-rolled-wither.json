@@ -1,0 +1,132 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "hand-rolled-wither",
+    "aliases": [
+      "HandRolledWitherDetector",
+      "HandRolledWither",
+      "python-hand-rolled-replace",
+      "HandRolledReplaceDetector",
+      "HandRolledReplace"
+    ],
+    "skill": "php/value-objects",
+    "description": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.",
+    "rule": "A wither should only say what changes: `clone($this, ['x' => $x])` states the intent, while re-listing every field just repeats the constructor in every wither.",
+    "suggestion": "Replace `new self($this->a, $this->b, $changed)` with `clone($this, ['c' => $changed])`.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "builtBy": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "return": [
+            "at",
+            "$s.values",
+            0
+          ]
+        },
+        null
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "tree.method",
+        "$f"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.body.statements"
+        ],
+        1
+      ]
+    ],
+    "let": [
+      [
+        "built",
+        [
+          "builtBy",
+          [
+            "at",
+            "$f.body.statements",
+            0
+          ]
+        ]
+      ],
+      [
+        "owner",
+        [
+          "enclosing",
+          "$f",
+          "type"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$built.kind",
+        "construction"
+      ],
+      [
+        "=",
+        "$built.resolved.name",
+        "$owner.symbol"
+      ],
+      [
+        ">=",
+        [
+          "distinctCount",
+          [
+            "map",
+            [
+              "filter",
+              "$built.arguments",
+              "a",
+              [
+                "tree.selfField",
+                "$a.value"
+              ]
+            ],
+            "a",
+            "$a.value.member.name"
+          ]
+        ],
+        2
+      ],
+      [
+        "some",
+        "$built.arguments",
+        "a",
+        [
+          "not",
+          [
+            "tree.selfField",
+            "$a.value"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

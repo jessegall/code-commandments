@@ -1,0 +1,95 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "constructor-side-effect",
+    "aliases": [
+      "ConstructorSideEffectDetector",
+      "ConstructorSideEffect",
+      "csharp-constructor-side-effect",
+      "python-constructor-side-effect"
+    ],
+    "skill": "php/fix-at-the-source",
+    "description": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.",
+    "rule": "Let a constructor establish what the object IS; never let building one change anything outside it.",
+    "suggestion": "Keep the collaborator as a field and act on it from the method that someone actually calls."
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.parent.kind",
+        "expression-statement"
+      ],
+      [
+        "=",
+        "$c.callee.kind",
+        "access"
+      ]
+    ],
+    "let": [
+      [
+        "constructor",
+        [
+          "enclosing",
+          "$c",
+          "function"
+        ]
+      ],
+      [
+        "receiver",
+        "$c.callee.subject"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$constructor.form",
+        "constructor"
+      ],
+      [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$receiver.kind",
+            "access"
+          ],
+          [
+            "isSelf",
+            "$receiver.subject"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$receiver.kind",
+            "reference"
+          ],
+          [
+            "some",
+            "$constructor.parameters",
+            "p",
+            [
+              "=",
+              "$p.binding.name",
+              "$receiver.name"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

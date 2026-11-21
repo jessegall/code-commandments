@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
-	pydetectors "github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
@@ -40,27 +39,15 @@ func parsed(t *testing.T) *contract.Stream {
 func TestNoPythonRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	stream := parsed(t)
 
-	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(stream.TwiceOver()), configured())
+	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(stream.TwiceOver()), configured(t))
 }
 
-func configured() []detectors.Detector {
-	var configured []detectors.Detector
-	for _, detector := range detectors.Of(catalog.Python) {
-		if _, ok := detector.(pydetectors.NamespaceDependencyDetector); ok {
-			detector = pydetectors.NamespaceDependencyDetector{}.
-				Layer("shop.layout").
-				Layer("shop.widgets", "shop.layout").
-				Layer("shop.screens", "shop.widgets", "shop.layout").
-				Layer("shop.menus", "shop.layout")
-		}
-		configured = append(configured, detector)
-	}
-
-	return configured
+func configured(t testing.TB) []detectors.Detector {
+	return fixturetest.Configured(t, "../../tests/Fixtures/python", detectors.Of(catalog.Python))
 }
 
 func TestEveryPythonDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
-	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: configured(), Known: detectors.Of(catalog.Python), Resolver: fixture.FileScenarios})
+	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: fixture.Proven(configured(t)), Known: fixture.Proven(detectors.Of(catalog.Python)), Resolver: fixture.FileScenarios})
 }
 
 func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
@@ -70,8 +57,8 @@ func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
 	}
 	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  engine.Load(stream),
-		Detectors: []detectors.Detector{pydetectors.UndeclaredMemberDetector},
-		Known:     detectors.Every(catalog.Python),
+		Detectors: fixture.Proven([]detectors.Detector{shipped(t, "undeclared-member")}),
+		Known:     fixture.Proven(detectors.Every(catalog.Python)),
 		Resolver:  fixture.FileScenarios,
 	})
 }

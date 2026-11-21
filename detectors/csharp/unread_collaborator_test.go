@@ -112,7 +112,7 @@ public sealed class Desk
 				"Shop/Desk.cs":   test.source,
 				"Shop/Mailer.cs": "namespace Shop;\n\npublic sealed class Mailer\n{\n    public void Send(string to)\n    {\n    }\n}\n",
 			}
-			found := UnreadCollaboratorDetector{}.Find(csharptest.FromSource(t, sources))
+			found := shipped(t, "unread-collaborator").Find(csharptest.FromSource(t, sources))
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

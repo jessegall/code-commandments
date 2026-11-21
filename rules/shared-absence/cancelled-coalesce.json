@@ -1,0 +1,100 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "cancelled-coalesce",
+    "aliases": [
+      "python-cancelled-fallback",
+      "csharp-cancelled-coalesce",
+      "CancelledCoalesceDetector",
+      "CancelledCoalesce",
+      "CancelledFallback",
+      "CancelledFallbackDetector"
+    ],
+    "skill": "shared/absence",
+    "description": "A fallback compared against the same value it falls back to (`(name ?? '') !== ''`, `(name or \"\") != \"\"`): missing and empty end up in one branch without saying so",
+    "rule": "Ask about absence directly; never fall back to a value only to compare against that same value.",
+    "suggestion": "Say both halves out loud (`name !== null && name !== ''`), or make the value always present where it is made so only one question is left."
+  },
+  "find": {
+    "select": "fallback",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "=",
+        "$f.replacement.kind",
+        "literal"
+      ],
+      [
+        "not",
+        [
+          "tree.nullish",
+          "$f.replacement"
+        ]
+      ],
+      [
+        "=",
+        "$f.parent.kind",
+        "comparison"
+      ],
+      [
+        "every",
+        "$f.parent.operators",
+        "o",
+        [
+          "in",
+          "$o",
+          "equal",
+          "not-equal",
+          "identical",
+          "not-identical",
+          "less",
+          "less-or-equal",
+          "greater",
+          "greater-or-equal"
+        ]
+      ],
+      [
+        "some",
+        "$f.parent.operands",
+        "side",
+        [
+          "and",
+          [
+            "!=",
+            [
+              "fingerprint",
+              "$side",
+              "exact"
+            ],
+            [
+              "fingerprint",
+              "$f",
+              "exact"
+            ]
+          ],
+          [
+            "=",
+            [
+              "fingerprint",
+              "$side",
+              "exact"
+            ],
+            [
+              "fingerprint",
+              "$f.replacement",
+              "exact"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

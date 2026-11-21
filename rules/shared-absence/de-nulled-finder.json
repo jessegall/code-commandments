@@ -1,0 +1,132 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "de-nulled-finder",
+    "aliases": [
+      "python-de-nulled-finder",
+      "csharp-de-nulled-finder",
+      "DeNulledFinderDetector",
+      "DeNulledFinder"
+    ],
+    "skill": "shared/absence",
+    "description": "Every caller takes a nullable result as present",
+    "rule": "Make the finder provide a value or report the miss.",
+    "suggestion": "Make the finder provide a value or report the miss.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "forces": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.parent.kind",
+        {
+          "unary": [
+            "=",
+            "$c.parent.operator",
+            "assert-present"
+          ],
+          "fallback": [
+            "some",
+            [
+              "tree.insideOf",
+              "$c.parent.replacement"
+            ],
+            "t",
+            [
+              "=",
+              "$t.kind",
+              "throw"
+            ]
+          ],
+          "access": [
+            "and",
+            [
+              "=",
+              "$c.role",
+              "subject"
+            ],
+            [
+              "!=",
+              "$c.parent.nullConditional",
+              true
+            ]
+          ]
+        },
+        false
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "=",
+        "$f.resolved.returns.nullable",
+        true
+      ],
+      [
+        "tree.notOverriding",
+        "$f"
+      ]
+    ],
+    "let": [
+      [
+        "callers",
+        [
+          "filter",
+          [
+            "referrers",
+            "$f"
+          ],
+          "c",
+          [
+            "and",
+            [
+              "=",
+              "$c.kind",
+              "call"
+            ],
+            [
+              "not",
+              "$c.file.test"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$callers"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$callers",
+        "c",
+        [
+          "forces",
+          "$c"
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

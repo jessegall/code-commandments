@@ -1,0 +1,73 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "duplicate-element",
+    "aliases": [
+      "DuplicateElementDetector",
+      "DuplicateElement"
+    ],
+    "skill": "vue/vue-components",
+    "description": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component",
+    "rule": "Extract repeated identical markup into one component.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "parameters": {
+    "elements": {
+      "type": "number",
+      "default": 3,
+      "description": "How many elements a block holds at least before a copy of it counts."
+    }
+  },
+  "find": {
+    "from": "element",
+    "as": "e",
+    "pipeline": [
+      {
+        "project": {
+          "anchor": "$e",
+          "size": [
+            "vue.size",
+            "$e"
+          ],
+          "key": [
+            "fingerprint",
+            "$e",
+            "exact"
+          ]
+        }
+      },
+      {
+        "where": [
+          ">=",
+          "$size",
+          "$param.elements"
+        ]
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "count",
+            "$rows"
+          ],
+          2
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

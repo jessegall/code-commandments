@@ -1,0 +1,93 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "restated-comment",
+    "aliases": [
+      "python-restated-comment",
+      "csharp-restated-comment",
+      "RestatedCommentDetector",
+      "RestatedComment"
+    ],
+    "skill": "shared/documentation",
+    "description": "A comment repeats the words of the statement it documents",
+    "rule": "Give the statement clear names and let it speak for itself.",
+    "suggestion": "Delete the comment or explain the reason for the statement."
+  },
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "!=",
+        "$c.form",
+        "doc"
+      ],
+      [
+        "not",
+        "$c.code"
+      ],
+      [
+        "exists",
+        "$c.documents"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$c.documents.kind",
+          "block",
+          "function",
+          "type"
+        ]
+      ],
+      [
+        "exists",
+        [
+          "enclosing",
+          "$c.documents",
+          "function"
+        ]
+      ],
+      [
+        ">=",
+        [
+          "count",
+          "$c.words"
+        ],
+        2
+      ],
+      [
+        ">",
+        [
+          "count",
+          "$c.codeWords"
+        ],
+        0
+      ],
+      [
+        "every",
+        "$c.words",
+        "w",
+        [
+          "some",
+          "$c.codeWords",
+          "s",
+          [
+            "=",
+            "$s",
+            "$w"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c.location"
+  }
+}

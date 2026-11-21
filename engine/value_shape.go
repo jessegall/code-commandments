@@ -65,51 +65,6 @@ func (m Match) returnedValue() Match {
 	return Match{}
 }
 
-func (m Match) RollsItsOwnWither() bool {
-	body := m.Body()
-	if !m.ownsMethodName() || len(body) != 1 {
-		return false
-	}
-	built := body[0].returnedValue()
-	owner := m.EnclosingType()
-	if !owner.Exists() || !built.Is(Construction) ||
-		BareSymbol(built.Constructed().Name()) != owner.Name() && BareSymbol(built.TypeName()) != owner.Name() {
-		return false
-	}
-	carried := map[string]bool{}
-	changed := false
-	for _, argument := range built.Arguments() {
-		if argument.Is(MemberAccess) && argument.Receiver().isSelfReceiver() {
-			carried[argument.MemberName()] = true
-		} else {
-			changed = true
-		}
-	}
-	return changed && len(carried) >= 2
-}
-
-func (m Match) LooksUpAnOwnedField() bool {
-	read := m.grammar().ArgumentLookup
-	if read == nil || !m.Is(Function) {
-		return false
-	}
-	body := m.Body()
-	if len(body) != 1 {
-		return false
-	}
-	container, key := read(body[0].returnedValue())
-	if !container.Exists() || !key.Is(MemberAccess) || key.Receiver().isSelfReceiver() {
-		return false
-	}
-	receiver := key.Receiver()
-	if !receiver.Is(Identifier) || !slices.ContainsFunc(m.Parameters(), func(parameter Match) bool {
-		return parameter.Name() == receiver.Name()
-	}) {
-		return false
-	}
-	return receiver.hasLocalTypeDeclaration()
-}
-
 func (m Match) hasLocalTypeDeclaration() bool {
 	declaration := m.typeDeclaration()
 	return declaration.Exists() && !declaration.IsInDependency()
@@ -143,42 +98,6 @@ func typeNames(m Match, typed *contract.Type) []string {
 		names = append(names, typed.Name, typed.Text)
 	}
 	return names
-}
-
-func (m Match) RestoresScratchField() bool {
-	read := m.grammar().InitializedValue
-	if !m.Is(Function) || read == nil {
-		return false
-	}
-	type savedField struct {
-		name   string
-		writes int
-	}
-	saved := map[string]savedField{}
-	writes := map[string]int{}
-	for _, node := range m.OwnDescendants() {
-		left, right := node.assignmentSides()
-		if initial := read(node); initial.Is(MemberAccess) && initial.Receiver().isSelfReceiver() {
-			name := node.DeclaredName()
-			if name == "" && node.Binds() && left.Is(Identifier) {
-				name = left.Name()
-			}
-			if name != "" {
-				field := initial.MemberName()
-				saved[name] = savedField{name: field, writes: writes[field]}
-			}
-		}
-		if !left.Is(MemberAccess) || !left.Receiver().isSelfReceiver() {
-			continue
-		}
-		field := left.MemberName()
-		original := saved[right.Name()]
-		if right.Is(Identifier) && original.name == field && writes[field] > original.writes {
-			return true
-		}
-		writes[field]++
-	}
-	return false
 }
 
 func (m Match) assignmentSides() (Match, Match) {

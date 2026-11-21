@@ -5,7 +5,7 @@ import "errors"
 func importBins(codes []string, read func(string) error) int {
 	loaded := 0
 	for _, code := range codes {
-		// @sin SwallowCatch
+		// @righteous SwallowCatch
 		if err := read(code); err != nil {
 			continue
 		}

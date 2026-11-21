@@ -1,0 +1,114 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "data-collection-type",
+    "aliases": [
+      "DataCollectionTypeDetector",
+      "DataCollectionType"
+    ],
+    "skill": "php/spatie-data",
+    "description": "A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration",
+    "rule": "Never type a `Data` property as `DataCollection`. Type it `array` (preferred) or `Collection` and add `#[DataCollectionOf(X::class)]` — element typing drives hydration, nested validation, and clean TypeScript.",
+    "suggestion": "`#[DataCollectionOf(NodeData::class)] public readonly array $nodes;`, not `public readonly DataCollection $nodes;`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "collectionType": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        "$t.form",
+        {
+          "union": [
+            "some",
+            "$t.members",
+            "m",
+            [
+              "=",
+              "$m.name",
+              [
+                "identity",
+                "data-collection"
+              ]
+            ]
+          ]
+        },
+        [
+          "=",
+          "$t.name",
+          [
+            "identity",
+            "data-collection"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "parameter",
+      "declarator"
+    ],
+    "as": "d",
+    "where": [
+      "case",
+      "$d.kind",
+      {
+        "parameter": [
+          "exists",
+          "$d.declaredType"
+        ],
+        "declarator": [
+          "and",
+          [
+            "=",
+            "$d.parent.kind",
+            "field"
+          ],
+          [
+            "exists",
+            "$d.parent.declaredType"
+          ]
+        ]
+      },
+      false
+    ],
+    "let": [
+      [
+        "written",
+        [
+          "case",
+          "$d.kind",
+          {
+            "parameter": "$d.declaredType"
+          },
+          "$d.parent.declaredType"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        [
+          "enclosing",
+          "$d",
+          "type"
+        ]
+      ],
+      [
+        "collectionType",
+        "$written"
+      ]
+    ],
+    "emit": "$d"
+  }
+}

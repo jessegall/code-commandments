@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "dangling-route-name",
+    "aliases": [
+      "DanglingRouteNameDetector",
+      "DanglingRouteName"
+    ],
+    "skill": "php/route-actions",
+    "description": "A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500",
+    "rule": "The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.",
+    "suggestion": "Point the lookup at the registered name, or register the route the name promises.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

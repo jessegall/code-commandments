@@ -5,24 +5,6 @@ import (
 	"strings"
 )
 
-func (m Match) ReadsRecordBag() bool {
-	if !m.Is(Parameter) || !m.isLooseRecord() {
-		return false
-	}
-	if validates := m.grammar().ValidatesRecord; validates != nil && validates(m) {
-		return false
-	}
-	keys := map[string]bool{}
-	for _, node := range m.DeclaringFunction().OwnDescendants() {
-		container, key := node.recordFieldLookup()
-		if key.Exists() && container.Name() == m.Name() {
-			name, _ := key.Text()
-			keys[name] = true
-		}
-	}
-	return len(keys) >= 2
-}
-
 func (m Match) RecordBagParameter() Match {
 	container, key := m.recordFieldLookup()
 	if !key.Exists() {
@@ -46,35 +28,6 @@ func (m Match) recordFieldLookup() (Match, Match) {
 		return container, key
 	}
 	return Match{}, Match{}
-}
-
-func (m Match) ReceivesRecordBag() bool {
-	if !m.Is(Parameter) || !m.isLooseRecord() {
-		return false
-	}
-	function := m.DeclaringFunction()
-	position := slices.IndexFunc(function.Parameters(), func(parameter Match) bool { return parameter.node == m.node })
-	if position < 0 {
-		return false
-	}
-	var signature []string
-	count := 0
-	for _, call := range function.Referrers() {
-		if !call.Is(Call) || call.IsTest() {
-			continue
-		}
-		arguments := call.Arguments()
-		if position >= len(arguments) {
-			return false
-		}
-		keys := arguments[position].recordKeys()
-		if len(keys) < 2 || signature != nil && !slices.Equal(signature, keys) {
-			return false
-		}
-		signature = keys
-		count++
-	}
-	return count >= 2
 }
 
 func (m Match) ReturnsRecordBag() bool {
@@ -122,41 +75,6 @@ func (m Match) isLooseRecord() bool {
 		return typed.Args[0].Text == "string"
 	}
 	return strings.HasPrefix(typed.Text, "Record<string,")
-}
-
-// DataClumps is every method taking the same three or more scalar values as a method of another owner: one concept
-// travelling as loose parameters. A constructor, an override and a named constructor take the shape their role or
-// their parent gives them, so none of them counts.
-func DataClumps(codebase *Codebase) []Match {
-	var signatures []string
-	bySignature := map[string][]Match{}
-	for _, method := range codebase.WhereFunction().
-		Reject(Match.IsConstructor).
-		Reject(Match.IsOverride).
-		Reject(Match.IsNamedConstructor).
-		Get() {
-		signature := method.ValueSignature()
-		if len(signature) < 3 {
-			continue
-		}
-		key := strings.Join(signature, ", ")
-		if bySignature[key] == nil {
-			signatures = append(signatures, key)
-		}
-		bySignature[key] = append(bySignature[key], method)
-	}
-	var findings []Match
-	for _, signature := range signatures {
-		owners := map[string]bool{}
-		for _, method := range bySignature[signature] {
-			owners[method.clumpOwner()] = true
-		}
-		if len(owners) >= 2 {
-			findings = append(findings, bySignature[signature]...)
-		}
-	}
-
-	return findings
 }
 
 // ValueSignature is a function's scalar parameters, each as its type and name, in sorted order.

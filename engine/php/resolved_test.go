@@ -163,8 +163,8 @@ final class Till
 				t.Fatalf("%s carries no resolved type", written)
 			}
 
-			if resolved.Name != want.name || resolved.Nullable != want.nullable || resolved.Origin != want.origin {
-				t.Errorf("%s resolves to %q, nullable %v, from %q", written, resolved.Name, resolved.Nullable, resolved.Origin)
+			if resolved.Name != want.name || resolved.IsNullable() != want.nullable || resolved.Origin != want.origin {
+				t.Errorf("%s resolves to %q, nullable %v, from %q", written, resolved.Name, resolved.IsNullable(), resolved.Origin)
 			}
 		})
 	}

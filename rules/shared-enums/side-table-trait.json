@@ -1,0 +1,27 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "side-table-trait",
+    "aliases": [
+      "typescript-side-table-trait",
+      "python-side-table-trait",
+      "csharp-side-table-trait",
+      "SideTableTraitDetector",
+      "SideTableTrait"
+    ],
+    "skill": "shared/enums",
+    "description": "A separate list repeats which cases have a trait",
+    "rule": "Keep the trait beside the cases it describes.",
+    "suggestion": "Keep the trait beside the cases it describes.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

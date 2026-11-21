@@ -1,0 +1,50 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "inline-throw",
+    "aliases": [
+      "InlineThrowDetector",
+      "InlineThrow"
+    ],
+    "skill": "php/guard-clauses-and-flow",
+    "description": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)",
+    "rule": "Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work."
+  },
+  "find": {
+    "select": "fallback",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "=",
+        "$f.replacement.kind",
+        "throw"
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$f.parent.kind",
+          "argument"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$f.parent.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$f.role",
+            "subject"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

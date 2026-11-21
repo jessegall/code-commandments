@@ -1,0 +1,26 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "divergent-twin",
+    "aliases": [
+      "python-divergent-twin",
+      "DivergentTwinDetector",
+      "DivergentTwin"
+    ],
+    "skill": "shared/duplication",
+    "description": "Two functions share most of their uncommon steps, but one misses a step the other takes",
+    "rule": "Put the steps that define one job in a single function.",
+    "suggestion": "Extract the shared work, pass the differences as inputs, and call it from both sites.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

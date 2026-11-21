@@ -1,0 +1,242 @@
+{
+  "package": "Microsoft.EntityFrameworkCore",
+  "ecosystem": "nuget",
+  "versions": ">=6",
+  "provenance": "engine/csharp/efcore/queries.go terminalQueries",
+  "entries": [
+    {
+      "type": "System.Linq.Queryable",
+      "name": "ToList",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "ToListAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "ToArray",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "ToArrayAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "First",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "FirstAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "FirstOrDefault",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "FirstOrDefaultAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Single",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "SingleAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "SingleOrDefault",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "SingleOrDefaultAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "CountAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Any",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "AnyAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Last",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "LastAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "LastOrDefault",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "LastOrDefaultAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Max",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "MaxAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Min",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "MinAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Sum",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "SumAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Average",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions",
+      "name": "AverageAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Enumerable",
+      "name": "ToList",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.DbSet<TEntity>",
+      "name": "Find",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Microsoft.EntityFrameworkCore.DbSet<TEntity>",
+      "name": "FindAsync",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Where",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Select",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "OrderBy",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "OrderByDescending",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Include",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Take",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "Skip",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "System.Linq.Queryable",
+      "name": "AsNoTracking",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    }
+  ]
+}

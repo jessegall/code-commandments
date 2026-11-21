@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "boundary-duplicated-operation",
+    "aliases": [
+      "BoundaryDuplicatedOperationDetector",
+      "BoundaryDuplicatedOperation"
+    ],
+    "skill": "php/route-actions",
+    "description": "The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift",
+    "rule": "One operation, one implementation. A boundary translates its own protocol and calls the shared application service; it does not re-spell the operation.",
+    "suggestion": "Hoist the shared sequence into one application service and have both faces call it.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

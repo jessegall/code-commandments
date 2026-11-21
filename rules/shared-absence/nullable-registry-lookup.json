@@ -1,0 +1,163 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "nullable-registry-lookup",
+    "aliases": [
+      "python-nullable-registry-lookup",
+      "NullableRegistryLookupDetector",
+      "NullableRegistryLookup"
+    ],
+    "skill": "shared/absence",
+    "description": "A keyed store returns absence on a miss",
+    "rule": "Resolve a required key or fail by name.",
+    "suggestion": "Make the lookup return a value or report the missing key."
+  },
+  "definitions": {
+    "handles": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$c.parent.kind",
+          "fallback"
+        ],
+        [
+          "=",
+          "$c.parent.nullConditional",
+          true
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.parent.kind",
+            "comparison"
+          ],
+          [
+            "some",
+            "$c.parent.operands",
+            "o",
+            [
+              "tree.nullish",
+              "$o"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "index",
+    "as": "i",
+    "where": [
+      "and",
+      [
+        "tree.selfField",
+        "$i.subject"
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$i.parent.kind",
+          "return"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$i.parent.kind",
+            "fallback"
+          ],
+          [
+            "=",
+            "$i.role",
+            "subject"
+          ],
+          [
+            "tree.nullish",
+            "$i.parent.replacement"
+          ],
+          [
+            "=",
+            "$i.parent.parent.kind",
+            "return"
+          ]
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "function",
+        [
+          "enclosing",
+          "$i",
+          "function"
+        ]
+      ],
+      [
+        "callers",
+        [
+          "filter",
+          [
+            "referrers",
+            "$function"
+          ],
+          "c",
+          [
+            "and",
+            [
+              "=",
+              "$c.kind",
+              "call"
+            ],
+            [
+              "not",
+              "$c.file.test"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "tree.notOverriding",
+        "$function"
+      ],
+      [
+        "or",
+        [
+          "=",
+          [
+            "count",
+            "$callers"
+          ],
+          0
+        ],
+        [
+          "some",
+          "$callers",
+          "c",
+          [
+            "not",
+            [
+              "handles",
+              "$c"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$i"
+  }
+}

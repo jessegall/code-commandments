@@ -1,0 +1,213 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "description": "Definitions over Vue elements that the Vue rules share: directives, bindings and an element's size.",
+  "definitions": {
+    "bound": {
+      "args": [
+        "e",
+        "p"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          "$e.attributes",
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "directive"
+            ],
+            [
+              "=",
+              "$a.name",
+              "bind"
+            ],
+            [
+              "=",
+              "$a.argument.name",
+              "$p"
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "directive": {
+      "args": [
+        "e",
+        "n"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          "$e.attributes",
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "directive"
+            ],
+            [
+              "=",
+              "$a.name",
+              "$n"
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "equality": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          "$d"
+        ],
+        [
+          "=",
+          "$d.value.kind",
+          "comparison"
+        ],
+        [
+          "every",
+          "$d.value.operators",
+          "o",
+          [
+            "in",
+            "$o",
+            "equal",
+            "identical"
+          ]
+        ],
+        [
+          "some",
+          "$d.value.operands",
+          "o",
+          [
+            "=",
+            "$o.kind",
+            "literal"
+          ]
+        ]
+      ]
+    },
+    "hasDirective": {
+      "args": [
+        "e",
+        "n"
+      ],
+      "expr": [
+        "some",
+        "$e.attributes",
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "directive"
+          ],
+          [
+            "=",
+            "$a.name",
+            "$n"
+          ]
+        ]
+      ]
+    },
+    "nextElement": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "siblings",
+            "$e"
+          ],
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "element"
+            ],
+            [
+              ">",
+              [
+                "position",
+                "$s"
+              ],
+              [
+                "position",
+                "$e"
+              ]
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "size": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "add",
+        1,
+        [
+          "count",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              "$e"
+            ],
+            "x",
+            [
+              "=",
+              "$x.kind",
+              "element"
+            ]
+          ]
+        ]
+      ]
+    },
+    "subjectOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "fingerprint",
+        [
+          "at",
+          [
+            "filter",
+            "$d.value.operands",
+            "o",
+            [
+              "!=",
+              "$o.kind",
+              "literal"
+            ]
+          ],
+          0
+        ],
+        "exact"
+      ]
+    }
+  }
+}

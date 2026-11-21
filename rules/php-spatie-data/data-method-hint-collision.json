@@ -1,0 +1,21 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "data-method-hint-collision",
+    "aliases": [
+      "DataMethodHintCollisionDetector",
+      "DataMethodHintCollision"
+    ],
+    "skill": "php/spatie-data",
+    "description": "`@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`)",
+    "rule": "A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "find": {}
+}

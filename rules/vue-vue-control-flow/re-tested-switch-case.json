@@ -1,0 +1,349 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "re-tested-switch-case",
+    "aliases": [
+      "RetestedSwitchCaseDetector",
+      "RetestedSwitchCase"
+    ],
+    "skill": "vue/vue-control-flow",
+    "description": "A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched on",
+    "rule": "A `<SwitchCase>` slot already knows which case it is; a `v-if` on the same value inside it is a second, drifting copy of the dispatch.",
+    "suggestion": "Give each value its own slot (`#paid`, `#refunded`) and drop the inner test."
+  },
+  "definitions": {
+    "tall": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownDescendants",
+          "$e"
+        ],
+        "g",
+        [
+          "and",
+          [
+            "=",
+            "$g.kind",
+            "element"
+          ],
+          [
+            "=",
+            "$g.parent.kind",
+            "element"
+          ],
+          [
+            "!=",
+            "$g.parent",
+            "$e"
+          ]
+        ]
+      ]
+    },
+    "extractable": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "element"
+        ],
+        [
+          "!=",
+          "$x.tag",
+          "template"
+        ],
+        [
+          ">=",
+          [
+            "vue.size",
+            "$x"
+          ],
+          6
+        ],
+        [
+          "tall",
+          "$x"
+        ],
+        [
+          "not",
+          [
+            "in",
+            "$x.tag",
+            "td",
+            "th",
+            "tr",
+            "tbody",
+            "thead",
+            "tfoot",
+            "caption",
+            "colgroup"
+          ]
+        ]
+      ]
+    },
+    "holdsView": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "extractable",
+          "$c"
+        ],
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$c"
+          ],
+          "x",
+          [
+            "extractable",
+            "$x"
+          ]
+        ]
+      ]
+    },
+    "branches": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "filter",
+        [
+          "siblings",
+          "$e"
+        ],
+        "s",
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "element"
+          ],
+          [
+            ">",
+            [
+              "position",
+              "$s"
+            ],
+            [
+              "position",
+              "$e"
+            ]
+          ],
+          [
+            "or",
+            [
+              "vue.hasDirective",
+              "$s",
+              "else-if"
+            ],
+            [
+              "vue.hasDirective",
+              "$s",
+              "else"
+            ]
+          ]
+        ]
+      ]
+    },
+    "cases": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          "$e.tag",
+          "SwitchCase"
+        ],
+        {
+          "true": [
+            "filter",
+            "$e.children",
+            "c",
+            [
+              "=",
+              "$c.kind",
+              "element"
+            ]
+          ]
+        },
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$e"
+            ],
+            [
+              "branches",
+              "$e"
+            ]
+          ]
+        ]
+      ]
+    },
+    "tested": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          "$e.attributes",
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "directive"
+            ],
+            [
+              "in",
+              "$a.name",
+              "if",
+              "else-if",
+              "show"
+            ],
+            [
+              "vue.equality",
+              "$a"
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "root": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "enclosing",
+        "$e",
+        "module"
+      ]
+    },
+    "boundValue": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "valueOf",
+        [
+          "vue.bound",
+          "$s",
+          "value"
+        ]
+      ]
+    },
+    "valueOf": {
+      "args": [
+        "d"
+      ],
+      "expr": "$d.value"
+    }
+  },
+  "find": {
+    "select": "element",
+    "as": "e",
+    "let": [
+      [
+        "test",
+        [
+          "tested",
+          "$e"
+        ]
+      ],
+      [
+        "switch",
+        [
+          "at",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              [
+                "root",
+                "$e"
+              ]
+            ],
+            "s",
+            [
+              "and",
+              [
+                "=",
+                "$s.kind",
+                "element"
+              ],
+              [
+                "=",
+                "$s.tag",
+                "SwitchCase"
+              ],
+              [
+                "some",
+                [
+                  "ownDescendants",
+                  "$s"
+                ],
+                "d",
+                [
+                  "=",
+                  "$d",
+                  "$e"
+                ]
+              ]
+            ]
+          ],
+          0
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$test"
+      ],
+      [
+        "exists",
+        "$switch"
+      ],
+      [
+        "=",
+        [
+          "vue.subjectOf",
+          "$test"
+        ],
+        [
+          "fingerprint",
+          [
+            "boundValue",
+            "$switch"
+          ],
+          "exact"
+        ]
+      ]
+    ],
+    "emit": "$e"
+  }
+}

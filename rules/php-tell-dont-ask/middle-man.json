@@ -1,0 +1,279 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "middle-man",
+    "aliases": [
+      "MiddleManDetector",
+      "MiddleMan"
+    ],
+    "skill": "php/tell-dont-ask",
+    "description": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.",
+    "rule": "A class earns its place by doing something; one that only forwards every call to one collaborator is a middle man — let callers talk to that collaborator.",
+    "suggestion": "Inject the collaborator where the middle man is used and delete the class, or move real behaviour into it.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "forwards": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$f.body.statements"
+            ],
+            1
+          ],
+          [
+            "not",
+            [
+              "private",
+              "$f"
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "forwardedBy",
+            "$f",
+            [
+              "tree.valueOf",
+              [
+                "at",
+                "$f.body.statements",
+                0
+              ]
+            ]
+          ]
+        },
+        ""
+      ]
+    },
+    "forwardedBy": {
+      "args": [
+        "f",
+        "c"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "tree.selfField",
+            "$c.callee.subject"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            [
+              "count",
+              "$f.parameters"
+            ]
+          ],
+          [
+            "every",
+            "$c.arguments",
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.value.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$a.value.name",
+                [
+                  "nameAt",
+                  "$f",
+                  [
+                    "position",
+                    "$a"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        {
+          "true": "$c.callee.subject.member.name"
+        },
+        ""
+      ]
+    },
+    "private": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "some",
+        "$m.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "private"
+        ]
+      ]
+    },
+    "nameAt": {
+      "args": [
+        "f",
+        "n"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          [
+            "filter",
+            "$f.parameters",
+            "p",
+            [
+              "=",
+              [
+                "position",
+                "$p"
+              ],
+              "$n"
+            ]
+          ],
+          "p",
+          "$p.binding.name"
+        ],
+        0
+      ]
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "in",
+        "$t.form",
+        "class",
+        "struct"
+      ],
+      [
+        "none",
+        "$t.modifiers",
+        "m",
+        [
+          "=",
+          "$m",
+          "abstract"
+        ]
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$t.bases"
+        ],
+        0
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$t.interfaces"
+        ],
+        0
+      ]
+    ],
+    "let": [
+      [
+        "methods",
+        [
+          "filter",
+          "$t.writtenMembers",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ],
+            [
+              "!=",
+              "$m.form",
+              "constructor"
+            ]
+          ]
+        ]
+      ],
+      [
+        "fields",
+        [
+          "map",
+          "$methods",
+          "m",
+          [
+            "forwards",
+            "$m"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$methods"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$fields",
+        "n",
+        [
+          "nonempty",
+          "$n"
+        ]
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          "$fields"
+        ],
+        1
+      ]
+    ],
+    "emit": "$t"
+  }
+}

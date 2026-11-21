@@ -166,34 +166,6 @@ type goldenFlow struct {
 	Coupled       bool                `json:"coupled"`
 }
 
-func TestEveryTypesStateFlowsAsThePhpEngineReadsIt(t *testing.T) {
-	codebase := shop(t)
-	program := csharp.Of(codebase)
-	var want map[string]goldenFlow
-	golden(t, "flows", &want)
-	got := map[string]goldenFlow{}
-	for _, match := range csharp.In(codebase).WhereType().Get() {
-		owner := csharp.Node{Match: match}
-		flow := csharp.FlowOf(owner)
-		answer := goldenFlow{State: map[string]string{}, ReadsByMember: map[string][]string{}, Assigned: map[string][]string{}, Reads: map[string]int{}, Coupled: owner.HoldsCoupledFields(program)}
-		for _, state := range owner.StateTypes() {
-			answer.State[state.Name] = state.Type.Name()
-			var assigned []string
-			for _, value := range flow.AssignedValues(state.Name) {
-				assigned = append(assigned, at(value))
-			}
-			answer.Assigned[state.Name] = assigned
-			answer.Reads[state.Name] = len(flow.Reads(state.Name))
-		}
-		for _, member := range flow.ReadsByMember() {
-			answer.ReadsByMember[member.Member] = member.Reads
-		}
-		answer.Nullable = flow.NullableFields()
-		got[at(owner)] = answer
-	}
-	compare(t, "flow", want, got)
-}
-
 func TestTheNamespaceGraphHoldsThePhpEnginesArrows(t *testing.T) {
 	codebase := shop(t)
 	var want struct {

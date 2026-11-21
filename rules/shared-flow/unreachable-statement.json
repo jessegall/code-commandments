@@ -1,0 +1,72 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "unreachable-statement",
+    "aliases": [
+      "UnreachableStatementDetector",
+      "UnreachableStatement"
+    ],
+    "skill": "shared/flow",
+    "description": "A statement after one that never completes (a return, throw, break or continue, an if whose every arm leaves, a loop that never ends): it can never run.",
+    "rule": "Every statement in a block can run; code after the block has left is dead.",
+    "suggestion": "Delete the statement, or move it before the statement that leaves the block if it was meant to run."
+  },
+  "find": {
+    "select": "statement",
+    "as": "s",
+    "where": [
+      "and",
+      [
+        "not",
+        "$s.file.test"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$s.kind",
+          "no-op",
+          "label"
+        ]
+      ],
+      [
+        "exists",
+        [
+          "previous",
+          "$s"
+        ]
+      ],
+      [
+        "none",
+        [
+          "siblings",
+          "$s"
+        ],
+        "x",
+        [
+          "=",
+          "$x.kind",
+          "label"
+        ]
+      ],
+      [
+        "not",
+        [
+          "completes",
+          [
+            "previous",
+            "$s"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$s"
+  }
+}

@@ -3,7 +3,6 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -21,7 +20,7 @@ func TestABlockingCallInACoroutineIsFoundAndAnAwaitIsNot(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := pythontest.FromSource(t, map[string]string{"app/waiting.py": test.source})
-			found := (python.BlockedAwaitDetector{}).Find(codebase)
+			found := shipped(t, "python-blocked-await").Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

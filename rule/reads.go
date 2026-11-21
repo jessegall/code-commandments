@@ -1,150 +1,84 @@
 package rule
 
 import (
-	"reflect"
+	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
 )
 
-var answeredFromTheFile = []string{
-	"is", "kind", "name", "nameIn", "nameLike", "nameMatches", "nameMood", "nameCase",
-	"hasModifier", "hasFlag", "operator", "operatorIn",
+// readsAcrossFiles are the operators whose answer for a node rests on files other than the node's own: who refers to a
+// declaration, and the declaration a call resolves to.
+var readsAcrossFiles = []string{"referrers", "declarationOf", "programEnums", "programTexts", "typeDeclaration"}
 
-	"text", "textLike", "textMatches", "commentIs", "commentLike", "commentMatches", "docTag", "documented",
-	"documents",
+// readsTheWholeTree are the operators whose answer for a node can turn on any file of the tree, not only on the files
+// the node's own file reads: who refers to a declaration, and every enum the program declares.
+var readsTheWholeTree = []string{"referrers", "programEnums", "programTexts"}
 
-	"file", "fileMatches", "namespaceLike", "layer", "topLevel", "withinLoop", "position", "field", "role",
-	"sameAs",
-
-	"unnamedCondition", "bindsItsOwnTest", "redundantElse", "soleLoopBodyGuard", "ladderRungs",
-	"passesItsElementOn",
-
-	"testCode", "implicit",
-
-	"parameters", "arguments", "lines", "lineLonger", "complexity", "members",
-
-	"typeKind", "extends", "hasAnnotation", "hasAttribute", "returnType", "parameterType", "value",
-
-	"descendant", "child", "body", "inside", "next", "previous", "nestedAtLeast", "calls", "argument", "count",
-	"all", "any", "not", "rule", "of",
+// StandsOnTheTree says whether the rule's answer for a file can turn on any file of the tree, so a change anywhere asks
+// it again: a pipeline whose rows group across files, or an operator that reads the whole program.
+func (r Rule) StandsOnTheTree() bool {
+	return r.read.Find.From != nil || r.applies(func(operator string) bool { return slices.Contains(readsTheWholeTree, operator) })
 }
 
-var readAcrossFiles = []string{
-	"resolves", "resolvesLike", "targets", "declaredBy", "answeredBy", "declaredElsewhere", "docReference", "constructs",
-
-	"type", "typeLike", "typeShape", "typeOrigin", "elementType", "nullable",
-
-	"extendsAny", "implements", "uses", "isA", "ancestors", "overrides",
-
-	"unused", "callers", "duplicated", "repeated", "referredFrom", "calledFrom", "sibling",
-
-	"php", "python", "csharp", "typescript", "vue",
-}
-
-var targetsAnotherFile = []string{"declaration", "declaredBy"}
-
-var readsOnlyDeclarations = []string{
-	"resolves", "resolvesLike", "docReference", "constructs", "extendsAny", "implements", "uses", "isA", "ancestors",
-	"overrides",
-}
-
-func (r Rule) ReadsForward() bool {
-	if r.find.inner != nil && !r.find.inner.ReadsForward() {
-		return false
-	}
-
-	return !slices.ContainsFunc(r.find.Where, Step.readsBackward) && !slices.ContainsFunc(r.find.Reject, Step.readsBackward)
-}
-
-func (s Step) readsBackward() bool {
-	if slices.ContainsFunc(s.written(), func(key string) bool {
-		return slices.Contains(readAcrossFiles, key) && !slices.Contains(readsOnlyDeclarations, key)
-	}) {
-		return true
-	}
-
-	if slices.Contains(targetsAnotherFile, s.Of) || s.Members != nil && s.Members.Inherited {
-		return true
-	}
-
-	if s.named != nil && !s.named.ReadsForward() {
-		return true
-	}
-
-	return slices.ContainsFunc(s.nested(), func(nested *Step) bool { return nested.readsBackward() })
-}
-
+// ReadsAcrossFiles says whether the rule's answer for a file rests on other files too, so a change to one of them asks
+// it again.
 func (r Rule) ReadsAcrossFiles() bool {
-	if r.find.inner != nil && r.find.inner.ReadsAcrossFiles() {
-		return true
-	}
-
-	return slices.ContainsFunc(r.find.Where, Step.readsAcrossFiles) ||
-		slices.ContainsFunc(r.find.Reject, Step.readsAcrossFiles)
+	return r.read.Sin.Reporting.CrossFile || r.read.Find.From != nil || r.applies(func(operator string) bool { return slices.Contains(readsAcrossFiles, operator) })
 }
 
-func (s Step) readsAcrossFiles() bool {
-	for _, key := range s.written() {
-		if slices.Contains(readAcrossFiles, key) {
-			return true
+// ReadsForward says whether the rule's answer for a file rests on that file and on what the others declare, never on
+// how the others are written inside: true of every rule that reads only its own file.
+func (r Rule) ReadsForward() bool {
+	return !r.ReadsAcrossFiles()
+}
+
+// applies says whether the rule applies an operator the test picks, in its find or its definitions.
+func (r Rule) applies(picked func(operator string) bool) bool {
+	found := false
+	visit := func(each Expr) {
+		found = found || each.IsCall() && picked(each.Operator)
+	}
+	for _, expression := range r.read.expressions() {
+		expression.Each(visit)
+	}
+
+	return found
+}
+
+// expressions is every expression a rule file writes: its definitions', its find's and its pipeline's.
+func (f file) expressions() []Expr {
+	var all []Expr
+	for _, defined := range f.Definitions {
+		all = append(all, defined.Expr)
+	}
+	written := []*Expr{f.Find.Where, f.Find.Having, f.Find.Emit}
+	for _, each := range f.Find.Let {
+		all = append(all, each.Expr)
+	}
+	stages := slices.Clone(f.Find.Pipeline)
+	for _, defined := range f.Find.Relations {
+		stages = append(stages, defined.Pipeline...)
+		all = append(all, slices.Collect(maps.Values(defined.Aggregate))...)
+	}
+	for _, step := range stages {
+		written = append(written, step.Reject, step.Where, step.Having, step.GroupBy, step.Expand, step.Emit, step.Group)
+		all = append(all, slices.Concat(step.OrderBy, step.FirstBy, slices.Collect(maps.Values(step.Project)), slices.Collect(maps.Values(step.On)))...)
+	}
+	for _, each := range written {
+		if each != nil {
+			all = append(all, *each)
 		}
 	}
 
-	if slices.Contains(targetsAnotherFile, s.Of) {
-		return true
-	}
-
-	if s.Members != nil && s.Members.Inherited {
-		return true
-	}
-
-	if s.named != nil && s.named.ReadsAcrossFiles() {
-		return true
-	}
-
-	return slices.ContainsFunc(s.nested(), func(nested *Step) bool { return nested.readsAcrossFiles() })
+	return all
 }
 
+// Fingerprint is what the rule's answers stand on: the effective rule with every definition it composes and the
+// contract it reads (CacheKey), the values its parameters are set to, and the layers it judges against. Editing the
+// rule file, an override of it or a definition it calls changes it, so no answer of the old rule is served.
 func (r Rule) Fingerprint() string {
-	parts := []string{string(r.written), r.layers}
+	set, _ := json.Marshal(r.set)
 
-	if r.find.inner != nil {
-		parts = append(parts, r.find.inner.Fingerprint())
-	}
-
-	for _, step := range slices.Concat(r.find.Where, r.find.Reject) {
-		parts = append(parts, step.composedOf()...)
-	}
-
-	return strings.Join(parts, "\x00")
-}
-
-func (s Step) composedOf() []string {
-	var parts []string
-
-	if s.named != nil {
-		parts = append(parts, s.named.Fingerprint())
-	}
-
-	for _, nested := range s.nested() {
-		parts = append(parts, nested.composedOf()...)
-	}
-
-	return parts
-}
-
-func (s Step) written() []string {
-	var keys []string
-
-	value := reflect.ValueOf(s)
-	for i := range value.NumField() {
-		key, _, _ := strings.Cut(value.Type().Field(i).Tag.Get("json"), ",")
-		if key == "" || key == "-" || value.Field(i).IsZero() {
-			continue
-		}
-
-		keys = append(keys, key)
-	}
-
-	return keys
+	return strings.Join([]string{r.CacheKey(), string(set), r.layers}, "\x00")
 }

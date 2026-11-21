@@ -2,6 +2,7 @@
 package dashboard
 
 import (
+	"github.com/jessegall/code-commandments/rules"
 	"encoding/json"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
@@ -16,7 +17,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -291,7 +291,7 @@ func filePage(sin, file, tool string, found []Stored) *jsonfile.Object {
 }
 
 func explanation(name, tool string) []any {
-	for _, sin := range sins.All() {
+	for _, sin := range rules.Sins() {
 		rule := sin.Definition()
 
 		if rule.Name != name {

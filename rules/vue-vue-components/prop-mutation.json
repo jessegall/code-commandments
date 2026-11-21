@@ -1,0 +1,17 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "prop-mutation",
+    "aliases": [
+      "PropMutationDetector",
+      "PropMutation"
+    ],
+    "skill": "vue/vue-components",
+    "description": "A prop is written to — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op).",
+    "rule": "Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value."
+  },
+  "find": {}
+}

@@ -13,7 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill/render"
 )
@@ -52,7 +51,7 @@ func (m Marked) scenario() string {
 // sources are marked sources by the name each marker gives.
 type sources map[string][]Marked
 
-func CarveDeclarations(root string, codebase *engine.Codebase, proven []detectors.Detector) render.Examples {
+func CarveDeclarations(root string, codebase *engine.Codebase, proven []Rule) render.Examples {
 	sinful, fixed, righteous := declarationSources(codebase, Sinful), declarationSources(codebase, Fixed), declarationSources(codebase, Righteous)
 	groups := recurringGroups(codebase, proven)
 	examples := render.Examples{}
@@ -73,7 +72,7 @@ func CarveDeclarations(root string, codebase *engine.Codebase, proven []detector
 		if len(resolution) > 1 {
 			example.Good = pointer(group(resolution, lift))
 		}
-		if _, recurs := detector.(detectors.Grouped); recurs && len(bad) > 0 {
+		if _, recurs := detector.(grouped); recurs && len(bad) > 0 {
 			anchor, anchored := anchorOf(bad, good)
 			if recurring := recurringOf(bad, anchor, anchored, groups[render.Key(detector)]); len(recurring) > 1 {
 				example.Bad = pointer(group(recurring, lift))
@@ -85,7 +84,7 @@ func CarveDeclarations(root string, codebase *engine.Codebase, proven []detector
 	return exampleFiles(root).over(examples, proven)
 }
 
-func CarveMarks(root string, codebase *engine.Codebase, proven []detectors.Detector, fallback source.Language) render.Examples {
+func CarveMarks(root string, codebase *engine.Codebase, proven []Rule, fallback source.Language) render.Examples {
 	sinful, fixed, righteous := commentSources(codebase, Sinful), commentSources(codebase, Fixed), commentSources(codebase, Righteous)
 	groups := recurringGroups(codebase, proven)
 	examples := render.Examples{}
@@ -97,7 +96,7 @@ func CarveMarks(root string, codebase *engine.Codebase, proven []detectors.Detec
 	return exampleFiles(root).over(examples, proven)
 }
 
-func perLanguage(detector detectors.Detector, bad, fixed, righteous []Marked, fallback source.Language, groups map[string]map[int]string) []render.Example {
+func perLanguage(detector Rule, bad, fixed, righteous []Marked, fallback source.Language, groups map[string]map[int]string) []render.Example {
 	badByLanguage, languages := byLanguage(bad)
 	if len(languages) == 0 {
 		return []render.Example{markedExample(detector, bad, fixed, righteous, fallback, bad, groups)}
@@ -112,7 +111,7 @@ func perLanguage(detector detectors.Detector, bad, fixed, righteous []Marked, fa
 	return examples
 }
 
-func markedExample(detector detectors.Detector, bad, fixed, righteous []Marked, language source.Language, everyBad []Marked, groups map[string]map[int]string) render.Example {
+func markedExample(detector Rule, bad, fixed, righteous []Marked, language source.Language, everyBad []Marked, groups map[string]map[int]string) render.Example {
 	resolution := resolutionOf(bad, fixed)
 	good := resolution
 	if len(good) == 0 {
@@ -123,7 +122,7 @@ func markedExample(detector detectors.Detector, bad, fixed, righteous []Marked, 
 		example.Good = pointer(group(resolution, false))
 	}
 	anchor, anchored := anchorOf(bad, good)
-	if _, recurs := detector.(detectors.Grouped); !recurs || !anchored {
+	if _, recurs := detector.(grouped); !recurs || !anchored {
 		return example
 	}
 	if recurring := recurringOf(everyBad, anchor, true, groups); len(recurring) > 1 {
@@ -147,10 +146,10 @@ func byLanguage(marked []Marked) (map[source.Language][]Marked, []source.Languag
 	return grouped, languages
 }
 
-func recurringGroups(codebase *engine.Codebase, proven []detectors.Detector) map[string]map[string]map[int]string {
+func recurringGroups(codebase *engine.Codebase, proven []Rule) map[string]map[string]map[int]string {
 	groups := map[string]map[string]map[int]string{}
 	for _, detector := range proven {
-		grouped, recurs := detector.(detectors.Grouped)
+		grouped, recurs := detector.(grouped)
 		if !recurs {
 			continue
 		}
@@ -160,7 +159,7 @@ func recurringGroups(codebase *engine.Codebase, proven []detectors.Detector) map
 	return groups
 }
 
-func groupedByFile(grouped detectors.Grouped, found []engine.Match) map[string]map[int]string {
+func groupedByFile(grouped grouped, found []engine.Match) map[string]map[int]string {
 	byFile := map[string]map[int]string{}
 	for _, finding := range found {
 		key, keyed := grouped.GroupKey(finding)
@@ -733,7 +732,7 @@ func exampleFiles(root string) examples {
 	return found
 }
 
-func (e examples) over(carved render.Examples, proven []detectors.Detector) render.Examples {
+func (e examples) over(carved render.Examples, proven []Rule) render.Examples {
 	for _, detector := range proven {
 		bad, badLanguages := byLanguage(namedFor(e.bad, detector))
 		good, goodLanguages := byLanguage(namedFor(e.good, detector))
@@ -755,7 +754,7 @@ func (e examples) over(carved render.Examples, proven []detectors.Detector) rend
 	return carved
 }
 
-func namedFor(half sources, detector detectors.Detector) []Marked {
+func namedFor(half sources, detector Rule) []Marked {
 	var marked []Marked
 	for _, name := range namesOf(detector) {
 		marked = append(marked, half[name]...)
@@ -764,7 +763,7 @@ func namedFor(half sources, detector detectors.Detector) []Marked {
 	return marked
 }
 
-func namesOf(detector detectors.Detector) []string {
+func namesOf(detector Rule) []string {
 	var names []string
 	for _, name := range []string{catalog.Name(detector), catalog.Name(detector.Sin()), detector.Sin().Definition().Name} {
 		if !slices.Contains(names, name) {

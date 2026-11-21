@@ -1,0 +1,126 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "param-resolved-from-param",
+    "aliases": [
+      "ParamResolvedFromParamDetector",
+      "ParamResolvedFromParam",
+      "csharp-param-resolved-from-param",
+      "python-param-resolved-from-param"
+    ],
+    "skill": "php/pass-the-object",
+    "description": "Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly.",
+    "rule": "Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.",
+    "suggestion": "Take the resolved object as the param; resolve once in the caller.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "named": {
+      "args": [
+        "x",
+        "n"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "reference"
+        ],
+        [
+          "=",
+          "$x.name",
+          "$n"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "index",
+    "as": "i",
+    "where": [
+      "and",
+      [
+        "=",
+        "$i.subject.kind",
+        "reference"
+      ],
+      [
+        "=",
+        "$i.key.kind",
+        "reference"
+      ],
+      [
+        "!=",
+        "$i.subject.name",
+        "$i.key.name"
+      ],
+      [
+        "=",
+        "$i.subject.binding.parent.kind",
+        "parameter"
+      ],
+      [
+        "=",
+        "$i.key.binding.parent.kind",
+        "parameter"
+      ]
+    ],
+    "let": [
+      [
+        "function",
+        [
+          "enclosing",
+          "$i",
+          "function"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "tree.own",
+        "$function"
+      ],
+      [
+        "none",
+        [
+          "ownDescendants",
+          "$function.body"
+        ],
+        "x",
+        [
+          "and",
+          [
+            "named",
+            "$x",
+            "$i.subject.name"
+          ],
+          [
+            "!=",
+            [
+              "fingerprint",
+              "$x.parent",
+              "exact"
+            ],
+            [
+              "fingerprint",
+              "$i",
+              "exact"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$function"
+  }
+}

@@ -588,32 +588,6 @@ func (n Node) IsInTest() bool {
 
 var collectionMutators = []string{"Add", "AddRange", "Insert", "InsertRange", "Remove", "RemoveAt", "RemoveAll", "RemoveRange", "Clear", "Sort", "Reverse", "Enqueue", "Dequeue", "Push", "Pop", "TryAdd", "TryRemove"}
 
-func (n Node) ChangesTheCollectionItsLoopWalks() bool {
-	changed := n.At(0).At(0)
-	if !n.IsCall() || !n.At(0).Is("SimpleMemberAccessExpression") || !slices.Contains(collectionMutators, n.At(0).ReferencedName()) {
-		return false
-	}
-	loop, walked := n.loopWalking(changed)
-	if !walked {
-		return false
-	}
-
-	return !n.leavesThatLoopAtOnce(loop)
-}
-
-func (n Node) loopWalking(collection Node) (Node, bool) {
-	for held, loop := n, n.Parent(); loop.Exists(); held, loop = loop, loop.Parent() {
-		if !loop.Is("ForEachStatement", "ForEachVariableStatement") || held.IsExpression() {
-			continue
-		}
-		if walked, walks := loop.Expressions()[0].collectionWalkedLive(); walks && walked.SameSyntax(collection.Match) {
-			return loop, true
-		}
-	}
-
-	return Node{}, false
-}
-
 func (n Node) collectionWalkedLive() (Node, bool) {
 	if n.Is("SimpleMemberAccessExpression") && slices.Contains([]string{"Keys", "Values"}, n.ReferencedName()) {
 		return n.At(0).collectionWalkedLive()
@@ -623,15 +597,6 @@ func (n Node) collectionWalkedLive() (Node, bool) {
 	}
 
 	return n, n.Is("IdentifierName", "SimpleMemberAccessExpression")
-}
-
-func (n Node) leavesThatLoopAtOnce(loop Node) bool {
-	block := n.statementsHolding()
-	if len(block) == 0 {
-		return false
-	}
-
-	return block[len(block)-1].leaves(loop)
 }
 
 func (n Node) statementsHolding() []Node {
@@ -1008,65 +973,3 @@ func (n Node) declaresAMemberNamed(name string) bool {
 
 var taskTypes = []string{"System.Threading.Tasks.Task", "System.Threading.Tasks.ValueTask"}
 
-func (n Node) BlocksOnATask() bool {
-	blocked, blocks := n.taskItBlocksOn()
-	if !blocks || !blocked.isATask() {
-		return false
-	}
-	if n.sitsWhereNothingCanDeadlock() {
-		return false
-	}
-
-	return !blocked.isCompletedWhereItStands()
-}
-
-func (n Node) taskItBlocksOn() (Node, bool) {
-	if n.Is("SimpleMemberAccessExpression") && n.At(1).Name() == "Result" {
-		return n.At(0), true
-	}
-	if !n.IsCall() || !n.At(0).Is("SimpleMemberAccessExpression") {
-		return Node{}, false
-	}
-	callee := n.At(0)
-	if callee.At(1).Name() == "Wait" {
-		return callee.At(0), true
-	}
-	if callee.At(1).Name() != "GetResult" || !callee.At(0).IsCall() {
-		return Node{}, false
-	}
-	awaiter := callee.At(0).At(0)
-	if !awaiter.Is("SimpleMemberAccessExpression") || awaiter.At(1).Name() != "GetAwaiter" {
-		return Node{}, false
-	}
-
-	return awaiter.At(0), true
-}
-
-func (n Node) isATask() bool {
-	held := strings.TrimSuffix(n.Type().Name(), "?")
-
-	return slices.ContainsFunc(taskTypes, func(task string) bool {
-		return held == "global::"+task || strings.HasPrefix(held, "global::"+task+"<")
-	})
-}
-
-func (n Node) sitsWhereNothingCanDeadlock() bool {
-	for held := n.Parent(); held.Exists(); held = held.Parent() {
-		if held.Is("ConstructorDeclaration") {
-			return true
-		}
-		if held.Is("MethodDeclaration") {
-			return held.Name() == "Main" && held.HasModifier("static")
-		}
-	}
-
-	return false
-}
-
-func (n Node) isCompletedWhereItStands() bool {
-	if n.Is("SimpleMemberAccessExpression") && n.At(1).Name() == "CompletedTask" {
-		return true
-	}
-
-	return n.IsCall() && n.At(0).Is("SimpleMemberAccessExpression") && slices.Contains([]string{"FromResult", "FromException", "FromCanceled"}, n.At(0).At(1).Name())
-}

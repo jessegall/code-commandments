@@ -1,0 +1,10 @@
+{
+  "package": "php",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "PHP's own date interface, which every date class implements (engine/php/spatie nativeCastTypes)",
+  "entries": [],
+  "identities": [
+    {"name": "date-time", "type": "DateTimeInterface"}
+  ]
+}

@@ -1,0 +1,445 @@
+{
+  "package": "categories",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "Each language's builtin and standard types by the neutral category typeCategory names them with (report 96 row T2): how each compiler spells text, numbers, truths, absence and the standard collections.",
+  "entries": [],
+  "identities": [
+    {
+      "name": "category-text",
+      "type": "string"
+    },
+    {
+      "name": "category-text",
+      "type": "str"
+    },
+    {
+      "name": "category-text",
+      "type": "builtins.str"
+    },
+    {
+      "name": "category-text",
+      "type": "System.String"
+    },
+    {
+      "name": "category-text",
+      "type": "global::System.String"
+    },
+    {
+      "name": "category-text",
+      "type": "String"
+    },
+    {
+      "name": "category-integer",
+      "type": "int"
+    },
+    {
+      "name": "category-integer",
+      "type": "integer"
+    },
+    {
+      "name": "category-integer",
+      "type": "builtins.int"
+    },
+    {
+      "name": "category-integer",
+      "type": "System.Int32"
+    },
+    {
+      "name": "category-integer",
+      "type": "System.Int64"
+    },
+    {
+      "name": "category-integer",
+      "type": "int8"
+    },
+    {
+      "name": "category-integer",
+      "type": "int16"
+    },
+    {
+      "name": "category-integer",
+      "type": "int32"
+    },
+    {
+      "name": "category-integer",
+      "type": "int64"
+    },
+    {
+      "name": "category-integer",
+      "type": "uint"
+    },
+    {
+      "name": "category-integer",
+      "type": "uint8"
+    },
+    {
+      "name": "category-integer",
+      "type": "uint16"
+    },
+    {
+      "name": "category-integer",
+      "type": "uint32"
+    },
+    {
+      "name": "category-integer",
+      "type": "uint64"
+    },
+    {
+      "name": "category-integer",
+      "type": "long"
+    },
+    {
+      "name": "category-integer",
+      "type": "short"
+    },
+    {
+      "name": "category-integer",
+      "type": "byte"
+    },
+    {
+      "name": "category-integer",
+      "type": "bigint"
+    },
+    {
+      "name": "category-integer",
+      "type": "global::System.Int32"
+    },
+    {
+      "name": "category-integer",
+      "type": "global::System.Int64"
+    },
+    {
+      "name": "category-float",
+      "type": "float"
+    },
+    {
+      "name": "category-float",
+      "type": "double"
+    },
+    {
+      "name": "category-float",
+      "type": "builtins.float"
+    },
+    {
+      "name": "category-float",
+      "type": "System.Double"
+    },
+    {
+      "name": "category-float",
+      "type": "System.Single"
+    },
+    {
+      "name": "category-float",
+      "type": "System.Decimal"
+    },
+    {
+      "name": "category-float",
+      "type": "decimal"
+    },
+    {
+      "name": "category-float",
+      "type": "float32"
+    },
+    {
+      "name": "category-float",
+      "type": "float64"
+    },
+    {
+      "name": "category-float",
+      "type": "number"
+    },
+    {
+      "name": "category-float",
+      "type": "global::System.Double"
+    },
+    {
+      "name": "category-float",
+      "type": "global::System.Decimal"
+    },
+    {
+      "name": "category-boolean",
+      "type": "bool"
+    },
+    {
+      "name": "category-boolean",
+      "type": "boolean"
+    },
+    {
+      "name": "category-boolean",
+      "type": "builtins.bool"
+    },
+    {
+      "name": "category-boolean",
+      "type": "System.Boolean"
+    },
+    {
+      "name": "category-boolean",
+      "type": "global::System.Boolean"
+    },
+    {
+      "name": "category-boolean",
+      "type": "true"
+    },
+    {
+      "name": "category-boolean",
+      "type": "false"
+    },
+    {
+      "name": "category-null",
+      "type": "null"
+    },
+    {
+      "name": "category-null",
+      "type": "None"
+    },
+    {
+      "name": "category-null",
+      "type": "builtins.None"
+    },
+    {
+      "name": "category-null",
+      "type": "nil"
+    },
+    {
+      "name": "category-null",
+      "type": "undefined"
+    },
+    {
+      "name": "category-void",
+      "type": "void"
+    },
+    {
+      "name": "category-void",
+      "type": "System.Void"
+    },
+    {
+      "name": "category-never",
+      "type": "never"
+    },
+    {
+      "name": "category-never",
+      "type": "noreturn"
+    },
+    {
+      "name": "category-never",
+      "type": "typing.NoReturn"
+    },
+    {
+      "name": "category-never",
+      "type": "typing.Never"
+    },
+    {
+      "name": "category-any",
+      "type": "mixed"
+    },
+    {
+      "name": "category-any",
+      "type": "any"
+    },
+    {
+      "name": "category-any",
+      "type": "unknown"
+    },
+    {
+      "name": "category-any",
+      "type": "object"
+    },
+    {
+      "name": "category-any",
+      "type": "builtins.object"
+    },
+    {
+      "name": "category-any",
+      "type": "typing.Any"
+    },
+    {
+      "name": "category-any",
+      "type": "System.Object"
+    },
+    {
+      "name": "category-any",
+      "type": "global::System.Object"
+    },
+    {
+      "name": "category-any",
+      "type": "interface{}"
+    },
+    {
+      "name": "category-any",
+      "type": "dynamic"
+    },
+    {
+      "name": "category-bytes",
+      "type": "bytes"
+    },
+    {
+      "name": "category-bytes",
+      "type": "builtins.bytes"
+    },
+    {
+      "name": "category-bytes",
+      "type": "[]byte"
+    },
+    {
+      "name": "category-bytes",
+      "type": "System.Byte[]"
+    },
+    {
+      "name": "category-list",
+      "type": "array"
+    },
+    {
+      "name": "category-list",
+      "type": "list"
+    },
+    {
+      "name": "category-list",
+      "type": "builtins.list"
+    },
+    {
+      "name": "category-list",
+      "type": "Array"
+    },
+    {
+      "name": "category-list",
+      "type": "ReadonlyArray"
+    },
+    {
+      "name": "category-list",
+      "type": "System.Collections.Generic.List"
+    },
+    {
+      "name": "category-list",
+      "type": "global::System.Collections.Generic.List"
+    },
+    {
+      "name": "category-list",
+      "type": "iterable"
+    },
+    {
+      "name": "category-set",
+      "type": "builtins.set"
+    },
+    {
+      "name": "category-set",
+      "type": "builtins.frozenset"
+    },
+    {
+      "name": "category-set",
+      "type": "Set"
+    },
+    {
+      "name": "category-set",
+      "type": "ReadonlySet"
+    },
+    {
+      "name": "category-set",
+      "type": "System.Collections.Generic.HashSet"
+    },
+    {
+      "name": "category-set",
+      "type": "global::System.Collections.Generic.HashSet"
+    },
+    {
+      "name": "category-map",
+      "type": "builtins.dict"
+    },
+    {
+      "name": "category-map",
+      "type": "Map"
+    },
+    {
+      "name": "category-map",
+      "type": "ReadonlyMap"
+    },
+    {
+      "name": "category-map",
+      "type": "Record"
+    },
+    {
+      "name": "category-map",
+      "type": "System.Collections.Generic.Dictionary"
+    },
+    {
+      "name": "category-map",
+      "type": "global::System.Collections.Generic.Dictionary"
+    },
+    {
+      "name": "category-tuple",
+      "type": "builtins.tuple"
+    },
+    {
+      "name": "category-function",
+      "type": "callable"
+    },
+    {
+      "name": "category-function",
+      "type": "Closure"
+    },
+    {
+      "name": "category-function",
+      "type": "Callable"
+    },
+    {
+      "name": "category-function",
+      "type": "typing.Callable"
+    },
+    {
+      "name": "category-function",
+      "type": "collections.abc.Callable"
+    },
+    {
+      "name": "category-function",
+      "type": "Function"
+    },
+    {
+      "name": "category-function",
+      "type": "System.Func"
+    },
+    {
+      "name": "category-function",
+      "type": "System.Action"
+    },
+    {
+      "name": "category-iterator",
+      "type": "Iterator"
+    },
+    {
+      "name": "category-iterator",
+      "type": "Generator"
+    },
+    {
+      "name": "category-iterator",
+      "type": "Traversable"
+    },
+    {
+      "name": "category-iterator",
+      "type": "typing.Iterator"
+    },
+    {
+      "name": "category-iterator",
+      "type": "typing.Generator"
+    },
+    {
+      "name": "category-iterator",
+      "type": "collections.abc.Iterator"
+    },
+    {
+      "name": "category-iterator",
+      "type": "collections.abc.Generator"
+    },
+    {
+      "name": "category-iterator",
+      "type": "IterableIterator"
+    },
+    {
+      "name": "category-iterator",
+      "type": "System.Collections.Generic.IEnumerable"
+    },
+    {
+      "name": "category-iterator",
+      "type": "global::System.Collections.Generic.IEnumerable"
+    }
+  ]
+}

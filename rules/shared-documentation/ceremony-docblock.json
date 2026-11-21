@@ -1,0 +1,53 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "ceremony-docblock",
+    "aliases": [
+      "python-ceremony-docblock",
+      "csharp-ceremony-docblock",
+      "CeremonyDocblockDetector",
+      "CeremonyDocblock"
+    ],
+    "skill": "shared/documentation",
+    "description": "A doc comment repeats the function signature",
+    "rule": "Keep documentation for information the signature does not already say.",
+    "suggestion": "Remove the redundant tags and leave any useful explanation."
+  },
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.form",
+        "doc"
+      ],
+      [
+        "=",
+        "$c.documents.kind",
+        "function"
+      ],
+      [
+        "=",
+        "$c.description",
+        ""
+      ],
+      [
+        ">",
+        [
+          "count",
+          "$c.documents.parameters"
+        ],
+        0
+      ]
+    ],
+    "emit": "$c.location"
+  }
+}

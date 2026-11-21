@@ -97,9 +97,9 @@ func (m Match) AdmitsAbsence() bool {
 		return true
 	}
 	if declared := m.Child("declaredType").Typed(); declared != nil {
-		return declared.Nullable
+		return declared.Nullable != nil && *declared.Nullable
 	}
 	typed := m.Typed()
 
-	return typed != nil && typed.Nullable
+	return typed != nil && typed.Nullable != nil && *typed.Nullable
 }

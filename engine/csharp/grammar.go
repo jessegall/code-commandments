@@ -66,7 +66,6 @@ func init() {
 		GenericFailures:     genericExceptions,
 		GenericMessage:      true,
 		TakesFailureMessage: takesFailureMessage,
-		BroadCatch:          engine.As(Node.IsBroadCatch),
 		Hashing:             hashing,
 		CallConversion:      callConversion,
 		BooleanTypes:        []string{"bool", "System.Boolean", "global::System.Boolean"},

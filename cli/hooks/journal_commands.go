@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/jessegall/code-commandments/rules"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -346,7 +347,7 @@ func everySin() []sins.Sin {
 	var every []sins.Sin
 
 	for _, engine := range catalog.Curriculum {
-		every = append(every, sins.Every(engine)...)
+		every = append(every, rules.SinsOf(engine)...)
 	}
 
 	return every

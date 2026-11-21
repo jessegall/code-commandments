@@ -63,6 +63,9 @@ type File struct {
 	Context  bool     `json:"context,omitempty"`
 	Test     bool     `json:"test,omitempty"`
 	Module   string   `json:"module,omitempty"`
+	// PublishedBy is the dependency that ships this file, when the project holds a copy of a file a package publishes,
+	// such as a Laravel config file published from vendor: the package reads it, so nothing in the project need.
+	PublishedBy string `json:"publishedBy,omitempty"`
 	// Reads are the other files whose contents shaped this tree, configuration and lockfiles included: a tree kept
 	// between runs stands while its own file and every one of these are unchanged.
 	Reads    []string  `json:"reads,omitempty"`
@@ -539,6 +542,21 @@ func (v Value) Bool() (bool, bool) {
 	return truth, err == nil
 }
 
+// Stated is a yes or no the compiler stated, for a fact whose absence means the compiler could not say.
+func Stated(answer bool) *bool {
+	return &answer
+}
+
+// IsNullable says whether the compiler stated the type admits absence.
+func (t *Type) IsNullable() bool {
+	return t != nil && t.Nullable != nil && *t.Nullable
+}
+
+// IsValueType says whether the compiler stated the type is copied by value.
+func (t *Type) IsValueType() bool {
+	return t != nil && t.ValueType != nil && *t.ValueType
+}
+
 // Type is a type, written or resolved.
 type Type struct {
 	Text       string      `json:"text"`
@@ -550,8 +568,8 @@ type Type struct {
 	Parameters []*Type     `json:"parameters,omitempty"`
 	Returns    *Type       `json:"returns,omitempty"`
 	Value      *Value      `json:"value,omitempty"`
-	Nullable   bool        `json:"nullable,omitempty"`
-	ValueType  bool        `json:"valueType,omitempty"`
+	Nullable   *bool       `json:"nullable,omitempty"`
+	ValueType  *bool       `json:"valueType,omitempty"`
 	Element    *Type       `json:"element,omitempty"`
 	Constructs string      `json:"constructs,omitempty"`
 	Origin     string      `json:"origin"`

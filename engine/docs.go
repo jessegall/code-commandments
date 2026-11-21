@@ -54,11 +54,6 @@ func (m Match) StacksDocComments() bool {
 	return run > 1
 }
 
-func (m Match) HasCeremonyDoc() bool {
-	read := m.grammar().CeremonyDoc
-	return read != nil && read(m)
-}
-
 func (m Match) NodeHash(normalize bool) string {
 	if rules := m.grammar().Hashing; rules != nil {
 		return SyntaxHash([]Match{m}, rules, normalize)

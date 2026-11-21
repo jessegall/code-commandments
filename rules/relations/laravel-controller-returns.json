@@ -1,0 +1,18 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": ["php"],
+  "definitions": {
+    "typesIn": {"args": ["x"], "expr": ["filter", ["map", ["flatten", ["list", ["list", "$x"], ["ownDescendants", "$x"]]], "d", "$d.resolved.name"], "n", ["nonempty", "$n"]]},
+    "publicControllerMethod": {"args": ["f"], "expr": ["and", ["exists", "$f"], ["=", "$f.form", "method"], ["none", "$f.modifiers", "m", ["in", "$m", "private", "protected"]],
+      ["some", ["list", ["enclosing", "$f", "type"]], "t", ["and", ["exists", "$t"], ["assignable", "$t", "controller"]]]]}
+  },
+  "relation": {
+    "from": "return",
+    "as": "r",
+    "pipeline": [
+      {"where": ["publicControllerMethod", ["enclosing", "$r", "function"]]},
+      {"expand": ["flatten", ["map", "$r.values", "v", ["typesIn", "$v"]]]},
+      {"project": {"type": "$row"}}
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "tag": "array-callback-contract",
+    "why": "The framework requires this method's callback to return an array."
+  },
+  {
+    "tag": "array-callback-input-contract",
+    "why": "The framework supplies an array to this method's callback."
+  },
+  {
+    "tag": "array-input-contract",
+    "why": "This framework boundary takes arrays carrying values in its declared input format."
+  },
+  {
+    "tag": "array-return-contract",
+    "why": "The framework requires this hook to return an array."
+  },
+  {
+    "tag": "array-returning",
+    "why": "A class whose whole job is handing the framework arrays: its array returns are contractual."
+  },
+  {
+    "tag": "association",
+    "why": "One end of a two-way association the framework requires both ends to name: it carries no dependency direction and cannot close a cycle."
+  },
+  {
+    "tag": "boundary",
+    "why": "A framework entry point: behaviour does not move onto it, and a method taking one may unpack its input."
+  },
+  {
+    "tag": "composition-root",
+    "why": "A provider or framework construction hook that wires config into values without constructor injection."
+  },
+  {
+    "tag": "contract-method",
+    "why": "A framework-mandated method whose signature the framework dictates."
+  },
+  {
+    "tag": "control-signal",
+    "why": "A Throwable thrown to steer control flow, not to report a failure: catching it with an empty body is the semantics."
+  },
+  {
+    "tag": "dynamic-members",
+    "why": "A type whose framework supplies members at runtime."
+  },
+  {
+    "tag": "generic-failure",
+    "why": "The language's catch-all failure type: throwing it names nothing a caller can catch."
+  },
+  {
+    "tag": "no-container",
+    "why": "A type the framework instantiates itself, without the container."
+  },
+  {
+    "tag": "validation-response",
+    "why": "A framework factory builds a validation response from field messages and has no parameter for the caught failure."
+  }
+]

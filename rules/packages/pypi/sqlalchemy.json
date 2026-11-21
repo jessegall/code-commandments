@@ -1,0 +1,86 @@
+{
+  "package": "sqlalchemy",
+  "ecosystem": "pypi",
+  "versions": ">=1.4",
+  "provenance": "engine/python/orm/queries.go sqlalchemyQueries",
+  "entries": [
+    {
+      "type": "sqlalchemy.orm.session.Session",
+      "name": "execute",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.ext.asyncio.session.AsyncSession",
+      "name": "execute",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.session.Session",
+      "name": "scalar",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.ext.asyncio.session.AsyncSession",
+      "name": "scalar",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.session.Session",
+      "name": "scalars",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.ext.asyncio.session.AsyncSession",
+      "name": "scalars",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.session.Session",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.ext.asyncio.session.AsyncSession",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.query.Query",
+      "name": "all",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.query.Query",
+      "name": "one",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.query.Query",
+      "name": "one_or_none",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.query.Query",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "sqlalchemy.orm.query.Query",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "null-to-optional-map",
+    "aliases": [
+      "NullToOptionalMapDetector",
+      "NullToOptionalMap"
+    ],
+    "skill": "php/spatie-data",
+    "description": "A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs)",
+    "rule": "Map an absent value onto `Optional` in ONE named factory, not a ternary at every producer. Use the scaffolded `optionalOrMissing()` (null → `new Optional`, else `::from`), the omit-from-wire counterpart to Spatie's `optional()`.",
+    "suggestion": "Replace `$x === null ? new Optional : Foo::from($x)` / `expr() ?? new Optional` with `Foo::optionalOrMissing($x)` (scaffold the `OptionalOrMissing` trait).",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "scaffolds": [
+      {
+        "path": "Support/OptionalOrMissing.php",
+        "stub": "OptionalOrMissing.php.stub"
+      }
+    ]
+  },
+  "definitions": {
+    "absent": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$n.kind",
+            "construction"
+          ],
+          [
+            "=",
+            "$n.type.refers",
+            "Spatie\\LaravelData\\Optional"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$n.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$n.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$n.callee.member.name",
+            "create"
+          ],
+          [
+            "=",
+            "$n.callee.subject.refers",
+            "Spatie\\LaravelData\\Optional"
+          ]
+        ]
+      ]
+    },
+    "nullTest": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "comparison"
+        ],
+        [
+          "some",
+          "$c.operands",
+          "o",
+          [
+            "and",
+            [
+              "=",
+              "$o.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$o.literalKind",
+              "null"
+            ]
+          ]
+        ]
+      ]
+    },
+    "ownParameter": {
+      "args": [
+        "x",
+        "n"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "reference"
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$n",
+              "function"
+            ]
+          ],
+          "f",
+          [
+            "and",
+            [
+              "exists",
+              "$f"
+            ],
+            [
+              "some",
+              "$f.parameters",
+              "p",
+              [
+                "=",
+                "$p.binding.name",
+                "$x.name"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "selfFrom": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$x.callee.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$x.callee.member.name",
+          "from"
+        ],
+        [
+          "=",
+          "$x.callee.subject.kind",
+          "reference"
+        ],
+        [
+          "in",
+          "$x.callee.subject.name",
+          "self",
+          "static"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "construction",
+      "call"
+    ],
+    "as": "n",
+    "where": [
+      "absent",
+      "$n"
+    ],
+    "having": [
+      "case",
+      "$n.parent.kind",
+      {
+        "conditional": [
+          "and",
+          [
+            "in",
+            "$n.role",
+            "consequent",
+            "alternative"
+          ],
+          [
+            "nullTest",
+            "$n.parent.condition"
+          ],
+          [
+            "not",
+            [
+              "selfFrom",
+              [
+                "case",
+                "$n.role",
+                {
+                  "consequent": "$n.parent.alternative"
+                },
+                "$n.parent.consequent"
+              ]
+            ]
+          ]
+        ],
+        "fallback": [
+          "and",
+          [
+            "=",
+            "$n.role",
+            "replacement"
+          ],
+          [
+            "not",
+            [
+              "ownParameter",
+              "$n.parent.subject",
+              "$n"
+            ]
+          ]
+        ]
+      },
+      false
+    ],
+    "emit": "$n"
+  }
+}

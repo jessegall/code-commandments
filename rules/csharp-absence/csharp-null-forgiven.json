@@ -1,0 +1,34 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp"
+  ],
+  "sin": {
+    "name": "csharp-null-forgiven",
+    "aliases": [
+      "NullForgivenDetector",
+      "NullForgiven"
+    ],
+    "skill": "csharp/absence",
+    "description": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding",
+    "rule": "Never silence a nullable warning with `!` — decide the missing case where the value is created, or handle it here.",
+    "suggestion": "Make the value non-nullable at its source, throw a named exception where it must exist, handle the null branch, or narrow it honestly (`OfType<T>()`, a pattern, `TryGetValue`)."
+  },
+  "find": {
+    "select": "unary",
+    "as": "u",
+    "where": [
+      "and",
+      [
+        "=",
+        "$u.operator",
+        "assert-present"
+      ],
+      [
+        "not",
+        "$u.file.test"
+      ]
+    ],
+    "emit": "$u"
+  }
+}

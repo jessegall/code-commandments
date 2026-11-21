@@ -1,0 +1,473 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "capability-probe-hub",
+    "aliases": [
+      "CapabilityProbeHubDetector",
+      "CapabilityProbeHub"
+    ],
+    "skill": "shared/absence",
+    "description": "Several methods each ask the same field if it has a capability before using it",
+    "rule": "Decide which capabilities an object provides when giving it to its owner.",
+    "suggestion": "Give the owner a typed capability or an adapter that supplies the required behavior."
+  },
+  "parameters": {
+    "probes": {
+      "type": "number",
+      "default": 3,
+      "description": "How many methods probe one field's capability at least."
+    }
+  },
+  "definitions": {
+    "receiverOf": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "case",
+        "$a.kind",
+        {
+          "call": "$a.callee.subject",
+          "access": "$a.subject"
+        },
+        null
+      ]
+    },
+    "answers": {
+      "args": [
+        "a",
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$a.kind",
+          "call",
+          "access"
+        ],
+        [
+          "!=",
+          "$a.nullConditional",
+          true
+        ],
+        [
+          "or",
+          [
+            "tree.names",
+            [
+              "receiverOf",
+              "$a"
+            ],
+            "$t.subject.member.name"
+          ],
+          [
+            "and",
+            [
+              "exists",
+              "$t.binding"
+            ],
+            [
+              "tree.names",
+              [
+                "receiverOf",
+                "$a"
+              ],
+              "$t.binding.name"
+            ]
+          ]
+        ]
+      ]
+    },
+    "probesSelf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$t.kind",
+          "type-test"
+        ],
+        [
+          "tree.selfField",
+          "$t.subject"
+        ]
+      ]
+    },
+    "fallbackValue": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$x.kind",
+          "literal"
+        ],
+        [
+          "tree.emptyCollection",
+          "$x"
+        ]
+      ]
+    },
+    "probeAnd": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "logical"
+          ],
+          [
+            "=",
+            "$v.operator",
+            "and"
+          ],
+          [
+            "probesSelf",
+            "$v.left"
+          ],
+          [
+            "answers",
+            "$v.right",
+            "$v.left"
+          ]
+        ],
+        {
+          "true": "$v.left.subject.member.name"
+        },
+        ""
+      ]
+    },
+    "probeConditional": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "conditional"
+          ],
+          [
+            "probesSelf",
+            "$v.condition"
+          ],
+          [
+            "answers",
+            "$v.consequent",
+            "$v.condition"
+          ],
+          [
+            "fallbackValue",
+            "$v.alternative"
+          ]
+        ],
+        {
+          "true": "$v.condition.subject.member.name"
+        },
+        ""
+      ]
+    },
+    "probeIf": {
+      "args": [
+        "s",
+        "r"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "if"
+          ],
+          [
+            "not",
+            [
+              "exists",
+              "$s.else"
+            ]
+          ],
+          [
+            "probesSelf",
+            "$s.condition"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$s.then.statements"
+            ],
+            1
+          ],
+          [
+            "=",
+            "$s.then.kind",
+            "block"
+          ],
+          [
+            "=",
+            [
+              "kindOf",
+              [
+                "at",
+                "$s.then.statements",
+                0
+              ]
+            ],
+            "return"
+          ],
+          [
+            "answers",
+            [
+              "valueOf",
+              [
+                "at",
+                "$s.then.statements",
+                0
+              ]
+            ],
+            "$s.condition"
+          ],
+          [
+            "=",
+            "$r.kind",
+            "return"
+          ],
+          [
+            "fallbackValue",
+            [
+              "valueOf",
+              "$r"
+            ]
+          ]
+        ],
+        {
+          "true": "$s.condition.subject.member.name"
+        },
+        ""
+      ]
+    },
+    "probed": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          [
+            "count",
+            "$m.body.statements"
+          ],
+          1
+        ],
+        {
+          "true": [
+            "case",
+            [
+              "nonempty",
+              [
+                "probeAnd",
+                [
+                  "valueOf",
+                  [
+                    "at",
+                    "$m.body.statements",
+                    0
+                  ]
+                ]
+              ]
+            ],
+            {
+              "true": [
+                "probeAnd",
+                [
+                  "valueOf",
+                  [
+                    "at",
+                    "$m.body.statements",
+                    0
+                  ]
+                ]
+              ]
+            },
+            [
+              "probeConditional",
+              [
+                "valueOf",
+                [
+                  "at",
+                  "$m.body.statements",
+                  0
+                ]
+              ]
+            ]
+          ]
+        },
+        [
+          "case",
+          [
+            "=",
+            [
+              "count",
+              "$m.body.statements"
+            ],
+            2
+          ],
+          {
+            "true": [
+              "probeIf",
+              [
+                "at",
+                "$m.body.statements",
+                0
+              ],
+              [
+                "at",
+                "$m.body.statements",
+                1
+              ]
+            ]
+          },
+          ""
+        ]
+      ]
+    },
+    "valueOf": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "return": [
+            "at",
+            "$s.values",
+            0
+          ]
+        },
+        null
+      ]
+    },
+    "kindOf": {
+      "args": [
+        "s"
+      ],
+      "expr": "$s.kind"
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "not",
+        "$t.file.test"
+      ],
+      [
+        "!=",
+        "$t.form",
+        "trait"
+      ]
+    ],
+    "let": [
+      [
+        "methods",
+        [
+          "filter",
+          "$t.writtenMembers",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ],
+            [
+              "!=",
+              "$m.form",
+              "constructor"
+            ]
+          ]
+        ]
+      ],
+      [
+        "probes",
+        [
+          "map",
+          "$methods",
+          "m",
+          [
+            "probed",
+            "$m"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$methods"
+        ],
+        "$param.probes"
+      ],
+      [
+        "some",
+        "$probes",
+        "n",
+        [
+          "and",
+          [
+            "nonempty",
+            "$n"
+          ],
+          [
+            ">=",
+            [
+              "count",
+              [
+                "filter",
+                "$probes",
+                "q",
+                [
+                  "=",
+                  "$q",
+                  "$n"
+                ]
+              ]
+            ],
+            "$param.probes"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$t"
+  }
+}

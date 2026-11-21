@@ -1,0 +1,54 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "typescript"
+  ],
+  "sin": {
+    "name": "redundant-arrow-return-type",
+    "aliases": [
+      "RedundantArrowReturnTypeDetector",
+      "RedundantArrowReturnType"
+    ],
+    "skill": "shared/arguments",
+    "description": "An arrow repeats the type already inferred from its expression",
+    "rule": "Let the expression supply its return type.",
+    "suggestion": "Let the expression supply its return type."
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "in",
+        "$f.form",
+        "arrow",
+        "lambda"
+      ],
+      [
+        "exists",
+        "$f.returnType"
+      ],
+      [
+        "in",
+        "$f.body.kind",
+        "construction",
+        "literal"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "nonempty",
+        "$f.body.resolved.text"
+      ],
+      [
+        "=",
+        "$f.body.resolved.text",
+        "$f.resolved.returns.text"
+      ]
+    ],
+    "emit": "$f"
+  }
+}

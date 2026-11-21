@@ -1,0 +1,30 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "short-circuit-statement",
+    "aliases": [
+      "python-short-circuit-statement",
+      "ShortCircuitStatementDetector",
+      "ShortCircuitStatement"
+    ],
+    "skill": "shared/flow",
+    "description": "A bare `a && b()` or `a || b()` statement: a short-circuit whose value nothing reads, so the operator is an `if` in disguise",
+    "rule": "Branch with an `if`; never run work off the right side of a bare `&&`/`||` (`and`/`or`) whose value nothing reads.",
+    "suggestion": "Write the condition as an `if` and the right side as its body, negating it for an `||`."
+  },
+  "find": {
+    "select": "logical",
+    "as": "l",
+    "where": [
+      "=",
+      "$l.parent.kind",
+      "expression-statement"
+    ],
+    "emit": "$l"
+  }
+}

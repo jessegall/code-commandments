@@ -4,7 +4,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/backend"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -42,7 +41,7 @@ final class Checkout {
 			t.Fatalf("%s should index the declaration %s", parameter.Name(), want[i])
 		}
 	}
-	findings := backend.ConcreteCrossModuleDependencyDetector.Find(codebase)
+	findings := shipped(t, "concrete-cross-module-dependency").Find(codebase)
 	if len(findings) != 1 || findings[0].Name() != "account" {
 		t.Fatalf("only the account module's dependency crosses the boundary, found %v", findings)
 	}
@@ -94,7 +93,7 @@ final class Checkout {
 }
 `)
 	var parameters []string
-	for _, finding := range backend.ConcreteCrossModuleDependencyDetector.Find(codebase) {
+	for _, finding := range shipped(t, "concrete-cross-module-dependency").Find(codebase) {
 		parameters = append(parameters, finding.Name())
 	}
 	slices.Sort(parameters)
@@ -148,7 +147,7 @@ final class Cleanup {
 }
 `)
 
-	findings := backend.ConcreteCrossModuleDependencyDetector.Find(codebase)
+	findings := shipped(t, "concrete-cross-module-dependency").Find(codebase)
 	if len(findings) != 2 || findings[0].Name() != "store" || findings[1].Name() != "purger" {
 		t.Fatalf("want only the two log service dependencies despite their common namespace root, found %v", findings)
 	}
@@ -180,7 +179,7 @@ final class Receipt {
     public function warehouse(): int { return $this->scope->warehouse(); }
 }
 `)
-	if findings := backend.ConcreteCrossModuleDependencyDetector.Find(codebase); len(findings) != 0 {
+	if findings := shipped(t, "concrete-cross-module-dependency").Find(codebase); len(findings) != 0 {
 		t.Fatalf("the factory supplies the scope for the current operation, found %v", findings)
 	}
 }
@@ -248,7 +247,7 @@ final class StockController {
     public function __construct(private StockRepository $repository, private ShopStockService $service) {}
 }
 `)
-	findings := backend.ConcreteCrossModuleDependencyDetector.Find(codebase)
+	findings := shipped(t, "concrete-cross-module-dependency").Find(codebase)
 	var names []string
 	for _, finding := range findings {
 		names = append(names, finding.Name())
@@ -287,7 +286,7 @@ final class WarehouseLabel {
     public function label(): string { return $this->warehouse->label; }
 }
 `)
-	findings := backend.ConcreteCrossModuleDependencyDetector.Find(codebase)
+	findings := shipped(t, "concrete-cross-module-dependency").Find(codebase)
 	if len(findings) != 2 || findings[0].Name() != "context" || findings[1].Name() != "warehouse" {
 		t.Fatalf("want the scope operation and the writable property, found %v", findings)
 	}

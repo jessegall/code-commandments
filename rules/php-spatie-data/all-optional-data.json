@@ -1,0 +1,122 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "all-optional-data",
+    "aliases": [
+      "AllOptionalDataDetector",
+      "AllOptionalData"
+    ],
+    "skill": "php/spatie-data",
+    "description": "Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used",
+    "rule": "Give a Data object the fields it needs to be valid. When the whole object can be absent, put `Optional` on the enclosing field. A partial update can make every field optional when its consumer applies each supplied field independently and preserves the current value for each omitted field.",
+    "suggestion": "Give each leaf a concrete default (`int $columns = 1`) and move the optionality up to where this type is used: `public readonly Grid|Optional $grid = new Optional();`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "optionalDefault": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "spatie.slotDefault",
+            "$s"
+          ]
+        ],
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "spatie.typeRefers",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "Spatie\\LaravelData\\Optional"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "=",
+      "$t.form",
+      "class"
+    ],
+    "let": [
+      [
+        "slots",
+        [
+          "spatie.publicSlots",
+          "$t"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        "$t"
+      ],
+      [
+        ">",
+        [
+          "count",
+          "$slots"
+        ],
+        0
+      ],
+      [
+        "every",
+        "$slots",
+        "s",
+        [
+          "spatie.optional",
+          "$s.declaredType"
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "spatie.typescript",
+            "$t"
+          ],
+          [
+            "every",
+            "$slots",
+            "s",
+            [
+              "optionalDefault",
+              "$s"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$t"
+  }
+}

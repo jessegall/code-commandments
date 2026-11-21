@@ -1,0 +1,88 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "switch-case",
+    "aliases": [
+      "SwitchCaseDetector",
+      "SwitchCase"
+    ],
+    "skill": "vue/vue-control-flow",
+    "description": "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)",
+    "rule": "Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject.",
+    "suggestion": "the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`.",
+    "scaffolds": [
+      {
+        "path": "components/SwitchCase.vue",
+        "stub": "vue/SwitchCase.vue",
+        "frontend": true
+      }
+    ]
+  },
+  "find": {
+    "select": "element",
+    "as": "e",
+    "where": [
+      "and",
+      [
+        "vue.hasDirective",
+        "$e",
+        "if"
+      ],
+      [
+        "vue.equality",
+        [
+          "vue.directive",
+          "$e",
+          "if"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "following",
+        [
+          "vue.nextElement",
+          "$e"
+        ]
+      ],
+      [
+        "branch",
+        [
+          "vue.directive",
+          "$following",
+          "else-if"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$following"
+      ],
+      [
+        "vue.equality",
+        "$branch"
+      ],
+      [
+        "=",
+        [
+          "vue.subjectOf",
+          [
+            "vue.directive",
+            "$e",
+            "if"
+          ]
+        ],
+        [
+          "vue.subjectOf",
+          "$branch"
+        ]
+      ]
+    ],
+    "emit": "$e"
+  }
+}

@@ -34,7 +34,7 @@ func typeOf(written *contract.Type) Type {
 		}
 	}
 
-	return Type{name: written.Text, nullable: written.Nullable, isValueType: written.ValueType, inner: inner}
+	return Type{name: written.Text, nullable: written.IsNullable(), isValueType: written.IsValueType(), inner: inner}
 }
 
 func namedInside(written *contract.Type) []string {

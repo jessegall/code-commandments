@@ -1,0 +1,60 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "redundant-enum-unwrap",
+    "aliases": [
+      "RedundantEnumUnwrapDetector",
+      "RedundantEnumUnwrap"
+    ],
+    "skill": "php/spatie-data-hydration",
+    "description": "An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum",
+    "rule": "Pass the enum itself to an enum slot — Spatie's enum cast keeps it; don't destructure it to `->value` at the hydration site only for it to be re-hydrated.",
+    "suggestion": "`'status' => $order->status`, not `'status' => $order->status->value`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "access",
+    "as": "a",
+    "where": [
+      "=",
+      "$a.member.name",
+      "value"
+    ],
+    "let": [
+      [
+        "enum",
+        [
+          "typeDeclaration",
+          "$a.subject.resolved.name"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$enum"
+      ],
+      [
+        "=",
+        "$enum.form",
+        "enum"
+      ],
+      [
+        "spatie.fits",
+        "$a",
+        "$a.subject.resolved.name"
+      ]
+    ],
+    "emit": "$a"
+  }
+}

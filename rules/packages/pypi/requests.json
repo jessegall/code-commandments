@@ -1,0 +1,15 @@
+{
+  "package": "requests",
+  "ecosystem": "pypi",
+  "versions": ">=2",
+  "provenance": "requests' module functions, each a blocking HTTP call",
+  "entries": [
+    {"type": "requests.api", "name": "get", "effect": "blocks-thread", "execution": "call"},
+    {"type": "requests.api", "name": "post", "effect": "blocks-thread", "execution": "call"},
+    {"type": "requests.api", "name": "put", "effect": "blocks-thread", "execution": "call"},
+    {"type": "requests.api", "name": "patch", "effect": "blocks-thread", "execution": "call"},
+    {"type": "requests.api", "name": "delete", "effect": "blocks-thread", "execution": "call"},
+    {"type": "requests.api", "name": "head", "effect": "blocks-thread", "execution": "call"},
+    {"type": "requests.api", "name": "request", "effect": "blocks-thread", "execution": "call"}
+  ]
+}

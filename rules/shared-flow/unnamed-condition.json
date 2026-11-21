@@ -1,0 +1,274 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "unnamed-condition",
+    "aliases": [
+      "python-unnamed-condition",
+      "csharp-unnamed-condition",
+      "UnnamedConditionDetector",
+      "UnnamedCondition"
+    ],
+    "skill": "shared/flow",
+    "description": "A condition of three or more parts over two or more objects whose decision has no name",
+    "rule": "Give a compound condition a name that says what it decides.",
+    "suggestion": "Put the condition on the type that owns the decision, or give a template condition a named computed value."
+  },
+  "parameters": {
+    "parts": {
+      "type": "number",
+      "default": 3,
+      "description": "How many parts a condition has at least."
+    },
+    "subjects": {
+      "type": "number",
+      "default": 2,
+      "description": "How many objects its parts test at least."
+    }
+  },
+  "definitions": {
+    "declares": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$n"
+            ],
+            [
+              "ownDescendants",
+              "$n"
+            ]
+          ]
+        ],
+        "d",
+        [
+          "is",
+          "$d",
+          "declaration"
+        ]
+      ]
+    },
+    "subjectOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "call": "$x.callee.subject",
+          "access": "$x.subject"
+        },
+        null
+      ]
+    },
+    "root": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "nameOf",
+        [
+          "at",
+          [
+            "filter",
+            [
+              "flatten",
+              [
+                "list",
+                [
+                  "list",
+                  [
+                    "subjectOf",
+                    "$x"
+                  ]
+                ],
+                [
+                  "ownDescendants",
+                  [
+                    "subjectOf",
+                    "$x"
+                  ]
+                ]
+              ]
+            ],
+            "y",
+            [
+              "in",
+              "$y.kind",
+              "reference"
+            ]
+          ],
+          0
+        ]
+      ]
+    },
+    "nameOf": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "case",
+        "$r.kind",
+        {
+          "reference": [
+            "case",
+            "$r.form",
+            {
+              "self": "self"
+            },
+            [
+              "case",
+              [
+                "nonempty",
+                "$r.refers"
+              ],
+              {
+                "true": ""
+              },
+              "$r.name"
+            ]
+          ]
+        },
+        ""
+      ]
+    }
+  },
+  "find": {
+    "select": "logical",
+    "as": "l",
+    "where": [
+      "and",
+      [
+        "!=",
+        "$l.parent.kind",
+        "logical"
+      ],
+      [
+        "in",
+        "$l.parent.kind",
+        "if",
+        "loop"
+      ],
+      [
+        "=",
+        "$l.role",
+        "condition"
+      ],
+      [
+        "nonempty",
+        [
+          "ownAncestors",
+          "$l"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "parts",
+        [
+          "leaves",
+          "$l",
+          "logical"
+        ]
+      ],
+      [
+        "roots",
+        [
+          "flatten",
+          [
+            "map",
+            "$parts",
+            "p",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "flatten",
+                  [
+                    "list",
+                    [
+                      "list",
+                      "$p"
+                    ],
+                    [
+                      "ownDescendants",
+                      "$p"
+                    ]
+                  ]
+                ],
+                "x",
+                [
+                  "in",
+                  "$x.kind",
+                  "call",
+                  "access"
+                ]
+              ],
+              "x",
+              [
+                "root",
+                "$x"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "subjects",
+        [
+          "filter",
+          "$roots",
+          "r",
+          [
+            "nonempty",
+            "$r"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$parts"
+        ],
+        "$param.parts"
+      ],
+      [
+        "none",
+        "$parts",
+        "p",
+        [
+          "declares",
+          "$p"
+        ]
+      ],
+      [
+        ">=",
+        [
+          "distinctCount",
+          "$subjects"
+        ],
+        "$param.subjects"
+      ]
+    ],
+    "emit": "$l"
+  }
+}

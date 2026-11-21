@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
-	godetectors "github.com/jessegall/code-commandments/detectors/go"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
@@ -38,20 +37,8 @@ func shop(t *testing.T) *engine.Codebase {
 
 func TestEveryGoDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
 	known := detectors.Of(catalog.Go)
-	dependencies := godetectors.NamespaceDependencyDetector.
-		Layer("commandments.fixture/shop/layers/inventory/core").
-		Layer("commandments.fixture/shop/layers/inventory/view", "commandments.fixture/shop/layers/inventory/core").
-		Layer("commandments.fixture/shop/layers/payroll/core").
-		Layer("commandments.fixture/shop/layers/payroll/view", "commandments.fixture/shop/layers/payroll/core").
-		Layer("commandments.fixture/shop/layers/routing/core").
-		Layer("commandments.fixture/shop/layers/routing/view", "commandments.fixture/shop/layers/routing/core")
-	for at, detector := range known {
-		if detector.Sin() == dependencies.Sin() {
-			known[at] = dependencies
-		}
-	}
 
-	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: known, Known: known})
+	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: fixture.Proven(fixturetest.Configured(t, "../../tests/Fixtures/go", known)), Known: fixture.Proven(known)})
 }
 
 func TestEverySinTheGoFixtureMarksHasADetector(t *testing.T) {

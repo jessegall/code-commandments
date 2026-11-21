@@ -1,0 +1,66 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "reassigned-parameter",
+    "aliases": [
+      "ReassignedParameterDetector",
+      "ReassignedParameter"
+    ],
+    "skill": "shared/flow",
+    "description": "A parameter overwritten inside its function, so one name holds the value the caller passed and later a different one.",
+    "rule": "A parameter keeps the value its caller passed; a new value gets a name of its own.",
+    "suggestion": "Assign the new value to a local named for what it is (`trimmed = trim(name)`), or ask the caller for the finished value."
+  },
+  "find": {
+    "select": "assignment",
+    "as": "a",
+    "where": [
+      "and",
+      [
+        "not",
+        "$a.file.test"
+      ],
+      [
+        "!=",
+        "$a.mode",
+        "define"
+      ]
+    ],
+    "let": [
+      [
+        "target",
+        [
+          "at",
+          "$a.targets",
+          0
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$target.kind",
+        "reference"
+      ],
+      [
+        "=",
+        "$target.binding.parent.kind",
+        "parameter"
+      ],
+      [
+        "!=",
+        "$target.binding.parent.passing",
+        "reference"
+      ]
+    ],
+    "emit": "$a"
+  }
+}

@@ -113,7 +113,7 @@ public sealed class Answer
 `, 0},
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := BlockedAwaitDetector{}.Find(csharptest.FromSource(t, map[string]string{"Shop/Desk.cs": test.source, "Shop/Feed.cs": feed}))
+			found := shipped(t, "csharp-blocked-await").Find(csharptest.FromSource(t, map[string]string{"Shop/Desk.cs": test.source, "Shop/Feed.cs": feed}))
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

@@ -1,0 +1,46 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "bloated-docblock",
+    "aliases": [
+      "python-bloated-docblock",
+      "csharp-bloated-docblock",
+      "BloatedDocblockDetector",
+      "BloatedDocblock"
+    ],
+    "skill": "shared/documentation",
+    "description": "A type has several paragraphs of description",
+    "rule": "Keep the type description short.",
+    "suggestion": "Move supporting detail to the place where it is needed."
+  },
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.form",
+        "doc"
+      ],
+      [
+        "=",
+        "$c.documents.kind",
+        "type"
+      ],
+      [
+        ">=",
+        "$c.paragraphs",
+        2
+      ]
+    ],
+    "emit": "$c.location"
+  }
+}

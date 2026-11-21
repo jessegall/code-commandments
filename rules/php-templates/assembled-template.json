@@ -1,0 +1,136 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "assembled-template",
+    "aliases": [
+      "AssembledTemplateDetector",
+      "AssembledTemplate",
+      "csharp-assembled-template",
+      "python-assembled-template"
+    ],
+    "skill": "php/templates",
+    "description": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it",
+    "rule": "State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies — never as a list of line fragments joined by a newline.",
+    "suggestion": "A heredoc (`<<<PHP` / `<<<'PHP'`), with the computed part as one interpolation."
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "not",
+      "$c.file.test"
+    ],
+    "having": [
+      "and",
+      [
+        "some",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "map",
+              "$c.arguments",
+              "g",
+              "$g.value"
+            ],
+            [
+              "list",
+              "$c.callee.subject"
+            ]
+          ]
+        ],
+        "x",
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$x.literalKind",
+              "string"
+            ],
+            [
+              "=",
+              "$x.value",
+              "\n"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "reference"
+            ],
+            [
+              "=",
+              "$x.name",
+              "PHP_EOL"
+            ]
+          ]
+        ]
+      ],
+      [
+        "some",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "map",
+              "$c.arguments",
+              "g",
+              "$g.value"
+            ],
+            [
+              "list",
+              "$c.callee.subject"
+            ]
+          ]
+        ],
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "collection"
+          ],
+          [
+            ">=",
+            [
+              "count",
+              "$x.entries"
+            ],
+            3
+          ],
+          [
+            "every",
+            "$x.entries",
+            "e",
+            [
+              "in",
+              "$e.value.kind",
+              "literal",
+              "interpolation"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

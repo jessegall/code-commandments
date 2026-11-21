@@ -1,0 +1,75 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "dead-config-key",
+    "aliases": [
+      "DeadConfigKeyDetector",
+      "DeadConfigKey"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt",
+    "rule": "Config is an interface: every key exists because something reads it. When the last reader goes, the key goes with it.",
+    "suggestion": "Delete the key (and its env var), or restore the reader the feature lost.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "from": "laravel-config-keys",
+    "as": "k",
+    "pipeline": [
+      {
+        "project": {
+          "anchor": "$k.anchor",
+          "key": "$k.key",
+          "texts": [
+            "programTexts"
+          ]
+        }
+      },
+      {
+        "reject": [
+          "some",
+          "$texts",
+          "t",
+          [
+            "or",
+            [
+              "=",
+              "$t",
+              "$key"
+            ],
+            [
+              "startsWith",
+              "$t",
+              [
+                "concat",
+                "$key",
+                "."
+              ]
+            ],
+            [
+              "startsWith",
+              "$key",
+              [
+                "concat",
+                "$t",
+                "."
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  }
+}

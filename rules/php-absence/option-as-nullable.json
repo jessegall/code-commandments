@@ -1,0 +1,141 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "option-as-nullable",
+    "aliases": [
+      "OptionAsNullableDetector",
+      "OptionAsNullable"
+    ],
+    "skill": "php/absence",
+    "description": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`",
+    "rule": "Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.",
+    "suggestion": "Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`.",
+    "requires": {
+      "name": "jessegall/php-types",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "nullableOption": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$t.nullable",
+          true
+        ],
+        [
+          "or",
+          [
+            "=",
+            "$t.name",
+            [
+              "identity",
+              "option"
+            ]
+          ],
+          [
+            "some",
+            "$t.members",
+            "m",
+            [
+              "=",
+              "$m.name",
+              [
+                "identity",
+                "option"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "parameter",
+      "declarator",
+      "function",
+      "call"
+    ],
+    "as": "s",
+    "where": [
+      "case",
+      "$s.kind",
+      {
+        "parameter": [
+          "nullableOption",
+          "$s.binding.resolved"
+        ],
+        "declarator": [
+          "and",
+          [
+            "=",
+            "$s.parent.kind",
+            "field"
+          ],
+          [
+            "nullableOption",
+            "$s.binding.resolved"
+          ]
+        ],
+        "function": [
+          "nullableOption",
+          "$s.resolved.returns"
+        ],
+        "call": [
+          "and",
+          [
+            "=",
+            "$s.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$s.callee.member.name",
+            "unwrapOr"
+          ],
+          [
+            "!=",
+            "$s.parent.kind",
+            "argument"
+          ],
+          [
+            "some",
+            "$s.arguments",
+            "a",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "position",
+                  "$a"
+                ],
+                0
+              ],
+              [
+                "=",
+                "$a.value.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$a.value.literalKind",
+                "null"
+              ]
+            ]
+          ]
+        ]
+      },
+      false
+    ],
+    "emit": "$s"
+  }
+}

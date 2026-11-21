@@ -1,0 +1,69 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "config-read",
+    "aliases": [
+      "ConfigReadDetector",
+      "ConfigRead"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "`config('…')` read inside a class",
+    "rule": "Inject a typed config object; never read `config('…')` inside a class.",
+    "suggestion": "Inject a typed config value object.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "=",
+        "$c.callee.kind",
+        "reference"
+      ],
+      [
+        "=",
+        "$c.callee.refers",
+        "config"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        [
+          "enclosing",
+          "$c",
+          "type"
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "composition-root",
+            [
+              "enclosing",
+              "$c",
+              "function"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

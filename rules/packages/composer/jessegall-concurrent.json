@@ -1,0 +1,13 @@
+{
+  "package": "jessegall/concurrent",
+  "ecosystem": "composer",
+  "versions": ">=1",
+  "provenance": "engine/php/phptypes, engine/php/concurrent",
+  "entries": [],
+  "identities": [
+    {
+      "name": "concurrent",
+      "type": "JesseGall\\Concurrent\\Concurrent"
+    }
+  ]
+}

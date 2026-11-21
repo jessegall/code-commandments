@@ -1,0 +1,98 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "match-default-returns-null",
+    "aliases": [
+      "csharp-match-default-returns-null",
+      "MatchDefaultReturnsNullDetector",
+      "MatchDefaultReturnsNull",
+      "python-match-wildcard-returns-none",
+      "MatchWildcardReturnsNoneDetector",
+      "MatchWildcardReturnsNone"
+    ],
+    "skill": "shared/arguments",
+    "description": "The default arm silently returns an absent value",
+    "rule": "Handle the expected cases explicitly and signal an unexpected value.",
+    "suggestion": "Handle the expected cases explicitly and signal an unexpected value."
+  },
+  "definitions": {
+    "nullLiteral": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "literal"
+        ],
+        [
+          "=",
+          "$x.literalKind",
+          "null"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "arm",
+    "as": "a",
+    "where": [
+      "=",
+      "$a.default",
+      true
+    ],
+    "having": [
+      "case",
+      "$a.body.kind",
+      {
+        "block": [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$a.body.statements"
+            ],
+            1
+          ],
+          [
+            "some",
+            "$a.body.statements",
+            "s",
+            [
+              "and",
+              [
+                "=",
+                "$s.kind",
+                "return"
+              ],
+              [
+                "some",
+                "$s.values",
+                "v",
+                [
+                  "nullLiteral",
+                  "$v"
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      [
+        "nullLiteral",
+        "$a.body"
+      ]
+    ],
+    "emit": "$a"
+  }
+}

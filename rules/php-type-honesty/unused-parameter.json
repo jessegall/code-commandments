@@ -1,0 +1,106 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "unused-parameter",
+    "aliases": [
+      "UnusedParameterDetector",
+      "UnusedParameter"
+    ],
+    "skill": "php/type-honesty",
+    "description": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses.",
+    "rule": "A signature asks only for what its body uses; a parameter no override can need and nothing reads is dead.",
+    "suggestion": "Remove the parameter and the argument at each call site, or use it where it was meant to be used."
+  },
+  "find": {
+    "select": "parameter",
+    "as": "p",
+    "where": [
+      "and",
+      [
+        "=",
+        "$p.parent.kind",
+        "function"
+      ],
+      [
+        "exists",
+        "$p.binding"
+      ],
+      [
+        "not",
+        [
+          "reads",
+          "$p.binding.name",
+          "fixture-marker"
+        ]
+      ],
+      [
+        "not",
+        [
+          "startsWith",
+          "$p.binding.name",
+          "_"
+        ]
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$p.parent.obligations"
+        ],
+        0
+      ],
+      [
+        "exists",
+        "$p.parent.body"
+      ],
+      [
+        ">",
+        [
+          "count",
+          "$p.parent.parameters"
+        ],
+        1
+      ],
+      [
+        "none",
+        "$p.parent.modifiers",
+        "m",
+        [
+          "in",
+          "$m",
+          "virtual",
+          "abstract"
+        ]
+      ]
+    ],
+    "having": [
+      "none",
+      [
+        "ownDescendants",
+        "$p.parent.body"
+      ],
+      "x",
+      [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "reference"
+        ],
+        [
+          "=",
+          "$x.name",
+          "$p.binding.name"
+        ]
+      ]
+    ],
+    "emit": "$p"
+  }
+}

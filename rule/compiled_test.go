@@ -1,50 +1,51 @@
 package rule
 
 import (
+	"strings"
 	"testing"
 )
 
-func TestARuleIsCompiledSoItsCheapestQuestionIsAskedFirst(t *testing.T) {
-	order := compiled([]Step{
-		{ReferredFrom: &Step{Kind: "Call"}},
-		{Descendant: &Descended{}},
-		{NameLike: "Probe*"},
-	})
-
-	if len(order) != 3 {
-		t.Fatalf("the rule was compiled to %d steps of 3", len(order))
+func TestOrderAsksTheCheaperOperandFirstAndKeepsACaseAsWritten(t *testing.T) {
+	read, err := Parse("probe", written(`"find":{"select":"handler","as":"site","where":["and",["some",["ownDescendants","$site"],"d",["=","$d.kind","throw"]],["exists","$site.body"],["case","$site.kind",{"handler":true},["exists","$site.filter"]]]}`), anySkill)
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	if order[0].NameLike == "" {
-		t.Errorf("the first question asked is not the cheapest: %+v", order[0])
+	where := *compiled(read.read).Find.Where
+	if where.Operands[0].Operator != "exists" || where.Operands[2].Operator != "some" {
+		t.Errorf("the conjunction is asked as %s, %s, %s", where.Operands[0].Operator, where.Operands[1].Operator, where.Operands[2].Operator)
 	}
-
-	if order[1].Descendant == nil {
-		t.Errorf("the second question asked is not the one that walks: %+v", order[1])
-	}
-
-	if order[2].ReferredFrom == nil {
-		t.Errorf("the last question asked is not the one only the whole program can answer: %+v", order[2])
+	if arms := where.Operands[1]; arms.Operator != "case" || !arms.Operands[1].IsArms() || arms.Operands[2].Operator != "exists" {
+		t.Errorf("the case is reordered: %v", arms.Written())
 	}
 }
 
-func TestEveryStepSaysWhatItCosts(t *testing.T) {
-	for _, told := range []struct {
-		what string
-		step Step
-		cost cost
-	}{
-		{"a name", Step{Name: "total"}, ofTheNode},
-		{"a kind", Step{Kind: "FunctionDef"}, ofTheNode},
-		{"a modifier", Step{HasModifier: "public"}, ofTheNode},
-		{"a descendant", Step{Descendant: &Descended{}}, ofAWalk},
-		{"a body", Step{Body: &Step{}}, ofAWalk},
-		{"its callers", Step{Callers: &Bounds{}}, ofTheProgram},
-		{"where it is referred from", Step{ReferredFrom: &Step{}}, ofTheProgram},
-		{"a layer", Step{Layer: "App"}, ofTheProgram},
-	} {
-		if told.step.cost() != told.cost {
-			t.Errorf("%s costs %d, and it is %d", told.what, told.step.cost(), told.cost)
+func TestOrderTurnedOffAsksTheRuleAsWritten(t *testing.T) {
+	t.Setenv(orderingSwitch, "off")
+	read, err := Parse("probe", written(`"find":{"select":"handler","as":"site","where":["and",["some",["ownDescendants","$site"],"d",true],["exists","$site.body"]]}`), anySkill)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first := compiled(read.read).Find.Where.Operands[0].Operator; first != "some" {
+		t.Errorf("with ordering off the conjunction starts with %s", first)
+	}
+}
+
+func TestCacheKeyChangesWithAComposedDefinition(t *testing.T) {
+	rule := func(threshold string) Rule {
+		read, err := Parse("probe", written(`"definitions":{"wide":{"args":["f"],"expr":[">=",["count","$f.caughtTypes"],`+threshold+`]}},"find":{"select":"handler","as":"site","where":["wide","$site"]}`), anySkill)
+		if err != nil {
+			t.Fatal(err)
 		}
+
+		return read
+	}
+	if rule("2").CacheKey() == rule("3").CacheKey() {
+		t.Errorf("editing the definition the rule calls keeps its cache key")
+	}
+	if rule("2").CacheKey() != rule("2").CacheKey() {
+		t.Errorf("the same rule gets two cache keys")
+	}
+	if !strings.HasPrefix(rule("2").CacheKey(), rule("2").CacheKey()[:8]) {
+		t.Errorf("the cache key is not stable")
 	}
 }

@@ -1,0 +1,10 @@
+{
+  "package": "laravel/mcp",
+  "ecosystem": "composer",
+  "versions": ">=0.1",
+  "provenance": "engine/php/laravel/node.go McpRequest, one of RequestTypes",
+  "entries": [],
+  "identities": [
+    {"name": "mcp-request", "type": "Laravel\\Mcp\\Request"}
+  ]
+}

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/sins"
 )
@@ -14,8 +14,8 @@ import (
 // Fixture is a marked codebase and the detectors it proves.
 type Fixture struct {
 	Codebase  *engine.Codebase
-	Detectors []detectors.Detector
-	Known     []detectors.Detector
+	Detectors []Rule
+	Known     []Rule
 	Resolver  ScenarioResolver
 }
 
@@ -58,7 +58,7 @@ const MinChainFiles = 5
 func (f Fixture) ChainDepths() map[string]int {
 	depths := map[string]int{}
 	for _, detector := range f.Detectors {
-		chained, ok := detector.(detectors.ChainDetector)
+		chained, ok := detector.(chained)
 		if !ok {
 			continue
 		}
@@ -90,7 +90,7 @@ const MinRecurrenceFiles = 2
 func (f Fixture) RecurrenceSpans() map[string]int {
 	spans := map[string]int{}
 	for _, detector := range f.Detectors {
-		recurring, ok := detector.(detectors.Grouped)
+		recurring, ok := detector.(grouped)
 		if !ok {
 			continue
 		}
@@ -120,7 +120,7 @@ func (f Fixture) Verify() []Result {
 	return results
 }
 
-func verify(codebase *engine.Codebase, detector detectors.Detector, markers []Marker) Result {
+func verify(codebase *engine.Codebase, detector Rule, markers []Marker) Result {
 	result := Result{Detector: catalog.Name(detector)}
 	sinful := tagged(markers, Sinful, detector)
 	fixed := tagged(markers, Fixed, detector)
@@ -162,13 +162,13 @@ func (f Fixture) WithoutRighteous() []string {
 func (f Fixture) UnknownResolutions() []string {
 	known := f.Known
 	if known == nil {
-		known = detectors.All()
+		known = Proven(rules.All())
 	}
 	var names []string
 	for _, detector := range known {
 		names = append(names, keys(detector)...)
 	}
-	for _, sin := range sins.All() {
+	for _, sin := range rules.Sins() {
 		names = append(names, catalog.Name(sin), sin.Definition().Name)
 	}
 	var unknown []string
@@ -218,19 +218,35 @@ func pairedIn(classes map[string]map[Tag]bool) int {
 	return paired
 }
 
-func keys(detector detectors.Detector) []string {
+func keys(detector Rule) []string {
 	return slices.Concat(catalog.Names(detector), catalog.Names(detector.Sin()), []string{detector.Sin().Definition().Name})
 }
 
-func Marking(markers []Marker, tag Tag, detector detectors.Detector) []Marker {
+// Rule is anything a fixture proves: it names one sin and finds it.
+type Rule interface {
+	Sin() sins.Sin
+	Find(codebase *engine.Codebase) []engine.Match
+}
+
+// grouped is a rule whose findings come in groups, each finding with the key of the group it belongs to.
+type grouped interface {
+	GroupKey(match engine.Match) (string, bool)
+}
+
+// chained is a rule whose finding reads a path of other places, each of which a fixture marks.
+type chained interface {
+	ChainPath(finding engine.Match, codebase *engine.Codebase) []string
+}
+
+func Marking(markers []Marker, tag Tag, detector Rule) []Marker {
 	return tagged(markers, tag, detector)
 }
 
-func (m Marker) Naming(detector detectors.Detector) bool {
+func (m Marker) Naming(detector Rule) bool {
 	return m.Names(keys(detector)...)
 }
 
-func tagged(markers []Marker, tag Tag, detector detectors.Detector) []Marker {
+func tagged(markers []Marker, tag Tag, detector Rule) []Marker {
 	names := keys(detector)
 	var found []Marker
 	for _, marker := range markers {

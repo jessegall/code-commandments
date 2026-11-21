@@ -1,0 +1,216 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "nullable-callback",
+    "aliases": [
+      "python-nullable-callback",
+      "NullableCallbackDetector",
+      "NullableCallback"
+    ],
+    "skill": "shared/absence",
+    "description": "A callback is declared optional, checked for absence, and then invoked",
+    "rule": "Give a callback a usable default when every caller must be able to invoke it.",
+    "suggestion": "Use a named no-op or require the callback as a parameter."
+  },
+  "definitions": {
+    "callable": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$t.kind",
+          "function"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$t.kind",
+            "union"
+          ],
+          [
+            "some",
+            "$t.members",
+            "m",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ]
+          ]
+        ]
+      ]
+    },
+    "guards": {
+      "args": [
+        "x",
+        "n"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "in",
+            "$x.kind",
+            "if",
+            "loop",
+            "conditional"
+          ],
+          [
+            "tree.names",
+            "$x.condition",
+            "$n"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "comparison"
+          ],
+          [
+            "some",
+            "$x.operands",
+            "o",
+            [
+              "tree.names",
+              "$o",
+              "$n"
+            ]
+          ],
+          [
+            "some",
+            "$x.operands",
+            "o",
+            [
+              "tree.nullish",
+              "$o"
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "fallback"
+          ],
+          [
+            "tree.names",
+            "$x.subject",
+            "$n"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "call"
+          ],
+          [
+            "tree.names",
+            "$x.callee",
+            "$n"
+          ],
+          [
+            "=",
+            "$x.parent.nullConditional",
+            true
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "parameter",
+    "as": "p",
+    "where": [
+      "and",
+      [
+        "=",
+        "$p.parent.kind",
+        "function"
+      ],
+      [
+        "=",
+        "$p.binding.resolved.nullable",
+        true
+      ],
+      [
+        "callable",
+        "$p.binding.resolved"
+      ],
+      [
+        "or",
+        [
+          "not",
+          [
+            "exists",
+            "$p.default"
+          ]
+        ],
+        [
+          "tree.nullish",
+          "$p.default"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "named",
+        "$p.binding.name"
+      ],
+      [
+        "body",
+        [
+          "ownDescendants",
+          "$p.parent.body"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "some",
+        "$body",
+        "c",
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "call"
+          ],
+          [
+            "tree.names",
+            "$c.callee",
+            "$named"
+          ]
+        ]
+      ],
+      [
+        "some",
+        "$body",
+        "g",
+        [
+          "guards",
+          "$g",
+          "$named"
+        ]
+      ]
+    ],
+    "emit": "$p.parent"
+  }
+}

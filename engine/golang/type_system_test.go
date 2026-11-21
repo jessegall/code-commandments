@@ -69,12 +69,6 @@ func assertion(s inputs.State) string {
 	if params[0].InjectsAnotherModulesConcreteService() || !params[1].InjectsAnotherModulesConcreteService() {
 		t.Fatal("public value fields and private service state should be distinguished")
 	}
-	if funcNamed(t, codebase, "Translate").EnviesAnotherObject() || !funcNamed(t, codebase, "Summarize").EnviesAnotherObject() {
-		t.Fatal("a cross-module translation and a summary should be distinguished")
-	}
-	if funcNamed(t, codebase, "assertion").EnviesAnotherObject() {
-		t.Fatal("a Go test helper may inspect the result it asserts on")
-	}
 }
 
 func TestAMapOfNamedValuesIsNotAReturnBag(t *testing.T) {

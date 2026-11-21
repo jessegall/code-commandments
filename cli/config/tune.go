@@ -3,13 +3,12 @@ package config
 import (
 	"fmt"
 	"maps"
-	"reflect"
 	"slices"
-	"unicode"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -24,23 +23,38 @@ type layeredDetector interface {
 }
 
 func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
-	var kept []detectors.Detector
-
+	var enabled []detectors.Detector
 	for _, detector := range Packaged(detectors.All(), installed) {
 		if !c.Disables(rulesOf(detector)...) {
-			if marks, ok := detector.(layeredDetector); ok {
-				engine, _ := detectors.EngineOf(detector)
-				detector = marks.WithLayers(c.Layers(engine))
-			}
-			if accepts, ok := detector.(publicContractDetector); ok {
-				engine, _ := detectors.EngineOf(detector)
-				contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))
-				if registrars := c.ContractRegistrars[engine]; len(contracts) > 0 || len(registrars) > 0 {
-					detector = accepts.WithPublicContracts(contracts, registrars)
-				}
-			}
-			kept = append(kept, detector)
+			enabled = append(enabled, detector)
 		}
+	}
+
+	return c.Applied(enabled)
+}
+
+// Applied is each detector as the config tunes it: its layers, its public contracts, then the configure steps.
+func (c Config) Applied(list []detectors.Detector) ([]detectors.Detector, error) {
+	var kept []detectors.Detector
+
+	for _, detector := range list {
+		if marks, ok := detector.(layeredDetector); ok {
+			engine, _ := detectors.EngineOf(detector)
+			detector = marks.WithLayers(c.Layers(engine))
+		}
+		if file, ok := detector.(rule.Rule); ok {
+			engine := file.Engine()
+			contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))
+			detector = file.WithLayers(c.Layers(engine)).WithPublicContracts(contracts)
+		}
+		if accepts, ok := detector.(publicContractDetector); ok {
+			engine, _ := detectors.EngineOf(detector)
+			contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))
+			if registrars := c.ContractRegistrars[engine]; len(contracts) > 0 || len(registrars) > 0 {
+				detector = accepts.WithPublicContracts(contracts, registrars)
+			}
+		}
+		kept = append(kept, detector)
 	}
 
 	return tune(kept, c.Configurators)
@@ -118,11 +132,17 @@ func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.
 	return tuned, nil
 }
 
-func indexOf(list []detectors.Detector, rule Rule) int {
+// indexOf is where the rule a configure names stands in the list: a Go detector by its engine and name, a rule file
+// by its name, its sin's name or an alias, under any engine it judges, or none written.
+func indexOf(list []detectors.Detector, named Rule) int {
 	for i, detector := range list {
 		engine, _ := detectors.EngineOf(detector)
+		_, isRuleFile := detector.(parameterised)
+		judges := named.Engine == "" || slices.Contains(detectors.EnginesOf(detector), named.Engine)
+		wanted := catalog.Normalise(named.Name)
+		answers := slices.ContainsFunc(catalog.Names(detector), func(name string) bool { return catalog.Normalise(name) == wanted })
 
-		if rule.Kind == Detector && rule.Engine == engine && slices.Contains(catalog.Names(detector), rule.Name) {
+		if named.Kind == Detector && (isRuleFile && judges || named.Engine == engine) && answers {
 			return i
 		}
 	}
@@ -130,114 +150,23 @@ func indexOf(list []detectors.Detector, rule Rule) int {
 	return -1
 }
 
+// parameterised is a rule whose file declares parameters, which configure sets by name.
+type parameterised interface {
+	WithParameter(name string, value any) (rule.Rule, error)
+}
+
+// apply sets one parameter of a rule: configure's {"name": [value]}. A layer step is read once for the whole engine
+// and reaches every rule through WithLayers, so it is left to that.
 func apply(detector detectors.Detector, call Call) (detectors.Detector, error) {
-	method := reflect.ValueOf(detector).MethodByName(exported(call.Method))
-
-	if !method.IsValid() {
-		return nil, fmt.Errorf("%s has no %s()", catalog.Name(detector), call.Method)
-	}
-
-	args, err := arguments(method.Type(), call.Args)
-	if err != nil {
-		return nil, fmt.Errorf("%s(): %w", call.Method, err)
-	}
-
-	answered := method.Call(args)
-
-	if len(answered) == 1 {
-		if next, isDetector := answered[0].Interface().(detectors.Detector); isDetector {
-			return next, nil
-		}
-	}
-
-	return detector, nil
-}
-
-func arguments(method reflect.Type, given []Arg) ([]reflect.Value, error) {
-	var args []reflect.Value
-
-	for i, arg := range given {
-		parameter, spread := parameterAt(method, i)
-		if parameter == nil {
-			return nil, fmt.Errorf("takes %d arguments, given %d", method.NumIn(), len(given))
-		}
-
-		items, isArray := arg.Value.([]any)
-
-		if spread && isArray {
-			for _, item := range items {
-				value, err := convert(item, parameter)
-				if err != nil {
-					return nil, err
-				}
-
-				args = append(args, value)
-			}
-
-			continue
-		}
-
-		value, err := convert(arg.Value, parameter)
-		if err != nil {
-			return nil, err
-		}
-
-		args = append(args, value)
-	}
-
-	return args, nil
-}
-
-func parameterAt(method reflect.Type, i int) (reflect.Type, bool) {
-	last := method.NumIn() - 1
-
+	declaring, declares := detector.(parameterised)
 	switch {
-	case method.IsVariadic() && i >= last:
-		return method.In(last).Elem(), true
-	case i <= last:
-		return method.In(i), false
-	default:
-		return nil, false
-	}
-}
-
-func convert(value any, to reflect.Type) (reflect.Value, error) {
-	if to.Kind() == reflect.Slice {
-		items, isArray := value.([]any)
-		if !isArray {
-			return reflect.Value{}, fmt.Errorf("wants a list, given %v", value)
-		}
-
-		slice := reflect.MakeSlice(to, 0, len(items))
-
-		for _, item := range items {
-			each, err := convert(item, to.Elem())
-			if err != nil {
-				return reflect.Value{}, err
-			}
-
-			slice = reflect.Append(slice, each)
-		}
-
-		return slice, nil
+	case call.Method == "layer":
+		return detector, nil
+	case !declares:
+		return nil, fmt.Errorf("%s declares no parameters to set; only a rule file declares them", catalog.Name(detector))
+	case len(call.Args) != 1:
+		return nil, fmt.Errorf("the parameter %s is set to one value, written [value], and %d are written", call.Method, len(call.Args))
 	}
 
-	given := reflect.ValueOf(value)
-
-	if !given.IsValid() || !given.Type().ConvertibleTo(to) || given.Kind() != to.Kind() {
-		return reflect.Value{}, fmt.Errorf("wants a %s, given %v", to.Kind(), value)
-	}
-
-	return given.Convert(to), nil
-}
-
-func exported(method string) string {
-	if method == "" {
-		return method
-	}
-
-	runes := []rune(method)
-	runes[0] = unicode.ToUpper(runes[0])
-
-	return string(runes)
+	return declaring.WithParameter(call.Method, call.Args[0].Value)
 }

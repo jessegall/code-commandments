@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -39,7 +38,7 @@ func (f Fixture) ReadsAcrossFiles() []string {
 	return named
 }
 
-func found(detector detectors.Detector, codebase *engine.Codebase) map[string]bool {
+func found(detector Rule, codebase *engine.Codebase) map[string]bool {
 	locations := map[string]bool{}
 	for _, finding := range detector.Find(codebase) {
 		locations[finding.Location()] = true

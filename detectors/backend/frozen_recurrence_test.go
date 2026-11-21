@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/backend"
 	"github.com/jessegall/code-commandments/engine/php"
 	_ "github.com/jessegall/code-commandments/engine/php/laravel"
 )
@@ -58,7 +57,7 @@ func findingsIn(t *testing.T, files map[string]string) []string {
 		t.Fatal(err)
 	}
 	var found []string
-	for _, match := range backend.DuplicateFunctionDetector.Find(codebase) {
+	for _, match := range shipped(t, "duplicate-function").Find(codebase) {
 		found = append(found, match.Location())
 	}
 

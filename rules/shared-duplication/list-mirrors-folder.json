@@ -1,0 +1,24 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "list-mirrors-folder",
+    "aliases": [
+      "ListMirrorsFolderDetector",
+      "ListMirrorsFolder"
+    ],
+    "skill": "shared/duplication",
+    "description": "A hand-written class list repeats every concrete class of one type in its folders",
+    "rule": "Keep the declarations as the source of truth for the classes that belong to the group.",
+    "suggestion": "Discover the implementations from their shared type, or let each class register itself.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

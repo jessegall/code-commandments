@@ -1,13 +1,13 @@
 package config
 
 import (
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
-	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
 
@@ -97,7 +97,7 @@ func report(action string, chosen target, changed bool, console cli.Console) int
 func matching(query string) []target {
 	var exact, lenient []target
 
-	for _, sin := range sins.All() {
+	for _, sin := range rules.Sins() {
 		definition := sin.Definition()
 		each := target{ClassOf(Sin, sin), "`" + definition.Name + "`", definition.Name}
 

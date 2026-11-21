@@ -1,0 +1,204 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "dead-event-wiring",
+    "aliases": [
+      "DeadEventWiringDetector",
+      "DeadEventWiring"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring",
+    "rule": "A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.",
+    "suggestion": "Delete the registration (and the listener, if nothing else reaches it) — or restore the dispatch the listener was waiting for.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "listenedBy": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$c.callee.member.name",
+            "listen"
+          ],
+          [
+            "=",
+            "$c.callee.subject.kind",
+            "reference"
+          ],
+          [
+            "in",
+            "$c.callee.subject.refers",
+            "Illuminate\\Support\\Facades\\Event",
+            "Event"
+          ]
+        ],
+        {
+          "true": [
+            "at",
+            [
+              "map",
+              [
+                "filter",
+                "$c.arguments",
+                "a",
+                [
+                  "and",
+                  [
+                    "=",
+                    [
+                      "position",
+                      "$a"
+                    ],
+                    0
+                  ],
+                  [
+                    "=",
+                    "$a.value.kind",
+                    "access"
+                  ],
+                  [
+                    "=",
+                    "$a.value.member.name",
+                    "class"
+                  ]
+                ]
+              ],
+              "a",
+              "$a.value.subject.refers"
+            ],
+            0
+          ]
+        },
+        null
+      ]
+    },
+    "produced": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "some",
+        [
+          "referrers",
+          "$d"
+        ],
+        "r",
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "construction"
+            ],
+            [
+              "=",
+              "$r.role",
+              "type"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "subject"
+            ],
+            [
+              "=",
+              "$r.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$r.parent.parent.kind",
+              "call"
+            ],
+            [
+              "in",
+              "$r.parent.member.name",
+              "dispatch",
+              "dispatchIf",
+              "dispatchUnless",
+              "broadcast"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "nonempty",
+        [
+          "listenedBy",
+          "$c"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "event",
+        [
+          "typeDeclaration",
+          [
+            "listenedBy",
+            "$c"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$event"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$event.form",
+          "interface"
+        ]
+      ],
+      [
+        "not",
+        [
+          "produced",
+          "$event"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

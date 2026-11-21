@@ -1,0 +1,24 @@
+{
+  "package": "lorisleiva/laravel-actions",
+  "ecosystem": "composer",
+  "versions": ">=2",
+  "provenance": "engine/php/packages/shipped.go",
+  "entries": [],
+  "exemptions": [
+    {
+      "on": {
+        "Lorisleiva\\Actions\\Concerns\\AsAction": [
+          "rules"
+        ]
+      },
+      "tag": "contract-method",
+      "why": "A framework-mandated method whose signature the framework dictates."
+    }
+  ],
+  "identities": [
+    {
+      "name": "action",
+      "type": "Lorisleiva\\Actions\\Concerns\\AsAction"
+    }
+  ]
+}

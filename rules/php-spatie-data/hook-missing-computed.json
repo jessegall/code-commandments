@@ -1,0 +1,149 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "hook-missing-computed",
+    "aliases": [
+      "HookMissingComputedDetector",
+      "HookMissingComputed"
+    ],
+    "skill": "php/spatie-data",
+    "description": "A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it",
+    "rule": "Mark every get-only property hook on a `Data` class `#[Computed]`, so Spatie treats it as an output-only computed value, not a required hydration input.",
+    "suggestion": "Add `#[Computed]` above the property: `#[Computed] public array $docks { get => $this->dockSet->all(); }`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "optionalDefault": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "spatie.slotDefault",
+            "$s"
+          ]
+        ],
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "spatie.typeRefers",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "Spatie\\LaravelData\\Optional"
+        ]
+      ]
+    },
+    "fieldOf": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "siblings",
+            "$h"
+          ],
+          "f",
+          [
+            "and",
+            [
+              "=",
+              "$f.kind",
+              "field"
+            ],
+            [
+              "some",
+              "$f.hooks",
+              "x",
+              [
+                "=",
+                "$x",
+                "$h"
+              ]
+            ]
+          ]
+        ],
+        0
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "h",
+    "where": [
+      "=",
+      "$h.form",
+      "get"
+    ],
+    "let": [
+      [
+        "field",
+        [
+          "fieldOf",
+          "$h"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$field"
+      ],
+      [
+        "spatie.isData",
+        [
+          "enclosing",
+          "$h",
+          "type"
+        ]
+      ],
+      [
+        "none",
+        "$field.attributes",
+        "a",
+        [
+          "=",
+          "$a.refers",
+          "Spatie\\LaravelData\\Attributes\\Computed"
+        ]
+      ],
+      [
+        "none",
+        "$field.hooks",
+        "x",
+        [
+          "=",
+          "$x.form",
+          "set"
+        ]
+      ]
+    ],
+    "emit": "$h"
+  }
+}

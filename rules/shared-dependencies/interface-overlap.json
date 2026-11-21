@@ -1,0 +1,23 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "go",
+    "php"
+  ],
+  "sin": {
+    "name": "interface-overlap",
+    "aliases": [
+      "InterfaceOverlapDetector",
+      "InterfaceOverlap"
+    ],
+    "skill": "shared/dependencies",
+    "description": "An interface repeats the signatures of a contract it can reuse.",
+    "rule": "Use the accessible contract for identical signatures. Extend it to add the remaining signatures.",
+    "suggestion": "Check that the contracts promise the same behaviour before reusing the existing one.",
+    "reporting": {
+      "crossFile": true,
+      "advice": true
+    }
+  },
+  "find": {}
+}

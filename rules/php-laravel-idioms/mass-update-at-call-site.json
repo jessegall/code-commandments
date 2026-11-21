@@ -1,0 +1,70 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "mass-update-at-call-site",
+    "aliases": [
+      "MassUpdateAtCallSiteDetector",
+      "MassUpdateAtCallSite"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "Bare `$model->update([...])` mass-array update at a call site",
+    "rule": "Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.",
+    "suggestion": "An intention method on the model (`$order->markPaid()`).",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "laravel.named",
+        "$c",
+        "update"
+      ],
+      [
+        "not",
+        [
+          "isSelf",
+          "$c.callee.subject"
+        ]
+      ],
+      [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "and",
+          [
+            "=",
+            [
+              "position",
+              "$a"
+            ],
+            0
+          ],
+          [
+            "=",
+            "$a.value.kind",
+            "collection"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "laravel.receiverIs",
+      "$c",
+      "model"
+    ],
+    "emit": "$c"
+  }
+}

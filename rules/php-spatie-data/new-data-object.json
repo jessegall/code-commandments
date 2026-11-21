@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "new-data-object",
+    "aliases": [
+      "NewDataObjectDetector",
+      "NewDataObject"
+    ],
+    "skill": "php/spatie-data",
+    "description": "`new \u003cData subclass\u003e` instead of `::from()` / a `fromX()` factory",
+    "rule": "Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.",
+    "suggestion": "`X::from(...)` (or a `fromY()` factory).",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

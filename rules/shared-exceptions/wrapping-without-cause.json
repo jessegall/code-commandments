@@ -1,0 +1,291 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "wrapping-without-cause",
+    "aliases": [
+      "python-raise-without-cause",
+      "csharp-wrapping-without-cause",
+      "WrappingWithoutCauseDetector",
+      "WrappingWithoutCause",
+      "RaiseWithoutCause",
+      "RaiseWithoutCauseDetector"
+    ],
+    "skill": "shared/exceptions",
+    "description": "A new failure thrown inside a `catch` without the caught one as its cause: the trace of where it started is lost",
+    "rule": "When wrapping a caught failure, hand the original over as its cause; never drop the trace.",
+    "suggestion": "Pass the caught failure as the cause (`previous: $e`, `new X(message, e)`, `{ cause: e }`, `raise X(...) from e`)."
+  },
+  "definitions": {
+    "carries": {
+      "args": [
+        "v",
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "tree.insideOf",
+          "$v"
+        ],
+        "r",
+        [
+          "and",
+          [
+            "=",
+            "$r.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$r.name",
+            "$n"
+          ],
+          [
+            "not",
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$r.role",
+                "subject"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "checked": {
+      "args": [
+        "i"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$i.kind",
+          "if"
+        ],
+        [
+          "=",
+          "$i.condition.kind",
+          "comparison"
+        ],
+        [
+          "some",
+          "$i.condition.operands",
+          "o",
+          [
+            "and",
+            [
+              "=",
+              "$o.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$o.literalKind",
+              "null"
+            ]
+          ]
+        ],
+        [
+          "some",
+          "$i.condition.operands",
+          "o",
+          [
+            "and",
+            [
+              "=",
+              "$o.kind",
+              "reference"
+            ],
+            [
+              "assignable",
+              "$o",
+              "standard.error-result"
+            ]
+          ]
+        ]
+      ]
+    },
+    "wraps": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.value.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$a.value.literalKind",
+            "string"
+          ],
+          [
+            "contains",
+            "$a.value.value",
+            "%w"
+          ]
+        ]
+      ]
+    },
+    "enclosingHandler": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "ownAncestors",
+            "$x"
+          ],
+          "a",
+          [
+            "=",
+            "$a.kind",
+            "handler"
+          ]
+        ],
+        0
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "throw",
+      "return"
+    ],
+    "as": "t",
+    "where": [
+      "case",
+      "$t.kind",
+      {
+        "throw": [
+          "and",
+          [
+            "not",
+            [
+              "exists",
+              "$t.cause"
+            ]
+          ],
+          [
+            "in",
+            "$t.value.kind",
+            "construction",
+            "call"
+          ],
+          [
+            "exists",
+            [
+              "enclosingHandler",
+              "$t"
+            ]
+          ]
+        ],
+        "return": [
+          "and",
+          [
+            "some",
+            [
+              "ownAncestors",
+              "$t"
+            ],
+            "a",
+            [
+              "checked",
+              "$a"
+            ]
+          ],
+          [
+            "some",
+            "$t.values",
+            "v",
+            [
+              "and",
+              [
+                "=",
+                "$v.kind",
+                "call"
+              ],
+              [
+                "assignable",
+                "$v",
+                "standard.error-result"
+              ],
+              [
+                "not",
+                [
+                  "wraps",
+                  "$v"
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      false
+    ],
+    "let": [
+      [
+        "handler",
+        [
+          "enclosingHandler",
+          "$t"
+        ]
+      ]
+    ],
+    "having": [
+      "case",
+      "$t.kind",
+      {
+        "throw": [
+          "or",
+          [
+            "not",
+            [
+              "exists",
+              "$handler.binding"
+            ]
+          ],
+          [
+            "=",
+            "$t.file.language",
+            "python"
+          ],
+          [
+            "not",
+            [
+              "carries",
+              "$t.value",
+              "$handler.binding.name"
+            ]
+          ]
+        ]
+      },
+      true
+    ],
+    "emit": "$t"
+  }
+}

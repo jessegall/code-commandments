@@ -1,0 +1,97 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "conditional-array-spread",
+    "aliases": [
+      "python-conditional-spread",
+      "csharp-conditional-spread",
+      "ConditionalArraySpreadDetector",
+      "ConditionalArraySpread",
+      "ConditionalSpread",
+      "ConditionalSpreadDetector"
+    ],
+    "skill": "shared/absence",
+    "description": "A spread branch supplies an empty collection as a placeholder",
+    "rule": "Build the collection from an explicit conditional contribution.",
+    "suggestion": "Build the collection from an explicit conditional contribution."
+  },
+  "definitions": {
+    "filled": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "collection"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$x.entries"
+            ],
+            0
+          ]
+        ],
+        [
+          "exists",
+          "$x.resolved.element"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "entry",
+    "as": "e",
+    "where": [
+      "and",
+      [
+        "in",
+        "$e.expansion",
+        "positional",
+        "keyed"
+      ],
+      [
+        "=",
+        "$e.value.kind",
+        "conditional"
+      ],
+      [
+        "or",
+        [
+          "and",
+          [
+            "tree.emptyCollection",
+            "$e.value.alternative"
+          ],
+          [
+            "filled",
+            "$e.value.consequent"
+          ]
+        ],
+        [
+          "and",
+          [
+            "tree.emptyCollection",
+            "$e.value.consequent"
+          ],
+          [
+            "filled",
+            "$e.value.alternative"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$e.value"
+  }
+}

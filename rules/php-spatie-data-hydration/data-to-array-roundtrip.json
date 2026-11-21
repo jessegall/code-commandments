@@ -1,0 +1,57 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "data-to-array-roundtrip",
+    "aliases": [
+      "DataToArrayRoundtripDetector",
+      "DataToArrayRoundtrip"
+    ],
+    "skill": "php/spatie-data-hydration",
+    "description": "A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build",
+    "rule": "Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.",
+    "suggestion": "Drop the `->toArray()` — the nested-`Data` / `#[DataCollectionOf]` slot takes the object as-is.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.callee.kind",
+        "access"
+      ],
+      [
+        "=",
+        "$c.callee.member.name",
+        "toArray"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        [
+          "typeDeclaration",
+          "$c.callee.subject.resolved.name"
+        ]
+      ],
+      [
+        "spatie.fits",
+        "$c",
+        "$c.callee.subject.resolved.name"
+      ]
+    ],
+    "emit": "$c"
+  }
+}

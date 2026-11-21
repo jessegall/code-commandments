@@ -1,0 +1,21 @@
+{
+  "package": "barryvdh/laravel-dompdf",
+  "ecosystem": "composer",
+  "versions": ">=1",
+  "provenance": "engine/php/packages/shipped.go",
+  "entries": [],
+  "exemptions": [
+    {
+      "on": {
+        "Barryvdh\\DomPDF\\Facade\\Pdf": [
+          "loadView"
+        ],
+        "Barryvdh\\DomPDF\\PDF": [
+          "loadView"
+        ]
+      },
+      "tag": "array-input-contract",
+      "why": "This framework boundary takes arrays carrying values in its declared input format."
+    }
+  ]
+}

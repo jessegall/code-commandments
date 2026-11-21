@@ -1,0 +1,100 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "handed-out-collection",
+    "aliases": [
+      "HandedOutCollectionDetector",
+      "HandedOutCollection",
+      "csharp-handed-out-collection",
+      "python-handed-out-collection"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
+    "rule": "A class keeps its own Collection: hand out something a caller cannot change, and give the class the methods callers were reaching in to use.",
+    "suggestion": "Return `$this->lines->collect()` or `$this->lines->all()` — a copy and a plain array, neither of which the caller can change on you — and add the methods the callers were doing by hand: `addLine()`, `totalFor()`, `without($line)`. A PHP array returned from a getter is already copied, which is why this is about a Collection and not about every getter."
+  },
+  "definitions": {
+    "declaredTypeOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.resolved"
+    }
+  },
+  "find": {
+    "select": "return",
+    "as": "r",
+    "where": [
+      "and",
+      [
+        "=",
+        [
+          "count",
+          "$r.values"
+        ],
+        1
+      ],
+      [
+        "tree.selfField",
+        [
+          "at",
+          "$r.values",
+          0
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "typed",
+        [
+          "declaredTypeOf",
+          [
+            "at",
+            "$r.values",
+            0
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "!=",
+        "$typed.valueType",
+        true
+      ],
+      [
+        "or",
+        [
+          "in",
+          "$typed.kind",
+          "array",
+          "map"
+        ],
+        [
+          "in",
+          "$typed.name",
+          "Set",
+          "Map",
+          "Array"
+        ]
+      ],
+      [
+        "not",
+        [
+          "contains",
+          "$typed.text",
+          "readonly "
+        ]
+      ]
+    ],
+    "emit": "$r"
+  }
+}

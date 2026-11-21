@@ -1,0 +1,12 @@
+{
+  "package": "decoding",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "each language's own JSON decoder, which returns an untyped value: PHP json_decode, Python json.loads and json.load, JavaScript JSON.parse",
+  "entries": [
+    {"type": "", "name": "json_decode", "effect": "decodes-untyped", "execution": "call"},
+    {"type": "json", "name": "loads", "effect": "decodes-untyped", "execution": "call"},
+    {"type": "json", "name": "load", "effect": "decodes-untyped", "execution": "call"},
+    {"type": "JSON", "name": "parse", "effect": "decodes-untyped", "execution": "call"}
+  ]
+}

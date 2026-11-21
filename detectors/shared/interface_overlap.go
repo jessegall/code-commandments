@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"strings"
 	"slices"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -83,4 +84,20 @@ func (d InterfaceOverlaps) publicInterfaces(codebase *engine.Codebase) map[strin
 		public[name] = true
 	}
 	return public
+}
+
+type interfacePublications struct{ symbols, registrars string }
+
+func publishedInterfaces(codebase *engine.Codebase, symbols, registrars []string) []string {
+	if len(registrars) == 0 {
+		return symbols
+	}
+	key := interfacePublications{strings.Join(symbols, "\x00"), strings.Join(registrars, "\x00")}
+	return engine.Analysis(codebase, key, func(codebase *engine.Codebase) []string {
+		public := slices.Clone(symbols)
+		for _, call := range codebase.Reporting().WhereCall().Get() {
+			public = append(public, call.PublishedContracts(registrars)...)
+		}
+		return public
+	})
 }

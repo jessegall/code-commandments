@@ -112,19 +112,6 @@ func (n Node) ComparisonSubject() (Node, bool) {
 
 var containerMutators = []string{"append", "extend", "insert", "remove", "pop", "clear", "add", "discard", "update", "setdefault", "popitem"}
 
-func (n Node) ChangesTheCollectionItsLoopWalks() bool {
-	changed, changes := n.collectionItChanges()
-	if !changes || !changed.namesOneCollection() {
-		return false
-	}
-	loop, walked := n.loopWalking(changed)
-	if !walked {
-		return false
-	}
-
-	return !n.leavesThatLoopAtOnce(loop)
-}
-
 func (n Node) collectionItChanges() (Node, bool) {
 	if n.IsCall() && slices.Contains(containerMutators, n.Callee().Name()) {
 		return n.Callee().Child("value"), true
@@ -149,26 +136,6 @@ func (n Node) namesOneCollection() bool {
 }
 
 var collectionViews, mappingViews = []string{"enumerate", "reversed", "iter"}, []string{"items", "keys", "values"}
-
-func (n Node) loopWalking(collection Node) (Node, bool) {
-	for held, loop := n, n.Parent(); loop.Exists(); held, loop = loop, loop.Parent() {
-		walked, walks := loop.Child("iter").collectionWalkedLive()
-		if walks && held.Node().InRole() == "body" && walked.SameSyntax(collection.Match) {
-			return loop, true
-		}
-	}
-
-	return Node{}, false
-}
-
-func (n Node) leavesThatLoopAtOnce(loop Node) bool {
-	block := n.blockHolding()
-	if len(block) == 0 {
-		return false
-	}
-
-	return block[len(block)-1].leaves(loop)
-}
 
 func (n Node) blockHolding() []Node {
 	for held := n; held.Exists(); held = held.Parent() {

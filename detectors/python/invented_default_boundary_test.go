@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	detectors "github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -13,7 +12,7 @@ func found(t *testing.T, sources map[string]string) string {
 	codebase := pythontest.FromSource(t, sources)
 
 	var lines []string
-	for _, match := range detectors.ManufacturedFakeFillDetector.Find(codebase) {
+	for _, match := range shipped(t, "manufactured-fake-fill").Find(codebase) {
 		lines = append(lines, match.Location())
 	}
 

@@ -7,8 +7,26 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/detectors"
-	godetectors "github.com/jessegall/code-commandments/detectors/go"
+	"github.com/jessegall/code-commandments/rules"
 )
+
+// shippedNamed is each shipped rule judging Go whose sin has one of the names, in the order named.
+func shippedNamed(t *testing.T, names ...string) []detectors.Detector {
+	t.Helper()
+	var found []detectors.Detector
+	for _, name := range names {
+		for _, shipped := range rules.All() {
+			if shipped.Sin().Definition().Name == name {
+				found = append(found, shipped)
+			}
+		}
+	}
+	if len(found) != len(names) {
+		t.Fatalf("the catalogue holds %d of the rules %v", len(found), names)
+	}
+
+	return found
+}
 
 func TestAFileInAJudgedFolderIsMarkedByTheRuleLetInAlone(t *testing.T) {
 	root := projectJudging(t, `{
@@ -22,19 +40,19 @@ func TestAFileInAJudgedFolderIsMarkedByTheRuleLetInAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rules := []detectors.Detector{godetectors.RedundantElseDetector, godetectors.LoopInvertedGuardDetector}
+	shipped := shippedNamed(t, "redundant-else", "loop-inverted-guard")
 
-	inTests := project.RulesFor(root, filepath.Join(root, "tests/ledger_test.go"), rules)
+	inTests := project.RulesFor(root, filepath.Join(root, "tests/ledger_test.go"), shipped)
 	if len(inTests) != 1 {
 		t.Fatalf("%d rules may mark a file in the judged folder, want the one let in", len(inTests))
 	}
-	if inTests[0] != detectors.Detector(godetectors.RedundantElseDetector) {
-		t.Errorf("the rule marking the judged folder is %T", inTests[0])
+	if named := inTests[0].Sin().Definition().Name; named != "redundant-else" {
+		t.Errorf("the rule marking the judged folder is %s", named)
 	}
 
-	inSource := project.RulesFor(root, filepath.Join(root, "shop/ledger.go"), rules)
-	if len(inSource) != len(rules) {
-		t.Errorf("%d rules may mark a file of the declared paths, want all %d", len(inSource), len(rules))
+	inSource := project.RulesFor(root, filepath.Join(root, "shop/ledger.go"), shipped)
+	if len(inSource) != len(shipped) {
+		t.Errorf("%d rules may mark a file of the declared paths, want all %d", len(inSource), len(shipped))
 	}
 }
 
@@ -50,14 +68,14 @@ func TestAProjectsOwnRuleIsLetInByItsBareName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rules := []detectors.Detector{godetectors.RedundantElseDetector, godetectors.LoopInvertedGuardDetector}
+	shipped := shippedNamed(t, "redundant-else", "loop-inverted-guard")
 
-	inTests := project.RulesFor(root, filepath.Join(root, "tests/ledger_test.go"), rules)
+	inTests := project.RulesFor(root, filepath.Join(root, "tests/ledger_test.go"), shipped)
 	if len(inTests) != 1 {
 		t.Fatalf("%d rules may mark the judged folder, want the one named by its bare name", len(inTests))
 	}
-	if inTests[0] != detectors.Detector(godetectors.RedundantElseDetector) {
-		t.Errorf("the rule marking the judged folder is %T", inTests[0])
+	if named := inTests[0].Sin().Definition().Name; named != "redundant-else" {
+		t.Errorf("the rule marking the judged folder is %s", named)
 	}
 }
 

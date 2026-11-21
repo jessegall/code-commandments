@@ -1,0 +1,123 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "service-location-in-page-object",
+    "aliases": [
+      "ServiceLocationInPageObjectDetector",
+      "ServiceLocationInPageObject"
+    ],
+    "skill": "php/page-objects",
+    "description": "A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]`",
+    "rule": "A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.",
+    "suggestion": "Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "from": "call",
+    "as": "c",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "reference"
+          ],
+          [
+            "in",
+            "$c.callee.refers",
+            "app",
+            "resolve"
+          ],
+          [
+            "some",
+            "$c.arguments",
+            "a",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "position",
+                  "$a"
+                ],
+                0
+              ],
+              [
+                "=",
+                "$a.value.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$a.value.member.name",
+                "class"
+              ]
+            ]
+          ],
+          [
+            "spatie.composes",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$c",
+          "symbol": [
+            "tree.ownSymbol",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ]
+        }
+      },
+      {
+        "join": "laravel-response-types",
+        "as": "rendered",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "join": "laravel-controller-returns",
+        "as": "returned",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "where": [
+          "or",
+          [
+            "exists",
+            "$rendered"
+          ],
+          [
+            "exists",
+            "$returned"
+          ]
+        ]
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  }
+}

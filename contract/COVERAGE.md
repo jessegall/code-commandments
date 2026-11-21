@@ -17,7 +17,6 @@ and calls inside are still read) or translates with a loss, and why.
 | `echo`, `print`, `unset`, `isset`, `empty`, `exit`, `clone`, `eval`, `include` | `call` whose callee is a `reference` named for the keyword | the callee carries no `refers` to PHP's own symbol yet |
 | a cast `(int) $x` | `cast` whose `targetType` is a keyword `type-expression` | the written type's name is not stated |
 | a reference's `binding` link | absent | references are not linked to the local binding they name yet |
-| a call's `target` | absent | php-parser resolves no callee; a compiler fact PHP has no tool for |
 | a parse error's partial declaration | the statements php-parser recovered | an `incomplete` node for the part it dropped is not written yet |
 
 ## Python: what the bridge does not translate yet
@@ -28,13 +27,11 @@ and calls inside are still read) or translates with a loss, and why.
 | Construct | Written as | Why |
 |---|---|---|
 | `assert` | `unsupported`, construct `assert` | version 5 has no kind for an assertion statement |
-| `del` | `unsupported`, construct `delete` | version 5 has no kind for deleting a name or an item |
 | a slice `a[1:2]` | `index` whose key is `unsupported`, construct `slice` | version 5 has no kind for a slice |
 | `type X = ...` (3.12) | `unsupported`, construct `typealias` | not translated to `alias` yet |
 | `//` floor division | `binary` with operator `divide` | version 5 has no floor-division operator |
 | `@` matrix multiplication | `binary` with operator `multiply` | version 5 has no matrix-multiplication operator |
 | a field's `written` type structure | absent | the bridge writes each annotation as a `type-expression` tree; the `written` fact is not filled |
-| a call's `target` | absent | mypy's resolved callee is not joined to the call yet |
 | a reference's `binding` link | absent | references are not linked to the local binding they name yet |
 
 ## C#: what the bridge does not translate yet

@@ -1,0 +1,191 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "undeclared-member",
+    "aliases": [
+      "UndeclaredMemberDetector",
+      "UndeclaredMember"
+    ],
+    "skill": "shared/dependencies",
+    "description": "A member access the receiver's declared type neither declares nor inherits",
+    "rule": "Read what the declared type guarantees. When only some implementers carry the member, give them a contract that declares it and type the receiver by that contract.",
+    "suggestion": "Declare the member on the carrying types' contract and use that contract at the access.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "namesOf": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "case",
+        "$m.kind",
+        {
+          "function": [
+            "list",
+            "$m.name"
+          ],
+          "field": [
+            "map",
+            "$m.declarators",
+            "d",
+            "$d.binding.name"
+          ],
+          "constant": [
+            "map",
+            "$m.declarators",
+            "d",
+            "$d.binding.name"
+          ],
+          "enum-case": [
+            "list",
+            "$m.name"
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "access",
+    "as": "a",
+    "where": [
+      "and",
+      [
+        "not",
+        "$a.file.test"
+      ],
+      [
+        "not",
+        [
+          "isSelf",
+          "$a.subject"
+        ]
+      ],
+      [
+        "!=",
+        [
+          "count",
+          [
+            "list",
+            "$a.member.name"
+          ]
+        ],
+        0
+      ]
+    ],
+    "let": [
+      [
+        "declared",
+        [
+          "typeDeclaration",
+          "$a.subject.resolved.name"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$declared"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$declared.bases"
+        ],
+        0
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$declared.mixins"
+        ],
+        0
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "dynamic-members",
+            "$declared"
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "flatten",
+          [
+            "map",
+            "$declared.writtenMembers",
+            "m",
+            [
+              "namesOf",
+              "$m"
+            ]
+          ]
+        ],
+        "n",
+        [
+          "=",
+          "$n",
+          "$a.member.name"
+        ]
+      ],
+      [
+        "none",
+        [
+          "flatten",
+          [
+            "map",
+            "$declared.writtenMembers",
+            "m",
+            [
+              "ownDescendants",
+              "$m.body"
+            ]
+          ]
+        ],
+        "w",
+        [
+          "and",
+          [
+            "=",
+            "$w.kind",
+            "assignment"
+          ],
+          [
+            "some",
+            "$w.targets",
+            "g",
+            [
+              "and",
+              [
+                "tree.selfField",
+                "$g"
+              ],
+              [
+                "=",
+                "$g.member.name",
+                "$a.member.name"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$a"
+  }
+}

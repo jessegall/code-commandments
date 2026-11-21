@@ -18,7 +18,7 @@ from mypy.find_sources import InvalidSourceList, create_source_list
 from mypy.modulefinder import BuildSource
 from mypy.build import BuildResult, State
 from mypy.errors import CompileError
-from mypy.nodes import Expression, MypyFile, TypeInfo
+from mypy.nodes import CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, OverloadedFuncDef, RefExpr, TypeInfo
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
 from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
@@ -197,7 +197,7 @@ class ResolvedType:
             ("text", self.text),
             ("kind", "named" if self.instance_of is not None else "opaque"),
             ("name", self.instance_of),
-            ("nullable", True if self.nullable else None),
+            ("nullable", self.nullable),
             ("constructs", self.constructs),
             ("origin", "compiler"),
         )
@@ -206,11 +206,12 @@ class ResolvedType:
 
 @dataclass(frozen=True)
 class TypedModule:
-    """How many of a module's expressions mypy typed, and what each typed one resolved to by its `[start, end)` byte
-    span; the first expression at a span wins."""
+    """How many of a module's expressions mypy typed, what each typed one resolved to by its `[start, end)` byte span
+    (the first expression at a span wins), and the declaration each call binds to by the call's span."""
 
     expressions: int
     by_span: dict[tuple[int, int], ResolvedType]
+    targets: dict[tuple[int, int], dict[str, str]] | None = None
 
 
 def described(typ: Type) -> ResolvedType | None:
@@ -246,7 +247,36 @@ def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule
         resolved = described(types[expression])
         if resolved is not None and span not in found:
             found[span] = resolved
-    return TypedModule(len(written), found)
+    bound: dict[tuple[int, int], dict[str, str]] = {}
+    for call in (e for e in get_subexpressions(state.tree) if isinstance(e, CallExpr)) if state.tree is not None else []:
+        if call.line < 1 or call.end_line is None or call.end_column is None or call.end_line > len(starts):
+            continue
+        span = (starts[call.line - 1] + call.column, starts[call.end_line - 1] + call.end_column)
+        target = target_of(call, types)
+        if target is not None and span not in bound:
+            bound[span] = target
+    return TypedModule(len(written), found, bound)
+
+
+def target_of(call: CallExpr, types: dict[Expression, Type]) -> dict[str, str] | None:
+    """The declaration a call binds to, as the contract's target: the function or method mypy resolved its callee to,
+    named with the type that declares it (a module function's module), or a class's __init__ for a construction."""
+    callee = call.callee
+    node = callee.node if isinstance(callee, RefExpr) else None
+    if node is None and isinstance(callee, MemberExpr) and callee.expr in types:
+        receiver = get_proper_type(types[callee.expr])
+        if isinstance(receiver, Instance):
+            node = receiver.type.get_method(callee.name)
+    if isinstance(node, Decorator):
+        node = node.func
+    if isinstance(node, TypeInfo):
+        declared = node.get_method("__init__")
+        owner = declared.info.fullname if declared is not None and not isinstance(declared.info, FakeInfo) else node.fullname
+        return {"symbol": owner + ".__init__", "type": owner, "name": "__init__"}
+    if isinstance(node, (FuncBase, OverloadedFuncDef)) and node.fullname:
+        owner = node.info.fullname if not isinstance(node.info, FakeInfo) else node.fullname.rpartition(".")[0]
+        return {"symbol": node.fullname, "type": owner, "name": node.name}
+    return None
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,151 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "array-return-bag",
+    "aliases": [
+      "ArrayReturnBagDetector",
+      "ArrayReturnBag",
+      "csharp-array-return-bag",
+      "python-dict-return-bag",
+      "DictReturnBagDetector",
+      "DictReturnBag"
+    ],
+    "skill": "php/value-objects",
+    "description": "Returning a multi-field string-keyed array literal (a bag that should be a value object)",
+    "rule": "Return a typed value object, not a multi-field string-keyed array literal.",
+    "suggestion": "Return a Spatie `Data` object via `::from(...)`.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "stringKeys": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          "$c.entries",
+          "e",
+          [
+            "and",
+            [
+              "=",
+              "$e.key.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$e.key.literalKind",
+              "string"
+            ]
+          ]
+        ],
+        "e",
+        "$e.key.value"
+      ]
+    },
+    "kindOf": {
+      "args": [
+        "t"
+      ],
+      "expr": "$t.kind"
+    }
+  },
+  "find": {
+    "select": "return",
+    "as": "r",
+    "where": [
+      "=",
+      [
+        "count",
+        "$r.values"
+      ],
+      1
+    ],
+    "let": [
+      [
+        "value",
+        [
+          "at",
+          "$r.values",
+          0
+        ]
+      ],
+      [
+        "function",
+        [
+          "enclosing",
+          "$r",
+          "function"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$value.kind",
+        "collection"
+      ],
+      [
+        ">=",
+        [
+          "distinctCount",
+          [
+            "stringKeys",
+            "$value"
+          ]
+        ],
+        2
+      ],
+      [
+        "or",
+        [
+          "not",
+          [
+            "exists",
+            "$function.returnType"
+          ]
+        ],
+        [
+          "tree.looseRecord",
+          "$function.resolved.returns"
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$function.resolved.returns.kind",
+            "map"
+          ],
+          [
+            "=",
+            [
+              "kindOf",
+              [
+                "at",
+                "$function.resolved.returns.args",
+                1
+              ]
+            ],
+            "named"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$r"
+  }
+}

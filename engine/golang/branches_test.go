@@ -1,7 +1,6 @@
 package golang_test
 
 import (
-	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -108,70 +107,6 @@ func (o Order) guarded() string {
 	return o.Note
 }
 `,
-}
-
-func TestGosBranchesAreReadByTheEnginesOwnReadings(t *testing.T) {
-	codebase := codebaseOf(t, flows)
-
-	for name, want := range map[string]bool{"labelled": true, "dedented": false, "guarded": false, "badge": false} {
-		if held := funcNamed(t, codebase, name); engine.HasRedundantElse(branchOf(held)) != want {
-			t.Errorf("%s reads as carrying a redundant else: %v", name, !want)
-		}
-	}
-
-	for name, want := range map[string]bool{"billed": true, "firstPaid": false, "guarded": false} {
-		var found bool
-		for _, held := range funcNamed(t, codebase, name).Descendants() {
-			if engine.IsSoleLoopBodyGuard(held) {
-				found = true
-			}
-		}
-		if found != want {
-			t.Errorf("%s reads as wrapping its loop's body in one condition: %v", name, found)
-		}
-	}
-
-	for name, want := range map[string]int{"badge": 4, "mixed": 0, "dedented": 1, "guarded": 1} {
-		if held := engine.SubjectLadderLength(branchOf(funcNamed(t, codebase, name))); held != want {
-			t.Errorf("%s reads as a ladder of %d rungs, where it is %d", name, held, want)
-		}
-	}
-}
-
-func TestCompoundTestAssertionsKeepTheirComparisonsTogether(t *testing.T) {
-	codebase := codebaseOf(t, map[string]string{
-		"go.mod": "module example.com/shop\n",
-		"order_test.go": `package shop
-import "testing"
-type Report struct { Count int; Ready bool }
-func TestOrder(t *testing.T) {
-    left, right := Report{}, Report{}
-    if left.Count != 1 || right.Count != 2 || !left.Ready { t.Errorf("got %v and %v", left, right) }
-    if left.Count != 1 || right.Count != 2 || !left.Ready { println(left, right) }
-}
-`,
-	})
-	found := codebase.Where(engine.TestsAnUnnamedConcept).Get()
-	if len(found) != 1 || found[0].Parent().Body()[0].Written() != "println(left, right)" {
-		for _, call := range codebase.WhereCall().Get() {
-			t.Logf("%q has target %q and test=%v", call.Written(), call.TargetSymbol(), call.IsTest())
-		}
-		t.Fatalf("only the ordinary branch should need a name, found %v", found)
-	}
-}
-
-func TestALadderRungIsCountedOnceFromItsTop(t *testing.T) {
-	codebase := codebaseOf(t, flows)
-
-	var ladders int
-	for _, held := range funcNamed(t, codebase, "badge").Descendants() {
-		if engine.SubjectLadderLength(held) > 0 {
-			ladders++
-		}
-	}
-	if ladders != 1 {
-		t.Errorf("one ladder of four rungs reads as %d ladders", ladders)
-	}
 }
 
 func branchOf(function engine.Match) engine.Match {

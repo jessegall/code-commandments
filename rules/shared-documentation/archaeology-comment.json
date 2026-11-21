@@ -1,0 +1,33 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "archaeology-comment",
+    "aliases": [
+      "python-archaeology-comment",
+      "csharp-archaeology-comment",
+      "ArchaeologyCommentDetector",
+      "ArchaeologyComment"
+    ],
+    "skill": "shared/documentation",
+    "description": "A comment narrates the history of the code",
+    "rule": "Explain why the code is written this way today.",
+    "suggestion": "Move the history to the change record."
+  },
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": [
+      "reads",
+      "$c.description",
+      "history"
+    ],
+    "emit": "$c.location"
+  }
+}

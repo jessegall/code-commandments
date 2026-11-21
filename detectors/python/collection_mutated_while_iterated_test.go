@@ -3,7 +3,6 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -36,7 +35,7 @@ func TestAChangeToTheWalkedCollectionIsFoundAndACopyIsNot(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := pythontest.FromSource(t, map[string]string{"app/thing.py": test.source})
-			found := (python.CollectionMutatedWhileIteratedDetector{}).Find(codebase)
+			found := shipped(t, "collection-mutated-while-iterated").Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

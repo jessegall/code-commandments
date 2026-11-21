@@ -4,7 +4,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -104,17 +103,6 @@ var contractOutcomes = engine.Memoised(func(codebase *engine.Codebase) map[strin
 
 	return outcomes
 })
-
-func (n Node) ReturnsFalseForNothing() bool {
-	declared := n.Node().Written
-	if !n.IsFunctionLike() || declared == nil || declared.Kind != "union" {
-		return false
-	}
-
-	return slices.ContainsFunc(declared.Members, func(member *contract.Type) bool {
-		return member.Kind == "keyword" && strings.EqualFold(member.Name, "false")
-	})
-}
 
 func (n Node) EndsEveryBranchAlike() bool {
 	if n.Kind() != "Stmt_If" || !n.Child("else").Exists() {

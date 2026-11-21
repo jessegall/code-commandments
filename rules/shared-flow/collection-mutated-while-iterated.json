@@ -1,0 +1,367 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "collection-mutated-while-iterated",
+    "aliases": [
+      "csharp-collection-mutated-while-iterated",
+      "CollectionMutatedWhileIteratedDetector",
+      "CollectionMutatedWhileIterated",
+      "python-collection-mutated-while-iterated",
+      "typescript-collection-mutated-while-iterated"
+    ],
+    "skill": "shared/flow",
+    "description": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException",
+    "rule": "Never change the collection a `foreach` walks while it walks it: decide inside the loop and change afterwards.",
+    "suggestion": "Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`foreach (var item in items.ToList())`) when the change must happen as it goes."
+  },
+  "definitions": {
+    "live": {
+      "args": [
+        "i"
+      ],
+      "expr": [
+        "case",
+        [
+          "proven",
+          [
+            "hasEffect",
+            "$i",
+            "live-view"
+          ]
+        ],
+        {
+          "true": [
+            "case",
+            "$i.kind",
+            {
+              "call": [
+                "case",
+                "$i.callee.kind",
+                {
+                  "access": "$i.callee.subject"
+                },
+                [
+                  "at",
+                  [
+                    "map",
+                    "$i.arguments",
+                    "a",
+                    "$a.value"
+                  ],
+                  0
+                ]
+              ],
+              "access": "$i.subject"
+            },
+            "$i"
+          ]
+        },
+        [
+          "case",
+          [
+            "and",
+            [
+              "=",
+              "$i.kind",
+              "access"
+            ],
+            [
+              "in",
+              "$i.member.name",
+              "Keys",
+              "Values"
+            ],
+            [
+              "startsWith",
+              "$i.subject.resolved.name",
+              "System.Collections.Generic."
+            ]
+          ],
+          {
+            "true": "$i.subject"
+          },
+          "$i"
+        ]
+      ]
+    },
+    "changed": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "call": "$c.callee.subject",
+          "unary": "$c.operand.subject"
+        },
+        null
+      ]
+    },
+    "leavesAtOnce": {
+      "args": [
+        "c",
+        "l"
+      ],
+      "expr": [
+        "some",
+        [
+          "filter",
+          [
+            "ownAncestors",
+            "$c"
+          ],
+          "b",
+          [
+            "=",
+            "$b.kind",
+            "block"
+          ]
+        ],
+        "b",
+        [
+          "and",
+          [
+            "=",
+            "$b",
+            [
+              "at",
+              [
+                "filter",
+                [
+                  "ownAncestors",
+                  "$c"
+                ],
+                "x",
+                [
+                  "=",
+                  "$x.kind",
+                  "block"
+                ]
+              ],
+              0
+            ]
+          ],
+          [
+            "in",
+            [
+              "tree.kindOf",
+              [
+                "last",
+                "$b.statements"
+              ]
+            ],
+            "return",
+            "throw",
+            "break"
+          ]
+        ]
+      ]
+    },
+    "walks": {
+      "args": [
+        "l",
+        "c",
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$l.kind",
+          "loop"
+        ],
+        [
+          "=",
+          "$l.form",
+          "for-each"
+        ],
+        [
+          "some",
+          [
+            "ownAncestors",
+            "$c"
+          ],
+          "a",
+          [
+            "=",
+            "$a",
+            "$l.body"
+          ]
+        ],
+        [
+          "=",
+          [
+            "fingerprint",
+            [
+              "live",
+              "$l.iterable"
+            ],
+            "exact"
+          ],
+          [
+            "fingerprint",
+            "$s",
+            "exact"
+          ]
+        ]
+      ]
+    },
+    "eachOver": {
+      "args": [
+        "c",
+        "s"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$c",
+            "function"
+          ]
+        ],
+        "f",
+        [
+          "and",
+          [
+            "exists",
+            "$f"
+          ],
+          [
+            "=",
+            "$f.parent.kind",
+            "argument"
+          ],
+          [
+            "proven",
+            [
+              "hasEffect",
+              "$f.parent.parent",
+              "iterates-receiver"
+            ]
+          ],
+          [
+            "=",
+            "$f.parent.parent.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            [
+              "fingerprint",
+              "$f.parent.parent.callee.subject",
+              "exact"
+            ],
+            [
+              "fingerprint",
+              "$s",
+              "exact"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "call",
+      "unary"
+    ],
+    "as": "c",
+    "where": [
+      "case",
+      "$c.kind",
+      {
+        "call": [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "proven",
+            [
+              "hasEffect",
+              "$c",
+              "mutates-receiver"
+            ]
+          ]
+        ],
+        "unary": [
+          "and",
+          [
+            "=",
+            "$c.operator",
+            "delete"
+          ],
+          [
+            "=",
+            "$c.operand.kind",
+            "index"
+          ]
+        ]
+      },
+      false
+    ],
+    "let": [
+      [
+        "subject",
+        [
+          "changed",
+          "$c"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "in",
+        "$subject.kind",
+        "reference",
+        "access"
+      ],
+      [
+        "or",
+        [
+          "some",
+          [
+            "ownAncestors",
+            "$c"
+          ],
+          "l",
+          [
+            "and",
+            [
+              "walks",
+              "$l",
+              "$c",
+              "$subject"
+            ],
+            [
+              "not",
+              [
+                "leavesAtOnce",
+                "$c",
+                "$l"
+              ]
+            ]
+          ]
+        ],
+        [
+          "eachOver",
+          "$c",
+          "$subject"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

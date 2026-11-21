@@ -1,0 +1,194 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "deep-nesting",
+    "aliases": [
+      "deep-python-nesting",
+      "deep-csharp-nesting",
+      "deep-go-nesting",
+      "DeepNestingDetector",
+      "DeepNesting"
+    ],
+    "skill": "shared/flow",
+    "description": "A decision sits deep inside other decisions in one function",
+    "rule": "Flatten with guards that leave early, or extract the inner decision into a function of its own.",
+    "suggestion": "Turn the outer conditions into guards that return or `continue`, or move the innermost block into a well-named function."
+  },
+  "parameters": {
+    "limit": {
+      "type": "number",
+      "default": 3,
+      "description": "How many choices above a choice make it too deep; PHP's fixtures prove two ifs."
+    }
+  },
+  "definitions": {
+    "choice": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "case",
+        "$n.kind",
+        {
+          "if": [
+            "not",
+            [
+              "tree.continuation",
+              "$n"
+            ]
+          ],
+          "loop": true
+        },
+        false
+      ]
+    },
+    "onlyLeaves": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "case",
+          "$n.kind",
+          {
+            "if": [
+              "list",
+              "$n.then",
+              "$n.else"
+            ],
+            "loop": [
+              "list",
+              "$n.body"
+            ]
+          },
+          [
+            "list"
+          ]
+        ],
+        "c",
+        [
+          "or",
+          [
+            "is",
+            "$c",
+            "exit"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$c.kind",
+              "block"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$c.statements"
+              ],
+              1
+            ],
+            [
+              "is",
+              [
+                "at",
+                "$c.statements",
+                0
+              ],
+              "exit"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "if",
+      "loop"
+    ],
+    "as": "s",
+    "where": [
+      "choice",
+      "$s"
+    ],
+    "let": [
+      [
+        "limit",
+        [
+          "case",
+          "$s.file.language",
+          {
+            "php": 2
+          },
+          "$param.limit"
+        ]
+      ],
+      [
+        "depth",
+        [
+          "count",
+          [
+            "filter",
+            [
+              "ownAncestors",
+              "$s"
+            ],
+            "a",
+            [
+              "case",
+              "$s.file.language",
+              {
+                "php": [
+                  "=",
+                  "$a.kind",
+                  "if"
+                ]
+              },
+              [
+                "choice",
+                "$a"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$depth",
+        "$limit"
+      ],
+      [
+        "case",
+        "$s.file.language",
+        {
+          "php": [
+            "=",
+            "$s.kind",
+            "if"
+          ]
+        },
+        true
+      ],
+      [
+        "not",
+        [
+          "onlyLeaves",
+          "$s"
+        ]
+      ]
+    ],
+    "emit": "$s"
+  }
+}

@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
-	csdetectors "github.com/jessegall/code-commandments/detectors/csharp"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
@@ -40,27 +39,15 @@ func parsed(t *testing.T) *contract.Stream {
 func TestNoCSharpRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	stream := parsed(t)
 
-	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(stream.TwiceOver()), configured())
+	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(stream.TwiceOver()), configured(t))
 }
 
-func configured() []detectors.Detector {
-	var configured []detectors.Detector
-	for _, detector := range detectors.Of(catalog.CSharp) {
-		if _, ok := detector.(csdetectors.NamespaceDependencyDetector); ok {
-			detector = csdetectors.NamespaceDependencyDetector{}.
-				Layer("Shop.Catalog").
-				Layer("Shop.Search", "Shop.Catalog").
-				Layer("Shop.Checkout", "Shop.Catalog").
-				Layer("Shop.Storefront", "Shop.Search", "Shop.Catalog")
-		}
-		configured = append(configured, detector)
-	}
-
-	return configured
+func configured(t testing.TB) []detectors.Detector {
+	return fixturetest.Configured(t, "../../tests/Fixtures/csharp", detectors.Of(catalog.CSharp))
 }
 
 func TestEveryCSharpDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
-	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: configured(), Known: detectors.Of(catalog.CSharp), Resolver: fixture.FileScenarios})
+	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: fixture.Proven(configured(t)), Known: fixture.Proven(detectors.Of(catalog.CSharp)), Resolver: fixture.FileScenarios})
 }
 
 func TestEverySinTheFixtureMarksHasADetector(t *testing.T) {

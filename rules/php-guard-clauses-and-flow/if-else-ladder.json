@@ -1,0 +1,45 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "if-else-ladder",
+    "aliases": [
+      "IfElseLadderDetector",
+      "IfElseLadder"
+    ],
+    "skill": "php/guard-clauses-and-flow",
+    "description": "if/elseif ladder of 4+ branches (should be match/dispatch)",
+    "rule": "Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.",
+    "suggestion": "A `match`, a method on the type, or polymorphic dispatch."
+  },
+  "find": {
+    "select": "if",
+    "as": "b",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "tree.continuation",
+          "$b"
+        ]
+      ],
+      [
+        ">=",
+        [
+          "count",
+          [
+            "follow",
+            "$b",
+            "else",
+            "if"
+          ]
+        ],
+        3
+      ]
+    ],
+    "emit": "$b"
+  }
+}

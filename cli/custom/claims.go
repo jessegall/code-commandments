@@ -1,6 +1,7 @@
 package custom
 
 import (
+	"github.com/jessegall/code-commandments/rules"
 	"fmt"
 	"os"
 	"regexp"
@@ -8,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
 
@@ -62,7 +62,7 @@ func (p Project) declaredNames() []string {
 		declared = append(declared, own.Sin().Definition().Name, own.Name())
 	}
 
-	for _, shipped := range sins.All() {
+	for _, shipped := range rules.Sins() {
 		declared = append(declared, shipped.Definition().Name)
 	}
 

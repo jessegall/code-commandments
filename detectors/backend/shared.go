@@ -18,79 +18,16 @@ func (language) Engine() catalog.Engine {
 }
 
 var (
-	ConcreteCrossModuleDependencyDetector = shared.Bind[shared.ConcreteCrossModuleDependency, language]()
-	UndeclaredMemberDetector              = shared.Bind[shared.UndeclaredMember, language](shared.Excusing(usesDynamicMembers, packages.Exemption{Tag: packages.DynamicMembers}))
-	LoneImplementerInterfaceDetector      = shared.BindLoneInterfaces[language]()
 	InterfaceOverlapDetector              = shared.BindInterfaceOverlaps[language](`\`, false)
-	MatchDefaultReturnsNullDetector       = shared.Bind[shared.MatchDefaultReturnsNull, language]()
-	RedundantArrowReturnTypeDetector      = shared.Bind[shared.RedundantArrowReturnType, language]()
-	ConvertedArgumentDetector             = shared.BindGrouped[shared.ConvertedArgument, language]()
-	TypeSwitchDetector                    = shared.Bind[shared.TypeSwitch, language]()
-	ConstClassEnumDetector                = shared.Bind[shared.ConstClassEnum, language]()
 	SideTableTraitDetector                = shared.Bind[shared.SideTableTrait, language]()
-	EnumCaseOrChainDetector               = shared.Bind[shared.EnumCaseOrChain, language]()
-	InArrayMirrorsEnumDetector            = shared.Bind[shared.InArrayMirrorsEnum, language]()
-	StringMatchMirrorsEnumDetector        = shared.Bind[shared.StringMatchMirrorsEnum, language]()
-	BlankStringDefaultDetector            = shared.Bind[shared.BlankStringDefault, language]()
-	DeNulledFinderDetector                = shared.Bind[shared.DeNulledFinder, language](shared.Excusing(func(_ *engine.Codebase, match engine.Match) bool { return isContractMethod(match) }, packages.Exemption{Tag: packages.ContractMethod, By: []packages.By{packages.EnclosingMethod}}))
-	ManufacturedFakeFillDetector          = shared.Bind[shared.ManufacturedFakeFill, language]()
-	CoalescedLoopSubjectDetector          = shared.Bind[shared.CoalescedLoopSubject, language]()
-	ConditionalArraySpreadDetector        = shared.Bind[shared.ConditionalArraySpread, language]()
-	CapabilityProbeHubDetector            = shared.Bind[shared.CapabilityProbeHub, language]()
-	PhantomNullableDetector               = shared.BindTraced[shared.PhantomNullable, language]()
-	NullableRegistryLookupDetector        = shared.Bind[shared.NullableRegistryLookup, language]()
-	MaskedInvariantDetector               = shared.Bind[shared.MaskedInvariant, language]()
-	NullableCallbackDetector              = shared.Bind[shared.NullableCallback, language]()
-	RawDecodedArrayReturnDetector         = shared.Bind[shared.RawDecodedArrayReturn, language]()
-	ArchaeologyCommentDetector            = shared.Bind[shared.ArchaeologyComment, language]()
-	NegativeSpaceCommentDetector          = shared.Bind[shared.NegativeSpaceComment, language]()
-	RestatedCommentDetector               = shared.Bind[shared.RestatedComment, language]()
-	DanglingDocReferenceDetector          = shared.Bind[shared.DanglingDocReference, language]()
-	BloatedDocblockDetector               = shared.Bind[shared.BloatedDocblock, language]()
-	CeremonyDocblockDetector              = shared.Bind[shared.CeremonyDocblock, language]()
-	StackedDocblockDetector               = shared.Bind[shared.StackedDocblock, language]()
-	DuplicateFunctionDetector             = shared.BindGrouped[shared.DuplicateFunction, language]()
-	NearDuplicateFunctionDetector         = shared.BindGrouped[shared.NearDuplicateFunction, language](shared.Rejecting(isContractMethod, packages.Exemption{Tag: packages.ContractMethod}))
-	UnnamedVocabularyLiteralDetector      = shared.Bind[shared.UnnamedVocabularyLiteral, language]()
 	DuplicatedMechanismDetector           = shared.BindGrouped[shared.DuplicatedMechanism, language]()
 	DivergentTwinDetector                 = shared.BindGrouped[shared.DivergentTwin, language]()
-	RepeatedGuardDetector                 = shared.BindGrouped[shared.RepeatedGuard, language]()
-	RepeatedTypeGuardDetector             = shared.BindGrouped[shared.RepeatedTypeGuard, language]()
 	ListMirrorsFolderDetector             = shared.Bind[shared.ListMirrorsFolder, language]()
 	RepeatedFolderPathDetector            = shared.Bind[shared.RepeatedFolderPath, language]()
-	UnnamedConditionDetector              = shared.Bind[shared.UnnamedCondition, language]()
-	RedundantElseDetector                 = shared.Bind[shared.RedundantElse, language]()
-	CancelledCoalesceDetector             = shared.Bind[shared.CancelledCoalesce, language]()
-	NonCountingForDetector                = shared.Bind[shared.NonCountingFor, language]()
-	DataClumpDetector                     = shared.BindGrouped[shared.DataClump, language]()
-	DeepNestingDetector                   = shared.Bind[shared.DeepNesting, language]()
-	ReassignedParameterDetector           = shared.Bind[shared.ReassignedParameter, language]()
-	LoopInvertedGuardDetector             = shared.Bind[shared.LoopInvertedGuard, language]()
-	DuplicatedBranchTailDetector          = shared.Bind[shared.DuplicatedBranchTail, language]()
-	UnreachableStatementDetector          = shared.Bind[shared.UnreachableStatement, language]()
-	NestedTernaryDetector                 = shared.Bind[shared.NestedTernary, language]()
-	TernaryStatementDetector              = shared.Bind[shared.TernaryStatement, language]()
-	ShortCircuitStatementDetector         = shared.Bind[shared.ShortCircuitStatement, language]()
-	SwallowCatchDetector                  = shared.Bind[shared.SwallowCatch, language](shared.Excusing(catchesOnlyControlSignals, packages.Exemption{Tag: packages.ControlSignal}))
-	RethrownUnchangedDetector             = shared.Bind[shared.RethrownUnchanged, language]()
-	WrappingWithoutCauseDetector          = shared.Bind[shared.WrappingWithoutCause, language](shared.Excusing(buildsValidationResponse, packages.Exemption{Tag: packages.ValidationResponse}))
-	GenericExceptionDetector              = shared.Bind[shared.GenericException, language]()
-	MessageAtThrowDetector                = shared.Bind[shared.MessageAtThrow, language]()
 )
 
 func usesDynamicMembers(codebase *engine.Codebase, access engine.Match) bool {
 	return packages.Excuses(codebase, packages.DynamicMembers, php.TypesOf(codebase).TypeAtRead(access.Receiver()), "")
-}
-
-func catchesOnlyControlSignals(codebase *engine.Codebase, catch engine.Match) bool {
-	types := php.Node{Match: catch}.CaughtTypes()
-	for _, caught := range types {
-		if !packages.Excuses(codebase, packages.ControlSignal, caught, "") {
-			return false
-		}
-	}
-
-	return len(types) > 0
 }
 
 func isContractMethod(match engine.Match) bool {

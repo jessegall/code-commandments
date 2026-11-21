@@ -1,0 +1,18 @@
+{
+  "package": "league/fractal",
+  "ecosystem": "composer",
+  "versions": ">=0.19",
+  "provenance": "engine/php/packages/shipped.go",
+  "entries": [],
+  "exemptions": [
+    {
+      "on": {
+        "League\\Fractal\\TransformerAbstract": [
+          "transform"
+        ]
+      },
+      "tag": "array-return-contract",
+      "why": "The framework requires this hook to return an array."
+    }
+  ]
+}

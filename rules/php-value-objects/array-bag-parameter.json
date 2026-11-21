@@ -1,0 +1,170 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "go",
+    "php",
+    "typescript"
+  ],
+  "sin": {
+    "name": "array-bag-parameter",
+    "aliases": [
+      "ArrayBagParameterDetector",
+      "ArrayBagParameter"
+    ],
+    "skill": "php/value-objects",
+    "description": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to.",
+    "rule": "A method of your own takes values and objects, never an `array` of named fields — the definition is at fault, not the caller filling it.",
+    "suggestion": "Type the parameter as a Spatie `Data` object or a final readonly value object, and have callers construct it.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "stringKeys": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          "$c.entries",
+          "e",
+          [
+            "and",
+            [
+              "=",
+              "$e.key.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$e.key.literalKind",
+              "string"
+            ]
+          ]
+        ],
+        "e",
+        "$e.key.value"
+      ]
+    }
+  },
+  "find": {
+    "select": "parameter",
+    "as": "p",
+    "where": [
+      "and",
+      [
+        "=",
+        "$p.parent.kind",
+        "function"
+      ],
+      [
+        "tree.looseRecord",
+        "$p.binding.resolved"
+      ]
+    ],
+    "let": [
+      [
+        "at",
+        [
+          "position",
+          "$p"
+        ]
+      ],
+      [
+        "calls",
+        [
+          "filter",
+          [
+            "referrers",
+            "$p.parent"
+          ],
+          "c",
+          [
+            "and",
+            [
+              "=",
+              "$c.kind",
+              "call"
+            ],
+            [
+              "not",
+              "$c.file.test"
+            ]
+          ]
+        ]
+      ],
+      [
+        "handed",
+        [
+          "map",
+          "$calls",
+          "c",
+          [
+            "tree.valueAt",
+            "$c",
+            "$at"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$calls"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$handed",
+        "h",
+        [
+          "and",
+          [
+            "=",
+            "$h.kind",
+            "collection"
+          ],
+          [
+            ">=",
+            [
+              "distinctCount",
+              [
+                "stringKeys",
+                "$h"
+              ]
+            ],
+            2
+          ],
+          [
+            "=",
+            [
+              "sort",
+              [
+                "stringKeys",
+                "$h"
+              ]
+            ],
+            [
+              "sort",
+              [
+                "stringKeys",
+                [
+                  "at",
+                  "$handed",
+                  0
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$p"
+  }
+}

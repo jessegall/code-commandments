@@ -1,0 +1,152 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "rethrown-unchanged",
+    "aliases": [
+      "python-rethrown-unchanged",
+      "csharp-rethrown-unchanged",
+      "RethrownUnchangedDetector",
+      "RethrownUnchanged"
+    ],
+    "skill": "shared/exceptions",
+    "description": "A `catch` whose whole body throws back the failure it caught: it adds nothing, which is what writing no clause does",
+    "rule": "Catch a failure only to do something about it: handle it, add what the caller needs, or let it pass by writing no clause.",
+    "suggestion": "Delete the clause and let the failure travel, or give it work: roll back, release what was held, or throw a failure of your own with it as the cause."
+  },
+  "definitions": {
+    "effective": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "filter",
+        "$s.statements",
+        "x",
+        [
+          "!=",
+          "$x.kind",
+          "no-op"
+        ]
+      ]
+    },
+    "thrownBy": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "throw": "$s",
+          "expression-statement": [
+            "case",
+            "$s.expression.kind",
+            {
+              "throw": "$s.expression"
+            },
+            null
+          ]
+        },
+        null
+      ]
+    }
+  },
+  "find": {
+    "select": "handler",
+    "as": "h",
+    "where": [
+      "and",
+      [
+        "=",
+        [
+          "count",
+          [
+            "effective",
+            "$h.body"
+          ]
+        ],
+        1
+      ],
+      [
+        "none",
+        "$h.parent.handlers",
+        "o",
+        [
+          ">",
+          [
+            "position",
+            "$o"
+          ],
+          [
+            "position",
+            "$h"
+          ]
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "thrown",
+        [
+          "thrownBy",
+          [
+            "at",
+            [
+              "effective",
+              "$h.body"
+            ],
+            0
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$thrown"
+      ],
+      [
+        "not",
+        [
+          "exists",
+          "$thrown.cause"
+        ]
+      ],
+      [
+        "or",
+        [
+          "not",
+          [
+            "exists",
+            "$thrown.value"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$thrown.value.kind",
+            "reference"
+          ],
+          [
+            "exists",
+            "$h.binding"
+          ],
+          [
+            "=",
+            "$thrown.value.name",
+            "$h.binding.name"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$h"
+  }
+}

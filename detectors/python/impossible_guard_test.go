@@ -3,7 +3,6 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -24,7 +23,7 @@ func TestAGuardTheTypeRulesOutIsFoundAndARealOneIsNot(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := pythontest.FromSource(t, map[string]string{"app/shipping.py": test.source})
-			found := (python.ImpossibleGuardDetector{}).Find(codebase)
+			found := shipped(t, "impossible-guard").Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

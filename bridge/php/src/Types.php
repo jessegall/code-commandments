@@ -1,0 +1,473 @@
+<?php
+
+declare(strict_types=1);
+
+namespace CodeCommandments\PhpBridge;
+
+use PhpParser\Node;
+use PhpParser\Node\Expr;
+use PhpParser\Node\Stmt;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitorAbstract;
+use ReflectionClass;
+use ReflectionNamedType;
+use ReflectionType;
+use Throwable;
+
+/**
+ * The type of each expression and the declaration each call binds to, inferred the way PHP itself resolves them: $this
+ * and self to the enclosing class, new X to X, a parameter or property to its declared type, a call to its declared
+ * return type, a local variable to what was last assigned to it. It reads the declarations of every judged file and,
+ * once the project's autoloader is in, the classes it loads. Each expression it types carries the attribute `type`
+ * ({name, nullable} or {keyword}), and each call and construction it binds the attribute `target`.
+ */
+final class Types
+{
+    /**
+     * Each declared class by its lowercased name: its name, file, parent, interfaces, traits, methods by lowercased name
+     * ({name, returns, static}) and properties by name (their type).
+     *
+     * @var array<string, array{name: string, file: ?string, parent: ?string, interfaces: list<string>, traits: list<string>, methods: array<string, array{name: string, returns: ?array, static: bool}>, properties: array<string, ?array>}>
+     */
+    private array $classes = [];
+
+    /**
+     * Each declared function's return type by its lowercased name.
+     *
+     * @var array<string, array{name: string, file: ?string, returns: ?array}>
+     */
+    private array $functions = [];
+
+    private bool $loads = false;
+
+    /**
+     * The files whose declarations the file being inferred read, by path.
+     *
+     * @var array<string, true>
+     */
+    private array $read = [];
+
+    /**
+     * Reads every class and function a file declares.
+     *
+     * @param  list<Node>  $statements
+     */
+    public function declare(array $statements, string $path): void
+    {
+        $traverser = new NodeTraverser(new class($this, $path) extends NodeVisitorAbstract
+        {
+            public function __construct(private readonly Types $types, private readonly string $path) {}
+
+            public function enterNode(Node $node): null
+            {
+                if ($node instanceof Stmt\ClassLike && $node->namespacedName !== null) {
+                    $this->types->declareClass($node, $this->path);
+                } elseif ($node instanceof Stmt\Function_ && $node->namespacedName !== null) {
+                    $this->types->declareFunction($node, $this->path);
+                }
+
+                return null;
+            }
+        });
+        $traverser->traverse($statements);
+    }
+
+    /**
+     * From here on, a class no judged file declares is read through the project's autoloader.
+     */
+    public function loadsClasses(): void
+    {
+        $this->loads = true;
+    }
+
+    public function declareClass(Stmt\ClassLike $class, string $path): void
+    {
+        $name = $class->namespacedName->toString();
+        $methods = [];
+        $properties = [];
+        foreach ($class->getMethods() as $method) {
+            $methods[strtolower($method->name->toString())] = ['name' => $method->name->toString(), 'returns' => $this->written($method->returnType, $name), 'static' => $method->isStatic()];
+            if ($method->name->toLowerString() === '__construct') {
+                foreach ($method->params as $parameter) {
+                    if ($parameter->flags !== 0 && $parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
+                        $properties[$parameter->var->name] = $this->written($parameter->type, $name);
+                    }
+                }
+            }
+        }
+        foreach ($class->getProperties() as $property) {
+            foreach ($property->props as $declared) {
+                $properties[$declared->name->toString()] = $this->written($property->type, $name);
+            }
+        }
+        $traits = [];
+        foreach ($class->getTraitUses() as $use) {
+            foreach ($use->traits as $trait) {
+                $traits[] = $trait->toString();
+            }
+        }
+        $this->classes[strtolower($name)] = [
+            'name' => $name,
+            'file' => $path,
+            'parent' => $class instanceof Stmt\Class_ && $class->extends !== null ? $class->extends->toString() : null,
+            'interfaces' => array_map(static fn (Node\Name $each): string => $each->toString(), match (true) {
+                $class instanceof Stmt\Class_, $class instanceof Stmt\Enum_ => $class->implements,
+                $class instanceof Stmt\Interface_ => $class->extends,
+                default => [],
+            }),
+            'traits' => $traits,
+            'methods' => $methods,
+            'properties' => $properties,
+        ];
+    }
+
+    public function declareFunction(Stmt\Function_ $function, string $path): void
+    {
+        $name = $function->namespacedName->toString();
+        $this->functions[strtolower($name)] = ['name' => $name, 'file' => $path, 'returns' => $this->written($function->returnType, null)];
+    }
+
+    /**
+     * Types every expression of a file and binds every call, and says which other files' declarations it read.
+     *
+     * @param  list<Node>  $statements
+     * @return list<string>
+     */
+    public function infer(array $statements, string $path): array
+    {
+        $this->read = [];
+        $traverser = new NodeTraverser(new class($this) extends NodeVisitorAbstract
+        {
+            /**
+             * @var list<array{class: ?string, variables: array<string, ?array>}>
+             */
+            private array $scopes = [['class' => null, 'variables' => []]];
+
+            private ?string $class = null;
+
+            public function __construct(private readonly Types $types) {}
+
+            public function enterNode(Node $node): null
+            {
+                if ($node instanceof Stmt\ClassLike) {
+                    $this->class = $node->namespacedName?->toString();
+                }
+                if ($node instanceof Stmt\Foreach_ && $node->valueVar instanceof Expr\Variable && is_string($node->valueVar->name)) {
+                    $this->scopes[array_key_last($this->scopes)]['variables'][$node->valueVar->name] = null;
+                }
+                if ($node instanceof Node\FunctionLike) {
+                    $variables = $node instanceof Expr\ArrowFunction ? end($this->scopes)['variables'] : [];
+                    foreach ($node->getParams() as $parameter) {
+                        if ($parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
+                            $variables[$parameter->var->name] = $this->types->written($parameter->type, $this->class);
+                        }
+                    }
+                    if ($node instanceof Expr\Closure) {
+                        foreach ($node->uses as $used) {
+                            if (is_string($used->var->name)) {
+                                $variables[$used->var->name] = end($this->scopes)['variables'][$used->var->name] ?? null;
+                            }
+                        }
+                    }
+                    $this->scopes[] = ['class' => $this->class, 'variables' => $variables];
+                }
+
+                return null;
+            }
+
+            public function leaveNode(Node $node): null
+            {
+                if ($node instanceof Expr) {
+                    $scope = array_key_last($this->scopes);
+                    $type = $this->types->typeOf($node, $this->class, $this->scopes[$scope]['variables']);
+                    if ($type !== null) {
+                        $node->setAttribute('type', $type);
+                    }
+                    if ($node instanceof Expr\Assign && $node->var instanceof Expr\Variable && is_string($node->var->name)) {
+                        $this->scopes[$scope]['variables'][$node->var->name] = $type;
+                    }
+                }
+                if ($node instanceof Node\FunctionLike) {
+                    array_pop($this->scopes);
+                }
+                if ($node instanceof Stmt\ClassLike) {
+                    $this->class = null;
+                }
+
+                return null;
+            }
+        });
+        $traverser->traverse($statements);
+        unset($this->read[$path]);
+
+        return array_keys($this->read);
+    }
+
+    /**
+     * The type an expression gives, from what its parts were already given: none where PHP's own rules do not say.
+     *
+     * @param  array<string, ?array>  $variables
+     */
+    public function typeOf(Expr $expression, ?string $class, array $variables): ?array
+    {
+        return match (true) {
+            $expression instanceof Expr\Variable => $expression->name === 'this'
+                ? ($class !== null ? ['name' => $class] : null)
+                : (is_string($expression->name) ? ($variables[$expression->name] ?? null) : null),
+            $expression instanceof Expr\New_ => $this->constructed($expression, $class),
+            $expression instanceof Expr\MethodCall, $expression instanceof Expr\NullsafeMethodCall => $this->called($expression, $this->classOf($expression->var->getAttribute('type')), $class),
+            $expression instanceof Expr\StaticCall => $expression->class instanceof Node\Name
+                ? $this->called($expression, $this->named($expression->class, $class), $class)
+                : $this->called($expression, $this->classOf($expression->class->getAttribute('type')), $class),
+            $expression instanceof Expr\FuncCall => $this->function($expression),
+            $expression instanceof Expr\PropertyFetch, $expression instanceof Expr\NullsafePropertyFetch => $expression->name instanceof Node\Identifier
+                ? $this->property($this->classOf($expression->var->getAttribute('type')), $expression->name->toString())
+                : null,
+            $expression instanceof Expr\StaticPropertyFetch => $expression->class instanceof Node\Name && $expression->name instanceof Node\VarLikeIdentifier
+                ? $this->property($this->named($expression->class, $class), $expression->name->toString())
+                : null,
+            $expression instanceof Expr\ClassConstFetch => $expression->name instanceof Node\Identifier && $expression->name->toLowerString() === 'class' ? ['keyword' => 'string'] : null,
+            $expression instanceof Expr\Assign => $expression->expr->getAttribute('type'),
+            $expression instanceof Node\Scalar\String_, $expression instanceof Node\Scalar\InterpolatedString => ['keyword' => 'string'],
+            $expression instanceof Node\Scalar\Int_ => ['keyword' => 'int'],
+            $expression instanceof Node\Scalar\Float_ => ['keyword' => 'float'],
+            $expression instanceof Expr\Array_ => ['keyword' => 'array'],
+            $expression instanceof Expr\ConstFetch => match ($expression->name->toLowerString()) {
+                'true', 'false' => ['keyword' => 'bool'],
+                'null' => ['keyword' => 'null'],
+                default => null,
+            },
+            $expression instanceof Expr\Clone_ => $expression->expr->getAttribute('type'),
+            default => null,
+        };
+    }
+
+    /**
+     * A type as written on a declaration, its self and static read as the class that writes them.
+     */
+    public function written(?Node $type, ?string $class): ?array
+    {
+        if ($type instanceof Node\NullableType) {
+            $inner = $this->written($type->type, $class);
+
+            return $inner === null ? null : $inner + ['nullable' => true];
+        }
+        if ($type instanceof Node\UnionType) {
+            $members = array_values(array_filter($type->types, static fn (Node $each): bool => ! ($each instanceof Node\Identifier && $each->toLowerString() === 'null')));
+            if (count($members) === 1 && count($type->types) === 2) {
+                $inner = $this->written($members[0], $class);
+
+                return $inner === null ? null : $inner + ['nullable' => true];
+            }
+
+            return null;
+        }
+        if ($type instanceof Node\Identifier) {
+            $keyword = $type->toLowerString();
+
+            return in_array($keyword, ['self', 'static'], true) && $class !== null ? ['name' => $class] : ['keyword' => $keyword];
+        }
+        if ($type instanceof Node\Name) {
+            $name = $type->toString();
+
+            return in_array(strtolower($name), ['self', 'static'], true) ? ($class !== null ? ['name' => $class] : null) : ['name' => $name];
+        }
+
+        return null;
+    }
+
+    private function constructed(Expr\New_ $new, ?string $class): ?array
+    {
+        if (! $new->class instanceof Node\Name) {
+            return null;
+        }
+        $made = $this->named($new->class, $class);
+        if ($made === null) {
+            return null;
+        }
+        $declaring = $this->declaring($made, '__construct') ?? $made;
+        $new->setAttribute('target', ['symbol' => "{$declaring}::__construct()", 'type' => $declaring, 'name' => '__construct']);
+
+        return ['name' => $made];
+    }
+
+    private function called(Expr\MethodCall|Expr\NullsafeMethodCall|Expr\StaticCall $call, ?string $receiver, ?string $class): ?array
+    {
+        if ($receiver === null || ! $call->name instanceof Node\Identifier) {
+            return null;
+        }
+        $name = $call->name->toString();
+        $declaring = $this->declaring($receiver, $name);
+        if ($declaring === null) {
+            return null;
+        }
+        $method = $this->methods($declaring)[strtolower($name)];
+        $call->setAttribute('target', ['symbol' => "{$declaring}::{$method['name']}()", 'type' => $declaring, 'name' => $method['name']]);
+        $returns = $method['returns'];
+        if ($returns !== null && isset($returns['keyword']) && in_array($returns['keyword'], ['self', 'static'], true)) {
+            return ['name' => $receiver] + array_intersect_key($returns, ['nullable' => true]);
+        }
+
+        return $returns;
+    }
+
+    private function function(Expr\FuncCall $call): ?array
+    {
+        if (! $call->name instanceof Node\Name) {
+            return null;
+        }
+        $written = $call->name->getAttribute('namespacedName')?->toString();
+        $declared = ($written !== null ? $this->functions[strtolower($written)] ?? null : null) ?? $this->functions[$call->name->toLowerString()] ?? null;
+        if ($declared !== null) {
+            $this->reads($declared['file']);
+            $call->setAttribute('target', ['symbol' => "{$declared['name']}()", 'name' => $declared['name']]);
+
+            return $declared['returns'];
+        }
+        $global = $call->name->getLast();
+        if (function_exists($global)) {
+            $call->setAttribute('target', ['symbol' => "{$global}()", 'name' => $global]);
+        }
+
+        return null;
+    }
+
+    private function property(?string $class, string $name): ?array
+    {
+        for ($at = $class; $at !== null; $at = $this->declaration($at)['parent'] ?? null) {
+            $declared = $this->declaration($at);
+            if ($declared !== null && array_key_exists($name, $declared['properties'])) {
+                return $declared['properties'][$name];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The class that declares the method a class answers to: the class itself, a trait it uses, a parent, or an
+     * interface it implements, nearest first.
+     */
+    private function declaring(string $class, string $method): ?string
+    {
+        $lowered = strtolower($method);
+        $seen = [];
+        $waiting = [$class];
+        while ($waiting !== []) {
+            $at = array_shift($waiting);
+            if (isset($seen[strtolower($at)])) {
+                continue;
+            }
+            $seen[strtolower($at)] = true;
+            $declared = $this->declaration($at);
+            if ($declared === null) {
+                continue;
+            }
+            if (isset($declared['methods'][$lowered])) {
+                return $declared['name'];
+            }
+            array_push($waiting, ...$declared['traits']);
+            if ($declared['parent'] !== null) {
+                $waiting[] = $declared['parent'];
+            }
+            array_push($waiting, ...$declared['interfaces']);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, array{name: string, returns: ?array, static: bool}>
+     */
+    private function methods(string $class): array
+    {
+        return $this->declaration($class)['methods'] ?? [];
+    }
+
+    private function named(Node\Name $name, ?string $class): ?string
+    {
+        return match ($name->toLowerString()) {
+            'self', 'static' => $class,
+            'parent' => $class !== null ? $this->declaration($class)['parent'] ?? null : null,
+            default => $name->toString(),
+        };
+    }
+
+    private function classOf(?array $type): ?string
+    {
+        return $type['name'] ?? null;
+    }
+
+    /**
+     * A class as a judged file declares it, or as the autoloader loads it.
+     */
+    private function declaration(string $class): ?array
+    {
+        $key = strtolower(ltrim($class, '\\'));
+        if (! isset($this->classes[$key]) && $this->loads) {
+            $this->classes[$key] = $this->reflected($key);
+        }
+        $declared = $this->classes[$key] ?? null;
+        if ($declared !== null) {
+            $this->reads($declared['file']);
+        }
+
+        return $declared;
+    }
+
+    private function reads(?string $file): void
+    {
+        if ($file !== null) {
+            $this->read[$file] = true;
+        }
+    }
+
+    private function reflected(string $class): ?array
+    {
+        try {
+            if (! class_exists($class) && ! interface_exists($class) && ! trait_exists($class) && ! enum_exists($class)) {
+                return null;
+            }
+            $reflection = new ReflectionClass($class);
+        } catch (Throwable) {
+            return null;
+        }
+        $name = $reflection->getName();
+        $methods = [];
+        foreach ($reflection->getMethods() as $method) {
+            if ($method->getDeclaringClass()->getName() === $name) {
+                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), $name), 'static' => $method->isStatic()];
+            }
+        }
+        $properties = [];
+        foreach ($reflection->getProperties() as $property) {
+            if ($property->getDeclaringClass()->getName() === $name) {
+                $properties[$property->getName()] = $this->reflectedType($property->getType(), $name);
+            }
+        }
+        $parent = $reflection->getParentClass();
+
+        return [
+            'name' => $name,
+            'file' => null,
+            'parent' => $parent !== false ? $parent->getName() : null,
+            'interfaces' => $reflection->getInterfaceNames(),
+            'traits' => $reflection->getTraitNames(),
+            'methods' => $methods,
+            'properties' => $properties,
+        ];
+    }
+
+    private function reflectedType(?ReflectionType $type, string $class): ?array
+    {
+        if (! $type instanceof ReflectionNamedType) {
+            return null;
+        }
+        $nullable = $type->allowsNull() && $type->getName() !== 'null' && $type->getName() !== 'mixed' ? ['nullable' => true] : [];
+        if ($type->isBuiltin()) {
+            return in_array($type->getName(), ['self', 'static'], true) ? ['name' => $class] + $nullable : ['keyword' => $type->getName()] + $nullable;
+        }
+
+        return ['name' => in_array(strtolower($type->getName()), ['self', 'static'], true) ? $class : $type->getName()] + $nullable;
+    }
+}

@@ -3,7 +3,6 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -25,7 +24,7 @@ func TestAContainerDefaultIsFoundAndAnImmutableOneIsNot(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := pythontest.FromSource(t, map[string]string{"app/thing.py": test.source})
-			found := (python.MutableDefaultDetector{}).Find(codebase)
+			found := shipped(t, "python-mutable-default").Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

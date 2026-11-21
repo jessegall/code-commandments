@@ -1,0 +1,21 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "blank-string-on-the-wire",
+    "aliases": [
+      "BlankStringOnTheWireDetector",
+      "BlankStringOnTheWire"
+    ],
+    "skill": "php/absence",
+    "description": "A string sent over the wire that the frontend reads as absent when it is blank.",
+    "rule": "A field that crosses the wire says absence in its TYPE; never ship a blank for the far side to decode as missing.",
+    "suggestion": "`?string $x = null` on the shape, and the reader asks `x == null` — one spelling of absence, agreed by both sides.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

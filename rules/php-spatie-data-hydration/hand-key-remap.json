@@ -1,0 +1,116 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "hand-key-remap",
+    "aliases": [
+      "HandKeyRemapDetector",
+      "HandKeyRemap"
+    ],
+    "skill": "php/spatie-data-hydration",
+    "description": "A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`",
+    "rule": "Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.",
+    "suggestion": "`#[MapInputName(SnakeCaseMapper::class)]` on the class, then `SomeData::from($src)`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "spatie.isFrom",
+        "$c"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$c.arguments"
+        ],
+        1
+      ],
+      [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "=",
+          "$a.value.kind",
+          "collection"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "items",
+        [
+          "at",
+          [
+            "map",
+            "$c.arguments",
+            "a",
+            "$a.value.entries"
+          ],
+          0
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        [
+          "spatie.ownerOf",
+          "$c"
+        ]
+      ],
+      [
+        ">=",
+        [
+          "count",
+          "$items"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$items",
+        "e",
+        [
+          "spatie.remapped",
+          "$e"
+        ]
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          [
+            "map",
+            "$items",
+            "e",
+            "$e.value.subject.name"
+          ]
+        ],
+        1
+      ],
+      [
+        "some",
+        "$items",
+        "e",
+        [
+          "!=",
+          "$e.key.value",
+          "$e.value.key.value"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

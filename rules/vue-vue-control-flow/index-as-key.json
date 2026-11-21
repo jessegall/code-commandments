@@ -1,0 +1,100 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "index-as-key",
+    "aliases": [
+      "IndexAsKeyDetector",
+      "IndexAsKey"
+    ],
+    "skill": "vue/vue-control-flow",
+    "description": "`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted",
+    "rule": "Key a `v-for` by a stable identity (`:key=\"item.id\"`), never the loop index — unless plain strings or numbers are rendered as markup that keeps no state, where the place is their only identity."
+  },
+  "find": {
+    "select": "element",
+    "as": "e",
+    "where": [
+      "vue.hasDirective",
+      "$e",
+      "for"
+    ],
+    "let": [
+      [
+        "loop",
+        [
+          "vue.directive",
+          "$e",
+          "for"
+        ]
+      ],
+      [
+        "key",
+        [
+          "vue.bound",
+          "$e",
+          "key"
+        ]
+      ],
+      [
+        "last",
+        [
+          "last",
+          "$loop.bindings"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$loop.bindings"
+        ],
+        2
+      ],
+      [
+        "exists",
+        "$key"
+      ],
+      [
+        "=",
+        "$key.value.kind",
+        "reference"
+      ],
+      [
+        "=",
+        "$key.value.name",
+        "$last.name"
+      ],
+      [
+        "or",
+        [
+          ">=",
+          [
+            "count",
+            "$loop.bindings"
+          ],
+          3
+        ],
+        [
+          "=",
+          "$loop.iterable.resolved.kind",
+          "array"
+        ]
+      ],
+      [
+        "not",
+        [
+          "=",
+          "$loop.iterable.resolved.element.kind",
+          "keyword"
+        ]
+      ]
+    ],
+    "emit": "$e"
+  }
+}

@@ -193,37 +193,36 @@ func typeOf(held types.Type, origin string) *contract.Type {
 		return nil
 	}
 
-	line := &contract.Type{Text: types.TypeString(held, qualify), Origin: origin}
+	line := &contract.Type{Text: types.TypeString(held, qualify), Origin: origin,
+		Nullable: contract.Stated(admitsNil(held.Underlying())), ValueType: contract.Stated(isValueType(held.Underlying()))}
 	switch shape := held.(type) {
 	case *types.Basic:
-		line.Kind, line.Name, line.ValueType = "keyword", shape.Name(), true
+		line.Kind, line.Name = "keyword", shape.Name()
 	case *types.Named:
 		line.Kind, line.Name = "named", namedPath(shape)
-		line.ValueType = isValueType(shape.Underlying())
-		line.Nullable = admitsNil(shape.Underlying())
 		for i := range shape.TypeArgs().Len() {
 			line.Args = append(line.Args, listedTypeOf(shape.TypeArgs().At(i), origin))
 		}
 		line.Element = elementOf(shape.Underlying(), origin)
 	case *types.Pointer:
-		line.Kind, line.Nullable, line.Element = "pointer", true, typeOf(shape.Elem(), origin)
+		line.Kind, line.Element = "pointer", typeOf(shape.Elem(), origin)
 	case *types.Slice:
 		line.Kind, line.Args, line.Element = "array", []*contract.Type{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin)
 	case *types.Array:
-		line.Kind, line.Args, line.Element, line.ValueType = "array", []*contract.Type{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin), true
+		line.Kind, line.Args, line.Element = "array", []*contract.Type{typeOf(shape.Elem(), origin)}, typeOf(shape.Elem(), origin)
 	case *types.Map:
 		line.Kind, line.Args = "map", []*contract.Type{listedTypeOf(shape.Key(), origin), listedTypeOf(shape.Elem(), origin)}
 		line.Element = typeOf(shape.Elem(), origin)
 	case *types.Chan:
 		line.Kind = "opaque"
 	case *types.Struct:
-		line.Kind, line.ValueType = "object", true
+		line.Kind = "object"
 		for i := range shape.NumFields() {
 			field := shape.Field(i)
 			line.Fields = append(line.Fields, contract.TypeField{Name: field.Name(), Type: typeOf(field.Type(), origin)})
 		}
 	case *types.Interface:
-		line.Kind, line.Nullable = "opaque", true
+		line.Kind = "opaque"
 	case *types.Signature:
 		line.Kind = "function"
 		for i := range shape.Params().Len() {

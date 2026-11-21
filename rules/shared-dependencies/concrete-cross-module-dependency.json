@@ -1,0 +1,126 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "concrete-cross-module-dependency",
+    "aliases": [
+      "ConcreteCrossModuleDependencyDetector",
+      "ConcreteCrossModuleDependency"
+    ],
+    "skill": "shared/dependencies",
+    "description": "A constructor takes another module's concrete service",
+    "rule": "Take a contract for the cross-module dependency.",
+    "suggestion": "Take a contract for the cross-module dependency.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "concrete": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$d.form",
+          "class",
+          "struct"
+        ],
+        [
+          "none",
+          "$d.modifiers",
+          "m",
+          [
+            "=",
+            "$m",
+            "abstract"
+          ]
+        ],
+        [
+          "none",
+          "$d.attributes",
+          "a",
+          [
+            "=",
+            "$a.name",
+            "dataclass"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "parameter",
+    "as": "p",
+    "where": [
+      "and",
+      [
+        "not",
+        "$p.file.test"
+      ],
+      [
+        "=",
+        "$p.parent.kind",
+        "function"
+      ],
+      [
+        "=",
+        "$p.parent.form",
+        "constructor"
+      ]
+    ],
+    "let": [
+      [
+        "supplier",
+        [
+          "typeDeclaration",
+          "$p.binding.resolved.name"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$supplier"
+      ],
+      [
+        "concrete",
+        "$supplier"
+      ],
+      [
+        "nonempty",
+        "$supplier.file.module"
+      ],
+      [
+        "nonempty",
+        "$p.file.module"
+      ],
+      [
+        "not",
+        [
+          "withinModule",
+          "$supplier.file.module",
+          "$p.file.module"
+        ]
+      ],
+      [
+        "not",
+        [
+          "withinModule",
+          "$p.file.module",
+          "$supplier.file.module"
+        ]
+      ]
+    ],
+    "emit": "$p"
+  }
+}

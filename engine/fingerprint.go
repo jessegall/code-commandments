@@ -1,0 +1,279 @@
+package engine
+
+import (
+	"crypto/sha1"
+	"encoding/hex"
+	"slices"
+	"strconv"
+	"strings"
+)
+
+// Fingerprint is a subtree's structure, hashed: each node's kind, the role it fills, its name, operator, form and
+// modifiers and a literal's value, in source order, with no-op statements dropped. Normalised, a local name and a
+// literal's value read as their kind alone, so two copies that differ only in them hash the same; a callee keeps its
+// name either way, since calling another function is another behaviour.
+func (m Match) Fingerprint(normalize bool) string {
+	mode := "exact"
+	if normalize {
+		mode = "normalized"
+	}
+	written, _ := m.FingerprintAs(Fingerprinting{Mode: mode})
+
+	return written
+}
+
+// Fingerprinting says what a fingerprint keeps of a subtree. Mode exact keeps every name and value; normalized reads
+// a local name and a literal as their kind; renamed numbers each local binding by its first appearance, so a copy
+// that renames its locals one for one hashes the same and one that uses a variable twice does not; shape keeps only
+// kinds and roles; calls is the order of the resolved targets called; signature is a function's name, parameter
+// types and return type; text is the source with its white space collapsed. LiteralKinds reads each literal as its
+// kind, Commutative sorts the operands of an operator whose order does not matter.
+type Fingerprinting struct {
+	Mode         string
+	LiteralKinds bool
+	Commutative  bool
+}
+
+// FingerprintModes are the modes a fingerprint is taken in.
+var FingerprintModes = []string{"exact", "normalized", "renamed", "shape", "calls", "signature", "text"}
+
+// FingerprintAs is the subtree's fingerprint taken as asked, and whether it can be: not where a node the parser
+// recovered from or could not translate lies inside, nor for calls whose target, or a signature whose type, the
+// compiler did not resolve.
+func (m Match) FingerprintAs(how Fingerprinting) (string, bool) {
+	if m.node == nil {
+		return "", false
+	}
+	var written string
+	switch how.Mode {
+	case "calls":
+		calls, resolved := m.calledTargets()
+		if !resolved {
+			return "", false
+		}
+		written = strings.Join(calls, ";")
+	case "signature":
+		signature, resolved := m.signature()
+		if !resolved {
+			return "", false
+		}
+		written = signature
+	case "text":
+		text, read := m.Text()
+		if !read {
+			return "", false
+		}
+		written = strings.Join(strings.Fields(text), " ")
+	default:
+		if !slices.Contains(FingerprintModes, how.Mode) {
+			return "", false
+		}
+		walked := fingerprintWalk{how: how, numbered: map[int]int{}}
+		written = walked.structure(m)
+		if walked.recovered {
+			return "", false
+		}
+	}
+	sum := sha1.Sum([]byte(written))
+
+	return hex.EncodeToString(sum[:]), true
+}
+
+// SyntaxWeight is how many nodes a subtree holds, no-op statements left out.
+func (m Match) SyntaxWeight() int {
+	if m.node == nil || m.node.Kind == "no-op" {
+		return 0
+	}
+	weight := 1
+	for _, child := range m.Children() {
+		weight += child.SyntaxWeight()
+	}
+
+	return weight
+}
+
+type fingerprintWalk struct {
+	how       Fingerprinting
+	numbered  map[int]int
+	recovered bool
+}
+
+// orderFree are the operators whose operands may be swapped without changing what they mean.
+var orderFree = []string{"add", "multiply", "bit-and", "bit-or", "bit-xor", "equal", "not-equal", "identical", "not-identical", "and", "or"}
+
+func (w *fingerprintWalk) structure(m Match) string {
+	node := m.node
+	if node.Incomplete || node.Kind == "unsupported" {
+		w.recovered = true
+	}
+	normalize := w.how.Mode == "normalized"
+	switch {
+	case w.how.Mode == "shape":
+		parts := []string{node.Kind, node.InRole()}
+		for _, child := range m.Children() {
+			if child.node.Kind != "no-op" {
+				parts = append(parts, w.structure(child))
+			}
+		}
+
+		return "(" + strings.Join(parts, "|") + ")"
+	case node.Kind == "literal" && (normalize || w.how.LiteralKinds):
+		return "(literal|" + node.LiteralKind + ")"
+	case node.Kind == "literal" && node.Value != nil:
+		written, _ := node.Value.MarshalJSON()
+
+		return "(literal|" + node.LiteralKind + "|" + string(written) + ")"
+	case node.Kind == "reference" && normalize && node.InRole() != "callee":
+		return "(reference)"
+	case w.how.Mode == "renamed" && node.Kind == "binding":
+		return "(binding|" + node.InRole() + "|v" + w.number(node.ID) + ")"
+	case w.how.Mode == "renamed" && node.Kind == "reference" && len(node.Linked("binding")) == 1:
+		return "(reference|" + node.InRole() + "|v" + w.number(node.Linked("binding")[0]) + ")"
+	}
+	parts := []string{node.Kind, node.InRole()}
+	if !normalize || !node.Is("declaration") {
+		parts = append(parts, node.Name)
+	}
+	parts = append(parts, node.Operator, node.Form, strings.Join(node.Modifiers, " "))
+	var children []string
+	for _, child := range m.Children() {
+		if child.node.Kind != "no-op" {
+			children = append(children, w.structure(child))
+		}
+	}
+	if w.how.Commutative && slices.Contains(orderFree, node.Operator) {
+		slices.Sort(children)
+	}
+
+	return "(" + strings.Join(append(parts, children...), "|") + ")"
+}
+
+// number is a local binding's place among the bindings the subtree names, counted in the order each first appears.
+func (w *fingerprintWalk) number(binding int) string {
+	if _, seen := w.numbered[binding]; !seen {
+		w.numbered[binding] = len(w.numbered)
+	}
+
+	return strconv.Itoa(w.numbered[binding])
+}
+
+// calledTargets is each call and construction under the node, in source order, named by the declaration it resolves to.
+func (m Match) calledTargets() ([]string, bool) {
+	var targets []string
+	resolved := true
+	var walk func(at Match)
+	walk = func(at Match) {
+		if kind := at.node.Kind; kind == "call" || kind == "construction" {
+			if at.node.Target == nil {
+				resolved = false
+			} else {
+				targets = append(targets, at.node.Target.Type+"::"+at.node.Target.Name)
+			}
+		}
+		for _, child := range at.Children() {
+			walk(child)
+		}
+	}
+	walk(m)
+
+	return targets, resolved
+}
+
+// signature is a function's name, its parameters' types in order and its return type, each as the compiler resolved it.
+func (m Match) signature() (string, bool) {
+	if m.node.Kind != "function" {
+		return "", false
+	}
+	typeOf := func(written Match) (string, bool) {
+		if !written.Exists() {
+			return "", true
+		}
+		resolved := written.Typed()
+		if resolved == nil {
+			return "", false
+		}
+
+		return resolved.Text, true
+	}
+	var parameters []string
+	for _, parameter := range m.ChildrenIn("parameters") {
+		declared, resolved := typeOf(parameter.Child("declaredType"))
+		if !resolved {
+			return "", false
+		}
+		parameters = append(parameters, declared)
+	}
+	returned, resolved := typeOf(m.Child("returnType"))
+
+	return m.node.Name + "(" + strings.Join(parameters, ",") + "):" + returned, resolved
+}
+
+// Reports says whether a finding in the file is reported: every file of the codebase, or the files a run narrowed it to.
+func (c *Codebase) Reports(file *File) bool {
+	return !file.dependency && (len(c.reporting) == 0 || c.reporting[file.Path])
+}
+
+// ResolvedImport is one import that reaches a file of the project: the module it is written in and the module it reaches.
+type ResolvedImport struct {
+	At   Match
+	From string
+	To   string
+}
+
+// ResolvedImports is every import of the project's own files that reaches another of its modules, in file and source
+// order, read once per codebase. An import reaches the file its resolves fact names, else the module its source
+// names, else the module of each project declaration its bindings, or it, refer to.
+func ResolvedImports(codebase *Codebase) []ResolvedImport {
+	return Analysis(codebase, "resolved-imports", func(codebase *Codebase) []ResolvedImport {
+		byPath := map[string]string{}
+		modules := map[string]bool{}
+		for _, file := range codebase.Files() {
+			if !file.dependency && file.Module != "" {
+				byPath[file.Path] = file.Module
+				modules[file.Module] = true
+			}
+		}
+		var resolved []ResolvedImport
+		for _, file := range codebase.Files() {
+			if file.dependency || file.Module == "" {
+				continue
+			}
+			for _, node := range file.OfKind("import") {
+				at := Match{node: node, file: file}
+				for _, to := range codebase.reached(at, byPath, modules) {
+					resolved = append(resolved, ResolvedImport{At: at, From: file.Module, To: to})
+				}
+			}
+		}
+
+		return resolved
+	})
+}
+
+func (c *Codebase) reached(imported Match, byPath map[string]string, modules map[string]bool) []string {
+	node := imported.node
+	if to, reaches := byPath[node.Resolves]; reaches && node.Resolves != "" {
+		return []string{to}
+	}
+	if modules[node.Source] {
+		return []string{node.Source}
+	}
+	symbols := []string{node.Refers}
+	bindings, _ := node.Role("bindings")
+	for _, binding := range bindings {
+		symbols = append(symbols, binding.Refers)
+	}
+	var reached []string
+	for _, symbol := range symbols {
+		if symbol == "" {
+			continue
+		}
+		for _, declaration := range c.Declarations(symbol) {
+			if module := byPath[declaration.File()]; module != "" && !slices.Contains(reached, module) {
+				reached = append(reached, module)
+			}
+		}
+	}
+
+	return reached
+}

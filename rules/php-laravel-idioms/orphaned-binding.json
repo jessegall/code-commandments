@@ -1,0 +1,416 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php"
+  ],
+  "sin": {
+    "name": "orphaned-binding",
+    "aliases": [
+      "OrphanedBindingDetector",
+      "OrphanedBinding",
+      "csharp-orphaned-binding"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor",
+    "rule": "Wiring is code: a binding exists to answer a resolve. When the last consumer goes, the binding goes with it.",
+    "suggestion": "Delete the registration (and the implementation it names, if that is dead too).",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "binding": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "in",
+          "$c.callee.member.name",
+          "bind",
+          "bindIf",
+          "singleton",
+          "singletonIf",
+          "scoped",
+          "scopedIf",
+          "instance"
+        ],
+        [
+          "some",
+          "$c.arguments",
+          "a",
+          [
+            "and",
+            [
+              "=",
+              [
+                "position",
+                "$a"
+              ],
+              0
+            ],
+            [
+              "=",
+              "$a.value.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$a.value.member.name",
+              "class"
+            ]
+          ]
+        ]
+      ]
+    },
+    "abstractOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          [
+            "filter",
+            "$c.arguments",
+            "a",
+            [
+              "=",
+              [
+                "position",
+                "$a"
+              ],
+              0
+            ]
+          ],
+          "a",
+          "$a.value.subject.refers"
+        ],
+        0
+      ]
+    },
+    "resolvedInTest": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$r.parent.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$r.parent.member.name",
+          "class"
+        ],
+        [
+          "=",
+          "$r.parent.parent.kind",
+          "argument"
+        ],
+        [
+          "in",
+          [
+            "calleeName",
+            "$r.parent.parent.parent"
+          ],
+          "make",
+          "get",
+          "makeWith",
+          "app",
+          "resolve",
+          "instance",
+          "swap",
+          "mock",
+          "partialMock",
+          "spy"
+        ]
+      ]
+    },
+    "calleeName": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.callee.kind",
+        {
+          "access": "$c.callee.member.name",
+          "reference": "$c.callee.name"
+        },
+        ""
+      ]
+    },
+    "csRegistration": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "in",
+          "$c.callee.member.name",
+          "AddSingleton",
+          "AddScoped",
+          "AddTransient",
+          "TryAddSingleton",
+          "TryAddScoped",
+          "TryAddTransient"
+        ],
+        [
+          "contains",
+          "$c.target.symbol",
+          "Microsoft.Extensions.DependencyInjection."
+        ],
+        [
+          ">",
+          [
+            "count",
+            "$c.typeArguments"
+          ],
+          0
+        ]
+      ]
+    },
+    "csResolution": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "in",
+          "$c.callee.member.name",
+          "GetService",
+          "GetRequiredService",
+          "GetKeyedService",
+          "GetRequiredKeyedService"
+        ],
+        [
+          "or",
+          [
+            "contains",
+            "$c.target.symbol",
+            "System.IServiceProvider."
+          ],
+          [
+            "contains",
+            "$c.target.symbol",
+            "Microsoft.Extensions.DependencyInjection."
+          ]
+        ]
+      ]
+    },
+    "csService": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          "$c.typeArguments",
+          "t",
+          "$t.refers"
+        ],
+        0
+      ]
+    },
+    "csReached": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "and",
+        [
+          "not",
+          "$r.file.test"
+        ],
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "declaredType"
+            ],
+            [
+              "=",
+              "$r.parent.kind",
+              "parameter"
+            ],
+            [
+              "=",
+              "$r.parent.parent.form",
+              "constructor"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "typeArguments"
+            ],
+            [
+              "csResolution",
+              "$r.parent"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "case",
+        "$c.file.language",
+        {
+          "php": [
+            "binding",
+            "$c"
+          ],
+          "csharp": [
+            "csRegistration",
+            "$c"
+          ]
+        },
+        false
+      ]
+    ],
+    "let": [
+      [
+        "declared",
+        [
+          "typeDeclaration",
+          [
+            "case",
+            "$c.file.language",
+            {
+              "php": [
+                "abstractOf",
+                "$c"
+              ]
+            },
+            [
+              "csService",
+              "$c"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$declared"
+      ],
+      [
+        "case",
+        "$c.file.language",
+        {
+          "php": [
+            "none",
+            [
+              "referrers",
+              "$declared"
+            ],
+            "r",
+            [
+              "and",
+              [
+                "none",
+                [
+                  "ownAncestors",
+                  "$r"
+                ],
+                "a",
+                [
+                  "binding",
+                  "$a"
+                ]
+              ],
+              [
+                "not",
+                [
+                  "in",
+                  "$r.parent.kind",
+                  "import-binding",
+                  "import"
+                ]
+              ],
+              [
+                "or",
+                [
+                  "not",
+                  "$r.file.test"
+                ],
+                [
+                  "resolvedInTest",
+                  "$r"
+                ]
+              ]
+            ]
+          ]
+        },
+        [
+          "none",
+          [
+            "referrers",
+            "$declared"
+          ],
+          "r",
+          [
+            "csReached",
+            "$r"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

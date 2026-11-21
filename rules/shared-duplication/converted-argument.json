@@ -1,0 +1,224 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "converted-argument",
+    "aliases": [
+      "python-converted-argument",
+      "csharp-converted-argument",
+      "ConvertedArgumentDetector",
+      "ConvertedArgument"
+    ],
+    "skill": "shared/duplication",
+    "description": "Most callers convert a value the same way for one parameter",
+    "rule": "Accept the value the callers already have and let the callee own the conversion.",
+    "suggestion": "Take the original typed value and convert it where it is used.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "conversion": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$v.kind",
+          "call"
+        ],
+        [
+          "=",
+          [
+            "count",
+            "$v.arguments"
+          ],
+          1
+        ],
+        [
+          "scalar",
+          "$v.resolved"
+        ],
+        [
+          "not",
+          [
+            "scalar",
+            [
+              "typeOfFirst",
+              "$v"
+            ]
+          ]
+        ],
+        [
+          "exists",
+          [
+            "typeOfFirst",
+            "$v"
+          ]
+        ]
+      ]
+    },
+    "scalar": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$t.kind",
+          "keyword"
+        ],
+        [
+          "tree.boolean",
+          "$t"
+        ]
+      ]
+    },
+    "typeOfFirst": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "resolvedOf",
+        [
+          "at",
+          [
+            "map",
+            "$v.arguments",
+            "g",
+            "$g.value"
+          ],
+          0
+        ]
+      ]
+    },
+    "resolvedOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.resolved"
+    },
+    "sameConversion": {
+      "args": [
+        "a",
+        "b"
+      ],
+      "expr": [
+        "and",
+        [
+          "conversion",
+          "$a"
+        ],
+        [
+          "=",
+          "$a.target.symbol",
+          "$b.target.symbol"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "call",
+      "construction"
+    ],
+    "as": "c",
+    "where": [
+      "not",
+      "$c.file.test"
+    ],
+    "let": [
+      [
+        "declared",
+        [
+          "declarationOf",
+          "$c"
+        ]
+      ],
+      [
+        "calls",
+        [
+          "tree.callsOf",
+          "$declared"
+        ]
+      ]
+    ],
+    "having": [
+      "some",
+      "$c.arguments",
+      "g",
+      [
+        "and",
+        [
+          "conversion",
+          "$g.value"
+        ],
+        [
+          ">=",
+          [
+            "count",
+            [
+              "filter",
+              "$calls",
+              "o",
+              [
+                "sameConversion",
+                [
+                  "tree.valueAt",
+                  "$o",
+                  [
+                    "position",
+                    "$g"
+                  ]
+                ],
+                "$g.value"
+              ]
+            ]
+          ],
+          2
+        ],
+        [
+          ">=",
+          [
+            "multiply",
+            [
+              "count",
+              [
+                "filter",
+                "$calls",
+                "o",
+                [
+                  "sameConversion",
+                  [
+                    "tree.valueAt",
+                    "$o",
+                    [
+                      "position",
+                      "$g"
+                    ]
+                  ],
+                  "$g.value"
+                ]
+              ]
+            ],
+            2
+          ],
+          [
+            "count",
+            "$calls"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

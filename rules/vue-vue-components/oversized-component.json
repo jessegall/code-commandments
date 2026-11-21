@@ -1,0 +1,94 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "oversized-component",
+    "aliases": [
+      "ComponentBudgetDetector",
+      "OversizedComponent"
+    ],
+    "skill": "vue/vue-components",
+    "description": "A component whose template renders more elements than the project's declared budget — one component doing several jobs",
+    "rule": "Split a component past the project's element budget into single-purpose children; the parent only composes them."
+  },
+  "parameters": {
+    "elements": {
+      "type": "number",
+      "default": 0,
+      "description": "The most elements a component's template renders before it is reported; 0 turns the rule off."
+    }
+  },
+  "find": {
+    "select": "module",
+    "as": "m",
+    "where": [
+      "and",
+      [
+        "=",
+        "$m.name",
+        "template"
+      ],
+      [
+        ">",
+        "$param.elements",
+        0
+      ]
+    ],
+    "let": [
+      [
+        "rendered",
+        [
+          "count",
+          [
+            "filter",
+            [
+              "flatten",
+              [
+                "list",
+                "$m.statements",
+                [
+                  "flatten",
+                  [
+                    "map",
+                    "$m.statements",
+                    "s",
+                    [
+                      "ownDescendants",
+                      "$s"
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "element"
+              ],
+              [
+                "!=",
+                "$x.tag",
+                "template"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      ">",
+      "$rendered",
+      "$param.elements"
+    ],
+    "emit": [
+      "at",
+      "$m.statements",
+      0
+    ]
+  }
+}

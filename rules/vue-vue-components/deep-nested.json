@@ -1,0 +1,17 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "deep-nested",
+    "aliases": [
+      "DeepNestedDetector",
+      "DeepNested"
+    ],
+    "skill": "vue/vue-components",
+    "description": "Template markup nested far too deep — extract a subtree as its own component",
+    "rule": "Extract a far-too-deeply-nested subtree into its own component."
+  },
+  "find": {}
+}

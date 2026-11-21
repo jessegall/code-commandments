@@ -1,0 +1,212 @@
+{
+  "package": "django",
+  "ecosystem": "pypi",
+  "versions": ">=3",
+  "provenance": "engine/python/orm/queries.go djangoQueries",
+  "entries": [
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "get_or_create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "get_or_create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "update_or_create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "update_or_create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "last",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "last",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "aggregate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "aggregate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "filter",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "filter",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "exclude",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "exclude",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "order_by",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "order_by",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "select_related",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "select_related",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "prefetch_related",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "prefetch_related",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.manager.Manager",
+      "name": "all",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "django.db.models.query.QuerySet",
+      "name": "all",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    }
+  ]
+}

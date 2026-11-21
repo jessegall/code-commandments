@@ -1,0 +1,68 @@
+{
+  "package": "spatie/laravel-data",
+  "ecosystem": "composer",
+  "versions": ">=3",
+  "provenance": "engine/php/spatie: a Data class built by from() casts its input to its own type; engine/php/packages/shipped.go",
+  "entries": [
+    {
+      "type": "Spatie\\LaravelData\\Data",
+      "name": "from",
+      "effect": "cast-result-type",
+      "execution": "call"
+    },
+    {
+      "type": "Spatie\\LaravelData\\Data",
+      "name": "collect",
+      "effect": "cast-result-type",
+      "execution": "call"
+    }
+  ],
+  "exemptions": [
+    {
+      "on": {
+        "Spatie\\LaravelData\\Data": [
+          "rules"
+        ]
+      },
+      "tag": "array-return-contract",
+      "why": "The framework requires this hook to return an array."
+    },
+    {
+      "on": {
+        "Spatie\\LaravelData\\Attributes\\InjectsPropertyValue": [
+          "resolve"
+        ]
+      },
+      "tag": "composition-root",
+      "why": "A provider or framework construction hook that wires config into values without constructor injection."
+    },
+    {
+      "on": {
+        "Spatie\\LaravelData\\Contracts\\PropertyMorphableData": [
+          "morph"
+        ]
+      },
+      "tag": "contract-method",
+      "why": "A framework-mandated method whose signature the framework dictates."
+    },
+    {
+      "classes": [
+        "Spatie\\LaravelData\\DataPipes\\DataPipe",
+        "Spatie\\LaravelData\\Casts\\Cast",
+        "Spatie\\LaravelData\\Attributes\\InjectsPropertyValue"
+      ],
+      "tag": "no-container",
+      "why": "A type the framework instantiates itself, without the container."
+    }
+  ],
+  "identities": [
+    {
+      "name": "data",
+      "type": "Spatie\\LaravelData\\Data"
+    },
+    {
+      "name": "data-collection",
+      "type": "Spatie\\LaravelData\\DataCollection"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "package": "collections",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "each language's own membership test over a list: PHP in_array, JavaScript Array.prototype.includes, .NET Enumerable.Contains",
+  "entries": [
+    {"type": "", "name": "in_array", "effect": "tests-membership", "execution": "call"},
+    {"type": "Array", "name": "includes", "effect": "tests-membership", "execution": "call"},
+    {"type": "System.Linq.Enumerable", "name": "Contains", "effect": "tests-membership", "execution": "call"}
+  ]
+}

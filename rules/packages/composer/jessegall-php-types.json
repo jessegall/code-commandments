@@ -1,0 +1,13 @@
+{
+  "package": "jessegall/php-types",
+  "ecosystem": "composer",
+  "versions": ">=1",
+  "provenance": "engine/php/phptypes, engine/php/concurrent",
+  "entries": [],
+  "identities": [
+    {
+      "name": "option",
+      "type": "JesseGall\\PhpTypes\\Option"
+    }
+  ]
+}

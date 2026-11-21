@@ -5,27 +5,6 @@ const (
 	conditionSubjects = 2
 )
 
-func TestsAnUnnamedConcept(m Match) bool {
-	if !m.Is(Conjunction) {
-		return false
-	}
-	if m.Parent().Is(Conjunction) {
-		return false
-	}
-	if !isDecisionCondition(m) {
-		return false
-	}
-	parts := conditionChainOf(m)
-	if len(parts) < conditionParts {
-		return false
-	}
-	if declaresAName(parts) {
-		return false
-	}
-
-	return len(subjectsOf(parts)) >= conditionSubjects
-}
-
 func isDecisionCondition(m Match) bool {
 	parent := m.Parent()
 	if assertion := m.grammar().TestAssertion; assertion != nil && m.IsTest() {

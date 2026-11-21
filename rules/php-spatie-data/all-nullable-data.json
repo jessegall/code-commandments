@@ -1,0 +1,144 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "all-nullable-data",
+    "aliases": [
+      "AllNullableDataDetector",
+      "AllNullableData"
+    ],
+    "skill": "php/spatie-data",
+    "description": "All-nullable \"god\" DTO — every field `?T`/defaulted (type doesn't tell the truth)",
+    "rule": "Use non-nullable types for values the class guarantees. Use `T|Optional = new Optional()` for omitted fields in any Data class. A single required nullable value can carry an explicit state, such as clearing a selection. Give empty filters, collections, or money breakdowns a typed identity where one exists.",
+    "suggestion": "Retype each field to the truth: required → non-nullable, no default; genuinely-absent → `T|Optional = new Optional()` (dropped from output, not `null`); always-present-but-emptyable → a Null Object / identity default (`Grid $grid = new Grid()`, `Status $s = Status::Default`). If a whole SUB-object may be absent, put the optional on the CONTAINER field (`Type|Optional $x = new Optional()`) and keep that type's leaves concrete — don't scatter `?T`/`Optional` across every leaf.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "requiresBestDesign": true
+    }
+  },
+  "definitions": {
+    "optionalDefault": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "spatie.slotDefault",
+            "$s"
+          ]
+        ],
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "spatie.typeRefers",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "Spatie\\LaravelData\\Optional"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "=",
+      "$t.form",
+      "class"
+    ],
+    "let": [
+      [
+        "slots",
+        [
+          "spatie.publicSlots",
+          "$t"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        "$t"
+      ],
+      [
+        ">",
+        [
+          "count",
+          "$slots"
+        ],
+        0
+      ],
+      [
+        "every",
+        "$slots",
+        "s",
+        [
+          "spatie.nullable",
+          "$s.declaredType"
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$slots"
+            ],
+            1
+          ],
+          [
+            "none",
+            "$slots",
+            "s",
+            [
+              "exists",
+              [
+                "spatie.slotDefault",
+                "$s"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "every",
+          "$slots",
+          "s",
+          [
+            "spatie.optional",
+            "$s.declaredType"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$t"
+  }
+}

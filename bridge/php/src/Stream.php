@@ -36,12 +36,21 @@ final readonly class Stream
         $declared = [];
         $parser = null;
         $written = 0;
-        foreach ($files as $path) {
-            if (! $this->request->judges($path)) {
-                continue;
-            }
+        $types = new Types();
+        $judged = array_values(array_filter($files, $this->request->judges(...)));
+        foreach ($judged as $path) {
             $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
-            $file = $this->parsed($path, $this->request->contents[$path] ?? (string) file_get_contents($path), $parser);
+            $types->declare($this->read($this->request->contents[$path] ?? (string) file_get_contents($path), $parser)[1], $path);
+        }
+        $autoload = $this->autoload();
+        if ($autoload !== null && $this->loadFailure($autoload) === '') {
+            require_once $autoload;
+            $types->loadsClasses();
+        }
+        foreach ($judged as $path) {
+            $code = $this->request->contents[$path] ?? (string) file_get_contents($path);
+            [, $statements, $errors, $tokens] = $this->read($code, $parser);
+            $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types->infer($statements, $path));
             $this->line($out, ['file' => $file]);
             $referenced += $file->translator->referenced;
             $declared += $file->translator->declared;
@@ -51,12 +60,28 @@ final readonly class Stream
         $this->line($out, ['trailer' => ['files' => $written]]);
     }
 
-    private function parsed(string $path, string $code, Parser $parser): ParsedFile
+    /**
+     * A file parsed with its names resolved: its code, statements, parse errors and tokens. Each file is parsed once to
+     * read its declarations and again to translate it, so no more than one file's tree is held at a time.
+     *
+     * @return array{string, list<\PhpParser\Node>, Collecting, array}
+     */
+    private function read(string $code, Parser $parser): array
     {
         $errors = new Collecting();
         $statements = $parser->parse($code, $errors) ?? [];
         $statements = (new NodeTraverser(new NameResolver($errors)))->traverse($statements);
-        $translator = new Translator($code, $parser->getTokens());
+
+        return [$code, $statements, $errors, $parser->getTokens()];
+    }
+
+    /**
+     * @param  list<\PhpParser\Node>  $statements
+     * @param  list<string>  $reads  the other files whose declarations typed this one
+     */
+    private function parsed(string $path, string $code, array $statements, Collecting $errors, array $tokens, array $reads): ParsedFile
+    {
+        $translator = new Translator($code, $tokens);
         $root = $translator->file($statements);
         $nodes = $root->numbered();
         $modules = $root->parts['modules'];
@@ -71,7 +96,30 @@ final readonly class Stream
             $root->written($translator->line(...)),
             $translator->comments($nodes),
             $translator,
+            $translator->types,
+            array_merge($reads, $this->publishing($path)[1]),
+            $this->publishing($path)[0],
         );
+    }
+
+    /**
+     * The package that ships a config file the project holds a copy of, as vendor/<package>/config/<name>.php, and the
+     * lock file that says which packages are installed: a published config is read by its package, not the project.
+     *
+     * @return array{?string, list<string>}
+     */
+    private function publishing(string $path): array
+    {
+        if (basename(dirname($path)) !== 'config') {
+            return [null, []];
+        }
+        $root = dirname($path, 2);
+        $lock = is_file("{$root}/composer.lock") ? ["{$root}/composer.lock"] : [];
+        foreach (glob("{$root}/vendor/*/*/config/".basename($path)) ?: [] as $shipped) {
+            return [basename(dirname($shipped, 3)).'/'.basename(dirname($shipped, 2)), $lock];
+        }
+
+        return [null, $lock];
     }
 
     /**

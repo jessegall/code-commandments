@@ -1,0 +1,157 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "const-class-enum",
+    "aliases": [
+      "python-const-class-enum",
+      "csharp-const-class-enum",
+      "ConstClassEnumDetector",
+      "ConstClassEnum",
+      "python-constant-class-enum",
+      "ConstantClassEnumDetector",
+      "ConstantClassEnum"
+    ],
+    "skill": "shared/enums",
+    "description": "A class of constants defines a closed set of cases",
+    "rule": "Declare the cases as an enum.",
+    "suggestion": "Declare the cases as an enum.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "constantMember": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$m.kind",
+          "constant"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "field"
+          ],
+          [
+            "some",
+            "$m.modifiers",
+            "x",
+            [
+              "in",
+              "$x",
+              "static",
+              "const",
+              "readonly",
+              "final"
+            ]
+          ]
+        ]
+      ]
+    },
+    "literalDeclarators": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "filter",
+        "$m.declarators",
+        "d",
+        [
+          "and",
+          [
+            "=",
+            "$d.initializer.kind",
+            "literal"
+          ],
+          [
+            "in",
+            "$d.initializer.literalKind",
+            "string",
+            "integer"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "not",
+        "$t.file.test"
+      ],
+      [
+        "in",
+        "$t.form",
+        "class",
+        "object",
+        "struct"
+      ]
+    ],
+    "let": [
+      [
+        "members",
+        "$t.writtenMembers"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "none",
+        "$members",
+        "m",
+        [
+          "=",
+          "$m.kind",
+          "function"
+        ]
+      ],
+      [
+        ">=",
+        [
+          "count",
+          "$members"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$members",
+        "m",
+        [
+          "and",
+          [
+            "constantMember",
+            "$m"
+          ],
+          [
+            ">",
+            [
+              "count",
+              [
+                "literalDeclarators",
+                "$m"
+              ]
+            ],
+            0
+          ]
+        ]
+      ]
+    ],
+    "emit": "$t"
+  }
+}

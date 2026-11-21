@@ -1,0 +1,32 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "dangling-doc-reference",
+    "aliases": [
+      "python-dangling-doc-reference",
+      "csharp-dangling-doc-reference",
+      "DanglingDocReferenceDetector",
+      "DanglingDocReference"
+    ],
+    "skill": "shared/documentation",
+    "description": "A document reference points at a declaration the project does not have",
+    "rule": "Keep references tied to existing declarations.",
+    "suggestion": "Correct the target or remove the reference.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": "$c.dangling",
+    "emit": "$c.location"
+  }
+}

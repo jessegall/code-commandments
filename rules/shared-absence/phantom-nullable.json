@@ -1,0 +1,212 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python"
+  ],
+  "sin": {
+    "name": "phantom-nullable",
+    "aliases": [
+      "python-phantom-nullable",
+      "PhantomNullableDetector",
+      "PhantomNullable"
+    ],
+    "skill": "shared/absence",
+    "description": "Every dereference assumes the declared optional value is present",
+    "rule": "Make the field's declared type agree with the values it can hold.",
+    "suggestion": "Require the value where it is constructed, or handle its absence at the read.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "handles": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$c.parent.kind",
+          "fallback"
+        ],
+        [
+          "=",
+          "$c.parent.nullConditional",
+          true
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.parent.kind",
+            "comparison"
+          ],
+          [
+            "some",
+            "$c.parent.operands",
+            "o",
+            [
+              "tree.nullish",
+              "$o"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "declarator",
+    "as": "d",
+    "where": [
+      "and",
+      [
+        "=",
+        "$d.parent.kind",
+        "field"
+      ],
+      [
+        "=",
+        "$d.binding.resolved.nullable",
+        true
+      ]
+    ],
+    "let": [
+      [
+        "named",
+        "$d.binding.name"
+      ],
+      [
+        "reads",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "map",
+              "$d.parent.parent.writtenMembers",
+              "m",
+              [
+                "ownDescendants",
+                "$m.body"
+              ]
+            ]
+          ],
+          "x",
+          [
+            "and",
+            [
+              "tree.selfField",
+              "$x"
+            ],
+            [
+              "=",
+              "$x.member.name",
+              "$named"
+            ]
+          ]
+        ]
+      ],
+      [
+        "assumed",
+        [
+          "filter",
+          "$reads",
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$x.role",
+              "subject"
+            ],
+            [
+              "!=",
+              "$x.parent.nullConditional",
+              true
+            ]
+          ]
+        ]
+      ],
+      [
+        "guarded",
+        [
+          "filter",
+          "$reads",
+          "x",
+          [
+            "or",
+            [
+              "=",
+              "$x.nullConditional",
+              true
+            ],
+            [
+              "handles",
+              "$x"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$x.parent.kind",
+                "assignment"
+              ],
+              [
+                "tree.nullish",
+                [
+                  "at",
+                  "$x.parent.values",
+                  0
+                ]
+              ]
+            ],
+            [
+              "and",
+              [
+                "in",
+                "$x.parent.kind",
+                "if",
+                "loop",
+                "conditional"
+              ],
+              [
+                "=",
+                "$x.role",
+                "condition"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">",
+        [
+          "count",
+          "$assumed"
+        ],
+        0
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$guarded"
+        ],
+        0
+      ]
+    ],
+    "emit": "$d.parent"
+  }
+}

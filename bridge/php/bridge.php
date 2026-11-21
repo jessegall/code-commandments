@@ -18,6 +18,7 @@ require __DIR__ . '/src/BadRequest.php';
 require __DIR__ . '/src/Request.php';
 require __DIR__ . '/src/Sources.php';
 require __DIR__ . '/src/TreeNode.php';
+require __DIR__ . '/src/Types.php';
 require __DIR__ . '/src/Translator.php';
 require __DIR__ . '/src/ParsedFile.php';
 require __DIR__ . '/src/UnreadableSymbol.php';

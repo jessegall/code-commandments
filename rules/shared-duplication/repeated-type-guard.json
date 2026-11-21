@@ -1,0 +1,127 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "repeated-type-guard",
+    "aliases": [
+      "python-repeated-type-guard",
+      "csharp-repeated-type-guard",
+      "RepeatedTypeGuardDetector",
+      "RepeatedTypeGuard"
+    ],
+    "skill": "shared/duplication",
+    "description": "The same compound type check is written out at more than one site",
+    "rule": "Give a repeated type test one name and use it at each site.",
+    "suggestion": "Extract the combined test to a predicate that describes which values it accepts.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "narrows": {
+      "args": [
+        "l"
+      ],
+      "expr": [
+        ">=",
+        [
+          "count",
+          [
+            "filter",
+            [
+              "leaves",
+              "$l",
+              "logical"
+            ],
+            "p",
+            [
+              "=",
+              "$p.kind",
+              "type-test"
+            ]
+          ]
+        ],
+        2
+      ]
+    }
+  },
+  "find": {
+    "from": "logical",
+    "as": "l",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$l.operator",
+            "and"
+          ],
+          [
+            "!=",
+            "$l.parent.kind",
+            "logical"
+          ],
+          [
+            "in",
+            "$l.parent.kind",
+            "if",
+            "loop",
+            "return"
+          ],
+          [
+            "narrows",
+            "$l"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$l",
+          "key": [
+            "sort",
+            [
+              "map",
+              [
+                "leaves",
+                "$l",
+                "logical"
+              ],
+              "p",
+              [
+                "fingerprint",
+                "$p",
+                "exact"
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "count",
+            "$rows"
+          ],
+          2
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

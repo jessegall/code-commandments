@@ -104,9 +104,7 @@ func readsAcross(detector Detector) bool {
 // standsOnTheTree is a rule whose answer for a file can turn on any file of the tree, not only the files that file read,
 // so a change anywhere asks it again.
 func standsOnTheTree(detector Detector) bool {
-	_, whole := detector.(WholeTree)
-
-	return whole
+	return StandsOnTheTree(detector)
 }
 
 func remembers(detector Detector) bool {

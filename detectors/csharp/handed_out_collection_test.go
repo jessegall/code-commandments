@@ -96,7 +96,7 @@ public sealed class Desk(List<string> notes)
 `, 0},
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := HandedOutCollectionDetector{}.Find(csharptest.FromSource(t, map[string]string{"Shop/Desk.cs": test.source}))
+			found := shipped(t, "handed-out-collection").Find(csharptest.FromSource(t, map[string]string{"Shop/Desk.cs": test.source}))
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

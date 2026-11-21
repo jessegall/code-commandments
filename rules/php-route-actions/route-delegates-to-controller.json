@@ -1,0 +1,283 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "route-delegates-to-controller",
+    "aliases": [
+      "RouteDelegatesToControllerDetector",
+      "RouteDelegatesToController"
+    ],
+    "skill": "php/route-actions",
+    "description": "A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one",
+    "rule": "A route action delegates INTO the domain (a service/action class), never sideways into another controller.",
+    "suggestion": "Extract the shared work into a service both routes call, or point the route at the real action and delete the wrapper.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "delegatedWith": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "concat",
+        [
+          "delegated",
+          "$f"
+        ],
+        "(",
+        [
+          "join",
+          [
+            "map",
+            [
+              "argumentsOf",
+              [
+                "sole",
+                "$f"
+              ]
+            ],
+            "a",
+            [
+              "fingerprint",
+              "$a.value",
+              "exact"
+            ]
+          ],
+          ","
+        ],
+        ")"
+      ]
+    },
+    "argumentsOf": {
+      "args": [
+        "c"
+      ],
+      "expr": "$c.arguments"
+    },
+    "key": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "concat",
+        [
+          "tree.ownSymbol",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ],
+        "::",
+        "$f.name"
+      ]
+    },
+    "sole": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          [
+            "count",
+            "$f.body.statements"
+          ],
+          1
+        ],
+        {
+          "true": [
+            "soleIn",
+            [
+              "at",
+              "$f.body.statements",
+              0
+            ]
+          ]
+        },
+        null
+      ]
+    },
+    "soleIn": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "return": [
+            "at",
+            "$s.values",
+            0
+          ],
+          "expression-statement": "$s.expression"
+        },
+        null
+      ]
+    },
+    "delegated": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "exists",
+            [
+              "sole",
+              "$f"
+            ]
+          ],
+          [
+            "=",
+            [
+              "tree.kindOf",
+              [
+                "sole",
+                "$f"
+              ]
+            ],
+            "call"
+          ],
+          [
+            "=",
+            [
+              "calleeKind",
+              [
+                "sole",
+                "$f"
+              ]
+            ],
+            "access"
+          ],
+          [
+            "nonempty",
+            [
+              "targetType",
+              [
+                "sole",
+                "$f"
+              ]
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "concat",
+            [
+              "targetType",
+              [
+                "sole",
+                "$f"
+              ]
+            ],
+            "::",
+            [
+              "targetName",
+              [
+                "sole",
+                "$f"
+              ]
+            ]
+          ]
+        },
+        ""
+      ]
+    },
+    "calleeKind": {
+      "args": [
+        "c"
+      ],
+      "expr": "$c.callee.kind"
+    },
+    "targetType": {
+      "args": [
+        "c"
+      ],
+      "expr": "$c.target.type"
+    },
+    "targetName": {
+      "args": [
+        "c"
+      ],
+      "expr": "$c.target.name"
+    }
+  },
+  "find": {
+    "from": "function",
+    "as": "f",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$f.form",
+            "method"
+          ],
+          [
+            "nonempty",
+            [
+              "delegated",
+              "$f"
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$f",
+          "key": [
+            "key",
+            "$f"
+          ],
+          "delegate": [
+            "delegated",
+            "$f"
+          ]
+        }
+      },
+      {
+        "join": "laravel-route-actions",
+        "as": "own",
+        "on": {
+          "action": "$key"
+        }
+      },
+      {
+        "where": [
+          "exists",
+          "$own"
+        ]
+      },
+      {
+        "join": "laravel-route-actions",
+        "as": "other",
+        "on": {
+          "action": "$delegate"
+        }
+      },
+      {
+        "where": [
+          "exists",
+          "$other"
+        ]
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  }
+}

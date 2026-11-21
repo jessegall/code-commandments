@@ -39,14 +39,6 @@ func (n Node) firstChild(kinds ...string) Node {
 	return Node{}
 }
 
-func (n Node) IsBroadCatch() bool {
-	if !n.Is("CatchClause") || n.firstChild("CatchFilterClause").Exists() {
-		return false
-	}
-	declaration := n.firstChild("CatchDeclaration")
-	return !declaration.Exists() || declaration.Type().Name() == "global::System.Exception"
-}
-
 func (n Node) IsAbsenceValue() bool {
 	switch {
 	case n.Is("NullLiteralExpression", "DefaultLiteralExpression", "DefaultExpression", "FalseLiteralExpression"):

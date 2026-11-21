@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
@@ -92,7 +91,7 @@ func (DoubledDetector) Sin() sins.Sin { return Doubled{} }
 
 func (DoubledDetector) Find(*engine.Codebase) []engine.Match { return nil }
 
-var known = []detectors.Detector{LoopedNewDetector{}, ShoutingDetector{}, DoubledDetector{}}
+var known = []fixture.Rule{LoopedNewDetector{}, ShoutingDetector{}, DoubledDetector{}}
 
 func toy(t *testing.T) *engine.Codebase {
 	t.Helper()
@@ -111,7 +110,7 @@ func toy(t *testing.T) *engine.Codebase {
 	}, stream)
 }
 
-func proving(t *testing.T, proven ...detectors.Detector) fixture.Fixture {
+func proving(t *testing.T, proven ...fixture.Rule) fixture.Fixture {
 	return fixture.Fixture{Codebase: toy(t), Detectors: proven, Known: known}
 }
 
@@ -209,7 +208,7 @@ func TestTheHarnessFailsExactMarksWithTooFewDiverseScenarios(t *testing.T) {
 
 func TestAResolverDecidesHowADetectorsFindingsRead(t *testing.T) {
 	shouting := proving(t, ShoutingDetector{})
-	shouting.Resolver = func(codebase *engine.Codebase, detector detectors.Detector) ([]fixture.Scenario, error) {
+	shouting.Resolver = func(codebase *engine.Codebase, detector fixture.Rule) ([]fixture.Scenario, error) {
 		if _, ok := detector.(ShoutingDetector); !ok {
 			return fixture.ScopeScenarios(codebase, detector)
 		}
@@ -229,7 +228,7 @@ func TestEveryDetectorNeedsARighteousTwin(t *testing.T) {
 }
 
 func TestAResolutionNamesASinTheCatalogKnows(t *testing.T) {
-	looped := fixture.Fixture{Codebase: toy(t), Detectors: []detectors.Detector{LoopedNewDetector{}}, Known: []detectors.Detector{LoopedNewDetector{}}}
+	looped := fixture.Fixture{Codebase: toy(t), Detectors: []fixture.Rule{LoopedNewDetector{}}, Known: []fixture.Rule{LoopedNewDetector{}}}
 
 	want := []string{
 		"#[Fixed(Doubled)] at /toy/Twice.php:17 names nothing in the catalog",

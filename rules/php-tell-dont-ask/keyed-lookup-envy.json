@@ -1,0 +1,100 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "keyed-lookup-envy",
+    "aliases": [
+      "KeyedLookupEnvyDetector",
+      "KeyedLookupEnvy",
+      "python-keyed-lookup-envy"
+    ],
+    "skill": "php/tell-dont-ask",
+    "description": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator",
+    "rule": "Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.",
+    "suggestion": "Move the lookup onto the object that owns the identity.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "builtBy": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "return": [
+            "at",
+            "$s.values",
+            0
+          ]
+        },
+        null
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "=",
+      [
+        "count",
+        "$f.body.statements"
+      ],
+      1
+    ],
+    "let": [
+      [
+        "looked",
+        [
+          "builtBy",
+          [
+            "at",
+            "$f.body.statements",
+            0
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$looked.kind",
+        "index"
+      ],
+      [
+        "=",
+        "$looked.key.kind",
+        "access"
+      ],
+      [
+        "=",
+        "$looked.key.subject.kind",
+        "reference"
+      ],
+      [
+        "=",
+        "$looked.key.subject.binding.parent.kind",
+        "parameter"
+      ],
+      [
+        "exists",
+        [
+          "declarationOf",
+          "$looked.key"
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

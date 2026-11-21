@@ -2,6 +2,7 @@
 package fixturetest
 
 import (
+	"github.com/jessegall/code-commandments/cli/config"
 	"slices"
 	"testing"
 
@@ -100,7 +101,7 @@ func NoRuleOutgrowsItsTree(t testing.TB, small, large *engine.Codebase, rules []
 		t.Fatal("no rule was handed in, so this test would pass by looking at nothing")
 	}
 
-	grown := fixture.Grown(small, large, rules)
+	grown := fixture.Grown(small, large, fixture.Proven(rules))
 
 	for _, each := range grown[:min(5, len(grown))] {
 		t.Logf("%s cost %d points over the fixture and %d over the same fixture twice, %.1f times",
@@ -114,4 +115,20 @@ func NoRuleOutgrowsItsTree(t testing.TB, small, large *engine.Codebase, rules []
 				"a consumer cannot escape", each.Detector, each.Small, each.Large, each.Times)
 		}
 	}
+}
+
+// Configured is the detectors as the fixture project's own configuration tunes them: its layers and its configure
+// steps, read from the .commandments folder under its root, as a project's judge reads them.
+func Configured(t testing.TB, root string, list []detectors.Detector) []detectors.Detector {
+	t.Helper()
+	project, err := config.Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tuned, err := project.Applied(list)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return tuned
 }

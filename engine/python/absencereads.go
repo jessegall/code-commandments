@@ -280,27 +280,6 @@ func (n Node) isCallableType() bool {
 	return slices.Contains(callableTypes, named.DottedName())
 }
 
-func (p *Program) IsConstantProperty(n Node) bool {
-	if !n.IsPropertyGetter() || len(n.Parameters()) == 0 || n.IsStub() {
-		return false
-	}
-	body := n.StatementsBeyondText()
-	if len(body) != 1 || !body[0].ReturnedValue().Exists() || len(body[0].ReturnedValue().DataNames()) != 0 {
-		return false
-	}
-	if class := n.Parent(); class.Kind() == "ClassDef" && slices.ContainsFunc(class.Methods(), func(member Node) bool { return member.IsPropertyAccessorOf(n.Name()) }) {
-		return false
-	}
-
-	return !p.IsOverride(n) && !p.IsOverridden(n) && !p.ExtendsOutside(n)
-}
-
-func (n Node) IsPropertyAccessorOf(name string) bool {
-	return slices.ContainsFunc(n.Decorators(), func(decorator Node) bool {
-		return decorator.DottedName() == name+".setter" || decorator.DottedName() == name+".deleter"
-	})
-}
-
 func (n Node) IsStub() bool {
 	return n.IsFunction() && !slices.ContainsFunc(n.ChildrenIn("body"), func(statement Node) bool { return !statement.IsPlaceholder() })
 }
@@ -520,27 +499,6 @@ var freshEveryCall = []string{
 	"datetime.datetime.today", "date.today", "datetime.date.today", "time.time", "time.monotonic",
 	"time.perf_counter", "uuid.uuid1", "uuid.uuid4", "uuid1", "uuid4", "os.urandom", "random.random",
 	"random.randint", "random.choice", "secrets.token_hex", "secrets.token_urlsafe",
-}
-
-func (n Node) IsMutableDefault() bool {
-	if !n.OwnerDef().Exists() || n.Kind() != "arg" {
-		return false
-	}
-
-	return n.Default().buildsAFreshContainer()
-}
-
-func (n Node) IsFrozenDefault() bool {
-	if !n.OwnerDef().Exists() || n.Kind() != "arg" {
-		return false
-	}
-	defaulted := n.Default()
-
-	return defaulted.IsCall() && slices.Contains(freshEveryCall, defaulted.Callee().DottedName())
-}
-
-func (n Node) DeclaresNoBody() bool {
-	return n.OwnerDef().IsStub()
 }
 
 func (n Node) buildsAFreshContainer() bool {

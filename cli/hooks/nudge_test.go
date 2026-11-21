@@ -8,8 +8,6 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/detectors"
-	godetectors "github.com/jessegall/code-commandments/detectors/go"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
@@ -75,7 +73,7 @@ func marksOfThreeSins(t *testing.T) (root string, marks []SinMark) {
 	}
 
 	edited := filepath.Join(root, "shop/ledger.go")
-	marks, _, _ = marksIn(Marks(root), edited, []detectors.Detector{godetectors.LoopInvertedGuardDetector}, git.ChangedLines{})
+	marks, _, _ = marksIn(Marks(root), edited, shippedNamed(t, "loop-inverted-guard"), git.ChangedLines{})
 
 	if len(marks) < 3 {
 		if _, err := scan.OneFile(edited).Load(); err != nil {

@@ -1,0 +1,71 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "placeholder-filled-data",
+    "aliases": [
+      "python-placeholder-filled-data",
+      "csharp-placeholder-filled-data",
+      "PlaceholderFilledDataDetector",
+      "PlaceholderFilledData"
+    ],
+    "skill": "shared/absence",
+    "description": "A blank string fills a required string field in a data type",
+    "rule": "Supply the required value or make its absence part of the type.",
+    "suggestion": "Validate the data before constructing it, or make a separate type for the incomplete state.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "blank": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "literal"
+        ],
+        [
+          "=",
+          "$x.literalKind",
+          "string"
+        ],
+        [
+          "=",
+          "$x.value",
+          ""
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "construction",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "blank",
+          "$a.value"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

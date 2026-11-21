@@ -1,0 +1,125 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "facade-call",
+    "aliases": [
+      "FacadeCallDetector",
+      "FacadeCall"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)",
+    "rule": "Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.",
+    "suggestion": "Constructor-inject the dependency behind its interface.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "nameOf": {
+      "args": [
+        "f"
+      ],
+      "expr": "$f.name"
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "=",
+        "$c.callee.kind",
+        "access"
+      ],
+      [
+        "=",
+        "$c.callee.subject.kind",
+        "reference"
+      ],
+      [
+        "!=",
+        "$c.callee.member.name",
+        "fake"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "assignable",
+        "$c.callee.subject.refers",
+        "facade"
+      ],
+      [
+        "exists",
+        [
+          "enclosing",
+          "$c",
+          "type"
+        ]
+      ],
+      [
+        "not",
+        [
+          "laravel.ownerIs",
+          "$c",
+          "service-provider"
+        ]
+      ],
+      [
+        "not",
+        [
+          "laravel.ownerIs",
+          "$c",
+          "casts-attributes"
+        ]
+      ],
+      [
+        "not",
+        [
+          "laravel.ownerIs",
+          "$c",
+          "casts-inbound-attributes"
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "laravel.ownerIs",
+            "$c",
+            "should-queue"
+          ],
+          [
+            "in",
+            [
+              "nameOf",
+              [
+                "enclosing",
+                "$c",
+                "function"
+              ]
+            ],
+            "failed",
+            "middleware",
+            "retryUntil",
+            "backoff",
+            "uniqueId",
+            "tags",
+            "displayName"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

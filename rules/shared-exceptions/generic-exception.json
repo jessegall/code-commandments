@@ -1,0 +1,225 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "generic-exception",
+    "aliases": [
+      "python-message-string-raise",
+      "csharp-generic-throw",
+      "GenericExceptionDetector",
+      "GenericException",
+      "MessageStringRaise",
+      "GenericThrow",
+      "MessageStringRaiseDetector",
+      "GenericThrowDetector"
+    ],
+    "skill": "shared/exceptions",
+    "description": "A throw of the language's catch-all failure (`Exception`, `RuntimeException`, `Error`, `RuntimeError`) instead of a named one",
+    "rule": "Throw a named failure, never the language's catch-all one.",
+    "suggestion": "A failure type of its own, with a named constructor that takes the values involved and writes the message."
+  },
+  "definitions": {
+    "writes": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$m.literalKind",
+            "string"
+          ]
+        ],
+        [
+          "=",
+          "$m.kind",
+          "interpolation"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "call"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$m.arguments"
+            ],
+            0
+          ],
+          [
+            "some",
+            "$m.arguments",
+            "g",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "position",
+                  "$g"
+                ],
+                0
+              ],
+              [
+                "=",
+                "$g.value.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$g.value.literalKind",
+                "string"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "binary"
+          ],
+          [
+            "=",
+            "$m.operator",
+            "concatenate"
+          ],
+          [
+            "some",
+            [
+              "ownDescendants",
+              "$m"
+            ],
+            "p",
+            [
+              "or",
+              [
+                "and",
+                [
+                  "=",
+                  "$p.kind",
+                  "literal"
+                ],
+                [
+                  "=",
+                  "$p.literalKind",
+                  "string"
+                ]
+              ],
+              [
+                "=",
+                "$p.kind",
+                "interpolation"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "messageAtThrow": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$t.value.kind",
+          "construction"
+        ],
+        [
+          ">",
+          [
+            "count",
+            "$t.value.arguments"
+          ],
+          0
+        ],
+        [
+          "writes",
+          [
+            "firstValue",
+            "$t.value"
+          ]
+        ]
+      ]
+    },
+    "firstValue": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "valueOfArgument",
+        [
+          "at",
+          "$c.arguments",
+          0
+        ]
+      ]
+    },
+    "valueOfArgument": {
+      "args": [
+        "a"
+      ],
+      "expr": "$a.value"
+    }
+  },
+  "find": {
+    "select": "throw",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "not",
+        "$t.file.test"
+      ],
+      [
+        "=",
+        "$t.value.kind",
+        "construction"
+      ],
+      [
+        "exemptedBy",
+        "generic-failure",
+        "$t.value"
+      ],
+      [
+        "case",
+        "$t.file.language",
+        {
+          "csharp": [
+            "messageAtThrow",
+            "$t"
+          ]
+        },
+        true
+      ]
+    ],
+    "emit": [
+      "case",
+      "$t.file.language",
+      {
+        "php": "$t.value"
+      },
+      "$t"
+    ]
+  }
+}

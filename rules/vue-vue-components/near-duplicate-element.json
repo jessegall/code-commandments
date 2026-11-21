@@ -1,0 +1,102 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "near-duplicate-element",
+    "aliases": [
+      "NearDuplicateElementDetector",
+      "NearDuplicateElement"
+    ],
+    "skill": "vue/vue-components",
+    "description": "Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates",
+    "rule": "Extract markup that repeats with different data into one component, and pass what differs as props.",
+    "suggestion": "Make the shared skeleton a component; each place that repeated it renders the component with its own data.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "parameters": {
+    "elements": {
+      "type": "number",
+      "default": 6,
+      "description": "How many elements a block holds at least before a near copy of it counts."
+    }
+  },
+  "find": {
+    "from": "element",
+    "as": "e",
+    "pipeline": [
+      {
+        "reject": [
+          "=",
+          "$e.parent.kind",
+          "argument"
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$e",
+          "size": [
+            "vue.size",
+            "$e"
+          ],
+          "key": [
+            "fingerprint",
+            "$e",
+            "normalized"
+          ],
+          "exact": [
+            "fingerprint",
+            "$e",
+            "exact"
+          ]
+        }
+      },
+      {
+        "where": [
+          ">=",
+          "$size",
+          "$param.elements"
+        ]
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              "$rows"
+            ],
+            2
+          ],
+          [
+            ">=",
+            [
+              "distinctCount",
+              [
+                "map",
+                "$rows",
+                "r",
+                "$r.exact"
+              ]
+            ],
+            2
+          ]
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

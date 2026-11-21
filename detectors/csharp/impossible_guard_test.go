@@ -85,7 +85,7 @@ public sealed class Shipping
 `, 0},
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := ImpossibleGuardDetector{}.Find(csharptest.FromSource(t, map[string]string{"Shop/Shipping.cs": test.source, "Shop/Order.cs": order}))
+			found := shipped(t, "impossible-guard").Find(csharptest.FromSource(t, map[string]string{"Shop/Shipping.cs": test.source, "Shop/Order.cs": order}))
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

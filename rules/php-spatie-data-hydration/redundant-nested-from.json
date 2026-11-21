@@ -1,0 +1,76 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "redundant-nested-from",
+    "aliases": [
+      "RedundantNestedFromDetector",
+      "RedundantNestedFrom"
+    ],
+    "skill": "php/spatie-data-hydration",
+    "description": "A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array",
+    "rule": "Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.",
+    "suggestion": "`'slot' => ['a' => 1]` (or `[['a' => 1], ...]` for a collection), not `X::from(['a' => 1])`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "spatie.isFrom",
+        "$c"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$c.arguments"
+        ],
+        1
+      ],
+      [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "=",
+          "$a.value.kind",
+          "collection"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        [
+          "spatie.ownerOf",
+          "$c"
+        ]
+      ],
+      [
+        "not",
+        [
+          "spatie.perItem",
+          "$c"
+        ]
+      ],
+      [
+        "spatie.fits",
+        "$c",
+        "$c.callee.subject.refers"
+      ]
+    ],
+    "emit": "$c"
+  }
+}

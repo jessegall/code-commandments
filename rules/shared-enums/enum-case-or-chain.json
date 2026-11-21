@@ -1,0 +1,247 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "enum-case-or-chain",
+    "aliases": [
+      "python-enum-case-or-chain",
+      "csharp-enum-case-or-chain",
+      "EnumCaseOrChainDetector",
+      "EnumCaseOrChain"
+    ],
+    "skill": "shared/enums",
+    "description": "An or-chain asks about several cases of one enum",
+    "rule": "Give that group of cases a named test on the enum.",
+    "suggestion": "Give that group of cases a named test on the enum.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "enumOwner": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "enum-case": [
+            "tree.ownSymbol",
+            [
+              "enclosing",
+              "$d",
+              "type"
+            ]
+          ]
+        },
+        ""
+      ]
+    },
+    "caseOwner": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        [
+          "nonempty",
+          [
+            "enumOwner",
+            [
+              "declarationOf",
+              [
+                "at",
+                "$c.operands",
+                1
+              ]
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "enumOwner",
+            [
+              "declarationOf",
+              [
+                "at",
+                "$c.operands",
+                1
+              ]
+            ]
+          ]
+        },
+        [
+          "enumOwner",
+          [
+            "declarationOf",
+            [
+              "at",
+              "$c.operands",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    "subjectOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        [
+          "nonempty",
+          [
+            "enumOwner",
+            [
+              "declarationOf",
+              [
+                "at",
+                "$c.operands",
+                1
+              ]
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "fingerprint",
+            [
+              "at",
+              "$c.operands",
+              0
+            ],
+            "exact"
+          ]
+        },
+        [
+          "fingerprint",
+          [
+            "at",
+            "$c.operands",
+            1
+          ],
+          "exact"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "logical",
+    "as": "l",
+    "where": [
+      "and",
+      [
+        "=",
+        "$l.operator",
+        "or"
+      ],
+      [
+        "!=",
+        "$l.parent.kind",
+        "logical"
+      ]
+    ],
+    "let": [
+      [
+        "checks",
+        [
+          "leaves",
+          "$l",
+          "logical"
+        ]
+      ],
+      [
+        "owners",
+        [
+          "map",
+          "$checks",
+          "c",
+          [
+            "caseOwner",
+            "$c"
+          ]
+        ]
+      ],
+      [
+        "subjects",
+        [
+          "map",
+          "$checks",
+          "c",
+          [
+            "subjectOf",
+            "$c"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$checks"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$checks",
+        "c",
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "comparison"
+          ],
+          [
+            "every",
+            "$c.operators",
+            "o",
+            [
+              "in",
+              "$o",
+              "equal",
+              "identical"
+            ]
+          ]
+        ]
+      ],
+      [
+        "every",
+        "$owners",
+        "o",
+        [
+          "nonempty",
+          "$o"
+        ]
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          "$owners"
+        ],
+        1
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          "$subjects"
+        ],
+        1
+      ]
+    ],
+    "emit": "$l"
+  }
+}

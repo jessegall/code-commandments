@@ -1,0 +1,163 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "unnamed-vocabulary-literal",
+    "aliases": [
+      "python-unnamed-vocabulary-literal",
+      "csharp-unnamed-vocabulary-literal",
+      "UnnamedVocabularyLiteralDetector",
+      "UnnamedVocabularyLiteral"
+    ],
+    "skill": "shared/duplication",
+    "description": "A string literal fills a parameter that already has a named constant for that value",
+    "rule": "Use the vocabulary the parameter already has.",
+    "suggestion": "Replace the string with the named constant that carries the same value.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "constantWord": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "wordOf",
+        [
+          "declarationOf",
+          "$v"
+        ]
+      ]
+    },
+    "wordOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "declarator": [
+            "writtenLiteral",
+            "$d.initializer"
+          ],
+          "enum-case": [
+            "writtenLiteral",
+            "$d.value"
+          ]
+        },
+        null
+      ]
+    },
+    "writtenLiteral": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "literal": "$x.value"
+        },
+        null
+      ]
+    }
+  },
+  "find": {
+    "select": "argument",
+    "as": "a",
+    "where": [
+      "and",
+      [
+        "not",
+        "$a.file.test"
+      ],
+      [
+        "=",
+        "$a.value.kind",
+        "literal"
+      ],
+      [
+        "=",
+        "$a.value.literalKind",
+        "string"
+      ],
+      [
+        "in",
+        "$a.parent.kind",
+        "call",
+        "construction"
+      ]
+    ],
+    "let": [
+      [
+        "at",
+        [
+          "position",
+          "$a"
+        ]
+      ],
+      [
+        "siblings",
+        [
+          "filter",
+          [
+            "referrers",
+            [
+              "declarationOf",
+              "$a.parent"
+            ]
+          ],
+          "c",
+          [
+            "not",
+            "$c.file.test"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "some",
+      "$siblings",
+      "c",
+      [
+        "some",
+        "$c.arguments",
+        "g",
+        [
+          "and",
+          [
+            "=",
+            [
+              "position",
+              "$g"
+            ],
+            "$at"
+          ],
+          [
+            "in",
+            "$g.value.kind",
+            "reference",
+            "access"
+          ],
+          [
+            "=",
+            [
+              "constantWord",
+              "$g.value"
+            ],
+            "$a.value.value"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$a"
+  }
+}

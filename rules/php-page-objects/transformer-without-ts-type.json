@@ -1,0 +1,142 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "transformer-without-ts-type",
+    "aliases": [
+      "TransformerWithoutTsTypeDetector",
+      "TransformerWithoutTsType"
+    ],
+    "skill": "php/page-objects",
+    "description": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value.",
+    "rule": "On Data classes exported to TypeScript, pair a custom `#[WithTransformer]` with `#[TypeScriptType]` or `#[LiteralTypeScriptType]` that declares the wire shape.",
+    "suggestion": "Add `#[TypeScriptType('...')]` (or `#[LiteralTypeScriptType(...)]`) stating the type the transformer serializes to, so the generated frontend type matches the wire.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "carrierOf": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "list",
+            "$a.parent",
+            "$a.parent.parent"
+          ],
+          "c",
+          [
+            "in",
+            "$c.kind",
+            "field",
+            "parameter"
+          ]
+        ],
+        0
+      ]
+    }
+  },
+  "find": {
+    "select": "annotation",
+    "as": "a",
+    "where": [
+      "=",
+      "$a.refers",
+      "Spatie\\LaravelData\\Attributes\\WithTransformer"
+    ],
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$a",
+          "type"
+        ]
+      ],
+      [
+        "slot",
+        [
+          "carrierOf",
+          "$a"
+        ]
+      ],
+      [
+        "transformer",
+        [
+          "at",
+          [
+            "map",
+            [
+              "filter",
+              "$a.arguments",
+              "x",
+              [
+                "and",
+                [
+                  "=",
+                  [
+                    "position",
+                    "$x"
+                  ],
+                  0
+                ],
+                [
+                  "=",
+                  "$x.value.kind",
+                  "access"
+                ]
+              ]
+            ],
+            "x",
+            "$x.value.subject.refers"
+          ],
+          0
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        "$owner"
+      ],
+      [
+        "spatie.typescript",
+        "$owner"
+      ],
+      [
+        "exists",
+        "$slot"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$transformer",
+          "Spatie\\LaravelData\\Transformers\\DateTimeInterfaceTransformer",
+          "Spatie\\LaravelData\\Transformers\\ArrayableTransformer"
+        ]
+      ],
+      [
+        "none",
+        "$slot.attributes",
+        "x",
+        [
+          "in",
+          "$x.refers",
+          "Spatie\\TypeScriptTransformer\\Attributes\\TypeScriptType",
+          "Spatie\\TypeScriptTransformer\\Attributes\\LiteralTypeScriptType"
+        ]
+      ]
+    ],
+    "emit": "$a"
+  }
+}

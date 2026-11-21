@@ -1,0 +1,241 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "nullable-wire-object",
+    "aliases": [
+      "NullableWireObjectDetector",
+      "NullableWireObject"
+    ],
+    "skill": "php/spatie-data",
+    "description": "A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
+    "rule": "On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested Data or enum (a backed enum included: its absence is a missing key, not a null case) `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.",
+    "suggestion": "`public readonly UiChrome|Optional $chrome = new Optional();`, not `public readonly UiChrome|null $chrome = null;`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "optionalDefault": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "spatie.slotDefault",
+            "$s"
+          ]
+        ],
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "spatie.typeRefers",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "Spatie\\LaravelData\\Optional"
+        ]
+      ]
+    },
+    "hidden": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "some",
+        "$s.attributes",
+        "a",
+        [
+          "=",
+          "$a.refers",
+          "Spatie\\LaravelData\\Attributes\\Hidden"
+        ]
+      ]
+    },
+    "innerOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        "$t.form",
+        {
+          "nullable": "$t.element.refers",
+          "union": [
+            "at",
+            [
+              "map",
+              [
+                "filter",
+                "$t.members",
+                "m",
+                [
+                  "not",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$m.form",
+                      "keyword"
+                    ],
+                    [
+                      "=",
+                      "$m.name",
+                      "null"
+                    ]
+                  ]
+                ]
+              ],
+              "m",
+              "$m.refers"
+            ],
+            0
+          ]
+        },
+        null
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "field",
+      "parameter"
+    ],
+    "as": "s",
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$s",
+          "type"
+        ]
+      ],
+      [
+        "inner",
+        [
+          "typeDeclaration",
+          [
+            "innerOf",
+            "$s.declaredType"
+          ]
+        ]
+      ]
+    ],
+    "where": [
+      "and",
+      [
+        "some",
+        "$s.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "public"
+        ]
+      ],
+      [
+        "none",
+        "$s.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "static"
+        ]
+      ],
+      [
+        "spatie.nullable",
+        "$s.declaredType"
+      ],
+      [
+        "nonempty",
+        [
+          "innerOf",
+          "$s.declaredType"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        "$owner"
+      ],
+      [
+        "spatie.typescript",
+        "$owner"
+      ],
+      [
+        "not",
+        [
+          "hidden",
+          "$s"
+        ]
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$s.kind",
+          "parameter"
+        ],
+        [
+          "=",
+          [
+            "count",
+            "$s.hooks"
+          ],
+          0
+        ]
+      ],
+      [
+        "exists",
+        "$inner"
+      ],
+      [
+        "or",
+        [
+          "spatie.isData",
+          "$inner"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$inner.form",
+            "enum"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$inner.bases"
+            ],
+            0
+          ]
+        ]
+      ]
+    ],
+    "emit": "$s"
+  }
+}

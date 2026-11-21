@@ -4,7 +4,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/prose"
 )
@@ -20,9 +19,9 @@ type Scenario struct {
 }
 
 // ScenarioResolver reads a detector's findings as the scenarios the diversity check compares.
-type ScenarioResolver func(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error)
+type ScenarioResolver func(codebase *engine.Codebase, detector Rule) ([]Scenario, error)
 
-func (f Fixture) Scenarios(detector detectors.Detector) ([]Scenario, error) {
+func (f Fixture) Scenarios(detector Rule) ([]Scenario, error) {
 	resolve := f.Resolver
 	if resolve == nil {
 		resolve = ScopeScenarios
@@ -31,9 +30,9 @@ func (f Fixture) Scenarios(detector detectors.Detector) ([]Scenario, error) {
 	return resolve(f.Codebase, detector)
 }
 
-func ScopeScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error) {
+func ScopeScenarios(codebase *engine.Codebase, detector Rule) ([]Scenario, error) {
 	var scenarios []Scenario
-	chained, isChain := detector.(detectors.ChainDetector)
+	chained, isChain := detector.(chained)
 	for _, finding := range detector.Find(codebase) {
 		if isChain {
 			scenarios = append(scenarios, Scenario{File: finding.File(), Source: strings.Join(chained.ChainPath(finding, codebase), "\n")})
@@ -76,7 +75,7 @@ func ScopeScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]S
 	return scenarios, nil
 }
 
-func FileScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error) {
+func FileScenarios(codebase *engine.Codebase, detector Rule) ([]Scenario, error) {
 	var scenarios []Scenario
 	for _, finding := range detector.Find(codebase) {
 		source, err := finding.Source().Source()

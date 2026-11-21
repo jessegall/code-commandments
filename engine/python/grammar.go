@@ -144,10 +144,6 @@ func init() {
 		PhantomFields:   phantomFields,
 		NullableLookup:  nullableLookup,
 		MaskedInvariant: engine.As(Node.MasksOwnState),
-		BroadCatch: func(handler engine.Match) bool {
-			caught := handler.Child("type")
-			return !caught.Exists() || slices.Contains([]string{"Exception", "BaseException", "builtins.Exception", "builtins.BaseException"}, (Node{Match: caught}).DottedName())
-		},
 		NullableCallback: engine.As(Node.HasNullNormalisedOptionalCallback),
 		Decode: func(call engine.Match) bool {
 			node := Node{Match: call}

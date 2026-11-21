@@ -144,7 +144,13 @@ func typeKey(t *Type) string {
 		key.WriteString(text)
 		key.WriteByte(0)
 	}
-	key.WriteString(strconv.FormatBool(t.Nullable) + strconv.FormatBool(t.ValueType))
+	for _, stated := range []*bool{t.Nullable, t.ValueType} {
+		if stated == nil {
+			key.WriteString("?")
+		} else {
+			key.WriteString(strconv.FormatBool(*stated))
+		}
+	}
 	if t.Value != nil {
 		key.WriteString("=" + string(t.Value.raw))
 	}

@@ -1,0 +1,60 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "false-for-nothing",
+    "aliases": [
+      "FalseForNothingDetector",
+      "FalseForNothing"
+    ],
+    "skill": "php/absence",
+    "description": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it.",
+    "rule": "Never return `false` to say nothing was found or something failed — throw a named exception, return an empty value, or return an Option.",
+    "suggestion": "Throw a named exception for a failure, or return an empty collection or `Option` for a genuine absence."
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "not",
+        "$f.file.test"
+      ],
+      [
+        "=",
+        "$f.returnType.form",
+        "union"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.obligations"
+        ],
+        0
+      ]
+    ],
+    "having": [
+      "some",
+      "$f.returnType.members",
+      "m",
+      [
+        "and",
+        [
+          "=",
+          "$m.form",
+          "keyword"
+        ],
+        [
+          "=",
+          "$m.name",
+          "false"
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

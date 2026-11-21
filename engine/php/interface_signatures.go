@@ -93,7 +93,7 @@ func interfaceTypeKey(typed *contract.Type) string {
 		if name == "" || name == "self" || name == "static" || name == "parent" {
 			return ""
 		}
-		if typed.Nullable && name != "null" {
+		if typed.IsNullable() && name != "null" {
 			keys := []string{name, "null"}
 			slices.Sort(keys)
 			return strings.Join(keys, "|")

@@ -2,6 +2,7 @@
 package render
 
 import (
+	"github.com/jessegall/code-commandments/rules"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -80,7 +81,7 @@ func body(definition skill.Definition, taught []sins.Sin, examplesOf []worked) s
 		opening,
 		blockquote(definition.Intro),
 		"## The principle\n\n" + strings.TrimSpace(definition.Principle),
-		rules(taught),
+		ruleRows(taught),
 		workedExample(examplesOf),
 		commands(definition, taught),
 		referenceIndex(definition, taught, examplesOf),
@@ -122,7 +123,7 @@ func blockquote(text string) string {
 	return strings.Join(lines, "\n")
 }
 
-func rules(taught []sins.Sin) string {
+func ruleRows(taught []sins.Sin) string {
 	var rows []string
 	for _, sin := range taught {
 		definition := sin.Definition()
@@ -372,7 +373,7 @@ func relativeLink(from, to string) string {
 
 func sinsOf(slug string) []sins.Sin {
 	var taught []sins.Sin
-	for _, sin := range config.InClassOrder(config.Sin, sins.All()) {
+	for _, sin := range config.InClassOrder(config.Sin, rules.Sins()) {
 		if sin.Definition().Slug() == slug {
 			taught = append(taught, sin)
 		}

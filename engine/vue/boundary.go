@@ -29,12 +29,3 @@ func (e Element) IsExtractable() bool {
 		!slices.Contains(tableBound, strings.ToLower(e.Tag()))
 }
 
-func (e Element) HoldsView() bool {
-	for _, candidate := range append([]Element{e}, e.DescendantElements()...) {
-		if !candidate.IsTemplate() && candidate.IsExtractable() {
-			return true
-		}
-	}
-
-	return false
-}

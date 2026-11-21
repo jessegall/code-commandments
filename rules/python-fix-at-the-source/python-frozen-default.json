@@ -1,0 +1,42 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "python"
+  ],
+  "sin": {
+    "name": "python-frozen-default",
+    "aliases": [
+      "FrozenDefaultDetector",
+      "FrozenDefault"
+    ],
+    "skill": "python/fix-at-the-source",
+    "description": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported",
+    "rule": "A default is a value, not a computation: anything that must be worked out per call is worked out in the body.",
+    "suggestion": "Default it to `None` and call it inside the body, so each call gets its own answer. It is the container default's twin and takes the same repair."
+  },
+  "find": {
+    "select": "parameter",
+    "as": "p",
+    "where": [
+      "and",
+      [
+        "=",
+        "$p.evaluated",
+        "definition"
+      ],
+      [
+        "exists",
+        "$p.default"
+      ]
+    ],
+    "having": [
+      "proven",
+      [
+        "hasEffect",
+        "$p.default",
+        "fresh-every-call"
+      ]
+    ],
+    "emit": "$p"
+  }
+}

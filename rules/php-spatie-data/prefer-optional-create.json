@@ -1,0 +1,56 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "prefer-optional-create",
+    "aliases": [
+      "PreferOptionalCreateDetector",
+      "PreferOptionalCreate"
+    ],
+    "skill": "php/spatie-data",
+    "description": "A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer",
+    "rule": "Use `Optional::create()`, not `new Optional`, everywhere a static call is legal — a parameter/property default must stay `new Optional` (a factory call is illegal there), everywhere else prefer the factory.",
+    "suggestion": "Replace `new Optional` / `new Optional()` with `Optional::create()`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "find": {
+    "select": "construction",
+    "as": "n",
+    "where": [
+      "and",
+      [
+        "=",
+        "$n.type.refers",
+        "Spatie\\LaravelData\\Optional"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$n.role",
+          "default",
+          "initializer"
+        ]
+      ]
+    ],
+    "having": [
+      "none",
+      [
+        "ownAncestors",
+        "$n"
+      ],
+      "a",
+      [
+        "=",
+        "$a.kind",
+        "annotation"
+      ]
+    ],
+    "emit": "$n"
+  }
+}

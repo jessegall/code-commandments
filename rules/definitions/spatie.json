@@ -1,0 +1,790 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "description": "Definitions over spatie/laravel-data classes that the Spatie rules share: a data class, its slots and the slot a value fills.",
+  "definitions": {
+    "composes": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "isData",
+          "$t"
+        ],
+        [
+          ">=",
+          [
+            "count",
+            [
+              "filter",
+              [
+                "slotsOf",
+                "$t"
+              ],
+              "s",
+              [
+                "namesData",
+                "$s"
+              ]
+            ]
+          ],
+          2
+        ]
+      ]
+    },
+    "elementOf": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "at",
+        [
+          "flatten",
+          [
+            "map",
+            [
+              "filter",
+              "$s.attributes",
+              "a",
+              [
+                "=",
+                "$a.refers",
+                "Spatie\\LaravelData\\Attributes\\DataCollectionOf"
+              ]
+            ],
+            "a",
+            [
+              "map",
+              [
+                "filter",
+                "$a.arguments",
+                "x",
+                [
+                  "=",
+                  "$x.value.kind",
+                  "access"
+                ]
+              ],
+              "x",
+              "$x.value.subject.refers"
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "entryOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$x.role",
+            "value"
+          ],
+          [
+            "=",
+            "$x.parent.kind",
+            "entry"
+          ]
+        ],
+        {
+          "true": "$x.parent"
+        },
+        null
+      ]
+    },
+    "fits": {
+      "args": [
+        "x",
+        "class"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "slotOf",
+            "$x"
+          ]
+        ],
+        [
+          "=",
+          [
+            "inList",
+            "$x"
+          ],
+          [
+            "isCollectionSlot",
+            [
+              "slotOf",
+              "$x"
+            ]
+          ]
+        ],
+        [
+          "nonempty",
+          "$class"
+        ],
+        [
+          "=",
+          [
+            "slotElementType",
+            [
+              "slotOf",
+              "$x"
+            ]
+          ],
+          "$class"
+        ]
+      ]
+    },
+    "fromCall": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "exists",
+            "$e"
+          ],
+          [
+            "=",
+            "$e.parent.kind",
+            "collection"
+          ],
+          [
+            "=",
+            "$e.parent.parent.kind",
+            "argument"
+          ],
+          [
+            "=",
+            [
+              "position",
+              "$e.parent.parent"
+            ],
+            0
+          ],
+          [
+            "=",
+            "$e.parent.parent.parent.kind",
+            "call"
+          ],
+          [
+            "isFrom",
+            "$e.parent.parent.parent"
+          ]
+        ],
+        {
+          "true": "$e.parent.parent.parent"
+        },
+        null
+      ]
+    },
+    "inList": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "not",
+        [
+          "keyed",
+          [
+            "entryOf",
+            "$x"
+          ]
+        ]
+      ]
+    },
+    "isCollectionSlot": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "nonempty",
+        [
+          "elementOf",
+          "$s"
+        ]
+      ]
+    },
+    "isData": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          "$t"
+        ],
+        [
+          "some",
+          "$t.bases",
+          "b",
+          [
+            "assignable",
+            "$b",
+            "data"
+          ]
+        ]
+      ]
+    },
+    "isFrom": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$c.callee.member.name",
+          "from"
+        ],
+        [
+          "=",
+          "$c.callee.subject.kind",
+          "reference"
+        ]
+      ]
+    },
+    "keyText": {
+      "args": [
+        "e"
+      ],
+      "expr": "$e.key.value"
+    },
+    "keyed": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          "$e"
+        ],
+        [
+          "literalIs",
+          "$e.key",
+          "string"
+        ]
+      ]
+    },
+    "namesData": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "or",
+        [
+          "isData",
+          [
+            "typeDeclaration",
+            [
+              "soleRefers",
+              "$s.declaredType"
+            ]
+          ]
+        ],
+        [
+          "some",
+          "$s.attributes",
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.refers",
+              "Spatie\\LaravelData\\Attributes\\DataCollectionOf"
+            ],
+            [
+              "some",
+              "$a.arguments",
+              "x",
+              [
+                "and",
+                [
+                  "=",
+                  "$x.value.kind",
+                  "access"
+                ],
+                [
+                  "isData",
+                  [
+                    "typeDeclaration",
+                    "$x.value.subject.refers"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "nullable": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$t.form",
+          "nullable"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$t.form",
+            "union"
+          ],
+          [
+            "some",
+            "$t.members",
+            "m",
+            [
+              "and",
+              [
+                "=",
+                "$m.form",
+                "keyword"
+              ],
+              [
+                "=",
+                "$m.name",
+                "null"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$t.form",
+            "keyword"
+          ],
+          [
+            "in",
+            "$t.name",
+            "null",
+            "mixed"
+          ]
+        ]
+      ]
+    },
+    "optional": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$t.form",
+          "union"
+        ],
+        [
+          "some",
+          "$t.members",
+          "m",
+          [
+            "=",
+            "$m.refers",
+            "Spatie\\LaravelData\\Optional"
+          ]
+        ]
+      ]
+    },
+    "ownerOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "typeDeclaration",
+        "$c.callee.subject.refers"
+      ]
+    },
+    "perItem": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "some",
+          [
+            "ownAncestors",
+            "$x"
+          ],
+          "a",
+          [
+            "=",
+            "$a.kind",
+            "loop"
+          ]
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$x",
+              "function"
+            ]
+          ],
+          "f",
+          [
+            "and",
+            [
+              "exists",
+              "$f"
+            ],
+            [
+              "=",
+              "$f.parent.kind",
+              "argument"
+            ],
+            [
+              "=",
+              "$f.parent.parent.callee.kind",
+              "reference"
+            ],
+            [
+              "=",
+              "$f.parent.parent.callee.refers",
+              "array_map"
+            ]
+          ]
+        ]
+      ]
+    },
+    "publicSlots": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "filter",
+        [
+          "flatten",
+          [
+            "list",
+            "$t.writtenMembers",
+            "$t.implicitMembers"
+          ]
+        ],
+        "m",
+        [
+          "and",
+          [
+            "in",
+            "$m.kind",
+            "field",
+            "parameter"
+          ],
+          [
+            "some",
+            "$m.modifiers",
+            "x",
+            [
+              "=",
+              "$x",
+              "public"
+            ]
+          ],
+          [
+            "none",
+            "$m.modifiers",
+            "x",
+            [
+              "=",
+              "$x",
+              "static"
+            ]
+          ]
+        ]
+      ]
+    },
+    "remapped": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "and",
+        [
+          "literalIs",
+          "$e.key",
+          "string"
+        ],
+        [
+          "=",
+          "$e.value.kind",
+          "index"
+        ],
+        [
+          "=",
+          "$e.value.subject.kind",
+          "reference"
+        ],
+        [
+          "literalIs",
+          "$e.value.key",
+          "string"
+        ],
+        [
+          "=",
+          [
+            "snakeCase",
+            "$e.key.value"
+          ],
+          "$e.value.key.value"
+        ]
+      ]
+    },
+    "slotDefault": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "field": [
+            "at",
+            [
+              "map",
+              "$s.declarators",
+              "d",
+              "$d.initializer"
+            ],
+            0
+          ],
+          "parameter": "$s.default"
+        },
+        null
+      ]
+    },
+    "slotElementType": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        [
+          "isCollectionSlot",
+          "$s"
+        ],
+        {
+          "true": [
+            "elementOf",
+            "$s"
+          ]
+        },
+        [
+          "soleRefers",
+          "$s.declaredType"
+        ]
+      ]
+    },
+    "slotEntry": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        [
+          "keyed",
+          [
+            "entryOf",
+            "$x"
+          ]
+        ],
+        {
+          "true": [
+            "entryOf",
+            "$x"
+          ]
+        },
+        [
+          "case",
+          [
+            "and",
+            [
+              "exists",
+              [
+                "entryOf",
+                "$x"
+              ]
+            ],
+            [
+              "keyed",
+              [
+                "entryOf",
+                "$x.parent.parent"
+              ]
+            ]
+          ],
+          {
+            "true": [
+              "entryOf",
+              "$x.parent.parent"
+            ]
+          },
+          null
+        ]
+      ]
+    },
+    "slotNamed": {
+      "args": [
+        "t",
+        "n"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "slotsOf",
+            "$t"
+          ],
+          "s",
+          [
+            "or",
+            [
+              "=",
+              "$s.binding.name",
+              "$n"
+            ],
+            [
+              "some",
+              "$s.declarators",
+              "d",
+              [
+                "=",
+                "$d.binding.name",
+                "$n"
+              ]
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "slotOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        [
+          "exists",
+          [
+            "fromCall",
+            [
+              "slotEntry",
+              "$x"
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "slotNamed",
+            [
+              "ownerOf",
+              [
+                "fromCall",
+                [
+                  "slotEntry",
+                  "$x"
+                ]
+              ]
+            ],
+            [
+              "keyText",
+              [
+                "slotEntry",
+                "$x"
+              ]
+            ]
+          ]
+        },
+        null
+      ]
+    },
+    "slotsOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "filter",
+        [
+          "flatten",
+          [
+            "list",
+            "$t.writtenMembers",
+            "$t.implicitMembers"
+          ]
+        ],
+        "m",
+        [
+          "in",
+          "$m.kind",
+          "field",
+          "parameter"
+        ]
+      ]
+    },
+    "soleRefers": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        "$t.form",
+        {
+          "named": "$t.refers",
+          "nullable": "$t.element.refers"
+        },
+        ""
+      ]
+    },
+    "typeRefers": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.type.refers"
+    },
+    "typescript": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "some",
+        "$t.attributes",
+        "a",
+        [
+          "=",
+          "$a.refers",
+          "Spatie\\TypeScriptTransformer\\Attributes\\TypeScript"
+        ]
+      ]
+    }
+  }
+}

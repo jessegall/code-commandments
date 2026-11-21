@@ -3,7 +3,6 @@ package custom
 
 import (
 	"fmt"
-	"github.com/jessegall/code-commandments/walk"
 	"os"
 	"path/filepath"
 	"slices"
@@ -16,7 +15,9 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/skill"
+	"github.com/jessegall/code-commandments/walk"
 )
 
 const SkillsFolder = "skills"
@@ -59,7 +60,7 @@ func Load(root string) Project {
 		}
 	}
 
-	rules, listFiles := jsonUnder(dir)
+	ruleFiles, listFiles := jsonUnder(dir)
 
 	lists, err := readLists(dir, listFiles)
 	if err != nil {
@@ -67,8 +68,9 @@ func Load(root string) Project {
 	}
 
 	named := map[string]string{}
+	var sources []rule.Source
 
-	for _, path := range rules {
+	for _, path := range ruleFiles {
 		text, err := os.ReadFile(path)
 		if err != nil {
 			continue
@@ -93,21 +95,19 @@ func Load(root string) Project {
 			continue
 		}
 
-		read, err := rule.Parse(name, written, project.skill)
-		if err != nil {
-			project.Unreadable = append(project.Unreadable, err.Error())
-			project.Refused = append(project.Refused, name)
-
-			continue
-		}
-
-		project.Rules = append(project.Rules, read)
+		sources = append(sources, rule.Source{Origin: rule.Project, Path: fromRoot(root, path), Text: written})
 	}
 
-	composed, refused := rule.Composed(project.Rules)
-	project.Rules = composed
-	for _, err := range refused {
-		project.Unreadable = append(project.Unreadable, err.Error())
+	library := rule.Load(append(rules.Sources(), sources...), project.skill)
+	project.Rules = slices.DeleteFunc(library.Rules, func(read rule.Rule) bool { return read.Origin() != rule.Project })
+	for _, problem := range library.Problems {
+		project.Unreadable = append(project.Unreadable, problem.Error())
+	}
+	for _, each := range sources {
+		name := strings.TrimSuffix(filepath.Base(each.Path), ".json")
+		if !slices.ContainsFunc(project.Rules, func(read rule.Rule) bool { return read.Name() == name }) {
+			project.Refused = append(project.Refused, name)
+		}
 	}
 
 	for _, class := range workspace.CustomFiles(root) {
@@ -121,7 +121,7 @@ func Load(root string) Project {
 	return project
 }
 
-func jsonUnder(dir string) (rules, lists []string) {
+func jsonUnder(dir string) (ruleFiles, lists []string) {
 	for _, path := range walk.Files(dir, walk.Excluded{}, func(path string) bool {
 		inside, _ := filepath.Rel(dir, path)
 
@@ -130,20 +130,20 @@ func jsonUnder(dir string) (rules, lists []string) {
 		if filepath.Base(path) == ListsFile {
 			lists = append(lists, path)
 		} else {
-			rules = append(rules, path)
+			ruleFiles = append(ruleFiles, path)
 		}
 	}
 
-	sort.Strings(rules)
+	sort.Strings(ruleFiles)
 	sort.Strings(lists)
 
-	return rules, lists
+	return ruleFiles, lists
 }
 
 func RuleFiles(dir string) []string {
-	rules, _ := jsonUnder(dir)
+	ruleFiles, _ := jsonUnder(dir)
 
-	return rules
+	return ruleFiles
 }
 
 func (p Project) skill(slug string) (skill.Skill, bool) {
@@ -173,12 +173,27 @@ func (p Project) Read(path string) (rule.Rule, error) {
 		return rule.Rule{}, err
 	}
 
-	read, err := rule.Parse(strings.TrimSuffix(filepath.Base(path), ".json"), text, p.skill)
-	if err != nil {
-		return rule.Rule{}, err
+	own := rule.Source{Origin: rule.Project, Path: filepath.ToSlash(path), Text: text}
+	library := rule.Load(append(rules.Sources(), own), p.skill)
+	for _, read := range library.Rules {
+		if read.Origin() == rule.Project {
+			return read, nil
+		}
+	}
+	if len(library.Problems) > 0 {
+		return rule.Rule{}, library.Problems[len(library.Problems)-1]
 	}
 
-	return rule.ComposedWith(read, p.Rules)
+	return rule.Rule{}, fmt.Errorf("%s: no rule was read", path)
+}
+
+// fromRoot is a path as the project names it, from its root.
+func fromRoot(root, path string) string {
+	if relative, err := filepath.Rel(root, path); err == nil {
+		return filepath.ToSlash(relative)
+	}
+
+	return filepath.ToSlash(path)
 }
 
 func (p Project) Enabled(project config.Config) []detectors.Detector {

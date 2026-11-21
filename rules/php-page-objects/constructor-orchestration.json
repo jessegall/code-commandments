@@ -1,0 +1,31 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "constructor-orchestration",
+    "aliases": [
+      "ConstructorOrchestrationDetector",
+      "ConstructorOrchestration"
+    ],
+    "skill": "php/page-objects",
+    "description": "A page object fills a public slot imperatively in the constructor (`$this-\u003ex = $this-\u003eprojector-\u003e…()`) where a `#[Computed]` property hook would describe it in place",
+    "rule": "Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.",
+    "suggestion": "Replace `$this-\u003ex = expr;` with `#[Computed] public T $x { get =\u003e expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "scaffolds": [
+      {
+        "path": "Support/Eager.php",
+        "stub": "Eager.php.stub"
+      }
+    ],
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

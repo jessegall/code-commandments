@@ -10,8 +10,24 @@ type WholeTree interface {
 	WholeTree()
 }
 
+// TreeStanding is a rule that says for itself whether its answer for a file can turn on any file of the tree: a rule
+// file, whose find decides it.
+type TreeStanding interface {
+	StandsOnTheTree() bool
+}
+
+// StandsOnTheTree says whether a rule's answer for a file can turn on any file of the tree.
+func StandsOnTheTree(detector Detector) bool {
+	if standing, says := detector.(TreeStanding); says {
+		return standing.StandsOnTheTree()
+	}
+	_, whole := detector.(WholeTree)
+
+	return whole
+}
+
 func ReadsBeyondOneFile(detector Detector) bool {
-	_, wholeTree := detector.(WholeTree)
+	wholeTree := StandsOnTheTree(detector)
 	_, grouped := detector.(Grouped)
 
 	return wholeTree || grouped || catalog.IsCrossFile(detector)

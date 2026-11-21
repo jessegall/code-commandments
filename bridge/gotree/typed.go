@@ -74,6 +74,9 @@ func (w *writer) target(call *ast.CallExpr) *contract.Target {
 	}
 
 	reached := &contract.Target{Symbol: id, Name: function.Name()}
+	if function.Pkg() != nil {
+		reached.Type = function.Pkg().Path()
+	}
 	if signature, isSignature := function.Type().(*types.Signature); isSignature && signature.Recv() != nil && function.Pkg() != nil {
 		if receiver := receiverName(signature.Recv().Type()); receiver != "" {
 			reached.Type = function.Pkg().Path() + "." + receiver
@@ -97,7 +100,7 @@ func (w *writer) importedTarget(call *ast.CallExpr) *contract.Target {
 		return nil
 	}
 
-	return &contract.Target{Symbol: imported.Imported().Path() + "." + selector.Sel.Name, Name: selector.Sel.Name}
+	return &contract.Target{Symbol: imported.Imported().Path() + "." + selector.Sel.Name, Type: imported.Imported().Path(), Name: selector.Sel.Name}
 }
 
 func calleeIdent(callee ast.Expr) *ast.Ident {

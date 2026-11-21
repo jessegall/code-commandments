@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/python"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -19,7 +19,7 @@ func TestATestModuleIsNoPartOfTheLayerItTests(t *testing.T) {
 		"commands/http.py":         "def dispatch(name: str) -> str:\n    return name\n",
 		"resources/__init__.py":    "",
 	})
-	detector := python.NamespaceDependencyDetector{}.Layer("features", "resources").Layer("commands").Layer("resources")
+	detector := shipped(t, "namespace-dependency").(rule.Rule).WithLayers(map[string][]string{"features": {"resources"}, "commands": nil, "resources": nil})
 
 	found := detector.Find(codebase)
 

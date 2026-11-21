@@ -1,0 +1,114 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "unused-private-member",
+    "aliases": [
+      "UnusedPrivateMemberDetector",
+      "UnusedPrivateMember"
+    ],
+    "skill": "php/type-honesty",
+    "description": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries.",
+    "rule": "A class carries only what it uses; a private member nothing reads is dead and is deleted.",
+    "suggestion": "Delete the member, or call it from where it was meant to be used.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "private": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "some",
+        "$m.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "private"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "function",
+      "declarator"
+    ],
+    "as": "m",
+    "where": [
+      "case",
+      "$m.kind",
+      {
+        "function": [
+          "and",
+          [
+            "private",
+            "$m"
+          ],
+          [
+            "!=",
+            "$m.form",
+            "constructor"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$m.obligations"
+            ],
+            0
+          ],
+          [
+            "exists",
+            [
+              "enclosing",
+              "$m",
+              "type"
+            ]
+          ]
+        ],
+        "declarator": [
+          "and",
+          [
+            "=",
+            "$m.parent.kind",
+            "field"
+          ],
+          [
+            "private",
+            "$m.parent"
+          ]
+        ]
+      },
+      false
+    ],
+    "having": [
+      "=",
+      [
+        "count",
+        [
+          "referrers",
+          [
+            "case",
+            "$m.kind",
+            {
+              "declarator": "$m.binding"
+            },
+            "$m"
+          ]
+        ]
+      ],
+      0
+    ],
+    "emit": "$m"
+  }
+}

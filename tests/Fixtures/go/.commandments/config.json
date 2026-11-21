@@ -1,0 +1,45 @@
+{
+    "configure": {
+        "go/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "commandments.fixture/shop/layers/inventory/core"
+                ]
+            },
+            {
+                "layer": [
+                    "commandments.fixture/shop/layers/inventory/view",
+                    [
+                        "commandments.fixture/shop/layers/inventory/core"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "commandments.fixture/shop/layers/payroll/core"
+                ]
+            },
+            {
+                "layer": [
+                    "commandments.fixture/shop/layers/payroll/view",
+                    [
+                        "commandments.fixture/shop/layers/payroll/core"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "commandments.fixture/shop/layers/routing/core"
+                ]
+            },
+            {
+                "layer": [
+                    "commandments.fixture/shop/layers/routing/view",
+                    [
+                        "commandments.fixture/shop/layers/routing/core"
+                    ]
+                ]
+            }
+        ]
+    }
+}

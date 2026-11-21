@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/jessegall/code-commandments/rules"
 	"bytes"
 	"encoding/json"
 	"strconv"
@@ -12,7 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
-	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
 
@@ -43,9 +43,9 @@ func Schema(root string) []byte {
 				"additionalProperties": false,
 				"properties": object{
 					"languages": list("Languages the project does not write; judge never reads them.", languages()),
-					"skills":    list("Whole skills turned off, every sin under them with it.", rules(skillRules())),
-					"sins":      list("Sins turned off, whichever detector finds them.", rules(sinRules())),
-					"detectors": list("Detectors turned off, shipped (engine/Name) or the project's own (Name).", rules(detectorRules())),
+					"skills":    list("Whole skills turned off, every sin under them with it.", ruleChoices(skillRules())),
+					"sins":      list("Sins turned off, whichever detector finds them.", ruleChoices(sinRules())),
+					"detectors": list("Detectors turned off, shipped (engine/Name) or the project's own (Name).", ruleChoices(detectorRules())),
 					"hooks":     list("Hooks turned off, by name.", object{"type": "string", "pattern": ownRule}),
 					"agents":    list("Agents turned off, by name: ClaudeAgent or CodexAgent.", object{"type": "string", "pattern": ownRule}),
 				},
@@ -77,7 +77,7 @@ func Schema(root string) []byte {
 			"configure": object{
 				"description":   "Detectors tuned, keyed by engine/Name for a shipped rule or by name for one of the project's own. Each step calls one of the detector's methods with its arguments in order, as {\"layer\": [\"App\\\\Http\", [\"App\\\\Domain\"]]}. One step is the config's own rather than the detector's: {\"judges\": [\"tests\"]} lets this one rule judge a folder the project excludes, which stays excluded for every other rule.",
 				"type":          "object",
-				"propertyNames": rules(detectorRules()),
+				"propertyNames": ruleChoices(detectorRules()),
 				"additionalProperties": list("The calls, in order.", object{
 					"type":          "object",
 					"minProperties": 1,
@@ -136,7 +136,7 @@ func formerIDs(id string) []string {
 	return former
 }
 
-func rules(shipped []named) object {
+func ruleChoices(shipped []named) object {
 	choices := []any{}
 
 	for _, rule := range shipped {
@@ -161,41 +161,41 @@ func languages() object {
 }
 
 func skillRules() []named {
-	var rules []named
+	var listed []named
 
 	for _, engine := range catalog.Curriculum {
 		for _, each := range skill.Of(engine) {
-			rules = append(rules, named{Rule{Skill, engine, catalog.Name(each)}.ID(), each.Definition().Summary})
+			listed = append(listed, named{Rule{Skill, engine, catalog.Name(each)}.ID(), each.Definition().Summary})
 		}
 	}
 
-	return rules
+	return listed
 }
 
 func sinRules() []named {
-	var rules []named
+	var listed []named
 
 	for _, engine := range catalog.Curriculum {
-		for _, each := range sins.Of(engine) {
+		for _, each := range rules.SinsOf(engine) {
 			for _, name := range catalog.Names(each) {
-				rules = append(rules, named{Rule{Sin, engine, name}.ID(), each.Definition().Description})
+				listed = append(listed, named{Rule{Sin, engine, name}.ID(), each.Definition().Description})
 			}
 		}
 	}
 
-	return rules
+	return listed
 }
 
 func detectorRules() []named {
-	var rules []named
+	var listed []named
 
 	for _, engine := range catalog.Curriculum {
 		for _, each := range detectors.Of(engine) {
 			for _, name := range catalog.Names(each) {
-				rules = append(rules, named{Rule{Detector, engine, name}.ID(), "Finds " + each.Sin().Definition().Name + "."})
+				listed = append(listed, named{Rule{Detector, engine, name}.ID(), "Finds " + each.Sin().Definition().Name + "."})
 			}
 		}
 	}
 
-	return rules
+	return listed
 }

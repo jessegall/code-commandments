@@ -1,0 +1,24 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": ["php"],
+  "definitions": {
+    "keyOf": {"args": ["e"], "expr": ["case", ["literalIs", "$e.key", "string"], {"true": "$e.key.value"}, ""]},
+    "path": {"args": ["e"], "expr": ["join", ["flatten", ["list",
+      ["list", ["baseName", "$e.file.path"]],
+      ["reverse", ["map", ["filter", ["ownAncestors", "$e"], "a", ["=", "$a.kind", "entry"]], "a", ["keyOf", "$a"]]],
+      ["list", ["keyOf", "$e"]]]], "."]},
+    "statesDefault": {"args": ["v"], "expr": ["or",
+      ["and", ["=", "$v.kind", "literal"], ["in", "$v.literalKind", "string", "integer", "float", "boolean"]],
+      ["and", ["=", "$v.kind", "call"], ["=", "$v.callee.kind", "reference"], ["=", "$v.callee.name", "env"], [">=", ["count", "$v.arguments"], 2]]]}
+  },
+  "relation": {
+    "from": "entry",
+    "as": "e",
+    "pipeline": [
+      {"where": ["and", ["contains", "$e.file.path", "/config/"], ["=", "$e.file.publishedBy", ""], ["nonempty", ["keyOf", "$e"]],
+        ["!=", "$e.value.kind", "collection"],
+        ["every", ["filter", ["ownAncestors", "$e"], "a", ["=", "$a.kind", "entry"]], "a", ["nonempty", ["keyOf", "$a"]]]]},
+      {"project": {"anchor": "$e", "key": ["path", "$e"], "defaulted": ["statesDefault", "$e.value"]}}
+    ]
+  }
+}

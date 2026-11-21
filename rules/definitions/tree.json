@@ -1,0 +1,371 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "description": "Definitions over the generic tree that many rules share.",
+  "definitions": {
+    "boolean": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "in",
+        "$t.name",
+        "bool",
+        "boolean",
+        "builtins.bool",
+        "System.Boolean"
+      ]
+    },
+    "callsOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "filter",
+        [
+          "referrers",
+          "$d"
+        ],
+        "c",
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "call"
+          ],
+          [
+            "not",
+            "$c.file.test"
+          ]
+        ]
+      ]
+    },
+    "continuation": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$b.parent.kind",
+          "if"
+        ],
+        [
+          "=",
+          "$b.role",
+          "else"
+        ]
+      ]
+    },
+    "effective": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "block": [
+            "filter",
+            "$s.statements",
+            "x",
+            [
+              "!=",
+              "$x.kind",
+              "no-op"
+            ]
+          ]
+        },
+        [
+          "list",
+          "$s"
+        ]
+      ]
+    },
+    "emptyCollection": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "collection"
+        ],
+        [
+          "=",
+          [
+            "count",
+            "$x.entries"
+          ],
+          0
+        ]
+      ]
+    },
+    "formOf": {
+      "args": [
+        "t"
+      ],
+      "expr": "$t.form"
+    },
+    "insideOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "list",
+            "$x"
+          ],
+          [
+            "ownDescendants",
+            "$x"
+          ]
+        ]
+      ]
+    },
+    "kindOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.kind"
+    },
+    "looseRecord": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$t.kind",
+          "map"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$t.kind",
+            "array"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$t.args"
+            ],
+            0
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$t.kind",
+            "keyword"
+          ],
+          [
+            "in",
+            "$t.name",
+            "array",
+            "dict",
+            "object"
+          ]
+        ]
+      ]
+    },
+    "method": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "or",
+          [
+            "exists",
+            [
+              "enclosing",
+              "$f",
+              "type"
+            ]
+          ],
+          [
+            "exists",
+            "$f.receiver"
+          ]
+        ],
+        [
+          "!=",
+          "$f.form",
+          "constructor"
+        ],
+        [
+          "=",
+          [
+            "count",
+            "$f.obligations"
+          ],
+          0
+        ]
+      ]
+    },
+    "names": {
+      "args": [
+        "x",
+        "n"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "access": [
+            "and",
+            [
+              "isSelf",
+              "$x.subject"
+            ],
+            [
+              "=",
+              "$x.member.name",
+              "$n"
+            ]
+          ],
+          "reference": [
+            "=",
+            "$x.name",
+            "$n"
+          ]
+        },
+        false
+      ]
+    },
+    "notOverriding": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "=",
+        [
+          "count",
+          "$f.obligations"
+        ],
+        0
+      ]
+    },
+    "nullish": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "literal"
+        ],
+        [
+          "in",
+          "$x.literalKind",
+          "null",
+          "undefined"
+        ]
+      ]
+    },
+    "own": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "!=",
+          "$f.form",
+          "constructor"
+        ],
+        [
+          "=",
+          [
+            "count",
+            "$f.obligations"
+          ],
+          0
+        ]
+      ]
+    },
+    "ownSymbol": {
+      "args": [
+        "t"
+      ],
+      "expr": "$t.symbol"
+    },
+    "selfField": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "access"
+        ],
+        [
+          "isSelf",
+          "$x.subject"
+        ]
+      ]
+    },
+    "valueAt": {
+      "args": [
+        "c",
+        "n"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          [
+            "filter",
+            "$c.arguments",
+            "g",
+            [
+              "=",
+              [
+                "position",
+                "$g"
+              ],
+              "$n"
+            ]
+          ],
+          "g",
+          "$g.value"
+        ],
+        0
+      ]
+    },
+    "valueOf": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "expression-statement": "$s.expression",
+          "return": [
+            "at",
+            "$s.values",
+            0
+          ]
+        },
+        null
+      ]
+    }
+  }
+}

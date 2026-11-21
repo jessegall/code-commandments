@@ -1,0 +1,202 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "message-at-throw",
+    "aliases": [
+      "MessageAtThrowDetector",
+      "MessageAtThrow"
+    ],
+    "skill": "shared/exceptions",
+    "description": "A failure's message written as a string at the throw, not by a named constructor given the values involved",
+    "rule": "Pass the values involved to a named constructor on the failure; never write the message at the throw.",
+    "suggestion": "A named constructor on the failure (`::for($order)`, `ForOrder(order)`) that writes the sentence once."
+  },
+  "definitions": {
+    "writes": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$m.literalKind",
+            "string"
+          ]
+        ],
+        [
+          "=",
+          "$m.kind",
+          "interpolation"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "call"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$m.arguments"
+            ],
+            0
+          ],
+          [
+            "some",
+            "$m.arguments",
+            "g",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "position",
+                  "$g"
+                ],
+                0
+              ],
+              [
+                "=",
+                "$g.value.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$g.value.literalKind",
+                "string"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "binary"
+          ],
+          [
+            "=",
+            "$m.operator",
+            "concatenate"
+          ],
+          [
+            "some",
+            [
+              "ownDescendants",
+              "$m"
+            ],
+            "p",
+            [
+              "or",
+              [
+                "and",
+                [
+                  "=",
+                  "$p.kind",
+                  "literal"
+                ],
+                [
+                  "=",
+                  "$p.literalKind",
+                  "string"
+                ]
+              ],
+              [
+                "=",
+                "$p.kind",
+                "interpolation"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "messageAtThrow": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$t.value.kind",
+          "construction"
+        ],
+        [
+          ">",
+          [
+            "count",
+            "$t.value.arguments"
+          ],
+          0
+        ],
+        [
+          "writes",
+          [
+            "firstValue",
+            "$t.value"
+          ]
+        ]
+      ]
+    },
+    "firstValue": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "valueOfArgument",
+        [
+          "at",
+          "$c.arguments",
+          0
+        ]
+      ]
+    },
+    "valueOfArgument": {
+      "args": [
+        "a"
+      ],
+      "expr": "$a.value"
+    }
+  },
+  "find": {
+    "select": "throw",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "not",
+        "$t.file.test"
+      ],
+      [
+        "messageAtThrow",
+        "$t"
+      ]
+    ],
+    "emit": [
+      "case",
+      "$t.file.language",
+      {
+        "php": "$t.value"
+      },
+      "$t"
+    ]
+  }
+}

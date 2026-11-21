@@ -1,0 +1,87 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "page-object-missing-typescript",
+    "aliases": [
+      "PageObjectMissingTypeScriptDetector",
+      "PageObjectMissingTypeScript"
+    ],
+    "skill": "php/page-objects",
+    "description": "A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked",
+    "rule": "Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.",
+    "suggestion": "Add `#[TypeScript]` above the page-object class (`use Spatie\\TypeScriptTransformer\\Attributes\\TypeScript;`).",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "from": "type",
+    "as": "t",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$t.form",
+            "class"
+          ],
+          [
+            "spatie.composes",
+            "$t"
+          ],
+          [
+            "not",
+            [
+              "spatie.typescript",
+              "$t"
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$t",
+          "symbol": "$t.symbol"
+        }
+      },
+      {
+        "join": "laravel-response-types",
+        "as": "rendered",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "join": "laravel-controller-returns",
+        "as": "returned",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "where": [
+          "or",
+          [
+            "exists",
+            "$rendered"
+          ],
+          [
+            "exists",
+            "$returned"
+          ]
+        ]
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  }
+}

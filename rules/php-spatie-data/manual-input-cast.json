@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "manual-input-cast",
+    "aliases": [
+      "ManualInputCastDetector",
+      "ManualInputCast"
+    ],
+    "skill": "php/spatie-data",
+    "description": "A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once",
+    "rule": "Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.",
+    "suggestion": "Type the property as the value object and add `#[WithCast(SomeCast::class)]` (or make the value object `Castable`) so the `simple → complex` mapping lives in one place.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

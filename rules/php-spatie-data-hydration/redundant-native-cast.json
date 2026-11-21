@@ -1,0 +1,219 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "redundant-native-cast",
+    "aliases": [
+      "RedundantNativeCastDetector",
+      "RedundantNativeCast"
+    ],
+    "skill": "php/spatie-data-hydration",
+    "description": "An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar",
+    "rule": "Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.",
+    "suggestion": "`'status' => $raw`, not `'status' => Status::from($raw)`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "castsNatively": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          [
+            "tree.formOf",
+            [
+              "typeDeclaration",
+              "$n"
+            ]
+          ],
+          "enum"
+        ],
+        [
+          "assignable",
+          "$n",
+          "date-time"
+        ]
+      ]
+    },
+    "declaredOf": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "spatie.soleRefers",
+        "$s.declaredType"
+      ]
+    },
+    "casts": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "some",
+        "$s.attributes",
+        "a",
+        [
+          "in",
+          "$a.refers",
+          "Spatie\\LaravelData\\Attributes\\WithCast",
+          "Spatie\\LaravelData\\Attributes\\WithCastAndTransformer",
+          "Spatie\\LaravelData\\Attributes\\WithCastable"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "call",
+      "construction"
+    ],
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        [
+          "count",
+          "$c.arguments"
+        ],
+        1
+      ],
+      [
+        "case",
+        "$c.kind",
+        {
+          "construction": [
+            "nonempty",
+            "$c.type.refers"
+          ],
+          "call": [
+            "and",
+            [
+              "=",
+              "$c.callee.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$c.callee.subject.kind",
+              "reference"
+            ],
+            [
+              "in",
+              "$c.callee.member.name",
+              "from",
+              "parse"
+            ]
+          ]
+        },
+        false
+      ]
+    ],
+    "let": [
+      [
+        "built",
+        [
+          "case",
+          "$c.kind",
+          {
+            "construction": "$c.type.refers"
+          },
+          "$c.callee.subject.refers"
+        ]
+      ],
+      [
+        "slot",
+        [
+          "spatie.slotOf",
+          "$c"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$slot"
+      ],
+      [
+        "not",
+        [
+          "casts",
+          "$slot"
+        ]
+      ],
+      [
+        "castsNatively",
+        "$built"
+      ],
+      [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "call"
+          ],
+          [
+            "=",
+            [
+              "tree.formOf",
+              [
+                "typeDeclaration",
+                "$built"
+              ]
+            ],
+            "enum"
+          ]
+        ],
+        {
+          "true": [
+            "=",
+            [
+              "declaredOf",
+              "$slot"
+            ],
+            "$built"
+          ]
+        },
+        [
+          "and",
+          [
+            "castsNatively",
+            [
+              "declaredOf",
+              "$slot"
+            ]
+          ],
+          [
+            "!=",
+            [
+              "tree.formOf",
+              [
+                "typeDeclaration",
+                [
+                  "declaredOf",
+                  "$slot"
+                ]
+              ]
+            ],
+            "enum"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

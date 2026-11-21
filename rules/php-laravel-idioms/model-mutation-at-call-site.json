@@ -1,0 +1,93 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "model-mutation-at-call-site",
+    "aliases": [
+      "ModelMutationAtCallSiteDetector",
+      "ModelMutationAtCallSite"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "Set-property-then-`save()` at a call site (should be an intention method)",
+    "rule": "Mutate a model through an intention method; don't set-property-then-`save()` at a call site.",
+    "suggestion": "An intention method on the model (`$order->suspend($reason)`).",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "laravel.named",
+        "$c",
+        "save"
+      ],
+      [
+        "=",
+        "$c.callee.subject.kind",
+        "reference"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "laravel.receiverIs",
+        "$c",
+        "model"
+      ],
+      [
+        "some",
+        [
+          "ownDescendants",
+          [
+            "enclosing",
+            "$c",
+            "function"
+          ]
+        ],
+        "w",
+        [
+          "and",
+          [
+            "=",
+            "$w.kind",
+            "assignment"
+          ],
+          [
+            "some",
+            "$w.targets",
+            "g",
+            [
+              "and",
+              [
+                "=",
+                "$g.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$g.subject.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$g.subject.name",
+                "$c.callee.subject.name"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

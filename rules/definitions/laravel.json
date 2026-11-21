@@ -1,0 +1,97 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "description": "Definitions over Laravel calls that the Laravel rules share: a call's receiver, its owner and the request.",
+  "definitions": {
+    "named": {
+      "args": [
+        "c",
+        "n"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$c.callee.member.name",
+          "$n"
+        ]
+      ]
+    },
+    "ownerIs": {
+      "args": [
+        "x",
+        "identity"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$x",
+            "type"
+          ]
+        ],
+        "t",
+        [
+          "and",
+          [
+            "exists",
+            "$t"
+          ],
+          [
+            "assignable",
+            "$t",
+            "$identity"
+          ]
+        ]
+      ]
+    },
+    "receiverIs": {
+      "args": [
+        "c",
+        "identity"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "assignable",
+          "$c.callee.subject.resolved",
+          "$identity"
+        ]
+      ]
+    },
+    "request": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "receiverIs",
+          "$c",
+          "request"
+        ],
+        [
+          "receiverIs",
+          "$c",
+          "form-request"
+        ],
+        [
+          "receiverIs",
+          "$c",
+          "mcp-request"
+        ]
+      ]
+    }
+  }
+}

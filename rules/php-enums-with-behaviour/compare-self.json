@@ -1,0 +1,439 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "compare-self",
+    "aliases": [
+      "SuggestCompareSelfTrait",
+      "CompareSelfDetector",
+      "SuggestCompareSelfTraitProphet",
+      "CompareSelf"
+    ],
+    "skill": "php/enums-with-behaviour",
+    "description": "A strict comparison bypasses an enum's verified comparison method.",
+    "rule": "Use the enum's comparison method when the comparison carries no type narrowing.",
+    "suggestion": "Ask the enum to compare itself with the case.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "parameters": {
+    "trait": {
+      "type": "string",
+      "default": "",
+      "description": "The trait an enum must use for its comparison methods; any when empty."
+    },
+    "equalsMethod": {
+      "type": "string",
+      "default": "equals",
+      "description": "The enum method that tests one case."
+    },
+    "notEqualsMethod": {
+      "type": "string",
+      "default": "notEquals",
+      "description": "The enum method that tests not one case."
+    },
+    "equalsAnyMethod": {
+      "type": "string",
+      "default": "equalsAny",
+      "description": "The enum method that tests several cases."
+    },
+    "notEqualsAnyMethod": {
+      "type": "string",
+      "default": "notEqualsAny",
+      "description": "The enum method that tests none of several cases."
+    },
+    "minChain": {
+      "type": "number",
+      "default": 1,
+      "description": "The fewest comparisons a chain holds before it is reported."
+    },
+    "excludeEnums": {
+      "type": "list",
+      "default": [],
+      "description": "Enums whose comparisons are never reported."
+    }
+  },
+  "definitions": {
+    "caseOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "=",
+        [
+          "tree.kindOf",
+          [
+            "declarationOf",
+            "$x"
+          ]
+        ],
+        "enum-case"
+      ]
+    },
+    "compared": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "comparison"
+        ],
+        [
+          "=",
+          [
+            "count",
+            "$c.operands"
+          ],
+          2
+        ],
+        [
+          "every",
+          "$c.operators",
+          "o",
+          [
+            "in",
+            "$o",
+            "identical",
+            "not-identical"
+          ]
+        ],
+        [
+          "some",
+          "$c.operands",
+          "o",
+          [
+            "caseOf",
+            "$o"
+          ]
+        ]
+      ]
+    },
+    "subjectOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          "$c.operands",
+          "o",
+          [
+            "not",
+            [
+              "caseOf",
+              "$o"
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "enumOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "typeDeclaration",
+        [
+          "at",
+          [
+            "map",
+            [
+              "filter",
+              "$c.operands",
+              "o",
+              [
+                "caseOf",
+                "$o"
+              ]
+            ],
+            "o",
+            "$o.subject.resolved.name"
+          ],
+          0
+        ]
+      ]
+    },
+    "offers": {
+      "args": [
+        "e",
+        "name"
+      ],
+      "expr": [
+        "or",
+        [
+          "some",
+          "$e.writtenMembers",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ],
+            [
+              "=",
+              "$m.name",
+              "$name"
+            ]
+          ]
+        ],
+        [
+          "some",
+          "$e.mixins",
+          "t",
+          [
+            "some",
+            [
+              "list",
+              [
+                "typeDeclaration",
+                "$t.resolved.name"
+              ]
+            ],
+            "d",
+            [
+              "and",
+              [
+                "exists",
+                "$d"
+              ],
+              [
+                "some",
+                "$d.writtenMembers",
+                "m",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$m.kind",
+                    "function"
+                  ],
+                  [
+                    "in",
+                    "$m.name",
+                    "$name",
+                    "__call"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "comparison",
+      "logical"
+    ],
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$c.parent.kind",
+            "logical"
+          ],
+          [
+            "=",
+            "$c.kind",
+            "logical"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "comparison"
+          ],
+          [
+            "=",
+            "$c.parent.kind",
+            "logical"
+          ]
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "parts",
+        [
+          "case",
+          "$c.kind",
+          {
+            "logical": [
+              "leaves",
+              "$c",
+              "logical"
+            ]
+          },
+          [
+            "list",
+            "$c"
+          ]
+        ]
+      ],
+      [
+        "enum",
+        [
+          "enumOf",
+          [
+            "at",
+            "$parts",
+            0
+          ]
+        ]
+      ],
+      [
+        "negated",
+        [
+          "some",
+          "$parts",
+          "p",
+          [
+            "some",
+            "$p.operators",
+            "o",
+            [
+              "=",
+              "$o",
+              "not-identical"
+            ]
+          ]
+        ]
+      ],
+      [
+        "method",
+        [
+          "case",
+          [
+            "pair",
+            "$negated",
+            [
+              ">",
+              [
+                "count",
+                "$parts"
+              ],
+              1
+            ]
+          ],
+          {
+            "[true,true]": "$param.notEqualsAnyMethod",
+            "[false,true]": "$param.equalsAnyMethod",
+            "[true,false]": "$param.notEqualsMethod"
+          },
+          "$param.equalsMethod"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$parts"
+        ],
+        "$param.minChain"
+      ],
+      [
+        "every",
+        "$parts",
+        "p",
+        [
+          "compared",
+          "$p"
+        ]
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          [
+            "map",
+            "$parts",
+            "p",
+            [
+              "fingerprint",
+              [
+                "subjectOf",
+                "$p"
+              ],
+              "exact"
+            ]
+          ]
+        ],
+        1
+      ],
+      [
+        "exists",
+        "$enum"
+      ],
+      [
+        "!=",
+        "$enum.symbol",
+        [
+          "tree.ownSymbol",
+          [
+            "enclosing",
+            "$c",
+            "type"
+          ]
+        ]
+      ],
+      [
+        "none",
+        "$param.excludeEnums",
+        "x",
+        [
+          "=",
+          "$x",
+          "$enum.symbol"
+        ]
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$param.trait",
+          ""
+        ],
+        [
+          "some",
+          "$enum.mixins",
+          "t",
+          [
+            "=",
+            "$t.resolved.name",
+            "$param.trait"
+          ]
+        ]
+      ],
+      [
+        "offers",
+        "$enum",
+        "$method"
+      ]
+    ],
+    "emit": "$c"
+  }
+}

@@ -635,7 +635,7 @@ export class Translator {
     describe(type, origin, depth) {
         const out = { text: this.program.printed(type) }
         Object.assign(out, depth >= TYPE_DEPTH ? { kind: 'opaque' } : this.shape(type, origin, depth + 1))
-        if (nullable(type)) out.nullable = true
+        out.nullable = nullable(type)
         out.origin = origin
 
         return out

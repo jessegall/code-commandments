@@ -12,7 +12,7 @@ func treeOf(t *testing.T, paths ...string) *engine.Codebase {
 
 	stream := &contract.Stream{Header: contract.Header{Language: contract.Python}}
 	for _, path := range paths {
-		stream.Files = append(stream.Files, &contract.File{Path: path, Language: contract.Python, Root: &contract.Node{}})
+		stream.Files = append(stream.Files, &contract.File{Path: path, Language: contract.Python, Root: &contract.Node{Kind: "file"}})
 	}
 
 	return engine.Load(stream)

@@ -3,7 +3,6 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -27,7 +26,7 @@ func TestTwoTypesAskingOfThemselvesRepeatNothing(t *testing.T) {
 `,
 	})
 
-	found := (python.RepeatedGuardDetector).Find(codebase)
+	found := shipped(t, "repeated-guard").Find(codebase)
 	if len(found) != 0 {
 		t.Errorf("two types asking of themselves were read as one repeated guard: %v", found)
 	}
@@ -50,7 +49,7 @@ def counted(row: Row) -> bool:
 `,
 	})
 
-	found := (python.RepeatedGuardDetector).Find(codebase)
+	found := shipped(t, "repeated-guard").Find(codebase)
 	if len(found) != 2 {
 		t.Errorf("one type's question asked twice found %d times, want 2: %v", len(found), found)
 	}

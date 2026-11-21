@@ -1,0 +1,114 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "compound-inline-component",
+    "aliases": [
+      "CompoundInlineComponentDetector",
+      "CompoundInlineComponent"
+    ],
+    "skill": "vue/vue-components",
+    "description": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component.",
+    "rule": "Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component.",
+    "suggestion": "Extract to a `<{Object}{Action}Dialog>` component; pass `v-model` + props."
+  },
+  "parameters": {
+    "body": {
+      "type": "number",
+      "default": 12,
+      "description": "How many elements a compound component's inline body holds at least before it is reported."
+    }
+  },
+  "find": {
+    "select": "element",
+    "as": "e",
+    "where": [
+      "and",
+      [
+        "=",
+        "$e.form",
+        "component"
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$e.parent.kind",
+            "module"
+          ],
+          [
+            "=",
+            [
+              "count",
+              [
+                "siblings",
+                "$e"
+              ]
+            ],
+            1
+          ]
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "parts",
+        [
+          "filter",
+          [
+            "ownDescendants",
+            "$e"
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "element"
+            ],
+            [
+              "=",
+              "$x.form",
+              "component"
+            ],
+            [
+              "!=",
+              "$x.tag",
+              "$e.tag"
+            ],
+            [
+              "startsWith",
+              "$x.tag",
+              "$e.tag"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$parts"
+        ],
+        2
+      ],
+      [
+        ">=",
+        [
+          "vue.size",
+          "$e"
+        ],
+        "$param.body"
+      ]
+    ],
+    "emit": "$e"
+  }
+}

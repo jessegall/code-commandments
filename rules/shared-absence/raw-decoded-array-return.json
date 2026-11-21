@@ -1,0 +1,70 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "raw-decoded-array-return",
+    "aliases": [
+      "python-raw-decoded-return",
+      "RawDecodedArrayReturnDetector",
+      "RawDecodedArrayReturn",
+      "RawDecodedReturn",
+      "RawDecodedReturnDetector"
+    ],
+    "skill": "shared/absence",
+    "description": "A function returns decoded data before checking and giving it a type",
+    "rule": "Validate decoded data at the boundary and return the type the caller can rely on.",
+    "suggestion": "Parse the decoded payload into a named result with checked fields."
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "=",
+        "$c.parent.kind",
+        "return"
+      ],
+      [
+        "hasEffect",
+        "$c",
+        "decodes-untyped"
+      ]
+    ],
+    "let": [
+      [
+        "function",
+        [
+          "enclosing",
+          "$c",
+          "function"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "not",
+        [
+          "exists",
+          "$function.returnType"
+        ]
+      ],
+      [
+        "tree.notOverriding",
+        "$function"
+      ]
+    ],
+    "emit": "$c"
+  }
+}

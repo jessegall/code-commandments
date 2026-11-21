@@ -1,0 +1,261 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "inline-case-views",
+    "aliases": [
+      "InlineCaseViewsDetector",
+      "InlineCaseViews"
+    ],
+    "skill": "vue/vue-components",
+    "description": "A dispatch whose cases each render a whole view inline — one component doing a job per case",
+    "rule": "Give each case of a dispatch that renders a whole view its own component; the dispatch only picks one."
+  },
+  "definitions": {
+    "tall": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownDescendants",
+          "$e"
+        ],
+        "g",
+        [
+          "and",
+          [
+            "=",
+            "$g.kind",
+            "element"
+          ],
+          [
+            "=",
+            "$g.parent.kind",
+            "element"
+          ],
+          [
+            "!=",
+            "$g.parent",
+            "$e"
+          ]
+        ]
+      ]
+    },
+    "extractable": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "element"
+        ],
+        [
+          "!=",
+          "$x.tag",
+          "template"
+        ],
+        [
+          ">=",
+          [
+            "vue.size",
+            "$x"
+          ],
+          6
+        ],
+        [
+          "tall",
+          "$x"
+        ],
+        [
+          "not",
+          [
+            "in",
+            "$x.tag",
+            "td",
+            "th",
+            "tr",
+            "tbody",
+            "thead",
+            "tfoot",
+            "caption",
+            "colgroup"
+          ]
+        ]
+      ]
+    },
+    "holdsView": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "extractable",
+          "$c"
+        ],
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$c"
+          ],
+          "x",
+          [
+            "extractable",
+            "$x"
+          ]
+        ]
+      ]
+    },
+    "branches": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "filter",
+        [
+          "siblings",
+          "$e"
+        ],
+        "s",
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "element"
+          ],
+          [
+            ">",
+            [
+              "position",
+              "$s"
+            ],
+            [
+              "position",
+              "$e"
+            ]
+          ],
+          [
+            "or",
+            [
+              "vue.hasDirective",
+              "$s",
+              "else-if"
+            ],
+            [
+              "vue.hasDirective",
+              "$s",
+              "else"
+            ]
+          ]
+        ]
+      ]
+    },
+    "cases": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          "$e.tag",
+          "SwitchCase"
+        ],
+        {
+          "true": [
+            "filter",
+            "$e.children",
+            "c",
+            [
+              "=",
+              "$c.kind",
+              "element"
+            ]
+          ]
+        },
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$e"
+            ],
+            [
+              "branches",
+              "$e"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "element",
+    "as": "e",
+    "where": [
+      "or",
+      [
+        "=",
+        "$e.tag",
+        "SwitchCase"
+      ],
+      [
+        "and",
+        [
+          "vue.hasDirective",
+          "$e",
+          "if"
+        ],
+        [
+          "vue.equality",
+          [
+            "vue.directive",
+            "$e",
+            "if"
+          ]
+        ],
+        [
+          "vue.equality",
+          [
+            "vue.directive",
+            [
+              "vue.nextElement",
+              "$e"
+            ],
+            "else-if"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      ">=",
+      [
+        "count",
+        [
+          "filter",
+          [
+            "cases",
+            "$e"
+          ],
+          "c",
+          [
+            "holdsView",
+            "$c"
+          ]
+        ]
+      ],
+      2
+    ],
+    "emit": "$e"
+  }
+}

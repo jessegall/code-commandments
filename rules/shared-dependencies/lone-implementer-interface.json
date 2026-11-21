@@ -1,0 +1,188 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "lone-implementer-interface",
+    "aliases": [
+      "LoneImplementerInterfaceDetector",
+      "LoneImplementerInterface"
+    ],
+    "skill": "shared/dependencies",
+    "description": "An interface has only one local implementation",
+    "rule": "Use the implementation directly unless the interface is a boundary.",
+    "suggestion": "Use the implementation directly unless the interface is a boundary.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "parameters": {
+    "publicContracts": {
+      "type": "list",
+      "default": [],
+      "description": "The types the project publishes as contracts, from configure's public contracts."
+    }
+  },
+  "definitions": {
+    "module": {
+      "args": [
+        "n"
+      ],
+      "expr": "$n.file.module"
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "in",
+        "$t.form",
+        "interface",
+        "protocol"
+      ],
+      [
+        "not",
+        "$t.file.test"
+      ],
+      [
+        "some",
+        "$t.writtenMembers",
+        "m",
+        [
+          "=",
+          "$m.kind",
+          "function"
+        ]
+      ],
+      [
+        "none",
+        "$param.publicContracts",
+        "p",
+        [
+          "=",
+          "$p",
+          "$t.symbol"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "implementing",
+        [
+          "filter",
+          [
+            "map",
+            [
+              "filter",
+              [
+                "referrers",
+                "$t"
+              ],
+              "r",
+              [
+                "in",
+                "$r.role",
+                "interfaces",
+                "bases"
+              ]
+            ],
+            "r",
+            [
+              "enclosing",
+              "$r",
+              "type"
+            ]
+          ],
+          "i",
+          [
+            "and",
+            [
+              "exists",
+              "$i"
+            ],
+            [
+              "not",
+              [
+                "in",
+                "$i.form",
+                "interface",
+                "protocol"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        [
+          "count",
+          "$implementing"
+        ],
+        1
+      ],
+      [
+        "every",
+        "$implementing",
+        "i",
+        [
+          "not",
+          "$i.file.test"
+        ]
+      ],
+      [
+        "every",
+        "$implementing",
+        "i",
+        [
+          "=",
+          [
+            "module",
+            "$i"
+          ],
+          [
+            "module",
+            "$t"
+          ]
+        ]
+      ],
+      [
+        "every",
+        [
+          "filter",
+          [
+            "referrers",
+            "$t"
+          ],
+          "r",
+          [
+            "not",
+            "$r.file.test"
+          ]
+        ],
+        "r",
+        [
+          "=",
+          [
+            "module",
+            "$r"
+          ],
+          [
+            "module",
+            "$t"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$t"
+  }
+}

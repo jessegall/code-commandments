@@ -1,0 +1,164 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "type-switch",
+    "aliases": [
+      "python-type-switch",
+      "csharp-type-switch",
+      "TypeSwitchDetector",
+      "TypeSwitch"
+    ],
+    "skill": "shared/enums",
+    "description": "Dispatch branches test the same value against several concrete types",
+    "rule": "Put the behavior on the type that owns it.",
+    "suggestion": "Put the behavior on the type that owns it.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "constructsOnReturn": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "count",
+            "$b.statements"
+          ],
+          1
+        ],
+        [
+          "some",
+          "$b.statements",
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "return"
+            ],
+            [
+              "some",
+              "$s.values",
+              "v",
+              [
+                "=",
+                "$v.kind",
+                "construction"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "if",
+    "as": "b",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$b.parent.kind",
+            "if"
+          ],
+          [
+            "=",
+            "$b.role",
+            "else"
+          ]
+        ]
+      ],
+      [
+        "=",
+        "$b.condition.kind",
+        "type-test"
+      ]
+    ],
+    "let": [
+      [
+        "rungs",
+        [
+          "filter",
+          [
+            "follow",
+            "$b",
+            "else",
+            "if"
+          ],
+          "r",
+          [
+            "=",
+            "$r.condition.kind",
+            "type-test"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "distinctCount",
+          [
+            "map",
+            "$rungs",
+            "r",
+            [
+              "fingerprint",
+              "$r.condition.testedType",
+              "exact"
+            ]
+          ]
+        ],
+        2
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          [
+            "map",
+            "$rungs",
+            "r",
+            [
+              "fingerprint",
+              "$r.condition.subject",
+              "exact"
+            ]
+          ]
+        ],
+        1
+      ],
+      [
+        "not",
+        [
+          "every",
+          "$rungs",
+          "r",
+          [
+            "constructsOnReturn",
+            "$r.then"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$b"
+  }
+}

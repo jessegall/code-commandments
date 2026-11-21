@@ -182,10 +182,12 @@
           ]
         },
         "nullable": {
-          "const": true
+          "type": "boolean",
+          "description": "Whether the type admits no value, when the bridge knows; absent when it does not."
         },
         "valueType": {
-          "const": true
+          "type": "boolean",
+          "description": "Whether the type is copied by value, when the bridge knows; absent when it does not."
         },
         "element": {
           "$ref": "#/$defs/type"
@@ -594,6 +596,11 @@
         "module": {
           "type": "string",
           "minLength": 1
+        },
+        "publishedBy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "the dependency that ships this file, when the project holds a copy of a file a package publishes (a Laravel config file published from vendor)"
         },
         "reads": {
           "type": "array",

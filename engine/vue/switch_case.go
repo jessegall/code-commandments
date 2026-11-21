@@ -72,12 +72,6 @@ func (e Element) SwitchCaseChain() (SwitchCaseChain, bool) {
 	return chain, cases >= switchCases
 }
 
-func (e Element) HeadsSwitchCase() bool {
-	_, ok := e.SwitchCaseChain()
-
-	return ok
-}
-
 func equality(directive Directive) (EqualityTest, bool) {
 	condition := typescript.Of(directive.Value())
 	if !condition.IsEquality() {
@@ -93,10 +87,6 @@ func equality(directive Directive) (EqualityTest, bool) {
 
 func (e Element) IsSwitchCase() bool {
 	return e.Tag() == SwitchCaseTag
-}
-
-func (e Element) IsDispatch() bool {
-	return e.IsSwitchCase() || e.HeadsSwitchCase()
 }
 
 func (e Element) Cases() []Element {
@@ -115,37 +105,3 @@ func (e Element) Cases() []Element {
 	return cases
 }
 
-func (e Element) ViewCases() []Element {
-	var views []Element
-	for _, dispatched := range e.Cases() {
-		if dispatched.HoldsView() {
-			views = append(views, dispatched)
-		}
-	}
-
-	return views
-}
-
-func (e Element) RetestsItsSwitchSubject() bool {
-	test, tested := e.conditionTest()
-	if !tested {
-		return false
-	}
-	for at := e.Parent(); at.Exists(); at = at.Parent() {
-		if at.IsSwitchCase() {
-			return typescript.Of(at.Binding("value").Value()).Source() == test.Subject
-		}
-	}
-
-	return false
-}
-
-func (e Element) conditionTest() (EqualityTest, bool) {
-	for _, name := range []Name{If, ElseIf, Show} {
-		if test, ok := equality(e.Directive(name)); ok {
-			return test, true
-		}
-	}
-
-	return EqualityTest{}, false
-}

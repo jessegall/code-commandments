@@ -1,0 +1,45 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "raw-fetch-in-component",
+    "aliases": [
+      "RawFetchInComponentDetector",
+      "RawFetchInComponent"
+    ],
+    "skill": "vue/server-calls",
+    "description": "A Vue component calls the global `fetch` itself instead of the one client module",
+    "rule": "Components never talk to the server with `fetch`; one client module owns the headers, the errors and the parsing.",
+    "suggestion": "Call the project's client module (or `router` / `useForm`) and move any headers the component sets into that module."
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.callee.kind",
+        "reference"
+      ],
+      [
+        "=",
+        "$c.callee.name",
+        "fetch"
+      ]
+    ],
+    "having": [
+      "not",
+      [
+        "exists",
+        [
+          "declarationOf",
+          "$c.callee"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

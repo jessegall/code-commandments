@@ -33,6 +33,13 @@ final class Translator
     public array $declared = [];
 
     /**
+     * The file's type table: each type an expression resolved to, once, which its resolvedType fact names by index.
+     *
+     * @var list<array<string, mixed>>
+     */
+    public array $types = [];
+
+    /**
      * @var list<int> where each line starts
      */
     private array $lines = [0];
@@ -449,6 +456,7 @@ final class Translator
         $extends = match (true) {
             $type instanceof Stmt\Class_ => $type->extends !== null ? [$type->extends] : [],
             $type instanceof Stmt\Interface_ => $type->extends,
+            $type instanceof Stmt\Enum_ && $type->scalarType !== null => [$type->scalarType],
             default => [],
         };
         $implements = $type instanceof Stmt\Class_ || $type instanceof Stmt\Enum_ ? $type->implements : [];
@@ -464,7 +472,13 @@ final class Translator
 
                 continue;
             }
-            $members[] = $this->member($member, $symbol, $promoted);
+            $translated = $this->member($member, $symbol, $promoted);
+            $members[] = $translated;
+            if ($member instanceof Stmt\Property && $member->hooks !== []) {
+                $hooks = $this->hooks($member, $symbol);
+                $translated->links = ['hooks' => $hooks];
+                array_push($members, ...$hooks);
+            }
         }
         $parts['writtenMembers'] = $members;
         $made->parts = array_filter($parts, static fn (array $held): bool => $held !== []);
@@ -473,6 +487,29 @@ final class Translator
         }
 
         return $made;
+    }
+
+    /**
+     * A property's hooks, each a function of form get or set named for the property, which the field links in hooks.
+     *
+     * @return list<TreeNode>
+     */
+    private function hooks(Stmt\Property $property, ?string $class): array
+    {
+        $hooks = [];
+        foreach ($property->hooks as $hook) {
+            $made = $this->of('function', $hook, ['name' => $property->props[0]->name->toString(), 'form' => $hook->name->toLowerString() === 'set' ? 'set' : 'get']);
+            $parts = ['parameters' => array_map($this->parameter(...), $hook->params), 'attributes' => $this->attributes($hook->attrGroups)];
+            if ($hook->body instanceof Expr) {
+                $parts['body'] = $this->expression($hook->body);
+            } elseif (is_array($hook->body)) {
+                $parts['body'] = $this->body($this->start($hook), $hook->body, $class);
+            }
+            $made->parts = array_filter($parts, static fn (mixed $held): bool => $held !== []);
+            $hooks[] = $made;
+        }
+
+        return $hooks;
     }
 
     /**
@@ -729,7 +766,49 @@ final class Translator
 
     // Expressions ----------------------------------------------------------------------------------------------------
 
+    /**
+     * An expression, with the type the inference gave it and the declaration it binds to, when it gave them.
+     */
     private function expression(Expr $expression): TreeNode
+    {
+        $node = $this->expressionNode($expression);
+        $type = $expression->getAttribute('type');
+        if (is_array($type)) {
+            $node->facts['resolvedType'] = $this->typeIndex($type);
+        }
+        $target = $expression->getAttribute('target');
+        if (is_array($target) && in_array($node->kind, ['call', 'construction'], true)) {
+            $node->facts['target'] = $target;
+        }
+
+        return $node;
+    }
+
+    /**
+     * The index of a type in the file's type table, as the contract writes it: named for its class, a keyword
+     * otherwise.
+     *
+     * @param  array{name?: string, keyword?: string, nullable?: bool}  $type
+     */
+    private function typeIndex(array $type): int
+    {
+        $written = array_filter([
+            'text' => ($type['nullable'] ?? false ? '?' : '').($type['name'] ?? $type['keyword'] ?? ''),
+            'kind' => isset($type['name']) ? 'named' : 'keyword',
+            'name' => $type['name'] ?? $type['keyword'] ?? null,
+            'nullable' => (bool) ($type['nullable'] ?? false),
+            'origin' => 'compiler',
+        ], static fn (mixed $value): bool => $value !== null);
+        $at = array_search($written, $this->types, true);
+        if ($at === false) {
+            $this->types[] = $written;
+            $at = array_key_last($this->types);
+        }
+
+        return $at;
+    }
+
+    private function expressionNode(Expr $expression): TreeNode
     {
         return match (true) {
             $expression instanceof Expr\Variable => $this->of('reference', $expression, [

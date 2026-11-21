@@ -2,6 +2,7 @@
 package scaffold
 
 import (
+	"github.com/jessegall/code-commandments/rules"
 	"bytes"
 	"encoding/json"
 	"github.com/jessegall/code-commandments/cli/atomic"
@@ -39,7 +40,7 @@ func (Command) Help() help.Help {
 func Scaffoldable() map[string]string {
 	commands := map[string]string{}
 
-	for _, sin := range sins.All() {
+	for _, sin := range rules.Sins() {
 		if scaffolding, scaffolds := sin.(sins.Scaffolding); scaffolds && len(scaffolding.Scaffolds()) > 0 {
 			name := sin.Definition().Name
 			commands[name] = binary.Here() + " scaffold --sin=" + name
@@ -66,7 +67,7 @@ func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	var created, skipped []string
 
-	for _, sin := range config.InClassOrder(config.Sin, sins.All()) {
+	for _, sin := range config.InClassOrder(config.Sin, rules.Sins()) {
 		scaffolding, scaffolds := sin.(sins.Scaffolding)
 
 		if !scaffolds || filtered && !sin.Definition().Matches(query) {

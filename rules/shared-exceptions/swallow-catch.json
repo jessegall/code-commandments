@@ -1,0 +1,290 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "python",
+    "csharp",
+    "typescript",
+    "vue",
+    "go"
+  ],
+  "sin": {
+    "name": "swallow-catch",
+    "aliases": [
+      "python-swallowed-exception",
+      "csharp-swallowed-exception",
+      "SwallowCatchDetector",
+      "SwallowCatch",
+      "SwallowedException",
+      "SwallowedExceptionDetector"
+    ],
+    "skill": "shared/exceptions",
+    "description": "A `catch` whose body is empty, or only returns `null`/`false`/an empty value or moves on: the failure becomes something that looks like an answer",
+    "rule": "Let a failure throw, or surface it named with its cause; never swallow a catch into an empty body or an absent value.",
+    "suggestion": "Rethrow it wrapped with the caught failure as its cause, or catch, log and skip at one named boundary."
+  },
+  "definitions": {
+    "errorPair": {
+      "args": [
+        "x",
+        "y"
+      ],
+      "expr": [
+        "and",
+        [
+          "assignable",
+          "$x.resolved",
+          "standard.error-result"
+        ],
+        [
+          "literalIs",
+          "$y",
+          "null"
+        ]
+      ]
+    },
+    "absentValue": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "or",
+        [
+          "literalIs",
+          "$v",
+          "null"
+        ],
+        [
+          "literalIs",
+          "$v",
+          "undefined"
+        ],
+        [
+          "literalEquals",
+          "$v",
+          false
+        ],
+        [
+          "literalEquals",
+          "$v",
+          ""
+        ],
+        [
+          "case",
+          "$v.kind",
+          {
+            "collection": [
+              "=",
+              [
+                "count",
+                "$v.entries"
+              ],
+              0
+            ],
+            "default-value": true,
+            "call": [
+              "hasEffect",
+              "$v",
+              "returns-empty-collection"
+            ]
+          },
+          false
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "handler",
+      "if"
+    ],
+    "as": "site",
+    "where": [
+      "and",
+      [
+        "reportable",
+        "$site"
+      ],
+      [
+        "!=",
+        "$site.file.purpose",
+        "test-fixture"
+      ],
+      [
+        "case",
+        "$site.kind",
+        {
+          "handler": true,
+          "if": [
+            "case",
+            "$site.condition.kind",
+            {
+              "comparison": [
+                "and",
+                [
+                  "=",
+                  "$site.condition.operator",
+                  "not-equal"
+                ],
+                [
+                  "or",
+                  [
+                    "errorPair",
+                    "$site.condition.left",
+                    "$site.condition.right"
+                  ],
+                  [
+                    "errorPair",
+                    "$site.condition.right",
+                    "$site.condition.left"
+                  ]
+                ]
+              ]
+            },
+            false
+          ]
+        },
+        false
+      ],
+      [
+        "none",
+        "$site.caughtTypes",
+        "t",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "control-signal",
+            "$t"
+          ]
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "body",
+        [
+          "case",
+          "$site.kind",
+          {
+            "handler": "$site.body",
+            "if": "$site.then"
+          }
+        ]
+      ],
+      [
+        "effective",
+        [
+          "filter",
+          "$body.statements",
+          "s",
+          [
+            "!=",
+            "$s.kind",
+            "no-op"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "or",
+      [
+        "=",
+        [
+          "count",
+          "$effective"
+        ],
+        0
+      ],
+      [
+        "and",
+        [
+          "=",
+          [
+            "count",
+            "$effective"
+          ],
+          1
+        ],
+        [
+          "some",
+          "$effective",
+          "exit",
+          [
+            "and",
+            [
+              "none",
+              [
+                "ownDescendants",
+                "$exit"
+              ],
+              "d",
+              [
+                "=",
+                "$d.kind",
+                "throw"
+              ]
+            ],
+            [
+              "case",
+              "$exit.kind",
+              {
+                "break": [
+                  "=",
+                  "$site.kind",
+                  "handler"
+                ],
+                "continue": [
+                  "=",
+                  "$site.kind",
+                  "handler"
+                ],
+                "return": [
+                  "or",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$site.kind",
+                      "handler"
+                    ],
+                    [
+                      "=",
+                      [
+                        "count",
+                        "$exit.values"
+                      ],
+                      0
+                    ]
+                  ],
+                  [
+                    "and",
+                    [
+                      ">",
+                      [
+                        "count",
+                        "$exit.values"
+                      ],
+                      0
+                    ],
+                    [
+                      "every",
+                      "$exit.values",
+                      "v",
+                      [
+                        "absentValue",
+                        "$v"
+                      ]
+                    ]
+                  ]
+                ]
+              },
+              false
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$site"
+  }
+}

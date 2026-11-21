@@ -69,7 +69,7 @@ func TestAWalkThatChangesWhatItWalksIsFoundAndACopyIsNot(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			found := CollectionMutatedWhileIteratedDetector{}.Find(frontendtest.FromSource(t, map[string]string{"src/lines.ts": test.source}))
+			found := shipped(t, "collection-mutated-while-iterated").Find(frontendtest.FromSource(t, map[string]string{"src/lines.ts": test.source}))
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

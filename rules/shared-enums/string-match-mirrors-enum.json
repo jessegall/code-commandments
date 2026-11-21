@@ -1,0 +1,234 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "string-match-mirrors-enum",
+    "aliases": [
+      "python-string-match-mirrors-enum",
+      "csharp-string-match-mirrors-enum",
+      "StringMatchMirrorsEnumDetector",
+      "StringMatchMirrorsEnum",
+      "csharp-string-mirrors-enum",
+      "StringMirrorsEnumDetector",
+      "StringMirrorsEnum"
+    ],
+    "skill": "shared/enums",
+    "description": "A switch repeats literal values already declared as cases",
+    "rule": "Dispatch on the declared type and its named cases.",
+    "suggestion": "Dispatch on the declared type and its named cases.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "texts": {
+      "args": [
+        "l"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          "$l",
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$x.literalKind",
+              "string"
+            ]
+          ]
+        ],
+        "x",
+        "$x.value"
+      ]
+    },
+    "mirrors": {
+      "args": [
+        "words"
+      ],
+      "expr": [
+        "and",
+        [
+          ">=",
+          [
+            "distinctCount",
+            "$words"
+          ],
+          2
+        ],
+        [
+          "some",
+          [
+            "programEnums"
+          ],
+          "cases",
+          [
+            "every",
+            "$words",
+            "w",
+            [
+              "some",
+              "$cases",
+              "c",
+              [
+                "=",
+                "$c",
+                "$w"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "armTexts": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          "$d.arms",
+          "a",
+          [
+            "texts",
+            "$a.patterns"
+          ]
+        ]
+      ]
+    },
+    "comparedIn": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "flatten",
+              [
+                "list",
+                [
+                  "list",
+                  "$c"
+                ],
+                [
+                  "ownDescendants",
+                  "$c"
+                ]
+              ]
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "comparison"
+              ],
+              [
+                "every",
+                "$x.operators",
+                "o",
+                [
+                  "in",
+                  "$o",
+                  "equal",
+                  "identical"
+                ]
+              ]
+            ]
+          ],
+          "x",
+          "$x.operands"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "dispatch",
+      "if"
+    ],
+    "as": "d",
+    "where": [
+      "and",
+      [
+        "not",
+        "$d.file.test"
+      ],
+      [
+        "case",
+        "$d.kind",
+        {
+          "if": [
+            "not",
+            [
+              "and",
+              [
+                "=",
+                "$d.parent.kind",
+                "if"
+              ],
+              [
+                "=",
+                "$d.role",
+                "else"
+              ]
+            ]
+          ]
+        },
+        true
+      ]
+    ],
+    "having": [
+      "mirrors",
+      [
+        "case",
+        "$d.kind",
+        {
+          "dispatch": [
+            "armTexts",
+            "$d"
+          ]
+        },
+        [
+          "flatten",
+          [
+            "map",
+            [
+              "follow",
+              "$d",
+              "else",
+              "if"
+            ],
+            "r",
+            [
+              "texts",
+              [
+                "comparedIn",
+                "$r.condition"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$d"
+  }
+}

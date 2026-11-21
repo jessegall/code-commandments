@@ -1,0 +1,86 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "coalesced-loop-subject",
+    "aliases": [
+      "python-coalesced-loop-subject",
+      "csharp-coalesced-loop-subject",
+      "CoalescedLoopSubjectDetector",
+      "CoalescedLoopSubject"
+    ],
+    "skill": "shared/absence",
+    "description": "The loop header replaces a missing collection with an empty one",
+    "rule": "Handle missing input before iteration or require a collection.",
+    "suggestion": "Handle missing input before iteration or require a collection."
+  },
+  "find": {
+    "select": "fallback",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "=",
+        "$f.role",
+        "iterable"
+      ],
+      [
+        "=",
+        "$f.parent.kind",
+        "loop"
+      ],
+      [
+        "tree.emptyCollection",
+        "$f.replacement"
+      ],
+      [
+        "some",
+        [
+          "tree.insideOf",
+          "$f.subject"
+        ],
+        "r",
+        [
+          "and",
+          [
+            "=",
+            "$r.kind",
+            "reference"
+          ],
+          [
+            "or",
+            [
+              "=",
+              [
+                "fingerprint",
+                "$r",
+                "exact"
+              ],
+              [
+                "fingerprint",
+                "$f.subject",
+                "exact"
+              ]
+            ],
+            [
+              "=",
+              "$r.role",
+              "subject"
+            ]
+          ],
+          [
+            "=",
+            "$r.binding.parent.kind",
+            "parameter"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

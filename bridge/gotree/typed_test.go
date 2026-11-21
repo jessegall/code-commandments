@@ -71,7 +71,7 @@ func TestAnExpressionCarriesTheTypeTheCheckerGave(t *testing.T) {
 	if slice.Element == nil || slice.Element.Text != "example.com/shop/money.Money" {
 		t.Errorf("a slice carries the element %+v", slice.Element)
 	}
-	if slice.Nullable {
+	if slice.Nullable == nil || *slice.Nullable {
 		t.Error("a slice is written as admitting absence, where a nil slice ranges cleanly")
 	}
 
@@ -79,7 +79,7 @@ func TestAnExpressionCarriesTheTypeTheCheckerGave(t *testing.T) {
 	if money.Kind != "named" || money.Name != "example.com/shop/money.Money" {
 		t.Errorf("a named type is written as %q named %q", money.Kind, money.Name)
 	}
-	if !money.ValueType {
+	if money.ValueType == nil || !*money.ValueType {
 		t.Error("a struct is not written as a value type, though Go copies one")
 	}
 }
@@ -88,7 +88,7 @@ func TestAPointerAdmitsAbsenceAndASliceDoesNot(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
 	pointer := typeNamed(t, file, "*example.com/shop/cart.Cart")
-	if !pointer.Nullable {
+	if pointer.Nullable == nil || !*pointer.Nullable {
 		t.Error("a pointer is not written as admitting absence")
 	}
 	if pointer.Kind != "pointer" {
@@ -125,7 +125,7 @@ func TestAMapCarriesItsKeyAndItsValue(t *testing.T) {
 	if len(held.Args) != 2 || held.Args[0].Text != "string" {
 		t.Errorf("a map carries %d args, where its key comes first", len(held.Args))
 	}
-	if held.Nullable {
+	if held.Nullable == nil || *held.Nullable {
 		t.Error("a map is written as admitting absence, where a nil map reads")
 	}
 }

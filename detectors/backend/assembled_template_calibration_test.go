@@ -39,7 +39,7 @@ final class ChartHelp {
 }
 `)
 	var methods []string
-	for _, match := range (AssembledTemplateDetector{}).Find(codebase) {
+	for _, match := range shipped(t, "assembled-template").Find(codebase) {
 		methods = append(methods, match.EnclosingFunction().Name())
 	}
 	if want := []string{"layout", "inline"}; !slices.Equal(methods, want) {

@@ -12,7 +12,7 @@ func (n Node) IsOptional() bool {
 		return false
 	}
 
-	return slices.Contains(node.Modifiers, "optional") || (node.Written != nil && node.Written.Nullable)
+	return slices.Contains(node.Modifiers, "optional") || node.Written.IsNullable()
 }
 
 func (n Node) Initializer() Node {

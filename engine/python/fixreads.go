@@ -398,21 +398,3 @@ var blockingCalls = []string{
 	"subprocess.check_call", "subprocess.check_output", "os.system", "socket.socket.recv", "input",
 }
 
-func (n Node) BlocksTheEventLoop() bool {
-	if !n.IsCall() || !slices.Contains(blockingCalls, n.Callee().DottedName()) {
-		return false
-	}
-	def := n.EnclosingFunction()
-
-	return def.Kind() == "AsyncFunctionDef" && !n.handedToAThread()
-}
-
-func (n Node) handedToAThread() bool {
-	for held := n.Parent(); held.Exists(); held = held.Parent() {
-		if held.IsCall() && slices.Contains([]string{"asyncio.to_thread", "to_thread", "run_in_executor"}, held.Callee().Name()) {
-			return true
-		}
-	}
-
-	return false
-}

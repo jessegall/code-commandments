@@ -1,0 +1,52 @@
+{
+    "configure": {
+        "typescript/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "client/layers/inventory/core"
+                ]
+            },
+            {
+                "layer": [
+                    "client/layers/inventory/view",
+                    [
+                        "client/layers/inventory/core"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "client/layers/payroll/core"
+                ]
+            },
+            {
+                "layer": [
+                    "client/layers/payroll/view",
+                    [
+                        "client/layers/payroll/core"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "client/layers/routing/core"
+                ]
+            },
+            {
+                "layer": [
+                    "client/layers/routing/view",
+                    [
+                        "client/layers/routing/core"
+                    ]
+                ]
+            }
+        ],
+        "vue/ComponentBudgetDetector": [
+            {
+                "elements": [
+                    30
+                ]
+            }
+        ]
+    }
+}

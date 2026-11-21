@@ -167,7 +167,7 @@ public static class OperationCatalogQueries
 	})
 
 	fired := map[string]bool{}
-	for _, found := range (FeatureEnvyDetector{}).Find(codebase) {
+	for _, found := range shipped(t, "feature-envy").Find(codebase) {
 		fired[found.Scope()] = true
 	}
 

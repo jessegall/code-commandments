@@ -1,0 +1,64 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "non-final-data",
+    "aliases": [
+      "NonFinalDataDetector",
+      "NonFinalData"
+    ],
+    "skill": "php/spatie-data",
+    "description": "Data class not `final` / props not `readonly` promoted",
+    "rule": "Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "and",
+      [
+        "=",
+        "$t.form",
+        "class"
+      ],
+      [
+        "none",
+        "$t.modifiers",
+        "m",
+        [
+          "in",
+          "$m",
+          "final",
+          "abstract"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        "$t"
+      ],
+      [
+        "none",
+        [
+          "referrers",
+          "$t"
+        ],
+        "r",
+        [
+          "=",
+          "$r.role",
+          "bases"
+        ]
+      ]
+    ],
+    "emit": "$t"
+  }
+}

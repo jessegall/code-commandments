@@ -1,6 +1,5 @@
 package engine
 
-import "slices"
 
 var equalities = []string{"==", "!=", "===", "!==", "is", "is not"}
 
@@ -28,27 +27,3 @@ func (m Match) Grouped() Match {
 	return m
 }
 
-func IsComparedToItsFallback(m Match) bool {
-	fallback := m.Fallback()
-	if fallback.IsNullish() {
-		return false
-	}
-	stable := m.grammar().StableFallback
-	accepted := fallback.Is(Literal) || fallback.IsConstant()
-	if stable != nil {
-		accepted = stable(fallback)
-	}
-	if !accepted {
-		return false
-	}
-	compared := m.Grouped()
-	comparison := compared.Parent()
-	operator := comparison.operator()
-	if !comparison.Is(Comparison) || !(slices.Contains(equalities, operator) || slices.Contains(orderComparisons, operator)) {
-		return false
-	}
-
-	return slices.ContainsFunc(comparison.Children(), func(side Match) bool {
-		return side.node != compared.node && side.SameSyntax(fallback)
-	})
-}

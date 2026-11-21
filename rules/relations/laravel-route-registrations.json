@@ -1,0 +1,30 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": ["php"],
+  "definitions": {
+    "classConstant": {"args": ["e"], "expr": ["case", ["and", ["=", "$e.kind", "access"], ["=", "$e.member.name", "class"]], {"true": "$e.subject.refers"}, ""]},
+    "entryValue": {"args": ["entry"], "expr": "$entry.value"},
+    "methodName": {"args": ["e"], "expr": ["case", ["literalIs", "$e", "string"], {"true": "$e.value"}, ""]},
+    "joined": {"args": ["class", "method"], "expr": ["case", ["and", ["nonempty", "$class"], ["nonempty", "$method"]], {"true": ["concat", "$class", "::", "$method"]}, ""]},
+    "arrayAction": {"args": ["v"], "expr": ["case", [">=", ["count", "$v.entries"], 2],
+      {"true": ["joined", ["classConstant", ["entryValue", ["at", "$v.entries", 0]]], ["methodName", ["entryValue", ["at", "$v.entries", 1]]]]}, ""]},
+    "action": {"args": ["v"], "expr": ["case", "$v.kind", {
+      "collection": ["arrayAction", "$v"],
+      "access": ["joined", ["classConstant", "$v"], "__invoke"]
+    }, ""]}
+  },
+  "relation": {
+    "from": "call",
+    "as": "c",
+    "pipeline": [
+      {"where": ["and", ["=", "$c.callee.kind", "access"],
+        ["in", "$c.callee.member.name", "get", "post", "put", "patch", "delete", "options", "match", "any"]]},
+      {"project": {
+        "anchor": "$c",
+        "verb": "$c.callee.member.name",
+        "actions": ["filter", ["map", "$c.arguments", "a", ["action", "$a.value"]], "x", ["nonempty", "$x"]]
+      }},
+      {"where": ["nonempty", "$actions"]}
+    ]
+  }
+}

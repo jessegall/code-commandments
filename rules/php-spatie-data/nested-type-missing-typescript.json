@@ -1,0 +1,329 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "nested-type-missing-typescript",
+    "aliases": [
+      "NestedTypeMissingTypeScriptDetector",
+      "NestedTypeMissingTypeScript"
+    ],
+    "skill": "php/spatie-data",
+    "description": "A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it)",
+    "rule": "Every nested `Data` reachable on the wire from a `#[TypeScript]` class must ALSO be `#[TypeScript]` (or the property must declare its shape with `#[LiteralTypeScriptType]`), or it generates as `undefined`. Enums need no tag — they auto-generate.",
+    "suggestion": "Add `#[TypeScript]` to the nested `Data` class the property points at.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    }
+  },
+  "definitions": {
+    "optionalDefault": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "spatie.slotDefault",
+            "$s"
+          ]
+        ],
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "spatie.typeRefers",
+            [
+              "spatie.slotDefault",
+              "$s"
+            ]
+          ],
+          "Spatie\\LaravelData\\Optional"
+        ]
+      ]
+    },
+    "hidden": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "some",
+        "$s.attributes",
+        "a",
+        [
+          "=",
+          "$a.refers",
+          "Spatie\\LaravelData\\Attributes\\Hidden"
+        ]
+      ]
+    },
+    "soleClass": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        "$t.form",
+        {
+          "named": "$t.refers",
+          "nullable": "$t.element.refers",
+          "union": [
+            "case",
+            [
+              "=",
+              [
+                "count",
+                [
+                  "realMembers",
+                  "$t"
+                ]
+              ],
+              1
+            ],
+            {
+              "true": [
+                "at",
+                [
+                  "realMembers",
+                  "$t"
+                ],
+                0
+              ]
+            },
+            ""
+          ]
+        },
+        ""
+      ]
+    },
+    "realMembers": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          "$t.members",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.form",
+              "named"
+            ],
+            [
+              "!=",
+              "$m.refers",
+              "Spatie\\LaravelData\\Optional"
+            ]
+          ]
+        ],
+        "m",
+        "$m.refers"
+      ]
+    },
+    "collectionOf": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "at",
+        [
+          "flatten",
+          [
+            "map",
+            [
+              "filter",
+              "$s.attributes",
+              "a",
+              [
+                "=",
+                "$a.refers",
+                "Spatie\\LaravelData\\Attributes\\DataCollectionOf"
+              ]
+            ],
+            "a",
+            [
+              "map",
+              [
+                "filter",
+                "$a.arguments",
+                "x",
+                [
+                  "and",
+                  [
+                    "=",
+                    [
+                      "position",
+                      "$x"
+                    ],
+                    0
+                  ],
+                  [
+                    "=",
+                    "$x.value.kind",
+                    "access"
+                  ]
+                ]
+              ],
+              "x",
+              "$x.value.subject.refers"
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "nestedOf": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        [
+          "nonempty",
+          [
+            "collectionOf",
+            "$s"
+          ]
+        ],
+        {
+          "true": [
+            "collectionOf",
+            "$s"
+          ]
+        },
+        [
+          "soleClass",
+          "$s.declaredType"
+        ]
+      ]
+    },
+    "tsTyped": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "some",
+        "$s.attributes",
+        "a",
+        [
+          "in",
+          "$a.refers",
+          "Spatie\\TypeScriptTransformer\\Attributes\\TypeScriptType",
+          "Spatie\\TypeScriptTransformer\\Attributes\\LiteralTypeScriptType"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "field",
+      "parameter"
+    ],
+    "as": "s",
+    "where": [
+      "and",
+      [
+        "some",
+        "$s.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "public"
+        ]
+      ],
+      [
+        "none",
+        "$s.modifiers",
+        "x",
+        [
+          "=",
+          "$x",
+          "static"
+        ]
+      ],
+      [
+        "nonempty",
+        [
+          "nestedOf",
+          "$s"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$s",
+          "type"
+        ]
+      ],
+      [
+        "inner",
+        [
+          "typeDeclaration",
+          [
+            "nestedOf",
+            "$s"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "spatie.isData",
+        "$owner"
+      ],
+      [
+        "spatie.typescript",
+        "$owner"
+      ],
+      [
+        "not",
+        [
+          "hidden",
+          "$s"
+        ]
+      ],
+      [
+        "not",
+        [
+          "tsTyped",
+          "$s"
+        ]
+      ],
+      [
+        "spatie.isData",
+        "$inner"
+      ],
+      [
+        "not",
+        [
+          "spatie.typescript",
+          "$inner"
+        ]
+      ]
+    ],
+    "emit": "$s"
+  }
+}

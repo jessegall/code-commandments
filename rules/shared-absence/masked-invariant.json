@@ -1,0 +1,203 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "masked-invariant",
+    "aliases": [
+      "python-masked-invariant",
+      "MaskedInvariantDetector",
+      "MaskedInvariant"
+    ],
+    "skill": "shared/absence",
+    "description": "Masking an optional field behind a literal hides a value the design requires",
+    "rule": "Keep required state non-null, or pass it directly to the operation that uses it.",
+    "suggestion": "Remove the fallback by giving the value a certain type where it is set.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "fieldNamed": {
+      "args": [
+        "t",
+        "n"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                "$t.writtenMembers",
+                "m",
+                [
+                  "=",
+                  "$m.kind",
+                  "field"
+                ]
+              ],
+              "m",
+              "$m.declarators"
+            ]
+          ],
+          "d",
+          [
+            "=",
+            "$d.binding.name",
+            "$n"
+          ]
+        ],
+        0
+      ]
+    },
+    "assignedOutsideConstructor": {
+      "args": [
+        "t",
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "filter",
+          "$t.writtenMembers",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ],
+            [
+              "!=",
+              "$m.form",
+              "constructor"
+            ]
+          ]
+        ],
+        "m",
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$m.body"
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "assignment"
+            ],
+            [
+              "tree.names",
+              [
+                "at",
+                "$x.targets",
+                0
+              ],
+              "$n"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "fallback",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "=",
+        "$f.replacement.kind",
+        "literal"
+      ],
+      [
+        "not",
+        [
+          "tree.nullish",
+          "$f.replacement"
+        ]
+      ],
+      [
+        "some",
+        [
+          "tree.insideOf",
+          "$f.subject"
+        ],
+        "x",
+        [
+          "=",
+          "$x.nullConditional",
+          true
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "read",
+        [
+          "at",
+          [
+            "filter",
+            [
+              "tree.insideOf",
+              "$f.subject"
+            ],
+            "x",
+            [
+              "tree.selfField",
+              "$x"
+            ]
+          ],
+          0
+        ]
+      ],
+      [
+        "owner",
+        [
+          "enclosing",
+          "$f",
+          "type"
+        ]
+      ],
+      [
+        "field",
+        [
+          "fieldNamed",
+          "$owner",
+          "$read.member.name"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$field"
+      ],
+      [
+        "=",
+        "$field.binding.resolved.nullable",
+        true
+      ],
+      [
+        "assignedOutsideConstructor",
+        "$owner",
+        "$read.member.name"
+      ]
+    ],
+    "emit": "$f"
+  }
+}

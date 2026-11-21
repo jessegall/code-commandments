@@ -1,0 +1,69 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "bare-state-predicate",
+    "aliases": [
+      "BareStatePredicateDetector",
+      "BareStatePredicate",
+      "csharp-bare-state-predicate",
+      "python-bare-state-predicate"
+    ],
+    "skill": "php/method-mood",
+    "description": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs",
+    "rule": "A `bool` answering about the object itself wears a question: `isBound()`, `isSpinning()`, `hasParent()`, `awaitsAnswer()`. (A predicate that takes what it compares against — `contains(\\$item)`, `matches(\\$name)` — is already a sentence and stays as it is.)",
+    "suggestion": "make it a question: `is…`, `has…`, `can…`, `awaits…`",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "tree.method",
+        "$f"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.parameters"
+        ],
+        0
+      ],
+      [
+        "in",
+        "$f.resolved.returns.name",
+        "bool",
+        "boolean"
+      ],
+      [
+        "reads",
+        "$f.name",
+        "bare-state"
+      ]
+    ],
+    "having": [
+      "some",
+      [
+        "ownDescendants",
+        "$f.body"
+      ],
+      "x",
+      [
+        "tree.selfField",
+        "$x"
+      ]
+    ],
+    "emit": "$f"
+  }
+}

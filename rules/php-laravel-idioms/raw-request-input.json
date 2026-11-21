@@ -1,0 +1,54 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "raw-request-input",
+    "aliases": [
+      "RawRequestInputDetector",
+      "RawRequestInput"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "Raw `->input()/->get()/->query()/->post()` on a Request",
+    "rule": "Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.",
+    "suggestion": "A named getter on a `FormRequest` subclass (`$request->productId()`).",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.callee.kind",
+        "access"
+      ],
+      [
+        "in",
+        "$c.callee.member.name",
+        "input",
+        "get",
+        "query",
+        "post"
+      ],
+      [
+        ">",
+        [
+          "count",
+          "$c.arguments"
+        ],
+        0
+      ]
+    ],
+    "having": [
+      "laravel.request",
+      "$c"
+    ],
+    "emit": "$c"
+  }
+}

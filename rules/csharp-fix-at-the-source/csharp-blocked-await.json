@@ -1,0 +1,193 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp"
+  ],
+  "sin": {
+    "name": "csharp-blocked-await",
+    "aliases": [
+      "BlockedAwaitDetector",
+      "BlockedAwait"
+    ],
+    "skill": "csharp/fix-at-the-source",
+    "description": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
+    "rule": "Work in flight is awaited, never blocked on: `await` it, and make the caller async too, however far up that goes.",
+    "suggestion": "Write `await` and mark the method `async`, then follow the callers: the breadth of that change IS the problem surfacing, and stopping it with `.Result` at one boundary is what buries the deadlock until load finds it."
+  },
+  "definitions": {
+    "blocked": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "access": [
+            "case",
+            [
+              "=",
+              "$x.member.name",
+              "Result"
+            ],
+            {
+              "true": "$x.subject"
+            },
+            null
+          ],
+          "call": [
+            "case",
+            [
+              "proven",
+              [
+                "hasEffect",
+                "$x",
+                "blocks-on-task"
+              ]
+            ],
+            {
+              "true": [
+                "case",
+                "$x.callee.subject.kind",
+                {
+                  "call": [
+                    "case",
+                    [
+                      "=",
+                      "$x.callee.subject.callee.kind",
+                      "access"
+                    ],
+                    {
+                      "true": "$x.callee.subject.callee.subject"
+                    },
+                    "$x.callee.subject"
+                  ]
+                },
+                "$x.callee.subject"
+              ]
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "isTask": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$x.resolved.name",
+          "System.Threading.Tasks.Task"
+        ],
+        [
+          "startsWith",
+          "$x.resolved.name",
+          "System.Threading.Tasks.Task<"
+        ],
+        [
+          "=",
+          "$x.resolved.name",
+          "System.Threading.Tasks.ValueTask"
+        ],
+        [
+          "startsWith",
+          "$x.resolved.name",
+          "System.Threading.Tasks.ValueTask<"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "call",
+      "access"
+    ],
+    "as": "x",
+    "let": [
+      [
+        "task",
+        [
+          "blocked",
+          "$x"
+        ]
+      ],
+      [
+        "method",
+        [
+          "enclosing",
+          "$x",
+          "function"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$task"
+      ],
+      [
+        "isTask",
+        "$task"
+      ],
+      [
+        "!=",
+        "$method.form",
+        "constructor"
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$method.name",
+            "Main"
+          ],
+          [
+            "some",
+            "$method.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "static"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$task.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$task.member.name",
+              "CompletedTask"
+            ]
+          ],
+          [
+            "proven",
+            [
+              "hasEffect",
+              "$task",
+              "completed-task"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$x"
+  }
+}

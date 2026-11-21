@@ -1,0 +1,189 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "manufactured-fake-fill",
+    "aliases": [
+      "python-invented-default",
+      "csharp-invented-default",
+      "ManufacturedFakeFillDetector",
+      "ManufacturedFakeFill",
+      "InventedDefault",
+      "InventedDefaultDetector"
+    ],
+    "skill": "shared/absence",
+    "description": "An empty scalar fills a slot that expects a meaningful value",
+    "rule": "Keep absence explicit and resolve it before calling.",
+    "suggestion": "Keep absence explicit and resolve it before calling."
+  },
+  "definitions": {
+    "emptyScalar": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "literal"
+        ],
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$x.literalKind",
+              "string"
+            ],
+            [
+              "=",
+              "$x.value",
+              ""
+            ]
+          ],
+          [
+            "and",
+            [
+              "in",
+              "$x.literalKind",
+              "integer",
+              "float"
+            ],
+            [
+              "in",
+              "$x.value",
+              "0",
+              "0.0"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$x.literalKind",
+              "boolean"
+            ],
+            [
+              "=",
+              "$x.value",
+              "false"
+            ]
+          ]
+        ]
+      ]
+    },
+    "parametersOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "function": "$d.parameters",
+          "type": [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                "$d.writtenMembers",
+                "m",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$m.kind",
+                    "function"
+                  ],
+                  [
+                    "=",
+                    "$m.form",
+                    "constructor"
+                  ]
+                ]
+              ],
+              "m",
+              "$m.parameters"
+            ]
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "fallback",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "emptyScalar",
+        "$f.replacement"
+      ],
+      [
+        "=",
+        "$f.parent.kind",
+        "argument"
+      ],
+      [
+        "in",
+        "$f.parent.parent.kind",
+        "call",
+        "construction"
+      ]
+    ],
+    "let": [
+      [
+        "parameter",
+        [
+          "at",
+          [
+            "parametersOf",
+            [
+              "declarationOf",
+              "$f.parent.parent"
+            ]
+          ],
+          [
+            "position",
+            "$f.parent"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "or",
+      [
+        "not",
+        [
+          "exists",
+          "$parameter.default"
+        ]
+      ],
+      [
+        "!=",
+        [
+          "fingerprint",
+          "$parameter.default",
+          "exact"
+        ],
+        [
+          "fingerprint",
+          "$f.replacement",
+          "exact"
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

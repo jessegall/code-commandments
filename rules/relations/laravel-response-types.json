@@ -1,0 +1,19 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": ["php"],
+  "definitions": {
+    "renders": {"args": ["c"], "expr": ["or",
+      ["and", ["=", "$c.callee.kind", "access"], ["=", "$c.callee.member.name", "render"], ["=", "$c.callee.subject.refers", "Inertia\\Inertia"]],
+      ["and", ["=", "$c.callee.kind", "reference"], ["=", "$c.callee.refers", "inertia"]]]},
+    "typesIn": {"args": ["x"], "expr": ["filter", ["map", ["flatten", ["list", ["list", "$x"], ["ownDescendants", "$x"]]], "d", "$d.resolved.name"], "n", ["nonempty", "$n"]]}
+  },
+  "relation": {
+    "from": "call",
+    "as": "c",
+    "pipeline": [
+      {"where": ["renders", "$c"]},
+      {"expand": ["flatten", ["map", "$c.arguments", "a", ["typesIn", "$a.value"]]]},
+      {"project": {"type": "$row"}}
+    ]
+  }
+}

@@ -303,7 +303,7 @@ func isNullableCallbackWithNullDefault(param engine.Match) bool {
 	switch {
 	case declared.Kind == "union":
 		candidates = declared.Members
-	case declared.Nullable:
+	case declared.IsNullable():
 		candidates = []*contract.Type{declared}
 	}
 	for _, candidate := range candidates {

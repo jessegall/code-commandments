@@ -1,0 +1,181 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "hand-rolled-registry",
+    "aliases": [
+      "HandRolledRegistryDetector",
+      "HandRolledRegistry"
+    ],
+    "skill": "php/role-vocabulary",
+    "description": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base",
+    "rule": "A keyed store extends the project's one `Registry` base and states only what it holds; the register/get/has plumbing is written once.",
+    "suggestion": "Extend the `Registry` base (scaffold one if the project has none) and delete the class's own array, `register()` and `get()`.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "registryField": {
+      "args": [
+        "i"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$i.kind",
+            "index"
+          ],
+          [
+            "tree.selfField",
+            "$i.subject"
+          ]
+        ],
+        {
+          "true": "$i.subject.member.name"
+        },
+        ""
+      ]
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "none",
+      "$t.modifiers",
+      "m",
+      [
+        "=",
+        "$m",
+        "abstract"
+      ]
+    ],
+    "let": [
+      [
+        "body",
+        [
+          "flatten",
+          [
+            "map",
+            "$t.writtenMembers",
+            "m",
+            [
+              "ownDescendants",
+              "$m.body"
+            ]
+          ]
+        ]
+      ],
+      [
+        "written",
+        [
+          "map",
+          [
+            "filter",
+            "$body",
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "assignment"
+              ],
+              [
+                "some",
+                "$a.targets",
+                "g",
+                [
+                  "and",
+                  [
+                    "nonempty",
+                    [
+                      "registryField",
+                      "$g"
+                    ]
+                  ],
+                  [
+                    "=",
+                    "$g.key.kind",
+                    "reference"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "a",
+          [
+            "registryField",
+            [
+              "at",
+              "$a.targets",
+              0
+            ]
+          ]
+        ]
+      ],
+      [
+        "guarded",
+        [
+          "map",
+          [
+            "filter",
+            "$body",
+            "f",
+            [
+              "and",
+              [
+                "=",
+                "$f.kind",
+                "fallback"
+              ],
+              [
+                "=",
+                "$f.replacement.kind",
+                "throw"
+              ],
+              [
+                "nonempty",
+                [
+                  "registryField",
+                  "$f.subject"
+                ]
+              ]
+            ]
+          ],
+          "f",
+          [
+            "registryField",
+            "$f.subject"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "some",
+      "$written",
+      "w",
+      [
+        "some",
+        "$guarded",
+        "g",
+        [
+          "=",
+          "$w",
+          "$g"
+        ]
+      ]
+    ],
+    "emit": "$t"
+  }
+}

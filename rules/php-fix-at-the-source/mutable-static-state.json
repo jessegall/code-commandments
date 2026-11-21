@@ -1,0 +1,111 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "mutable-static-state",
+    "aliases": [
+      "MutableStaticStateDetector",
+      "MutableStaticState",
+      "csharp-mutable-static-state",
+      "python-mutable-static-state"
+    ],
+    "skill": "php/fix-at-the-source",
+    "description": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
+    "rule": "Hold changing state on an INSTANCE someone owns and passes; never write a static property.",
+    "suggestion": "Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down."
+  },
+  "definitions": {
+    "fieldOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "modifiersOf",
+        [
+          "enclosing",
+          "$d",
+          "field"
+        ]
+      ]
+    },
+    "modifiersOf": {
+      "args": [
+        "f"
+      ],
+      "expr": "$f.modifiers"
+    }
+  },
+  "find": {
+    "select": "assignment",
+    "as": "a",
+    "where": [
+      "exists",
+      [
+        "enclosing",
+        "$a",
+        "function"
+      ]
+    ],
+    "let": [
+      [
+        "declared",
+        [
+          "declarationOf",
+          [
+            "at",
+            "$a.targets",
+            0
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "or",
+      [
+        "some",
+        [
+          "fieldOf",
+          "$declared"
+        ],
+        "m",
+        [
+          "=",
+          "$m",
+          "static"
+        ]
+      ],
+      [
+        "and",
+        [
+          "not",
+          [
+            "exists",
+            [
+              "enclosing",
+              "$declared",
+              "function"
+            ]
+          ]
+        ],
+        [
+          "not",
+          [
+            "exists",
+            [
+              "enclosing",
+              "$declared",
+              "type"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$a"
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "mutable-value-object",
+    "aliases": [
+      "MutableValueObjectDetector",
+      "MutableValueObject",
+      "csharp-mutable-value-object",
+      "python-mutable-value-object"
+    ],
+    "skill": "php/value-objects",
+    "description": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing.",
+    "rule": "Make a value immutable: build it complete and derive a NEW one to change it; never write its fields after construction.",
+    "suggestion": "`readonly` on the class, and a `with…()`/named derivation that returns a new instance (PHP 8.5's `clone with`)."
+  },
+  "definitions": {
+    "writes": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "filter",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "assignment"
+          ],
+          [
+            "tree.selfField",
+            [
+              "at",
+              "$a.targets",
+              0
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "tree.method",
+      "$f"
+    ],
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$f",
+          "type"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "or",
+        [
+          "in",
+          "$owner.form",
+          "record",
+          "struct"
+        ],
+        [
+          "some",
+          "$owner.attributes",
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.name",
+              "dataclass"
+            ],
+            [
+              "none",
+              "$a.arguments",
+              "g",
+              [
+                "and",
+                [
+                  "=",
+                  "$g.label",
+                  "eq"
+                ],
+                [
+                  "=",
+                  "$g.value.value",
+                  "false"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        ">",
+        [
+          "count",
+          [
+            "writes",
+            "$f"
+          ]
+        ],
+        0
+      ]
+    ],
+    "emit": "$f"
+  }
+}

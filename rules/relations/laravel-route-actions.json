@@ -1,0 +1,12 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": ["php"],
+  "relation": {
+    "from": "laravel-route-registrations",
+    "as": "r",
+    "pipeline": [
+      {"expand": "$r.actions"},
+      {"project": {"action": "$row"}}
+    ]
+  }
+}

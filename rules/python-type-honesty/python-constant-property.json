@@ -1,0 +1,173 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "python"
+  ],
+  "sin": {
+    "name": "python-constant-property",
+    "aliases": [
+      "ConstantPropertyDetector",
+      "ConstantProperty"
+    ],
+    "skill": "python/type-honesty",
+    "description": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one.",
+    "rule": "A `@property` must derive from the object; a value it never reads `self` for is a class attribute.",
+    "suggestion": "`kind = \"box\"` on the class — or a `ClassVar` — and the property goes."
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "=",
+        "$f.form",
+        "method"
+      ],
+      [
+        "some",
+        "$f.attributes",
+        "a",
+        [
+          "=",
+          "$a.refers",
+          "builtins.property"
+        ]
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.parameters"
+        ],
+        1
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.body.statements"
+        ],
+        1
+      ],
+      [
+        "=",
+        [
+          "tree.kindOf",
+          [
+            "at",
+            "$f.body.statements",
+            0
+          ]
+        ],
+        "return"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.obligations"
+        ],
+        0
+      ]
+    ],
+    "let": [
+      [
+        "first",
+        [
+          "at",
+          "$f.body.statements",
+          0
+        ]
+      ],
+      [
+        "value",
+        [
+          "at",
+          "$first.values",
+          0
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$value"
+      ],
+      [
+        "none",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$value"
+            ],
+            [
+              "ownDescendants",
+              "$value"
+            ]
+          ]
+        ],
+        "x",
+        [
+          "in",
+          "$x.kind",
+          "reference",
+          "call",
+          "access",
+          "index"
+        ]
+      ],
+      [
+        "none",
+        [
+          "siblings",
+          "$f"
+        ],
+        "m",
+        [
+          "some",
+          "$m.attributes",
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.subject.kind",
+              "reference"
+            ],
+            [
+              "=",
+              "$a.subject.name",
+              "$f.name"
+            ]
+          ]
+        ]
+      ],
+      [
+        "=",
+        [
+          "count",
+          [
+            "filter",
+            [
+              "referrers",
+              "$f"
+            ],
+            "r",
+            [
+              "=",
+              "$r.role",
+              "overrides"
+            ]
+          ]
+        ],
+        0
+      ]
+    ],
+    "emit": "$f"
+  }
+}

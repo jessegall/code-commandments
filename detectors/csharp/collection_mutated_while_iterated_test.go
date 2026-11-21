@@ -140,7 +140,7 @@ func TestAChangeToTheWalkedCollectionIsFoundAndACopyIsNotCS(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			codebase := csharptest.FromSource(t, map[string]string{"Shop/Desk.cs": wrapped(test.body)})
-			found := CollectionMutatedWhileIteratedDetector{}.Find(codebase)
+			found := shipped(t, "collection-mutated-while-iterated").Find(codebase)
 
 			if len(found) != test.want {
 				t.Errorf("found %d, want %d: %v", len(found), test.want, found)

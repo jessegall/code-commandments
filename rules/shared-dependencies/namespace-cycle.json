@@ -1,0 +1,138 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "python",
+    "csharp",
+    "typescript",
+    "vue",
+    "go"
+  ],
+  "sin": {
+    "name": "namespace-cycle",
+    "aliases": [
+      "python-namespace-cycle",
+      "csharp-namespace-cycle",
+      "NamespaceCycle",
+      "NamespaceCycleDetector"
+    ],
+    "skill": "shared/dependencies",
+    "description": "Two independent modules import each other",
+    "rule": "Give the dependency one direction.",
+    "suggestion": "Move the shared contract to a module both can use."
+  },
+  "find": {
+    "relations": {
+      "independent-imports": {
+        "from": "imports",
+        "as": "i",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "not",
+                "$i.test"
+              ],
+              [
+                "!=",
+                "$i.from",
+                "$i.to"
+              ],
+              [
+                "not",
+                [
+                  "encloses",
+                  "$i.from",
+                  "$i.to"
+                ]
+              ],
+              [
+                "not",
+                [
+                  "encloses",
+                  "$i.to",
+                  "$i.from"
+                ]
+              ]
+            ]
+          }
+        ]
+      },
+      "counts": {
+        "from": "independent-imports",
+        "groupBy": [
+          "from",
+          "to"
+        ],
+        "aggregate": {
+          "n": [
+            "count",
+            "$rows"
+          ]
+        }
+      }
+    },
+    "from": "independent-imports",
+    "as": "a",
+    "pipeline": [
+      {
+        "where": "$a.held"
+      },
+      {
+        "join": "counts",
+        "on": {
+          "from": "$a.from",
+          "to": "$a.to"
+        },
+        "as": "forward"
+      },
+      {
+        "join": "counts",
+        "on": {
+          "from": "$a.to",
+          "to": "$a.from"
+        },
+        "as": "back"
+      },
+      {
+        "where": [
+          "or",
+          [
+            "<",
+            "$forward.n",
+            "$back.n"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$forward.n",
+              "$back.n"
+            ],
+            [
+              "lexLess",
+              "$a.from",
+              "$a.to"
+            ]
+          ]
+        ]
+      },
+      {
+        "orderBy": [
+          "$a.fileOrder",
+          "$a.sourceOrder"
+        ]
+      },
+      {
+        "firstBy": [
+          "$a.file",
+          "$a.to"
+        ]
+      },
+      {
+        "emit": "$a.anchor"
+      }
+    ]
+  }
+}

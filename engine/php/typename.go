@@ -88,7 +88,7 @@ func (n TypeName) Named() *contract.Type {
 		return member.written
 	}
 	nullable := *member.written
-	nullable.Nullable = true
+	nullable.Nullable = contract.Stated(true)
 	nullable.Text = "?" + member.written.Text
 
 	return &nullable
@@ -223,12 +223,12 @@ func (n TypeName) isNamed() bool {
 }
 
 func (n TypeName) isSugared() bool {
-	return n.isNamed() && n.written.Nullable && !slices.Contains([]string{"null", "mixed"}, strings.ToLower(n.written.Name))
+	return n.isNamed() && n.written.IsNullable() && !slices.Contains([]string{"null", "mixed"}, strings.ToLower(n.written.Name))
 }
 
 func (n TypeName) bare() *contract.Type {
 	bare := *n.written
-	bare.Nullable = false
+	bare.Nullable = contract.Stated(false)
 	bare.Text = strings.TrimPrefix(bare.Text, "?")
 
 	return &bare

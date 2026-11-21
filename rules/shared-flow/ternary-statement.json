@@ -1,0 +1,32 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "ternary-statement",
+    "aliases": [
+      "python-conditional-statement",
+      "TernaryStatementDetector",
+      "TernaryStatement",
+      "ConditionalStatement",
+      "ConditionalStatementDetector"
+    ],
+    "skill": "shared/flow",
+    "description": "A bare conditional expression as a statement (`cond ? doThis() : doThat()`): its value is never read, so it chooses an action, not a value",
+    "rule": "Choose an action with `if`/`else`; a conditional expression chooses a value, so never write one whose value nothing reads.",
+    "suggestion": "An `if` with each side as its own body, and no `else` at all when one side did nothing."
+  },
+  "find": {
+    "select": "conditional",
+    "as": "c",
+    "where": [
+      "=",
+      "$c.parent.kind",
+      "expression-statement"
+    ],
+    "emit": "$c"
+  }
+}

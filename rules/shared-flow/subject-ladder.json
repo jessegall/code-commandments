@@ -1,0 +1,123 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "subject-ladder",
+    "aliases": [
+      "python-subject-ladder",
+      "csharp-subject-ladder",
+      "SubjectLadderDetector",
+      "SubjectLadder"
+    ],
+    "skill": "shared/flow",
+    "description": "An `if`/`else if` chain of four or more rungs that each test the same subject for equality with a constant: a dispatch written as a ladder",
+    "rule": "Dispatch on a value with a type that answers per case, a lookup keyed by the value, or a `switch`/`match` on it; never a ladder of equality tests on one subject.",
+    "suggestion": "Make the closed set an enum and put the per-case answer on it, or key a lookup by the value; a `switch`/`match` fits a structural dispatch."
+  },
+  "parameters": {
+    "rungs": {
+      "type": "number",
+      "default": 4,
+      "description": "How many rungs of one ladder test the same subject."
+    }
+  },
+  "definitions": {
+    "subject": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "comparison": [
+            "case",
+            [
+              "in",
+              "$c.right.kind",
+              "literal",
+              "access"
+            ],
+            {
+              "true": "$c.left"
+            },
+            "$c.right"
+          ]
+        },
+        "$c"
+      ]
+    }
+  },
+  "find": {
+    "select": "if",
+    "as": "b",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "tree.continuation",
+          "$b"
+        ]
+      ],
+      [
+        ">=",
+        [
+          "count",
+          [
+            "follow",
+            "$b",
+            "else",
+            "if"
+          ]
+        ],
+        "$param.rungs"
+      ],
+      [
+        "every",
+        [
+          "follow",
+          "$b",
+          "else",
+          "if"
+        ],
+        "r",
+        [
+          "and",
+          [
+            "nonempty",
+            [
+              "subject",
+              "$r.condition"
+            ]
+          ],
+          [
+            "=",
+            [
+              "fingerprint",
+              [
+                "subject",
+                "$r.condition"
+              ],
+              "exact"
+            ],
+            [
+              "fingerprint",
+              [
+                "subject",
+                "$b.condition"
+              ],
+              "exact"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$b"
+  }
+}

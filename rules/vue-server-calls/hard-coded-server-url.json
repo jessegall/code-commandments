@@ -1,0 +1,21 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "hard-coded-server-url",
+    "aliases": [
+      "HardCodedServerURLDetector",
+      "HardCodedServerURL"
+    ],
+    "skill": "vue/server-calls",
+    "description": "A string written out as the path of a route the server declares by name",
+    "rule": "Every server address comes from the generated routes, never a path written by hand.",
+    "suggestion": "Build it with the generated route helper (`route('plans.show', { plan: card.number })`) or the generated action's `.url()`.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

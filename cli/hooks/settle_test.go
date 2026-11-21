@@ -12,7 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/cli/source"
-	pydetectors "github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
@@ -23,7 +22,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 	file := pythontest.File(t, codebase, "shop/refund.py").Path
 	root, data := filepath.Dir(filepath.Dir(file)), t.TempDir()
 
-	rule := pydetectors.RedundantElseDetector
+	rule := shippedNamed(t, "redundant-else")[0]
 	var marks []SinMark
 	for _, match := range rule.Find(codebase) {
 		marks = append(marks, SinMark{Rule: rule, Match: match, Touched: true})
@@ -102,7 +101,7 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	codebase := pythontest.FromSource(t, map[string]string{"shop/refund.py": sinful})
 	file := pythontest.File(t, codebase, "shop/refund.py").Path
 	root, data := filepath.Dir(filepath.Dir(file)), t.TempDir()
-	rule := pydetectors.RedundantElseDetector
+	rule := shippedNamed(t, "redundant-else")[0]
 	marksIn := func(codebase *engine.Codebase) []SinMark {
 		var marks []SinMark
 		for _, match := range rule.Find(codebase) {
@@ -168,7 +167,8 @@ func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 		}
 	}
 
-	rule, other := pydetectors.RedundantElseDetector, pydetectors.MutableDefaultDetector{}
+	named := shippedNamed(t, "redundant-else", "python-mutable-default")
+	rule, other := named[0], named[1]
 	marks := []SinMark{
 		{Rule: other, Match: at[52], Touched: true},
 		{Rule: rule, Match: at[53], Touched: true},
@@ -192,7 +192,7 @@ func TestAMarkWithOneSinStillOpens(t *testing.T) {
 	file := pythontest.File(t, codebase, "shop/orders.py")
 	root, data := filepath.Dir(filepath.Dir(file.Path)), t.TempDir()
 
-	rule := pydetectors.RedundantElseDetector
+	rule := shippedNamed(t, "redundant-else")[0]
 	mark := SinMark{Rule: rule, Match: codebase.WhereAssign().Get()[0], Touched: true}
 
 	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file.Path}, []SinMark{mark}).Raises(root)
@@ -214,7 +214,7 @@ func TestAPartialJudgingNeverCallsAFileClean(t *testing.T) {
 	root, data := filepath.Dir(filepath.Dir(file)), t.TempDir()
 	named := source.Relative(root, file)
 
-	rule := pydetectors.RedundantElseDetector
+	rule := shippedNamed(t, "redundant-else")[0]
 	var marks []SinMark
 	for _, match := range rule.Find(codebase) {
 		marks = append(marks, SinMark{Rule: rule, Match: match, Touched: true})

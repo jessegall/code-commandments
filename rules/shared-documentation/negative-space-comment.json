@@ -1,0 +1,33 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "negative-space-comment",
+    "aliases": [
+      "python-negative-space-comment",
+      "csharp-negative-space-comment",
+      "NegativeSpaceCommentDetector",
+      "NegativeSpaceComment"
+    ],
+    "skill": "shared/documentation",
+    "description": "A comment defends the code against an assumption the reader has no reason to make",
+    "rule": "Say what the code does.",
+    "suggestion": "Keep a comment only when it explains a real constraint."
+  },
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": [
+      "reads",
+      "$c.description",
+      "strawman"
+    ],
+    "emit": "$c.location"
+  }
+}

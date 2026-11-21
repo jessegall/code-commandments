@@ -1,0 +1,87 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "flag-argument",
+    "aliases": [
+      "FlagArgumentDetector",
+      "FlagArgument",
+      "csharp-flag-argument",
+      "python-flag-argument"
+    ],
+    "skill": "php/behaviour-per-method",
+    "description": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name",
+    "rule": "Split a method whose body is one branch on a flag into two NAMED methods — never make a call site say `true`, and never widen a required parameter to `?T = null` so that leaving it out means 'all of them'.",
+    "suggestion": "name each half for what it does (`renderCompact()` / `renderFull()`), with any shared middle as a private method both call"
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "tree.own",
+        "$f"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.body.statements"
+        ],
+        1
+      ]
+    ],
+    "let": [
+      [
+        "branch",
+        [
+          "at",
+          "$f.body.statements",
+          0
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$branch.kind",
+        "if"
+      ],
+      [
+        "exists",
+        "$branch.else"
+      ],
+      [
+        "=",
+        "$branch.condition.kind",
+        "reference"
+      ],
+      [
+        "some",
+        "$f.parameters",
+        "p",
+        [
+          "and",
+          [
+            "=",
+            "$p.binding.name",
+            "$branch.condition.name"
+          ],
+          [
+            "tree.boolean",
+            "$p.binding.resolved"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

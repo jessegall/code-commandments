@@ -1,0 +1,203 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "repeated-guard",
+    "aliases": [
+      "python-repeated-guard",
+      "csharp-repeated-guard",
+      "RepeatedGuardDetector",
+      "RepeatedGuard"
+    ],
+    "skill": "shared/duplication",
+    "description": "A compound condition about an object is written out at more than one site",
+    "rule": "Give a repeated condition one name and have the callers use it.",
+    "suggestion": "Put a named predicate on the object that owns most of the condition and use it at each site.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "substantive": {
+      "args": [
+        "l"
+      ],
+      "expr": [
+        "and",
+        [
+          ">=",
+          [
+            "count",
+            [
+              "leaves",
+              "$l",
+              "logical"
+            ]
+          ],
+          2
+        ],
+        [
+          "some",
+          [
+            "leaves",
+            "$l",
+            "logical"
+          ],
+          "p",
+          [
+            "!=",
+            "$p.kind",
+            "type-test"
+          ]
+        ],
+        [
+          ">=",
+          [
+            "count",
+            [
+              "filter",
+              [
+                "flatten",
+                [
+                  "map",
+                  [
+                    "leaves",
+                    "$l",
+                    "logical"
+                  ],
+                  "p",
+                  [
+                    "flatten",
+                    [
+                      "list",
+                      [
+                        "list",
+                        "$p"
+                      ],
+                      [
+                        "ownDescendants",
+                        "$p"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "x",
+              [
+                "and",
+                [
+                  "in",
+                  "$x.kind",
+                  "access",
+                  "call"
+                ],
+                [
+                  "not",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$x.kind",
+                      "access"
+                    ],
+                    [
+                      "=",
+                      "$x.parent.kind",
+                      "call"
+                    ],
+                    [
+                      "=",
+                      "$x.role",
+                      "callee"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ],
+          2
+        ]
+      ]
+    }
+  },
+  "find": {
+    "from": "logical",
+    "as": "l",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$l.operator",
+            "and"
+          ],
+          [
+            "!=",
+            "$l.parent.kind",
+            "logical"
+          ],
+          [
+            "in",
+            "$l.parent.kind",
+            "if",
+            "loop",
+            "return"
+          ],
+          [
+            "substantive",
+            "$l"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$l",
+          "key": [
+            "sort",
+            [
+              "map",
+              [
+                "leaves",
+                "$l",
+                "logical"
+              ],
+              "p",
+              [
+                "fingerprint",
+                "$p",
+                "exact"
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "count",
+            "$rows"
+          ],
+          2
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

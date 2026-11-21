@@ -1,0 +1,20 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "vue"
+  ],
+  "sin": {
+    "name": "prop-drilling",
+    "aliases": [
+      "PropDrillingDetector",
+      "PropDrilling"
+    ],
+    "skill": "vue/vue-components",
+    "description": "A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further.",
+    "rule": "Don't thread a prop through a component that doesn't use it; provide/inject it, or give the child the data directly.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

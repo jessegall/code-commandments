@@ -1,0 +1,40 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "typescript"
+  ],
+  "sin": {
+    "name": "stacked-docblock",
+    "aliases": [
+      "StackedDocblockDetector",
+      "StackedDocblock"
+    ],
+    "skill": "shared/documentation",
+    "description": "Several doc comments describe one declaration",
+    "rule": "Keep one doc comment per declaration.",
+    "suggestion": "Merge useful text into one doc comment."
+  },
+  "find": {
+    "select": "comment",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        "$c.form",
+        "doc"
+      ],
+      [
+        "exists",
+        "$c.documents"
+      ],
+      [
+        ">=",
+        "$c.docsOnOwner",
+        2
+      ]
+    ],
+    "emit": "$c.location"
+  }
+}

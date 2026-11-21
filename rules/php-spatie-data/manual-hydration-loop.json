@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "manual-hydration-loop",
+    "aliases": [
+      "ManualHydrationLoopDetector",
+      "ManualHydrationLoop"
+    ],
+    "skill": "php/spatie-data",
+    "description": "Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()`",
+    "rule": "Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.",
+    "suggestion": "`#[DataCollectionOf(X::class)]` + `X::collect($rows)`.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

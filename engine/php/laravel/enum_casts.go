@@ -71,7 +71,7 @@ func declaredCasts(model engine.Match, program *php.Program) map[string]*contrac
 			}
 			class := strings.TrimLeft(value.Child("class").Name(), `\`)
 			if program.IsEnum(class) {
-				types[field] = &contract.Type{Text: "?" + class, Kind: "named", Name: class, Nullable: true, Origin: "inferred"}
+				types[field] = &contract.Type{Text: "?" + class, Kind: "named", Name: class, Nullable: contract.Stated(true), Origin: "inferred"}
 			}
 		}
 	}

@@ -1,0 +1,226 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "in-array-mirrors-enum",
+    "aliases": [
+      "python-in-literals-mirrors-enum",
+      "csharp-in-array-mirrors-enum",
+      "InArrayMirrorsEnumDetector",
+      "InArrayMirrorsEnum",
+      "InLiteralsMirrorsEnum",
+      "InLiteralsMirrorsEnumDetector"
+    ],
+    "skill": "shared/enums",
+    "description": "A literal membership check repeats declared enum values",
+    "rule": "Use the named cases or a named group of cases.",
+    "suggestion": "Use the named cases or a named group of cases.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "texts": {
+      "args": [
+        "l"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          "$l",
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$x.literalKind",
+              "string"
+            ]
+          ]
+        ],
+        "x",
+        "$x.value"
+      ]
+    },
+    "mirrors": {
+      "args": [
+        "words"
+      ],
+      "expr": [
+        "and",
+        [
+          ">=",
+          [
+            "distinctCount",
+            "$words"
+          ],
+          2
+        ],
+        [
+          "some",
+          [
+            "programEnums"
+          ],
+          "cases",
+          [
+            "every",
+            "$words",
+            "w",
+            [
+              "some",
+              "$cases",
+              "c",
+              [
+                "=",
+                "$c",
+                "$w"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "membership": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "comparison": [
+            "case",
+            [
+              "every",
+              "$x.operators",
+              "o",
+              [
+                "in",
+                "$o",
+                "in",
+                "not-in"
+              ]
+            ],
+            {
+              "true": [
+                "texts",
+                [
+                  "entriesOf",
+                  "$x.right"
+                ]
+              ]
+            },
+            [
+              "list"
+            ]
+          ],
+          "call": [
+            "case",
+            [
+              "hasEffect",
+              "$x",
+              "tests-membership"
+            ],
+            {
+              "true": [
+                "flatten",
+                [
+                  "map",
+                  [
+                    "candidates",
+                    "$x"
+                  ],
+                  "c",
+                  [
+                    "texts",
+                    [
+                      "entriesOf",
+                      "$c"
+                    ]
+                  ]
+                ]
+              ]
+            },
+            [
+              "list"
+            ]
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "entriesOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "collection": [
+            "map",
+            "$c.entries",
+            "e",
+            "$e.value"
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "candidates": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "map",
+            "$c.arguments",
+            "a",
+            "$a.value"
+          ],
+          [
+            "list",
+            "$c.callee.subject"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "comparison",
+      "call"
+    ],
+    "as": "m",
+    "where": [
+      "not",
+      "$m.file.test"
+    ],
+    "having": [
+      "mirrors",
+      [
+        "membership",
+        "$m"
+      ]
+    ],
+    "emit": "$m"
+  }
+}

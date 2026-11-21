@@ -1,0 +1,241 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "near-duplicate-function",
+    "aliases": [
+      "near-duplicate-typescript-function",
+      "near-duplicate-python-function",
+      "near-duplicate-csharp-method",
+      "NearDuplicateFunctionDetector",
+      "NearDuplicateFunction",
+      "NearDuplicateMethod",
+      "NearDuplicateMethodDetector"
+    ],
+    "skill": "shared/duplication",
+    "description": "Two functions run the same code with different names or data",
+    "rule": "Share the body and pass what differs as parameters.",
+    "suggestion": "Extract the common function and give its varying inputs names.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "parameters": {
+    "weight": {
+      "type": "number",
+      "default": 20,
+      "description": "How heavy a function body is at least before a near copy counts."
+    }
+  },
+  "definitions": {
+    "effective": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "filter",
+        "$b.statements",
+        "s",
+        [
+          "!=",
+          "$s.kind",
+          "no-op"
+        ]
+      ]
+    },
+    "stub": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "or",
+        [
+          "not",
+          [
+            "exists",
+            "$f.body"
+          ]
+        ],
+        [
+          "=",
+          [
+            "count",
+            [
+              "effective",
+              "$f.body"
+            ]
+          ],
+          0
+        ],
+        [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              [
+                "effective",
+                "$f.body"
+              ]
+            ],
+            1
+          ],
+          [
+            "some",
+            [
+              "effective",
+              "$f.body"
+            ],
+            "s",
+            [
+              "=",
+              "$s.kind",
+              "throw"
+            ]
+          ]
+        ]
+      ]
+    },
+    "sole": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "count",
+            [
+              "effective",
+              "$f.body"
+            ]
+          ],
+          1
+        ],
+        [
+          "some",
+          [
+            "effective",
+            "$f.body"
+          ],
+          "s",
+          [
+            "in",
+            "$s.kind",
+            "return",
+            "expression-statement"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "from": "function",
+    "as": "f",
+    "pipeline": [
+      {
+        "reject": [
+          "or",
+          "$f.file.test",
+          [
+            "stub",
+            "$f"
+          ],
+          [
+            "=",
+            "$f.form",
+            "constructor"
+          ],
+          [
+            "sole",
+            "$f"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$f.obligations"
+            ],
+            0
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$f",
+          "weight": [
+            "syntaxWeight",
+            "$f.body"
+          ],
+          "key": [
+            "fingerprint",
+            "$f.body",
+            "normalized"
+          ],
+          "exact": [
+            "fingerprint",
+            "$f.body",
+            "exact"
+          ]
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            ">=",
+            "$weight",
+            "$param.weight"
+          ],
+          [
+            "nonempty",
+            "$key"
+          ]
+        ]
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              "$rows"
+            ],
+            2
+          ],
+          [
+            ">=",
+            [
+              "distinctCount",
+              [
+                "map",
+                "$rows",
+                "r",
+                "$r.exact"
+              ]
+            ],
+            2
+          ]
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

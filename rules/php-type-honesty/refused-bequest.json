@@ -1,0 +1,81 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "refused-bequest",
+    "aliases": [
+      "RefusedBequestDetector",
+      "RefusedBequest"
+    ],
+    "skill": "php/type-honesty",
+    "description": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep.",
+    "rule": "A subtype keeps every promise its parent makes; a method that only throws to refuse its inheritance says the class is not that type.",
+    "suggestion": "Split the contract so the class implements only what it can do, or compose the parent instead of extending it.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "throws": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$s.kind",
+          "throw"
+        ],
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "tree.valueOf",
+              "$s"
+            ]
+          ],
+          "throw"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        ">",
+        [
+          "count",
+          "$f.obligations"
+        ],
+        0
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.body.statements"
+        ],
+        1
+      ]
+    ],
+    "having": [
+      "throws",
+      [
+        "at",
+        "$f.body.statements",
+        0
+      ]
+    ],
+    "emit": "$f"
+  }
+}

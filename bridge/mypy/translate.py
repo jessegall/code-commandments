@@ -46,11 +46,13 @@ class Node:
 
 
 class Translator:
-    """Translates one parsed module. `resolve` names what a dotted name refers to (None when mypy did not run), and
-    `types` is mypy's type of each expression by its byte span."""
+    """Translates one parsed module. `resolve` names what a dotted name refers to (None when mypy did not run),
+    `types` is mypy's type of each expression by its byte span, and `targets` the declaration each call binds to."""
 
-    def __init__(self, source: bytes, module: str, resolve, types: dict[tuple[int, int], ResolvedType]) -> None:
+    def __init__(self, source: bytes, module: str, resolve, types: dict[tuple[int, int], ResolvedType],
+                 targets: dict[tuple[int, int], dict[str, str]] | None = None) -> None:
         self.source = source
+        self.targets = targets or {}
         self.module = module
         self.resolve = resolve
         self.types = types
@@ -134,6 +136,21 @@ class Translator:
     def stmt_Expr(self, statement: ast.Expr, scope, owner) -> Node:
         node = self.of("expression-statement", statement)
         node.parts = {"expression": self.expression(statement.value)}
+        return node
+
+    def stmt_Delete(self, statement: ast.Delete, scope, owner) -> Node:
+        """`del a[k]`: a delete of the target; `del a[k], b` is a block of one delete statement per target."""
+        statements = []
+        for target in statement.targets:
+            removed = self.of("unary", target, operator="delete")
+            removed.parts = {"operand": self.expression(target)}
+            each = self.of("expression-statement", target if len(statement.targets) > 1 else statement)
+            each.parts = {"expression": removed}
+            statements.append(each)
+        if len(statements) == 1:
+            return statements[0]
+        node = self.of("block", statement)
+        node.parts = {"statements": statements}
         return node
 
     def stmt_Pass(self, statement, scope, owner) -> Node:
@@ -473,7 +490,18 @@ class Translator:
         return self.of("type-expression", annotation, form="opaque")
 
     def named_type(self, annotation: ast.expr, refers: str | None) -> Node:
-        return self.of("type-expression", annotation, form="named", refers=refers)
+        """A written type naming a class: when mypy resolved the name, it stands for an instance of that class."""
+        node = self.of("type-expression", annotation, form="named", refers=refers)
+        if refers is not None:
+            node.facts["resolvedType"] = self.typed({"text": ast.unparse(annotation), "kind": "named", "name": refers, "nullable": False,
+                                                      "origin": "compiler"})
+        return node
+
+    def typed(self, resolved: dict[str, object]) -> int:
+        """The position of a resolved type in the file's type table, added the first time it is seen."""
+        if resolved not in self.table:
+            self.table.append(resolved)
+        return self.table.index(resolved)
 
     def union(self, annotation: ast.expr) -> list[ast.expr]:
         if is_union(annotation):
@@ -500,10 +528,7 @@ class Translator:
         span = self.span(expression)
         if span in self.types and node.kind != "unsupported":
             self.joined.add(span)
-            typed = self.types[span].to_json()
-            if typed not in self.table:
-                self.table.append(typed)
-            node.facts["resolvedType"] = self.table.index(typed)
+            node.facts["resolvedType"] = self.typed(self.types[span].to_json())
         return node
 
     def expr_Name(self, expression: ast.Name) -> Node:
@@ -563,6 +588,9 @@ class Translator:
         construction = named is not None and named.is_class
         node = self.of("construction" if construction else "call", expression)
         node.parts = {"callee": self.expression(expression.func), "arguments": self.arguments(expression)}
+        target = self.targets.get(self.span(expression))
+        if target is not None:
+            node.facts["target"] = target
         return node
 
     def arguments(self, call: ast.Call) -> list[Node]:

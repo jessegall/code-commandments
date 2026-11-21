@@ -272,7 +272,7 @@ func (n Node) ValueParamSignature() []string {
 	var fields []string
 	for _, param := range Params(n.Match) {
 		declared, variable := param.Node().Written, param.Child("var")
-		if declared == nil || declared.Kind != "keyword" || declared.Nullable || variable.Kind() != "Expr_Variable" || variable.Name() == "" {
+		if declared == nil || declared.Kind != "keyword" || declared.IsNullable() || variable.Kind() != "Expr_Variable" || variable.Name() == "" {
 			continue
 		}
 		if scalar := strings.ToLower(declared.Name); slices.Contains(clumpScalars, scalar) {

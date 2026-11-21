@@ -371,7 +371,7 @@ A resolved or written type is an object, so its structure survives and nothing r
 | `parameters`, `returns` | `function` | the parameter types and the return type |
 | `value` | `literal` | the value, decoded as a literal's is |
 | `nullable` | the compiler can say | `true` or `false`; absent only where the compiler cannot say (unknown) |
-| `valueType` | the compiler says so | `true` for a value type: a C# struct or enum, a Go basic type, struct or array |
+| `valueType` | the compiler can say | `true` for a value type (a C# struct or enum, a Go basic type, struct or array), `false` for a reference; absent only where the compiler cannot say |
 | `element` | a collection whose element is known | the element type, one level |
 | `constructs` | the expression names a class | the class a call of it builds |
 | `origin` | always | `written`, `docblock`, `attribute`, `inferred`, `compiler` |

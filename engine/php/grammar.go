@@ -75,10 +75,6 @@ func init() {
 		Thrown:            engine.OfKind("Expr_Throw", "expr"),
 		FailureLocation:   engine.Match.Thrown,
 		MessageParts:      messageParts,
-		ExpectedTestCatch: expectsTestFailure,
-		SwallowedExit: func(statement engine.Match) bool {
-			return statement.Is(engine.Return) && statement.Child("expr").Exists()
-		},
 		EmptyCollection: func(held engine.Match) bool { return Node{Match: held}.IsEmptyArrayLiteral() },
 		ConstructedType: func(held engine.Match) string { return strings.TrimLeft(Node{Match: held}.ConstructedClass(), `\`) },
 		GenericFailures: genericFailures,
@@ -282,29 +278,6 @@ func condition(held engine.Match) engine.Match {
 	}
 
 	return held.Child("cond")
-}
-
-func expectsTestFailure(caught engine.Match) bool {
-	if caught.Kind() != "Stmt_Catch" || len(caught.Body()) != 0 {
-		return false
-	}
-	program := ProgramOf(caught.Codebase())
-	if !program.IsA(EnclosingClassName(caught), `PHPUnit\Framework\TestCase`) {
-		return false
-	}
-	if slices.ContainsFunc(caught.ChildrenIn("types"), func(held engine.Match) bool {
-		class := strings.TrimLeft(held.Name(), `\`)
-		return slices.Contains([]string{"Throwable", "Exception", "RuntimeException", `PHPUnit\Exception`}, class) ||
-			program.IsA(`PHPUnit\Framework\AssertionFailedError`, class)
-	}) {
-		return false
-	}
-	statements := caught.Parent().ChildrenIn("stmts")
-	if len(statements) == 0 {
-		return false
-	}
-	call := statements[len(statements)-1].Child("expr")
-	return call.Kind() == "Expr_MethodCall" && variableName(call.Child("var")) == "this" && CallName(call) == "fail"
 }
 
 func messageParts(message engine.Match) []engine.Match {

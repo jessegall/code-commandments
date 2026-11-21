@@ -140,10 +140,6 @@ func (e Element) Following() []Element {
 	return nil
 }
 
-func (e Element) IsTransitionChild() bool {
-	return slices.Contains([]string{"Transition", "TransitionGroup", "transition", "transition-group"}, e.Parent().Tag())
-}
-
 func (e Element) Binding(prop string) Directive {
 	for _, directive := range e.Directives() {
 		if directive.Named(Bind) && directive.Target() == prop {
@@ -220,17 +216,6 @@ func (e Element) DescendantElements() []Element {
 	}
 
 	return below
-}
-
-func (e Element) CompoundParts() []Element {
-	var parts []Element
-	for _, element := range e.DescendantElements() {
-		if element.IsComponent() && element.Tag() != e.Tag() && strings.HasPrefix(element.Tag(), e.Tag()) {
-			parts = append(parts, element)
-		}
-	}
-
-	return parts
 }
 
 func (e Element) IsTemplateRoot() bool {

@@ -1,0 +1,264 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "positional-tuple-return",
+    "aliases": [
+      "PositionalTupleReturnDetector",
+      "PositionalTupleReturn",
+      "csharp-positional-tuple-return",
+      "python-positional-tuple-return"
+    ],
+    "skill": "php/value-objects",
+    "description": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position",
+    "rule": "Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.",
+    "suggestion": "A small `readonly` result object."
+  },
+  "definitions": {
+    "rootOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "nameOf",
+        [
+          "at",
+          [
+            "filter",
+            [
+              "tree.insideOf",
+              "$v"
+            ],
+            "x",
+            [
+              "in",
+              "$x.kind",
+              "reference"
+            ]
+          ],
+          0
+        ]
+      ]
+    },
+    "nameOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "reference": [
+            "case",
+            "$x.form",
+            {
+              "self": "self"
+            },
+            "$x.name"
+          ]
+        },
+        ""
+      ]
+    },
+    "returnedValueKind": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "tree.kindOf",
+        [
+          "at",
+          "$r.values",
+          0
+        ]
+      ]
+    },
+    "entriesOf": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "entriesIn",
+        [
+          "at",
+          "$r.values",
+          0
+        ]
+      ]
+    },
+    "entriesIn": {
+      "args": [
+        "c"
+      ],
+      "expr": "$c.entries"
+    }
+  },
+  "find": {
+    "select": [
+      "return",
+      "function"
+    ],
+    "as": "s",
+    "where": [
+      "case",
+      "$s.kind",
+      {
+        "return": [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$s.values"
+            ],
+            1
+          ],
+          [
+            "=",
+            [
+              "returnedValueKind",
+              "$s"
+            ],
+            "collection"
+          ],
+          [
+            "not",
+            "$s.file.test"
+          ]
+        ],
+        "function": [
+          "and",
+          [
+            "=",
+            "$s.resolved.returns.kind",
+            "tuple"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$s.obligations"
+            ],
+            0
+          ]
+        ]
+      },
+      false
+    ],
+    "let": [
+      [
+        "entries",
+        [
+          "case",
+          "$s.kind",
+          {
+            "return": [
+              "entriesOf",
+              "$s"
+            ]
+          },
+          [
+            "list"
+          ]
+        ]
+      ],
+      [
+        "slots",
+        [
+          "case",
+          "$s.kind",
+          {
+            "function": [
+              "map",
+              "$s.resolved.returns.members",
+              "m",
+              "$m.text"
+            ]
+          },
+          [
+            "list"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "case",
+      "$s.kind",
+      {
+        "return": [
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              "$entries"
+            ],
+            3
+          ],
+          [
+            "every",
+            "$entries",
+            "e",
+            [
+              "and",
+              [
+                "not",
+                [
+                  "exists",
+                  "$e.key"
+                ]
+              ],
+              [
+                "=",
+                "$e.expansion",
+                "none"
+              ]
+            ]
+          ],
+          [
+            ">=",
+            [
+              "distinctCount",
+              [
+                "filter",
+                [
+                  "map",
+                  "$entries",
+                  "e",
+                  [
+                    "rootOf",
+                    "$e.value"
+                  ]
+                ],
+                "n",
+                [
+                  "nonempty",
+                  "$n"
+                ]
+              ]
+            ],
+            2
+          ]
+        ],
+        "function": [
+          "<",
+          [
+            "distinctCount",
+            "$slots"
+          ],
+          [
+            "count",
+            "$slots"
+          ]
+        ]
+      },
+      false
+    ],
+    "emit": "$s"
+  }
+}

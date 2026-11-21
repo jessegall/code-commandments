@@ -1,0 +1,25 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "derived-collection-cast",
+    "aliases": [
+      "DerivedCollectionShouldCastDetector",
+      "DerivedCollectionCast"
+    ],
+    "skill": "php/spatie-data-hydration",
+    "description": "A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation",
+    "rule": "Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.",
+    "suggestion": "`#[WithCast(SomeCast::class)] public array $items` — the cast runs `E::for(...)` per item; the call site passes the raw values.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {}
+}

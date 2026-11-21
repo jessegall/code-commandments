@@ -1,0 +1,174 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "bare-scope-escape",
+    "aliases": [
+      "BareScopeEscapeDetector",
+      "BareScopeEscape"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "an Eloquent query drops every global scope, including ones added later",
+    "rule": "Name the scope a query steps out of (`withoutGlobalScope(OwnerScope::class)`), or pass whose rows it reads as an argument; never drop every global scope at once.",
+    "suggestion": "Name the one scope to drop, or give the query the owner it reads for explicitly.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "scoped": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "laravel.receiverIs",
+          "$c",
+          "model"
+        ],
+        [
+          "laravel.receiverIs",
+          "$c",
+          "eloquent-builder"
+        ],
+        [
+          "laravel.receiverIs",
+          "$c",
+          "eloquent-relation"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.subject.kind",
+            "reference"
+          ],
+          [
+            "assignable",
+            "$c.callee.subject.refers",
+            "model"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "=",
+        "$c.callee.kind",
+        "access"
+      ],
+      [
+        "in",
+        "$c.callee.member.name",
+        "withoutGlobalScopes",
+        "withoutGlobalScopesExcept"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "scoped",
+        "$c"
+      ],
+      [
+        "or",
+        [
+          "=",
+          [
+            "count",
+            "$c.arguments"
+          ],
+          0
+        ],
+        [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            1
+          ],
+          [
+            "=",
+            "$c.callee.member.name",
+            "withoutGlobalScopes"
+          ],
+          [
+            "some",
+            "$c.arguments",
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.value.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$a.value.literalKind",
+                "null"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            1
+          ],
+          [
+            "=",
+            "$c.callee.member.name",
+            "withoutGlobalScopesExcept"
+          ],
+          [
+            "some",
+            "$c.arguments",
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.value.kind",
+                "collection"
+              ],
+              [
+                "=",
+                [
+                  "count",
+                  "$a.value.entries"
+                ],
+                0
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

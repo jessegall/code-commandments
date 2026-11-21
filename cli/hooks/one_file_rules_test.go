@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/detectors"
-	"github.com/jessegall/code-commandments/detectors/typescript"
 )
 
 func TestARuleOfTheTypeScriptEngineJudgesAnEditedTypeScriptFile(t *testing.T) {
@@ -22,7 +20,7 @@ func TestARuleOfTheTypeScriptEngineJudgesAnEditedTypeScriptFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rules := []detectors.Detector{typescript.CollectionMutatedWhileIteratedDetector{}}
+	rules := shippedNamed(t, "collection-mutated-while-iterated")
 
 	marks, _, err := marksIn(Marks(root), file, rules, git.ChangedLines{})
 	if err != nil {

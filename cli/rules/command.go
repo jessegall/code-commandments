@@ -3,13 +3,15 @@ package rules
 
 import (
 	"fmt"
-	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/help"
@@ -20,6 +22,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/rule"
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -35,11 +38,14 @@ func (Command) Help() help.Help {
 		Form("rule explain <file> [--line=N]", "print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to").
 		Form("rule try <Rule> <path>…", "run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched").
 		Form("rule prove [path]", "check every rule of the project flags exactly the code its samples mark, and nothing else").
+		Form("rule prove --all [path]", "check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed").
 		Form("rule schema", "print the JSON Schema of a rule file").
+		Form("rule export <folder>", "write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/").
 		Form("rule migrate [--dry-run]", "bring your own rules up to this release: merge the copies that differ only in the engine they judge into one rule naming them all, and name every rule this release no longer reads, with the reason").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
 		Option("--dry-run", "with `migrate`, say what would change and change nothing").
 		Option("--work", "with `try`, print how many nodes, checks and analyses the rule cost").
+		Option("--all", "with `prove`, prove the shipped rules too, over every fixture project under the path").
 		Note("`rule migrate` never stops at the first rule it cannot settle: it reads every one, merges every set of copies it can, and ends by naming what is left. A rule naming a construct no parser writes is named rather than repaired, since the nearest real word is a guess and a guess written into your own file is worse than a message.").
 		Note("<Rule> is a rule of `.commandments/custom/` by its name — `NoRawSql` or `NoRawSqlDetector` — or the path of a rule file anywhere.").
 		Note("A sample marks the code a rule must flag with a comment above it — `// @sin NoRawSqlDetector`, `# @sin …` in Python, `<!-- @sin … -->` in a Vue template — the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark, flags anything unmarked, has no `@sin` mark at all, or cannot be read, and when a mark names no rule of the project.")
@@ -64,8 +70,20 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		console.Write(string(rule.Schema()))
 
 		return 0, nil
+	case "export":
+		folder, named := in.Argument(1)
+		if !named {
+			return help.Usage(console.Err, c, "name the folder to write the installed rules into: `rule export <folder>`."), nil
+		}
+		written, err := rules.Export(folder)
+		if err != nil {
+			return 0, err
+		}
+		console.Write(fmt.Sprintf("%d installed rule files written under %s; point COMMANDMENTS_RULES at it, or put it beside the binary as rules/, to judge with your edits\n", written, folder))
+
+		return 0, nil
 	default:
-		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule prove`, `rule schema` or `rule migrate`."), nil
+		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule prove`, `rule schema`, `rule export` or `rule migrate`."), nil
 	}
 }
 
@@ -154,6 +172,10 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 		path = given
 	}
 
+	if in.HasFlag("all") {
+		return c.proveAll(in, root, console)
+	}
+
 	own := custom.Load(root)
 	for _, reason := range own.Unreadable {
 		console.Warn("\033[31m✗\033[0m .commandments/custom/" + reason)
@@ -184,10 +206,24 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 		return 0, err
 	}
 
-	markers := fixture.Markers(codebase)
-	failed := len(own.Unreadable) > 0
+	if verified(root, codebase, proven, "is no rule of the project", console) || len(own.Unreadable) > 0 {
+		return cli.Refused, nil
+	}
 
-	for at, result := range (fixture.Fixture{Codebase: codebase, Detectors: proven}).Verify() {
+	return 0, nil
+}
+
+// verified proves each rule against what the codebase's markers say, says each result, and says whether any failed;
+// a marker no rule answers to fails, saying what it is no rule of.
+func verified(root string, codebase *engine.Codebase, proven []detectors.Detector, unknownMarker string, console cli.Console) bool {
+	markers := fixture.Markers(codebase)
+	failed := false
+
+	var rules []fixture.Rule
+	for _, each := range proven {
+		rules = append(rules, each)
+	}
+	for at, result := range (fixture.Fixture{Codebase: codebase, Detectors: rules}).Verify() {
 		unmarked := len(fixture.Marking(markers, fixture.Sinful, proven[at])) == 0
 		if result.Passed() && !unmarked {
 			console.Write("\033[32m✓\033[0m " + result.Detector + "\n")
@@ -221,18 +257,14 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 	}
 
 	for _, marker := range markers {
-		if slices.ContainsFunc(proven, marker.Naming) {
+		if slices.ContainsFunc(rules, marker.Naming) {
 			continue
 		}
 		failed = true
-		console.Write("\033[31m✗\033[0m " + source.Relative(root, marker.Location) + " marks " + marker.Name + ", which is no rule of the project\n")
+		console.Write("\033[31m✗\033[0m " + source.Relative(root, marker.Location) + " marks " + marker.Name + ", which "+unknownMarker+"\n")
 	}
 
-	if failed {
-		return cli.Refused, nil
-	}
-
-	return 0, nil
+	return failed
 }
 
 func sayWhereAMarkGoes(result fixture.Result, console cli.Console) {
@@ -348,4 +380,63 @@ func sourceLine(match engine.Match) string {
 	}
 
 	return strings.TrimSpace(lines[match.Line()-1])
+}
+
+// proveAll proves every rule in force, shipped and the project's own, against each fixture project under the path:
+// each project read whole, so a rule reading across files sees all of it.
+func (c Command) proveAll(in *cli.Input, root string, console cli.Console) (int, error) {
+	path := filepath.Join(root, "tests", "Fixtures")
+	if given, named := in.Argument(1); named {
+		path = given
+	}
+	folders, err := os.ReadDir(path)
+	if err != nil {
+		return console.Refuse("No fixture projects at " + path + "."), nil
+	}
+	own := custom.Load(root)
+	for _, reason := range own.Unreadable {
+		console.Warn("\033[31m✗\033[0m " + reason)
+	}
+	failed := len(own.Unreadable) > 0
+	for _, folder := range folders {
+		if !folder.IsDir() {
+			continue
+		}
+		fixtures := filepath.Join(path, folder.Name())
+		codebase, err := scan.Walk([]string{fixtures}, source.Excluded{}).Load()
+		if err != nil {
+			return 0, err
+		}
+		project, err := config.Load(fixtures)
+		if err != nil {
+			return 0, err
+		}
+		enabled, err := project.Enabled(config.Everything)
+		if err != nil {
+			return 0, err
+		}
+		for _, each := range own.Rules {
+			enabled = append(enabled, each)
+		}
+		var proven []detectors.Detector
+		for _, rule := range enabled {
+			if slices.ContainsFunc(detectors.EnginesOf(rule), func(engine catalog.Engine) bool { return judgesAny(codebase, engine) }) {
+				proven = append(proven, rule)
+			}
+		}
+		console.Write(folder.Name() + "\n")
+		failed = verified(root, codebase, proven, "is no rule in force", console) || failed
+	}
+	if failed {
+		return cli.Refused, nil
+	}
+
+	return 0, nil
+}
+
+// judgesAny says whether the codebase holds a file of a language the engine judges.
+func judgesAny(codebase *engine.Codebase, judged catalog.Engine) bool {
+	return slices.ContainsFunc(codebase.Files(), func(file *engine.File) bool {
+		return slices.Contains(source.OfEngine(judged), source.Language(file.Language()))
+	})
 }

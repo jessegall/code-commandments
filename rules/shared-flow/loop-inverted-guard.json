@@ -1,0 +1,148 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "loop-inverted-guard",
+    "aliases": [
+      "python-loop-wrapped-in-if",
+      "csharp-loop-wrapped-in-if",
+      "go-loop-wrapped-in-if",
+      "LoopInvertedGuardDetector",
+      "LoopInvertedGuard",
+      "LoopWrappedInIf",
+      "LoopWrappedInIfDetector"
+    ],
+    "skill": "shared/flow",
+    "description": "A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition",
+    "rule": "Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.",
+    "suggestion": "Make the negated condition the loop's first line, followed by `continue`, and dedent the body under it."
+  },
+  "definitions": {
+    "exits": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "is",
+        "$s",
+        "exit"
+      ]
+    },
+    "declares": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$n"
+            ],
+            [
+              "ownDescendants",
+              "$n"
+            ]
+          ]
+        ],
+        "d",
+        [
+          "is",
+          "$d",
+          "declaration"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "if",
+    "as": "b",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "exists",
+          "$b.else"
+        ]
+      ],
+      [
+        "not",
+        [
+          "declares",
+          "$b.condition"
+        ]
+      ],
+      [
+        ">=",
+        [
+          "count",
+          [
+            "tree.effective",
+            "$b.then"
+          ]
+        ],
+        2
+      ],
+      [
+        "not",
+        [
+          "exits",
+          [
+            "last",
+            [
+              "tree.effective",
+              "$b.then"
+            ]
+          ]
+        ]
+      ],
+      [
+        "case",
+        "$b.parent.kind",
+        {
+          "block": [
+            "and",
+            [
+              "=",
+              "$b.parent.parent.kind",
+              "loop"
+            ],
+            [
+              "=",
+              "$b.parent.role",
+              "body"
+            ],
+            [
+              "=",
+              [
+                "count",
+                [
+                  "tree.effective",
+                  "$b.parent"
+                ]
+              ],
+              1
+            ]
+          ],
+          "loop": [
+            "=",
+            "$b.role",
+            "body"
+          ]
+        },
+        false
+      ]
+    ],
+    "emit": "$b"
+  }
+}

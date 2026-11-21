@@ -1,0 +1,253 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "computed-boolean-argument",
+    "aliases": [
+      "ComputedBooleanArgumentDetector",
+      "ComputedBooleanArgument",
+      "python-computed-boolean-argument"
+    ],
+    "skill": "php/pass-the-object",
+    "description": "A parameter that's just true/false, computed by every caller from the same object it could be given instead.",
+    "rule": "Take the SUBJECT and ask it — never a bool every caller derives from that same object.",
+    "suggestion": "swap the flags for the object the callers already hold: `CornerInset::for($editor)`",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "values": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "map",
+        "$c.arguments",
+        "g",
+        "$g.value"
+      ]
+    },
+    "computed": {
+      "args": [
+        "handed",
+        "positions"
+      ],
+      "expr": [
+        "and",
+        [
+          "every",
+          "$positions",
+          "n",
+          [
+            "in",
+            [
+              "kindAt",
+              "$handed",
+              "$n"
+            ],
+            "access",
+            "call"
+          ]
+        ],
+        [
+          "every",
+          "$positions",
+          "n",
+          [
+            "=",
+            [
+              "tree.kindOf",
+              [
+                "rootAt",
+                "$handed",
+                "$n"
+              ]
+            ],
+            "reference"
+          ]
+        ],
+        [
+          "=",
+          [
+            "distinctCount",
+            [
+              "map",
+              "$positions",
+              "n",
+              [
+                "fingerprint",
+                [
+                  "rootAt",
+                  "$handed",
+                  "$n"
+                ],
+                "exact"
+              ]
+            ]
+          ],
+          1
+        ]
+      ]
+    },
+    "rootAt": {
+      "args": [
+        "l",
+        "n"
+      ],
+      "expr": [
+        "rootOf",
+        [
+          "at",
+          "$l",
+          "$n"
+        ]
+      ]
+    },
+    "rootOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "access": "$x.subject",
+          "call": "$x.callee.subject"
+        },
+        null
+      ]
+    },
+    "kindAt": {
+      "args": [
+        "l",
+        "n"
+      ],
+      "expr": [
+        "tree.kindOf",
+        [
+          "at",
+          "$l",
+          "$n"
+        ]
+      ]
+    },
+    "subjectKindAt": {
+      "args": [
+        "l",
+        "n"
+      ],
+      "expr": [
+        "tree.kindOf",
+        [
+          "subjectAt",
+          "$l",
+          "$n"
+        ]
+      ]
+    },
+    "subjectAt": {
+      "args": [
+        "l",
+        "n"
+      ],
+      "expr": [
+        "subjectOf",
+        [
+          "at",
+          "$l",
+          "$n"
+        ]
+      ]
+    },
+    "subjectOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.subject"
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "not",
+      "$c.file.test"
+    ],
+    "let": [
+      [
+        "declared",
+        [
+          "declarationOf",
+          "$c"
+        ]
+      ],
+      [
+        "calls",
+        [
+          "tree.callsOf",
+          "$declared"
+        ]
+      ],
+      [
+        "positions",
+        [
+          "map",
+          [
+            "filter",
+            "$declared.parameters",
+            "p",
+            [
+              "tree.boolean",
+              "$p.binding.resolved"
+            ]
+          ],
+          "p",
+          [
+            "position",
+            "$p"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$calls"
+        ],
+        2
+      ],
+      [
+        ">=",
+        [
+          "count",
+          "$positions"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$calls",
+        "o",
+        [
+          "computed",
+          [
+            "values",
+            "$o"
+          ],
+          "$positions"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

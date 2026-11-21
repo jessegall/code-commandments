@@ -1,0 +1,393 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php"
+  ],
+  "sin": {
+    "name": "container-reach",
+    "aliases": [
+      "ContainerReachDetector",
+      "ContainerReach",
+      "csharp-container-reach"
+    ],
+    "skill": "php/laravel-idioms",
+    "description": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class",
+    "rule": "Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.",
+    "suggestion": "Declare the dependency as a constructor parameter.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "classLiteral": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          [
+            "filter",
+            "$c.arguments",
+            "a",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "position",
+                  "$a"
+                ],
+                0
+              ],
+              [
+                "=",
+                "$a.value.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$a.value.member.name",
+                "class"
+              ]
+            ]
+          ],
+          "a",
+          "$a.value.subject.refers"
+        ],
+        0
+      ]
+    },
+    "phpResolution": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "nonempty",
+          [
+            "classLiteral",
+            "$c"
+          ]
+        ],
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$c.callee.kind",
+              "reference"
+            ],
+            [
+              "in",
+              "$c.callee.refers",
+              "app",
+              "resolve"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$c.callee.kind",
+              "access"
+            ],
+            [
+              "in",
+              "$c.callee.member.name",
+              "make",
+              "makeWith",
+              "get"
+            ],
+            [
+              "or",
+              [
+                "assignable",
+                "$c.callee.subject.resolved",
+                "container"
+              ],
+              [
+                "assignable",
+                "$c.callee.subject.resolved",
+                "application"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "csResolution": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "in",
+          "$c.callee.member.name",
+          "GetService",
+          "GetRequiredService",
+          "GetKeyedService",
+          "GetRequiredKeyedService"
+        ],
+        [
+          "or",
+          [
+            "contains",
+            "$c.target.symbol",
+            "System.IServiceProvider."
+          ],
+          [
+            "contains",
+            "$c.target.symbol",
+            "Microsoft.Extensions.DependencyInjection."
+          ]
+        ]
+      ]
+    },
+    "containerBuilt": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "or",
+        [
+          "some",
+          [
+            "referrers",
+            "$t"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "declaredType"
+            ],
+            [
+              "=",
+              "$r.parent.kind",
+              "parameter"
+            ]
+          ]
+        ],
+        [
+          "none",
+          [
+            "referrers",
+            "$t"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "type"
+            ],
+            [
+              "=",
+              "$r.parent.kind",
+              "construction"
+            ]
+          ]
+        ]
+      ]
+    },
+    "constructorTakes": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "some",
+        "$t.writtenMembers",
+        "m",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "function"
+          ],
+          [
+            "=",
+            "$m.form",
+            "constructor"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$m.parameters"
+            ],
+            0
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "case",
+        "$c.file.language",
+        {
+          "php": [
+            "phpResolution",
+            "$c"
+          ],
+          "csharp": [
+            "csResolution",
+            "$c"
+          ]
+        },
+        false
+      ]
+    ],
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$c",
+          "type"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$owner"
+      ],
+      [
+        "case",
+        "$c.file.language",
+        {
+          "csharp": [
+            "constructorTakes",
+            "$owner"
+          ],
+          "php": [
+            "and",
+            [
+              "<",
+              [
+                "count",
+                "$c.arguments"
+              ],
+              2
+            ],
+            [
+              "!=",
+              "$owner.form",
+              "enum"
+            ],
+            [
+              "not",
+              [
+                "laravel.ownerIs",
+                "$c",
+                "service-provider"
+              ]
+            ],
+            [
+              "not",
+              [
+                "laravel.ownerIs",
+                "$c",
+                "model"
+              ]
+            ],
+            [
+              "!=",
+              [
+                "classLiteral",
+                "$c"
+              ],
+              "$owner.symbol"
+            ],
+            [
+              "none",
+              "$owner.modifiers",
+              "m",
+              [
+                "=",
+                "$m",
+                "abstract"
+              ]
+            ],
+            [
+              "not",
+              [
+                "some",
+                [
+                  "list",
+                  [
+                    "enclosing",
+                    "$c",
+                    "function"
+                  ]
+                ],
+                "f",
+                [
+                  "some",
+                  "$f.modifiers",
+                  "m",
+                  [
+                    "=",
+                    "$m",
+                    "static"
+                  ]
+                ]
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "exemptedBy",
+                  "no-container",
+                  "$owner"
+                ]
+              ]
+            ],
+            [
+              "containerBuilt",
+              "$owner"
+            ]
+          ]
+        },
+        false
+      ]
+    ],
+    "emit": "$c"
+  }
+}

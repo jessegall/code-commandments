@@ -1,0 +1,133 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "duplicate-route",
+    "aliases": [
+      "DuplicateRouteDetector",
+      "DuplicateRoute"
+    ],
+    "skill": "php/route-actions",
+    "description": "Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt)",
+    "rule": "Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.",
+    "suggestion": "Keep one route; if a second URL is truly needed, make it a redirect, or an invokable controller.",
+    "requires": {
+      "name": "illuminate/support",
+      "ecosystem": "composer"
+    },
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "defaultsOf": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "ownAncestors",
+              "$c"
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$a.callee.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$a.callee.member.name",
+                "defaults"
+              ]
+            ]
+          ],
+          "a",
+          [
+            "map",
+            "$a.arguments",
+            "x",
+            [
+              "fingerprint",
+              "$x.value",
+              "exact"
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "from": "laravel-route-registrations",
+    "as": "r",
+    "pipeline": [
+      {
+        "project": {
+          "anchor": "$r.anchor",
+          "verb": "$r.verb",
+          "action": [
+            "at",
+            "$r.actions",
+            0
+          ],
+          "defaults": [
+            "defaultsOf",
+            "$r.anchor"
+          ]
+        }
+      },
+      {
+        "reject": [
+          "contains",
+          "$action",
+          "::__invoke"
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$anchor",
+          "key": [
+            "list",
+            "$verb",
+            "$action",
+            "$defaults"
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "count",
+            "$rows"
+          ],
+          2
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

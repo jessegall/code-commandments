@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -19,7 +18,7 @@ type Growth struct {
 	Times    float64
 }
 
-func Grown(small, large *engine.Codebase, rules []detectors.Detector) []Growth {
+func Grown(small, large *engine.Codebase, rules []Rule) []Growth {
 	grown := make([]Growth, 0, len(rules))
 
 	for _, rule := range rules {
@@ -41,7 +40,7 @@ func Grown(small, large *engine.Codebase, rules []detectors.Detector) []Growth {
 	return grown
 }
 
-func costOf(codebase *engine.Codebase, rule detectors.Detector) int64 {
+func costOf(codebase *engine.Codebase, rule Rule) int64 {
 	before := engine.Counted()
 
 	rule.Find(codebase)

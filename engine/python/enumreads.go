@@ -117,12 +117,6 @@ func (p *Program) IsStringMatchMirroringEnum(n Node) bool {
 	return n.Kind() == "Match" && !readsValue && p.EnumsHoldAll(n.caseKeys(isTextPattern))
 }
 
-func (p *Program) IsEnumMatchWithAbsentWildcard(n Node) bool {
-	classes := n.memberCaseClasses()
-
-	return n.Kind() == "Match" && len(classes) == 1 && p.IsEnum(classes[0]) && n.onlyTheWildcardAnswersAbsence()
-}
-
 func (n Node) caseKeys(admits func(Node) bool) []string {
 	var keys []string
 	for _, match := range n.ChildrenIn("cases") {

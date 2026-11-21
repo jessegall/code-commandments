@@ -1,0 +1,159 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "coupled-fields",
+    "aliases": [
+      "CoupledFieldsDetector",
+      "CoupledFields",
+      "csharp-coupled-fields",
+      "python-coupled-fields"
+    ],
+    "skill": "php/value-objects",
+    "description": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.",
+    "rule": "Fields that always change together are really one type — extract them into a value object and use it directly; don't keep a field that just duplicates a nested object's property.",
+    "suggestion": "Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "writes": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "filter",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "assignment"
+          ],
+          [
+            "tree.selfField",
+            [
+              "at",
+              "$a.targets",
+              0
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "tree.method",
+      "$f"
+    ],
+    "let": [
+      [
+        "written",
+        [
+          "map",
+          [
+            "writes",
+            "$f"
+          ],
+          "a",
+          "$a.targets.member.name"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "distinctCount",
+          [
+            "flatten",
+            "$written"
+          ]
+        ],
+        2
+      ],
+      [
+        "some",
+        [
+          "filter",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "l",
+          [
+            "and",
+            [
+              "=",
+              "$l.kind",
+              "logical"
+            ],
+            [
+              "!=",
+              "$l.parent.kind",
+              "logical"
+            ]
+          ]
+        ],
+        "l",
+        [
+          ">=",
+          [
+            "distinctCount",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "ownDescendants",
+                  "$l"
+                ],
+                "x",
+                [
+                  "and",
+                  [
+                    "tree.selfField",
+                    "$x"
+                  ],
+                  [
+                    "some",
+                    [
+                      "flatten",
+                      "$written"
+                    ],
+                    "w",
+                    [
+                      "=",
+                      "$w",
+                      "$x.member.name"
+                    ]
+                  ]
+                ]
+              ],
+              "x",
+              "$x.member.name"
+            ]
+          ],
+          2
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

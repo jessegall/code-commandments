@@ -7,38 +7,17 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/detectors/backend"
 	"github.com/jessegall/code-commandments/detectors/backend/laravel"
-	"github.com/jessegall/code-commandments/detectors/backend/spatie"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-var tunings = []detectors.Tuning{
-	detectors.Tune(func(d backend.NamespaceDependencyDetector) backend.NamespaceDependencyDetector {
-		return d.
-			Layer(`Shop\Ui\Tokens`).
-			Layer(`Shop\Ui\Elements`, `Shop\Ui\Tokens`).
-			Layer(`Shop\Ui\Shared`, `Shop\Ui\Elements`, `Shop\Ui\Tokens`).
-			Layer(`Shop\Ui\Pages`, `Shop\Ui\Shared`, `Shop\Ui\Elements`, `Shop\Ui\Tokens`)
-	}),
-}
-
-func tuned(t *testing.T, registered []detectors.Detector) []detectors.Detector {
-	t.Helper()
-	set, unmatched := detectors.Tuned(registered, tunings...)
-	if len(unmatched) > 0 {
-		t.Fatalf("the shop tunes detectors that are not registered: %v", unmatched)
-	}
-
-	return set
-}
-
 func TestEveryBackendDetectorProvesItselfOnTheShop(t *testing.T) {
 	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  shop.Project(t),
-		Detectors: tuned(t, detectors.Of(catalog.PHP)),
-		Known:     detectors.Every(catalog.PHP),
+		Detectors: fixture.Proven(fixturetest.Configured(t, shop.Fixture(), detectors.Of(catalog.PHP))),
+		Known:     fixture.Proven(detectors.Every(catalog.PHP)),
 	})
 }
 
@@ -49,45 +28,16 @@ func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
 			shop.Root+"/app/Exports/ExportRun.php",
 			shop.Root+"/app/Vouchers/VoucherReceipt.php",
 		),
-		Detectors: []detectors.Detector{backend.UndeclaredMemberDetector},
-		Known:     detectors.Every(catalog.PHP),
+		Detectors: fixture.Proven([]detectors.Detector{shipped(t, "undeclared-member")}),
+		Known:     fixture.Proven(detectors.Every(catalog.PHP)),
 	})
 }
 
-func TestArrayReturnBagProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.ArrayReturnBagDetector{})
-}
-
-func TestArrayBagProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.ArrayBagDetector{})
-}
-
-func TestArrayBagParameterProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.ArrayBagParameterDetector{})
-}
-
 func TestAssembledTemplateProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.AssembledTemplateDetector{})
-}
-
-func TestAllNullableDataProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, spatie.AllNullableDataDetector{})
-}
-
-func TestAllOptionalDataProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, spatie.AllOptionalDataDetector{})
 }
 
 func TestBareScopeEscapeProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, laravel.BareScopeEscapeDetector{})
-}
-
-func TestBareStatePredicateProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.BareStatePredicateDetector{})
-}
-
-func TestBlankStringDefaultProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.BlankStringDefaultDetector)
+	proveBackendDetector(t, shipped(t, "bare-scope-escape"))
 }
 
 func TestBlankStringOnTheWireProvesItselfOnTheShop(t *testing.T) {
@@ -95,38 +45,26 @@ func TestBlankStringOnTheWireProvesItselfOnTheShop(t *testing.T) {
 }
 
 func TestBloatedDocblockProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.BloatedDocblockDetector)
+	proveBackendDetector(t, shipped(t, "bloated-docblock"))
 }
 
 func TestBoundaryDuplicatedOperationProvesItselfOnTheShop(t *testing.T) {
 	proveBackendDetector(t, laravel.BoundaryDuplicatedOperationDetector{})
 }
 
-func TestCancelledCoalesceProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.CancelledCoalesceDetector)
-}
-
-func TestCapabilityProbeHubProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.CapabilityProbeHubDetector)
-}
-
 func TestCeremonyDocblockProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.CeremonyDocblockDetector)
-}
-
-func TestCoalescedLoopSubjectProvesItselfOnTheShop(t *testing.T) {
-	proveBackendDetector(t, backend.CoalescedLoopSubjectDetector)
+	proveBackendDetector(t, shipped(t, "ceremony-docblock"))
 }
 
 func proveBackendDetector(t *testing.T, detector detectors.Detector) {
 	t.Helper()
 	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  shop.Project(t),
-		Detectors: []detectors.Detector{detector},
-		Known:     detectors.Every(catalog.PHP),
+		Detectors: fixture.Proven([]detectors.Detector{detector}),
+		Known:     fixture.Proven(detectors.Every(catalog.PHP)),
 	})
 }
 
 func TestEveryBackendDetectorFlagsWhatItsPhpTwinFlags(t *testing.T) {
-	shop.SameFindings(t, tuned(t, detectors.Every(catalog.PHP))...)
+	shop.SameFindings(t, fixturetest.Configured(t, shop.Fixture(), detectors.Every(catalog.PHP))...)
 }

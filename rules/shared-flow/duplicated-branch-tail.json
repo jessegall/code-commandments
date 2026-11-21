@@ -1,0 +1,142 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "duplicated-branch-tail",
+    "aliases": [
+      "DuplicatedBranchTailDetector",
+      "DuplicatedBranchTail"
+    ],
+    "skill": "shared/flow",
+    "description": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.",
+    "rule": "A statement every branch ends with belongs after the conditional, written once.",
+    "suggestion": "Move the shared last statement below the `if`/`else`."
+  },
+  "definitions": {
+    "elseOf": {
+      "args": [
+        "r"
+      ],
+      "expr": "$r.else"
+    }
+  },
+  "find": {
+    "select": "if",
+    "as": "b",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "tree.continuation",
+          "$b"
+        ]
+      ],
+      [
+        "not",
+        "$b.file.test"
+      ]
+    ],
+    "let": [
+      [
+        "rungs",
+        [
+          "follow",
+          "$b",
+          "else",
+          "if"
+        ]
+      ],
+      [
+        "finalElse",
+        [
+          "elseOf",
+          [
+            "last",
+            "$rungs"
+          ]
+        ]
+      ],
+      [
+        "arms",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "map",
+              "$rungs",
+              "r",
+              [
+                "tree.effective",
+                "$r.then"
+              ]
+            ],
+            [
+              "list",
+              [
+                "tree.effective",
+                "$finalElse"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$finalElse"
+      ],
+      [
+        "every",
+        "$arms",
+        "a",
+        [
+          ">",
+          [
+            "count",
+            "$a"
+          ],
+          0
+        ]
+      ],
+      [
+        "every",
+        "$arms",
+        "a",
+        [
+          "=",
+          [
+            "fingerprint",
+            [
+              "last",
+              "$a"
+            ],
+            "exact"
+          ],
+          [
+            "fingerprint",
+            [
+              "last",
+              [
+                "at",
+                "$arms",
+                0
+              ]
+            ],
+            "exact"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$b"
+  }
+}

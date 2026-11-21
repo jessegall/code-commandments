@@ -1,0 +1,213 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php",
+    "python",
+    "csharp",
+    "typescript",
+    "vue",
+    "go"
+  ],
+  "sin": {
+    "name": "duplicate-function",
+    "aliases": [
+      "duplicate-typescript-function",
+      "duplicate-python-function",
+      "duplicate-csharp-method",
+      "DuplicateFunction",
+      "DuplicateMethod"
+    ],
+    "skill": "shared/duplication",
+    "description": "Two functions repeat the same body",
+    "rule": "Write a shared function and call it from the places that need it.",
+    "suggestion": "Move the copied body to one owner and delegate to it from each caller."
+  },
+  "definitions": {
+    "effective": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "filter",
+        "$b.statements",
+        "s",
+        [
+          "!=",
+          "$s.kind",
+          "no-op"
+        ]
+      ]
+    },
+    "stub": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "or",
+        [
+          "not",
+          [
+            "exists",
+            "$f.body"
+          ]
+        ],
+        [
+          "=",
+          [
+            "count",
+            [
+              "effective",
+              "$f.body"
+            ]
+          ],
+          0
+        ],
+        [
+          "and",
+          [
+            "=",
+            [
+              "count",
+              [
+                "effective",
+                "$f.body"
+              ]
+            ],
+            1
+          ],
+          [
+            "some",
+            [
+              "effective",
+              "$f.body"
+            ],
+            "s",
+            [
+              "=",
+              "$s.kind",
+              "throw"
+            ]
+          ]
+        ]
+      ]
+    },
+    "soleStatement": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "count",
+            [
+              "effective",
+              "$f.body"
+            ]
+          ],
+          1
+        ],
+        [
+          "some",
+          [
+            "effective",
+            "$f.body"
+          ],
+          "s",
+          [
+            "in",
+            "$s.kind",
+            "return",
+            "expression-statement"
+          ]
+        ]
+      ]
+    },
+    "exactCopyExclusions": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$f.form",
+          "constructor"
+        ],
+        [
+          "soleStatement",
+          "$f"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "from": "function",
+    "as": "f",
+    "pipeline": [
+      {
+        "reject": [
+          "or",
+          "$f.file.test",
+          [
+            "stub",
+            "$f"
+          ],
+          [
+            "exactCopyExclusions",
+            "$f"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$f",
+          "weight": [
+            "syntaxWeight",
+            "$f.body"
+          ],
+          "key": [
+            "fingerprint",
+            "$f.body",
+            "exact"
+          ]
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            ">=",
+            "$weight",
+            12
+          ],
+          [
+            "nonempty",
+            "$key"
+          ]
+        ]
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "count",
+            "$rows"
+          ],
+          2
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

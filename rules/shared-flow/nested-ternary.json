@@ -1,0 +1,73 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "nested-ternary",
+    "aliases": [
+      "python-nested-conditional",
+      "csharp-nested-ternary",
+      "NestedTernaryDetector",
+      "NestedTernary",
+      "NestedConditional",
+      "NestedConditionalDetector"
+    ],
+    "skill": "shared/flow",
+    "description": "A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression",
+    "rule": "Use one conditional expression for one choice; for more, use a `match`/`switch`, a lookup, or guards that return early.",
+    "suggestion": "A `match`/`switch` over the subject, a lookup for a table of values, or a small function whose guards return early."
+  },
+  "find": {
+    "select": "conditional",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "none",
+        [
+          "ownAncestors",
+          "$c"
+        ],
+        "a",
+        [
+          "=",
+          "$a.kind",
+          "conditional"
+        ]
+      ],
+      [
+        "some",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$c.consequent",
+              "$c.alternative"
+            ],
+            [
+              "ownDescendants",
+              "$c.consequent"
+            ],
+            [
+              "ownDescendants",
+              "$c.alternative"
+            ]
+          ]
+        ],
+        "d",
+        [
+          "=",
+          "$d.kind",
+          "conditional"
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

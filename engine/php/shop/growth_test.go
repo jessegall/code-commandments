@@ -48,7 +48,7 @@ func (everyFileAgainstEveryOther) Find(codebase *engine.Codebase) []engine.Match
 }
 
 func TestTheGateCatchesARuleThatGrowsFasterThanTheTree(t *testing.T) {
-	grown := fixture.Grown(shop.Fresh(t), shop.Doubled(t), []detectors.Detector{everyFileAgainstEveryOther{}})
+	grown := fixture.Grown(shop.Fresh(t), shop.Doubled(t), []fixture.Rule{everyFileAgainstEveryOther{}})
 
 	if len(grown) != 1 {
 		t.Fatalf("the gate measured %d rules of 1", len(grown))

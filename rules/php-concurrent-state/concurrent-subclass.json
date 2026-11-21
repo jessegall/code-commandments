@@ -1,0 +1,41 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "concurrent-subclass",
+    "aliases": [
+      "ConcurrentSubclassDetector",
+      "ConcurrentSubclass"
+    ],
+    "skill": "php/concurrent-state",
+    "description": "Class `extends Concurrent` instead of composing `Concurrent<self>`",
+    "rule": "Compose `Concurrent<self>` via a `::for()` factory; never `extends Concurrent`.",
+    "suggestion": "Compose `Concurrent<self>` behind a `::for($id)` factory.",
+    "requires": {
+      "name": "jessegall/concurrent",
+      "ecosystem": "composer"
+    }
+  },
+  "find": {
+    "select": "type",
+    "as": "t",
+    "where": [
+      "=",
+      "$t.form",
+      "class"
+    ],
+    "having": [
+      "some",
+      "$t.bases",
+      "b",
+      [
+        "assignable",
+        "$b",
+        "concurrent"
+      ]
+    ],
+    "emit": "$t"
+  }
+}

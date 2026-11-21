@@ -2,42 +2,6 @@ package engine
 
 import "slices"
 
-func (m Match) SwitchesOnType() bool {
-	grammar := m.grammar()
-	if grammar.TypeDispatch != nil {
-		return grammar.TypeDispatch(m)
-	}
-	if grammar.DispatchTest == nil || !m.Is(Branch) || m.IsContinuation() {
-		return false
-	}
-	var subject Match
-	types := map[string]bool{}
-	allTranslate := true
-	for branch := m; branch.Exists(); {
-		asked, kind := grammar.DispatchTest(branch.Condition())
-		if !asked.Exists() || kind == "" || subject.Exists() && !asked.SameSyntax(subject) {
-			break
-		}
-		subject = asked
-		types[kind] = true
-		allTranslate = allTranslate && constructsOnReturn(branch.Body())
-		following := branch.Otherwise()
-		if len(following) != 1 || !following[0].IsContinuation() {
-			break
-		}
-		branch = following[0]
-	}
-	return len(types) >= 2 && !allTranslate
-}
-
-func constructsOnReturn(body []Match) bool {
-	if len(body) != 1 || !body[0].Is(Return) {
-		return false
-	}
-	values := body[0].Children()
-	return len(values) == 1 && values[0].IsConstruction()
-}
-
 func (m Match) IsConstClassEnum() bool {
 	read := m.grammar().ConstClass
 	return read != nil && read(m)

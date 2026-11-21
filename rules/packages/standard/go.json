@@ -1,0 +1,8 @@
+{
+  "package": "go",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "the Go language: error is the type of a failure result",
+  "entries": [],
+  "identities": [{"name": "standard.error-result", "type": "error"}]
+}

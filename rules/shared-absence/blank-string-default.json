@@ -1,0 +1,218 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "blank-string-default",
+    "aliases": [
+      "python-blank-string-default",
+      "csharp-blank-string-default",
+      "BlankStringDefaultDetector",
+      "BlankStringDefault"
+    ],
+    "skill": "shared/absence",
+    "description": "A blank string default stands for a missing required value",
+    "rule": "Require the text or give absence its own type.",
+    "suggestion": "Require the text or give absence its own type.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "blank": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "literal"
+        ],
+        [
+          "=",
+          "$x.literalKind",
+          "string"
+        ],
+        [
+          "=",
+          "$x.value",
+          ""
+        ]
+      ]
+    },
+    "tested": {
+      "args": [
+        "x",
+        "n"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "in",
+            "$x.kind",
+            "if",
+            "loop",
+            "conditional"
+          ],
+          [
+            "tree.names",
+            "$x.condition",
+            "$n"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "comparison"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$x.operands"
+            ],
+            2
+          ],
+          [
+            "every",
+            "$x.operators",
+            "o",
+            [
+              "in",
+              "$o",
+              "equal",
+              "not-equal",
+              "identical",
+              "not-identical"
+            ]
+          ],
+          [
+            "or",
+            [
+              "and",
+              [
+                "tree.names",
+                [
+                  "at",
+                  "$x.operands",
+                  0
+                ],
+                "$n"
+              ],
+              [
+                "blank",
+                [
+                  "at",
+                  "$x.operands",
+                  1
+                ]
+              ]
+            ],
+            [
+              "and",
+              [
+                "tree.names",
+                [
+                  "at",
+                  "$x.operands",
+                  1
+                ],
+                "$n"
+              ],
+              [
+                "blank",
+                [
+                  "at",
+                  "$x.operands",
+                  0
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "parameter",
+      "declarator"
+    ],
+    "as": "d",
+    "where": [
+      "case",
+      "$d.kind",
+      {
+        "parameter": [
+          "blank",
+          "$d.default"
+        ],
+        "declarator": [
+          "and",
+          [
+            "=",
+            "$d.parent.kind",
+            "field"
+          ],
+          [
+            "blank",
+            "$d.initializer"
+          ]
+        ]
+      },
+      false
+    ],
+    "let": [
+      [
+        "named",
+        "$d.binding.name"
+      ],
+      [
+        "read",
+        [
+          "case",
+          "$d.kind",
+          {
+            "parameter": [
+              "ownDescendants",
+              "$d.parent.body"
+            ]
+          },
+          [
+            "flatten",
+            [
+              "map",
+              "$d.parent.parent.writtenMembers",
+              "m",
+              [
+                "ownDescendants",
+                "$m.body"
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "some",
+      "$read",
+      "x",
+      [
+        "tested",
+        "$x",
+        "$named"
+      ]
+    ],
+    "emit": "$d"
+  }
+}

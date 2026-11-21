@@ -1,0 +1,66 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "redundant-else",
+    "aliases": [
+      "redundant-python-else",
+      "redundant-csharp-else",
+      "redundant-go-else",
+      "RedundantElseDetector",
+      "RedundantElse"
+    ],
+    "skill": "shared/flow",
+    "description": "An `else` after an `if` branch that already left (it returns, throws, breaks or continues): it indents the rest for nothing",
+    "rule": "Drop the `else` after a branch that returns, throws, continues or breaks; let the rest run at the function's own level.",
+    "suggestion": "Delete the `else` and dedent what was inside it; the exit above already says the rest only runs when the condition did not hold."
+  },
+  "find": {
+    "select": "if",
+    "as": "b",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "isElseIf",
+          "$b"
+        ]
+      ],
+      [
+        "exists",
+        "$b.else"
+      ],
+      [
+        "!=",
+        "$b.else.kind",
+        "if"
+      ],
+      [
+        ">",
+        [
+          "count",
+          [
+            "tree.effective",
+            "$b.else"
+          ]
+        ],
+        0
+      ],
+      [
+        "not",
+        [
+          "completes",
+          "$b.then"
+        ]
+      ]
+    ],
+    "emit": "$b"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "unread-collaborator",
+    "aliases": [
+      "UnreadCollaboratorDetector",
+      "UnreadCollaborator",
+      "csharp-unread-collaborator",
+      "python-unread-collaborator"
+    ],
+    "skill": "php/fix-at-the-source",
+    "description": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
+    "rule": "A constructor asks for what the class uses, and nothing more: a collaborator no method reads is removed, along with what the callers pass.",
+    "suggestion": "Delete the parameter and the field, then follow the callers: whatever they built or resolved only to hand it over goes too. If the class is meant to use it and does not, that is the bug the empty field is pointing at.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "declarator",
+    "as": "d",
+    "where": [
+      "and",
+      [
+        "=",
+        "$d.parent.kind",
+        "field"
+      ],
+      [
+        "exists",
+        [
+          "typeDeclaration",
+          "$d.binding.resolved.name"
+        ]
+      ]
+    ],
+    "having": [
+      "=",
+      [
+        "count",
+        [
+          "referrers",
+          "$d.binding"
+        ]
+      ],
+      0
+    ],
+    "emit": "$d"
+  }
+}

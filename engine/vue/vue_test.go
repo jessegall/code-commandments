@@ -58,59 +58,6 @@ func TestAnElementMeasuresItsNesting(t *testing.T) {
 	}
 }
 
-func TestAChainReTestingOneSubjectIsASwitchCase(t *testing.T) {
-	codebase := frontendtest.FromSource(t, map[string]string{"Badge.vue": `<template>
-  <div>
-    <b v-if="status === 'paid'">paid</b>
-    <i v-else-if="status === 'open'">open</i>
-    <u v-else>other</u>
-    <s v-if="stock > 10">many</s>
-    <em v-else-if="stock === 0">none</em>
-  </div>
-</template>`})
-	chain, ok := vue.Of(frontendtest.Named(t, codebase, "Element", "b")).SwitchCaseChain()
-	if !ok || chain.Subject != "status" || len(chain.Branches) != 3 {
-		t.Errorf("the status chain reads as %+v", chain)
-	}
-	if vue.Of(frontendtest.Named(t, codebase, "Element", "s")).HeadsSwitchCase() {
-		t.Error("a range guard heads a switch case")
-	}
-}
-
-func TestADispatchKnowsWhichCasesRenderAView(t *testing.T) {
-	view := `<section><h3>t</h3><ul><li><b>a</b></li><li><i>b</i></li></ul></section>`
-	codebase := frontendtest.FromSource(t, map[string]string{"Cases.vue": `<template>
-  <SwitchCase :value="kind">
-    <template #big>` + view + `</template>
-    <template #small><p>x</p></template>
-    <template #default><Other /></template>
-  </SwitchCase>
-  <template v-if="step === 'a'">` + view + `</template>
-  <template v-else-if="step === 'b'"><p>y</p></template>
-  <Layout><template #main>` + view + `</template></Layout>
-</template>`})
-	switchCase := vue.Of(frontendtest.Named(t, codebase, "Element", "SwitchCase"))
-	if !switchCase.IsDispatch() || len(switchCase.Cases()) != 3 || len(switchCase.ViewCases()) != 1 {
-		t.Errorf("the SwitchCase dispatches %d cases, %d of them views", len(switchCase.Cases()), len(switchCase.ViewCases()))
-	}
-	var chain vue.Element
-	for _, element := range vue.In(codebase).WhereElement().Get() {
-		if vue.Of(element).Has(vue.If) {
-			chain = vue.Of(element)
-		}
-	}
-	if !chain.IsDispatch() || len(chain.Cases()) != 2 || len(chain.ViewCases()) != 1 {
-		t.Errorf("the chain dispatches %d cases, %d of them views", len(chain.Cases()), len(chain.ViewCases()))
-	}
-	layout := vue.Of(frontendtest.Named(t, codebase, "Element", "Layout"))
-	if layout.IsDispatch() || len(layout.Cases()) != 0 {
-		t.Error("a layout's named slots are taken for a dispatch")
-	}
-	if !layout.HoldsView() || vue.Of(frontendtest.Named(t, codebase, "Element", "Other")).HoldsView() {
-		t.Error("a view is not told from a lone component")
-	}
-}
-
 func TestAComponentMeasuresWhatItsTemplateRenders(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"Sized.vue": `<template>
   <section><h1>t</h1><template v-if="a"><p>x</p><template v-for="i in list" :key="i"><b>{{ i }}</b></template></template></section>

@@ -1,0 +1,2552 @@
+{
+  "package": "laravel/framework",
+  "ecosystem": "composer",
+  "versions": ">=8",
+  "provenance": "engine/php/laravel/node.go QueryRunners and BuilderTypes; engine/php/packages/shipped.go",
+  "entries": [
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "get",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "first",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "firstOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "firstOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "firstOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "firstOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "sole",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "sole",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "find",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "find",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "findOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "findOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "findOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "findOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "findMany",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "findMany",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "count",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "exists",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "doesntExist",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "doesntExist",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "sum",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "sum",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "avg",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "avg",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "min",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "min",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "max",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "max",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "pluck",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "pluck",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "value",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "value",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "paginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "paginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "simplePaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "simplePaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "cursorPaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "cursorPaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "firstOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "toArray",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "save",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "increment",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "decrement",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "updateOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "insert",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "refresh",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "where",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "orWhere",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "whereIn",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "orderBy",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "with",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "select",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "join",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "limit",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "latest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "oldest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "get",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "first",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "firstOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "firstOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "firstOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "firstOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "sole",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "sole",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "find",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "find",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "findOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "findOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "findOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "findOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "findMany",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "findMany",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "count",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "exists",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "doesntExist",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "doesntExist",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "sum",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "sum",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "avg",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "avg",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "min",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "min",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "max",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "max",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "pluck",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "pluck",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "value",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "value",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "paginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "paginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "simplePaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "simplePaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "cursorPaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "cursorPaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "firstOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "toArray",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "save",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "increment",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "decrement",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "updateOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "insert",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "refresh",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "where",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "orWhere",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "whereIn",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "orderBy",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "with",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "select",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "join",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "limit",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "latest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "oldest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "get",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "first",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "firstOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "firstOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "firstOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "firstOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "sole",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "sole",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "find",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "find",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "findOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "findOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "findOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "findOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "findMany",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "findMany",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "count",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "exists",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "doesntExist",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "doesntExist",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "sum",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "sum",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "avg",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "avg",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "min",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "min",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "max",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "max",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "pluck",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "pluck",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "value",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "value",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "paginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "paginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "simplePaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "simplePaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "cursorPaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "cursorPaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "firstOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "toArray",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "save",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "increment",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "decrement",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "updateOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "insert",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "refresh",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "where",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "orWhere",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "whereIn",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "orderBy",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "with",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "select",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "join",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "limit",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "latest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "oldest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "get",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "first",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "firstOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "firstOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "firstOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "firstOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "sole",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "sole",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "find",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "find",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "findOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "findOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "findOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "findOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "findMany",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "findMany",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "count",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "exists",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "doesntExist",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "doesntExist",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "sum",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "sum",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "avg",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "avg",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "min",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "min",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "max",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "max",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "pluck",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "pluck",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "value",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "value",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "paginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "paginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "simplePaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "simplePaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "cursorPaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "cursorPaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "firstOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "toArray",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "save",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "increment",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "decrement",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "updateOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "insert",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "refresh",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "where",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "orWhere",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "whereIn",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "orderBy",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "with",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "select",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "join",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "limit",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "latest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "name": "oldest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "get",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "first",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "firstOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "firstOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "firstOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "firstOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "sole",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "sole",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "find",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "find",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "findOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "findOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "findOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "findOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "findMany",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "findMany",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "count",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "exists",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "doesntExist",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "doesntExist",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "sum",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "sum",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "avg",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "avg",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "min",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "min",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "max",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "max",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "pluck",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "pluck",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "value",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "value",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "paginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "paginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "simplePaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "simplePaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "cursorPaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "cursorPaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "firstOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "toArray",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "save",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "increment",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "decrement",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "updateOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "insert",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "refresh",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "where",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "orWhere",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "whereIn",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "orderBy",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "with",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "select",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "join",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "limit",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "latest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo",
+      "name": "oldest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "get",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "get",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "first",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "first",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "firstOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "firstOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "firstOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "firstOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "sole",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "sole",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "find",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "find",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "findOrFail",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "findOrFail",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "findOr",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "findOr",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "findMany",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "findMany",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "count",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "count",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "exists",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "exists",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "doesntExist",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "doesntExist",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "sum",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "sum",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "avg",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "avg",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "min",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "min",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "max",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "max",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "pluck",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "pluck",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "value",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "value",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "paginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "paginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "simplePaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "simplePaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "cursorPaginate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "cursorPaginate",
+      "effect": "database-read",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "firstOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "toArray",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "save",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "increment",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "decrement",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "create",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "updateOrCreate",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "insert",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "refresh",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "where",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "orWhere",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "whereIn",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "orderBy",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "with",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "select",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "join",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "limit",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "latest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "name": "oldest",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "save",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "update",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "delete",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "refresh",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "increment",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "decrement",
+      "effect": "executes-query",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "query",
+      "effect": "deferred-query",
+      "execution": "iteration"
+    }
+  ],
+  "exemptions": [
+    {
+      "on": {
+        "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
+          "state"
+        ]
+      },
+      "tag": "array-callback-contract",
+      "why": "The framework requires this method's callback to return an array."
+    },
+    {
+      "on": {
+        "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
+          "state"
+        ]
+      },
+      "tag": "array-callback-input-contract",
+      "why": "The framework supplies an array to this method's callback."
+    },
+    {
+      "on": {
+        "Illuminate\\Console\\Command": [
+          "table"
+        ],
+        "Illuminate\\Database\\Eloquent\\Builder": [
+          "insert",
+          "insertOrIgnore",
+          "update",
+          "upsert"
+        ],
+        "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo": [
+          "insert",
+          "insertOrIgnore",
+          "update",
+          "upsert"
+        ],
+        "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany": [
+          "insert",
+          "insertOrIgnore",
+          "update",
+          "upsert"
+        ],
+        "Illuminate\\Database\\Eloquent\\Relations\\HasMany": [
+          "insert",
+          "insertOrIgnore",
+          "update",
+          "upsert"
+        ],
+        "Illuminate\\Database\\Eloquent\\Relations\\Relation": [
+          "insert",
+          "insertOrIgnore",
+          "update",
+          "upsert"
+        ],
+        "Illuminate\\Database\\Query\\Builder": [
+          "insert",
+          "insertOrIgnore",
+          "update",
+          "upsert"
+        ]
+      },
+      "tag": "array-input-contract",
+      "why": "This framework boundary takes arrays carrying values in its declared input format."
+    },
+    {
+      "classes": [
+        "Illuminate\\Foundation\\Http\\FormRequest",
+        "Laravel\\Mcp\\Request",
+        "Laravel\\Mcp\\Server\\Tool"
+      ],
+      "tag": "array-returning",
+      "why": "A class whose whole job is handing the framework arrays: its array returns are contractual."
+    },
+    {
+      "attributes": [
+        "Illuminate\\Database\\Eloquent\\Attributes\\ObservedBy",
+        "Illuminate\\Database\\Eloquent\\Attributes\\ScopedBy",
+        "Illuminate\\Database\\Eloquent\\Attributes\\CollectedBy",
+        "Illuminate\\Database\\Eloquent\\Attributes\\UsePolicy"
+      ],
+      "methods": [
+        "hasOne",
+        "hasOneThrough",
+        "hasMany",
+        "hasManyThrough",
+        "belongsTo",
+        "belongsToMany",
+        "morphOne",
+        "morphMany",
+        "morphToMany",
+        "morphedByMany"
+      ],
+      "tag": "association",
+      "why": "One end of a two-way association the framework requires both ends to name: it carries no dependency direction and cannot close a cycle."
+    },
+    {
+      "classes": [
+        "Illuminate\\Http\\Request",
+        "Illuminate\\Foundation\\Http\\FormRequest",
+        "Laravel\\Mcp\\Request"
+      ],
+      "tag": "boundary",
+      "why": "A framework entry point: behaviour does not move onto it, and a method taking one may unpack its input."
+    },
+    {
+      "classes": [
+        "Illuminate\\Support\\ServiceProvider"
+      ],
+      "on": {
+        "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
+          "definition"
+        ]
+      },
+      "tag": "composition-root",
+      "why": "A provider or framework construction hook that wires config into values without constructor injection."
+    },
+    {
+      "on": {
+        "Illuminate\\Contracts\\Auth\\Guard": [
+          "user"
+        ],
+        "Illuminate\\Contracts\\Auth\\UserProvider": [
+          "retrieveById",
+          "retrieveByToken",
+          "retrieveByCredentials"
+        ],
+        "Illuminate\\Contracts\\Support\\Arrayable": [
+          "toArray"
+        ],
+        "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
+          "definition"
+        ],
+        "Illuminate\\Database\\Eloquent\\Model": [
+          "casts"
+        ],
+        "Illuminate\\Foundation\\Auth\\User": [
+          "casts"
+        ],
+        "Illuminate\\Foundation\\Http\\FormRequest": [
+          "rules"
+        ],
+        "Laravel\\Fortify\\Contracts\\ResetsUserPasswords": [
+          "reset"
+        ],
+        "Laravel\\Mcp\\Request": [
+          "rules"
+        ],
+        "Laravel\\Mcp\\Server\\Tool": [
+          "rules",
+          "schema"
+        ]
+      },
+      "tag": "contract-method",
+      "why": "A framework-mandated method whose signature the framework dictates."
+    },
+    {
+      "classes": [
+        "Illuminate\\Database\\Eloquent\\Model"
+      ],
+      "tag": "dynamic-members",
+      "why": "A type whose framework supplies members at runtime."
+    },
+    {
+      "classes": [
+        "Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes",
+        "Illuminate\\Contracts\\Database\\Eloquent\\CastsInboundAttributes"
+      ],
+      "tag": "no-container",
+      "why": "A type the framework instantiates itself, without the container."
+    },
+    {
+      "on": {
+        "Illuminate\\Validation\\ValidationException": [
+          "withMessages"
+        ]
+      },
+      "tag": "validation-response",
+      "why": "A framework factory builds a validation response from field messages and has no parameter for the caught failure."
+    }
+  ],
+  "identities": [
+    {
+      "name": "model",
+      "type": "Illuminate\\Database\\Eloquent\\Model"
+    },
+    {
+      "name": "eloquent-builder",
+      "type": "Illuminate\\Database\\Eloquent\\Builder"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation"
+    },
+    {
+      "name": "request",
+      "type": "Illuminate\\Http\\Request"
+    },
+    {
+      "name": "form-request",
+      "type": "Illuminate\\Foundation\\Http\\FormRequest"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Facade"
+    },
+    {
+      "name": "service-provider",
+      "type": "Illuminate\\Support\\ServiceProvider"
+    },
+    {
+      "name": "should-queue",
+      "type": "Illuminate\\Contracts\\Queue\\ShouldQueue"
+    },
+    {
+      "name": "casts-attributes",
+      "type": "Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes"
+    },
+    {
+      "name": "casts-inbound-attributes",
+      "type": "Illuminate\\Contracts\\Database\\Eloquent\\CastsInboundAttributes"
+    },
+    {
+      "name": "container",
+      "type": "Illuminate\\Contracts\\Container\\Container"
+    },
+    {
+      "name": "application",
+      "type": "Illuminate\\Foundation\\Application"
+    },
+    {
+      "name": "controller",
+      "type": "Illuminate\\Routing\\Controller"
+    }
+  ]
+}

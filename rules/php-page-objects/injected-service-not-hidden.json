@@ -1,0 +1,139 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "injected-service-not-hidden",
+    "aliases": [
+      "InjectedServiceNotHiddenDetector",
+      "InjectedServiceNotHidden"
+    ],
+    "skill": "php/page-objects",
+    "description": "A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type",
+    "rule": "Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.",
+    "suggestion": "Add `#[Hidden]` above the injection attribute to keep it off the wire. To also keep it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config — otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type.",
+    "requires": {
+      "name": "spatie/laravel-data",
+      "ecosystem": "composer"
+    },
+    "scaffolds": [
+      {
+        "path": "TypeScript/DropDataHiddenPropertyProcessor.php",
+        "stub": "DropDataHiddenPropertyProcessor.php.stub"
+      },
+      {
+        "path": "TypeScript/HiddenAwareAttributedClassTransformer.php",
+        "stub": "HiddenAwareAttributedClassTransformer.php.stub"
+      }
+    ],
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "from": "type",
+    "as": "t",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "=",
+            "$t.form",
+            "class"
+          ],
+          [
+            "spatie.composes",
+            "$t"
+          ],
+          [
+            "some",
+            [
+              "spatie.slotsOf",
+              "$t"
+            ],
+            "s",
+            [
+              "and",
+              [
+                "some",
+                "$s.modifiers",
+                "x",
+                [
+                  "=",
+                  "$x",
+                  "public"
+                ]
+              ],
+              [
+                "some",
+                "$s.attributes",
+                "a",
+                [
+                  "in",
+                  "$a.refers",
+                  "Spatie\\LaravelData\\Attributes\\FromContainer",
+                  "Spatie\\LaravelData\\Attributes\\FromContainerProperty"
+                ]
+              ],
+              [
+                "none",
+                "$s.attributes",
+                "a",
+                [
+                  "=",
+                  "$a.refers",
+                  "Spatie\\LaravelData\\Attributes\\Hidden"
+                ]
+              ],
+              [
+                "not",
+                [
+                  "spatie.namesData",
+                  "$s"
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$t",
+          "symbol": "$t.symbol"
+        }
+      },
+      {
+        "join": "laravel-response-types",
+        "as": "rendered",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "join": "laravel-controller-returns",
+        "as": "returned",
+        "on": {
+          "type": "$symbol"
+        }
+      },
+      {
+        "where": [
+          "or",
+          [
+            "exists",
+            "$rendered"
+          ],
+          [
+            "exists",
+            "$returned"
+          ]
+        ]
+      },
+      {
+        "emit": "$anchor"
+      }
+    ]
+  }
+}
