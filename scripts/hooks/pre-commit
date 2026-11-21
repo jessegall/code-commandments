@@ -25,7 +25,29 @@ fi
 exec php "$top/scripts/hooks/PreCommit.php"
 HOOK
     chmod +x "$hooks/pre-commit"
-    echo "✓ pre-commit hook installed (runs scripts/hooks/pre-commit)"
+    cat > "$hooks/post-commit" <<'HOOK'
+#!/usr/bin/env bash
+top="$(git rev-parse --show-toplevel)"
+if [ -x "$top/scripts/hooks/pre-commit" ]; then
+    exec "$top/scripts/hooks/pre-commit" --post-commit
+fi
+HOOK
+    chmod +x "$hooks/post-commit"
+    echo "✓ pre-commit and post-commit hooks installed (run scripts/hooks/pre-commit)"
+    exit 0
+fi
+
+# A commit that names its paths runs this hook on a temporary index, so a re-staged file reaches the commit but the
+# real index keeps its old copy. After the commit, each re-staged path whose file matches the commit is reset to it.
+restaged_list="$(git rev-parse --git-dir)/commandments-restaged"
+if [ "${1:-}" = "--post-commit" ]; then
+    [ -f "$restaged_list" ] || exit 0
+    while IFS= read -r path; do
+        if git diff --quiet HEAD -- "$path"; then
+            git reset -q HEAD -- "$path"
+        fi
+    done < "$restaged_list"
+    rm -f "$restaged_list"
     exit 0
 fi
 
@@ -68,5 +90,6 @@ for generator in "${GENERATORS[@]}"; do
 done
 
 if [ ${#restaged[@]} -gt 0 ]; then
+    printf '%s\n' "${restaged[@]}" > "$restaged_list"
     echo "↻ regenerated and re-staged: ${restaged[*]}"
 fi
