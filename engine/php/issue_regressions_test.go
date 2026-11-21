@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/detectors/backend"
 	backendlaravel "github.com/jessegall/code-commandments/detectors/backend/laravel"
+	backendspatie "github.com/jessegall/code-commandments/detectors/backend/spatie"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/engine/php/laravel"
@@ -366,6 +367,63 @@ class CustomerFactory extends Factory {
 `)
 	if cycle := namespaces.Of(codebase).ArrowsClosingAMutualPair(); len(cycle) != 0 {
 		t.Fatalf("an Eloquent model-to-factory association closed a cycle: %v", cycle)
+	}
+}
+
+func TestAPageObjectCountsTheDataSlotsItInherits(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App\Pages;
+use Illuminate\Routing\Controller;
+use Spatie\LaravelData\Attributes\FromContainer;
+use Spatie\LaravelData\Attributes\Hidden;
+use Spatie\LaravelData\Data;
+final class ShopData extends Data {}
+final class CommandData extends Data {}
+final class SettingsRequest { public function pageSize(): int { return 20; } }
+class SettingsPage extends Data {
+    public readonly ShopData $shop;
+}
+final class CommandsPage extends SettingsPage {
+    public readonly CommandData $latest;
+    public readonly int $pageSize;
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(SettingsRequest::class)]
+        public SettingsRequest $request,
+    ) {
+        $this->pageSize = $this->request->pageSize();
+    }
+}
+final class SettingsController extends Controller {
+    public function commands(): CommandsPage { return CommandsPage::from([]); }
+}
+`)
+	if !spatie.DataClassShapeOf(codebase).ComposesMultipleData(`App\Pages\CommandsPage`) {
+		t.Fatal("a page with one Data slot of its own and one inherited was not read as composing several")
+	}
+	if spatie.DataClassShapeOf(codebase).ComposesMultipleData(`App\Pages\SettingsPage`) {
+		t.Fatal("a parent with a single Data slot was read as composing several")
+	}
+	if found := (backendspatie.ConstructorOrchestrationDetector{}).Find(codebase); len(found) != 1 {
+		t.Fatalf("expected the pageSize slot filled in the constructor, found %v", found)
+	}
+}
+
+func TestReadingTheWholeRequestBagIsNotARawKeyRead(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App\Http;
+use Illuminate\Http\Request;
+final class TopicController {
+    public function index(Request $request): array {
+        $page = $request->input('page');
+        $sort = $request->query('sort');
+        return ['page' => $page, 'sort' => $sort, 'links' => $request->query(), 'payload' => $request->input()];
+    }
+}
+`)
+	found := (backendlaravel.RawRequestInputDetector{}).Find(codebase)
+	if len(found) != 2 {
+		t.Fatalf("expected the two keyed reads and not the whole-bag reads, found %v", found)
 	}
 }
 

@@ -23,5 +23,6 @@ func (RawRequestInputDetector) Find(codebase *engine.Codebase) []engine.Match {
 			return n.MethodCallName() == "input" || n.MethodCallName() == "get" || n.MethodCallName() == "query" || n.MethodCallName() == "post"
 		})).
 		Where(engine.As(func(n php.Node) bool { return n.IsUsedOn(laravelnode.RequestTypes...) })).
+		Reject(engine.As(php.Node.IsCalledWithoutArguments)).
 		Get()
 }

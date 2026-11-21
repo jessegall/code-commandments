@@ -63,6 +63,10 @@ func (n Node) StringArgument(position int) (string, bool) {
 	return value.Text()
 }
 
+func (n Node) IsCalledWithoutArguments() bool {
+	return n.ArgumentCount() == 0
+}
+
 func (n Node) ArgumentCount() int {
 	return len(Arguments(n.Match))
 }

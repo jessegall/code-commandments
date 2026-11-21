@@ -122,14 +122,19 @@ func (s *DataClassShape) isCastableType(written *contract.Type) bool {
 }
 
 func (s *DataClassShape) ComposesMultipleData(fqcn string) bool {
-	class, ok := s.program.Class(fqcn)
-	if !ok {
+	if _, ok := s.program.Class(fqcn); !ok {
 		return false
 	}
 	count := 0
-	for _, field := range php.Fields(class) {
-		if s.typeNamesData(field.Type) || s.collectionElementIsData(field) {
-			count++
+	for _, owner := range append([]string{fqcn}, s.program.Ancestors(fqcn)...) {
+		class, ok := s.program.Class(owner)
+		if !ok {
+			continue
+		}
+		for _, field := range php.Fields(class) {
+			if s.typeNamesData(field.Type) || s.collectionElementIsData(field) {
+				count++
+			}
 		}
 	}
 
