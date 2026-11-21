@@ -83,40 +83,6 @@ recomputed at every construction site. A boundary that renames keys (snake ↔ c
 - [ ] Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
       _`'slot' => ['a' => 1]` (or `[['a' => 1], ...]` for a collection), not `X::from(['a' => 1])`._
 
-## Worked example
-
-### data-to-array-roundtrip
-
-A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build
-
-```php
-----------[ Bad ]----------
-
-public function hold(BadgeCopy $badge, string $status): BadgeHolder
-{
-    $toned = new BadgeCopy($badge->label, $this->toneFor($status));
-
-    return BadgeHolder::from(['badge' => $toned->toArray()]);
-}
-
-----------[ Good ]----------
-
-// in Shop\Http\Pages\Hydration\BadgeHolderBuilder
-public function holdReady(BadgeCopy $badge, string $status): BadgeHolder
-{
-    $toned = new BadgeCopy($badge->label, $this->toneFor($status));
-
-    return BadgeHolder::from(['badge' => $toned]);
-}
-
-final class BadgeCopy extends Data
-{
-    public function __construct(public readonly string $label, public readonly string $tone) {}
-}
-```
-
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/spatie-data-hydration` — find every one of these in the codebase.

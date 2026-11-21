@@ -76,86 +76,17 @@ or extract the inner block into a method named for what it decides.
 
 ## Rules
 
-- [ ] Never change the collection a `foreach` walks while it walks it: decide inside the loop and change afterwards.
-      _Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`foreach (var item in items.ToList())`) when the change must happen as it goes._
 - [ ] Check at the top and throw there; don't hide a `?? throw` inside the expression that does the work.
       _Pull it out into its own line first — `var given = name ?? throw new …;` or an `is null` check with a throw — then do the work with the checked value._
-
-## Worked example
-
-### csharp-collection-mutated-while-iterated
-
-a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException
-
-```cs
-----------[ Bad ]----------
-
-// A reserve shelf added to the list the foreach is walking, which grows the list it is reading: every shelf
-// added names the next one to add, so the walk never reaches its end.
-public static class AisleBlocks
-{
-    public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
-    {
-        foreach (var shelf in shelves)
-        {
-            if (below.Contains(shelf))
-            {
-                shelves.Add($"{shelf}-reserve");
-            }
-        }
-
-        return shelves;
-    }
-
-    public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
-    {
-        var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
-        shelves.AddRange(reserves);
-
-        return shelves;
-    }
-}
-
-----------[ Good ]----------
-
-// A reserve shelf added to the list the foreach is walking, which grows the list it is reading: every shelf
-// added names the next one to add, so the walk never reaches its end.
-public static class AisleBlocks
-{
-    public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
-    {
-        foreach (var shelf in shelves)
-        {
-            if (below.Contains(shelf))
-            {
-                shelves.Add($"{shelf}-reserve");
-            }
-        }
-
-        return shelves;
-    }
-
-    public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
-    {
-        var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
-        shelves.AddRange(reserves);
-
-        return shelves;
-    }
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-collection-mutated-while-iterated`, `csharp-inline-throw`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-inline-throw`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

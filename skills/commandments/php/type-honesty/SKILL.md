@@ -55,37 +55,6 @@ field, or a value object, and delete the defence.
 - [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
       _Make it a stored property: a constant body becomes a property default (`public ?Transition $t = null;`); a constructed value (`get => Transition::make(...)`) is assigned ONCE in the constructor. Keep the hook only when the body genuinely derives from `$this` state._
 
-## Worked example
-
-### filled-parameter
-
-a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed
-
-```php
-----------[ Bad ]----------
-
-private function fillCounts(ExportState $state, string $run): void
-{
-    $state->rows = strlen($this->http->get("https://reports.test/runs/{$run}"));
-}
-
-----------[ Good ]----------
-
-// in Shop\Reporting\ExportStateLoader
-public function loadCounted(string $run): ExportState
-{
-    return new ExportState($this->countedRows($run));
-}
-
-// in Shop\Reporting\ExportStateLoader
-private function countedRows(string $run): int
-{
-    return strlen($this->http->get("https://reports.test/runs/{$run}"));
-}
-```
-
-The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/type-honesty` — find every one of these in the codebase.

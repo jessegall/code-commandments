@@ -1,6 +1,7 @@
 package registry_test
 
 import (
+	"slices"
 	"bytes"
 	"os"
 	"testing"
@@ -24,27 +25,24 @@ func TestTheRegistryEnrolsEveryRuleFolder(t *testing.T) {
 	}
 }
 
-func TestANameSeveralEnginesShareMeansNoOneRule(t *testing.T) {
-	shared := detectors.EveryNamedIn(detectors.All(), "DeepNestingDetector")
-	if len(shared) < 2 {
-		t.Fatalf("want DeepNestingDetector in several engines, got %d", len(shared))
+func TestANameOneRuleOfSeveralEnginesAnswersToIsThatRule(t *testing.T) {
+	named := detectors.EveryNamedIn(detectors.All(), "DeepNestingDetector")
+	if len(named) != 1 || len(detectors.EnginesOf(named[0])) < 2 {
+		t.Fatalf("want the one deep-nesting rule of several engines, got %d rules", len(named))
 	}
-
-	if rule, found := detectors.Named("DeepNestingDetector"); found {
-		engine, _ := detectors.EngineOf(rule)
-		t.Fatalf("want no rule for a name %d engines share, got the %s one", len(shared), engine)
+	if rule, found := detectors.Named("DeepNestingDetector"); !found || rule.Sin().Definition().Name != "deep-nesting" {
+		t.Fatalf("DeepNestingDetector names no single rule")
 	}
 }
 
-func TestANameGivenItsEngineMeansThatEnginesRule(t *testing.T) {
+func TestANameGivenItsEngineMeansTheRuleJudgingThatEngine(t *testing.T) {
 	for _, engine := range []catalog.Engine{catalog.PHP, catalog.Python, catalog.CSharp, catalog.Go} {
 		rule, found := detectors.Named(string(engine) + "/DeepNestingDetector")
 		if !found {
 			t.Fatalf("%s/DeepNestingDetector means no rule", engine)
 		}
-
-		if own, _ := detectors.EngineOf(rule); own != engine {
-			t.Fatalf("%s/DeepNestingDetector means the %s rule", engine, own)
+		if !slices.Contains(detectors.EnginesOf(rule), engine) {
+			t.Fatalf("%s/DeepNestingDetector means a rule that does not judge %s", engine, engine)
 		}
 	}
 }

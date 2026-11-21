@@ -44,68 +44,15 @@ needs it (usually through the constructor), and the dependency is in the signatu
 
 - [ ] Work in flight is awaited, never blocked on: `await` it, and make the caller async too, however far up that goes.
       _Write `await` and mark the method `async`, then follow the callers: the breadth of that change IS the problem surfacing, and stopping it with `.Result` at one boundary is what buries the deadlock until load finds it._
-- [ ] A constructor sets up the object; creating one should never change anything outside it.
-      _Keep the collaborator in a field and call it from the method someone actually calls to do the work._
-- [ ] Keep state that changes on an instance someone owns and passes around; don't write to a static field from a method.
-      _Move the field onto an object and hand that object to the code that reads and changes it; for a value computed once, use a `static readonly Lazy<T>`._
-- [ ] A constructor asks for what the type uses, and nothing more: a collaborator nothing reads is removed, along with what the callers pass.
-      _Delete the parameter and the field, then follow the callers: whatever they resolved or built only to hand it over goes too. If the type is meant to use it and does not, that is the bug the unread field is pointing at._
-
-## Worked example
-
-### csharp-blocked-await
-
-`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else
-
-```cs
-----------[ Bad ]----------
-
-// Reads the supplier's price feed. The method below takes the answer out of the task by blocking for it, so
-// the thread it stops is the one the read needed back: it works on a quiet morning and deadlocks under load,
-// which is the worst way to find a bug. Below it, the repair: await it, and say async in the signature.
-public sealed class PriceFeedReader(IPriceFeed feed)
-{
-    public string Read(string supplier)
-    {
-        return feed.ReadAsync(supplier).Result;
-    }
-
-    public async Task<string> ReadAsync(string supplier)
-    {
-        return await feed.ReadAsync(supplier);
-    }
-}
-
-----------[ Good ]----------
-
-// Reads the supplier's price feed. The method below takes the answer out of the task by blocking for it, so
-// the thread it stops is the one the read needed back: it works on a quiet morning and deadlocks under load,
-// which is the worst way to find a bug. Below it, the repair: await it, and say async in the signature.
-public sealed class PriceFeedReader(IPriceFeed feed)
-{
-    public string Read(string supplier)
-    {
-        return feed.ReadAsync(supplier).Result;
-    }
-
-    public async Task<string> ReadAsync(string supplier)
-    {
-        return await feed.ReadAsync(supplier);
-    }
-}
-```
-
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-blocked-await`, `csharp-constructor-side-effect`, `csharp-mutable-static-state`, `csharp-unread-collaborator`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-blocked-await`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

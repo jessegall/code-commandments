@@ -56,44 +56,6 @@ instead of a ladder at every call site.
 - **Parsing at the edge.** An `isinstance` check that turns loose input (`dict`, `list`, `str`) into your
   types is where the types are born, not a switch over them.
 
-## Rules
-
-- [ ] Move the behaviour onto the object whose data it works on; ask it (`order.heaviest_line()`), don't reach through it.
-      _Move the method onto the envied class and call it there; keep only the orchestration here._
-- [ ] Put the fact on the object it is about and ask it (`node.reserved_names()`), instead of looking it up from outside by the object's key.
-      _Give the object the method, holding what it needs to answer, and call it where this method was called._
-
-## Worked example
-
-### python-feature-envy
-
-a method that loops another object's collection or writes its fields, reaching into it more than into its own state — behaviour exiled from the object it works on
-
-```py
-----------[ Bad ]----------
-
-def vegan_line(self, board: MenuBoard) -> str:
-    return ", ".join(dish.name for dish in board.dishes if dish.vegan)
-
-----------[ Good ]----------
-
-def vegan_names(self) -> list[str]:
-    return [dish.name for dish in self.dishes if dish.vegan]
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=python/tell-dont-ask` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-feature-envy`, `python-keyed-lookup-envy`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/tell-dont-ask`](../../php/tell-dont-ask/SKILL.md) — the same discipline over PHP.

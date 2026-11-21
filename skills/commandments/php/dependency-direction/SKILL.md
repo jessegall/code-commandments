@@ -124,60 +124,17 @@ object carries rather than a collaborator it calls.
 
 ## Rules
 
-- [ ] Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
-      _cut the weaker arrow: move the shared class down, or have the lower namespace own an interface the higher one implements_
 - [ ] Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
       _invert the arrow: take the value/contract the low layer needs, and let the high layer supply it_
-
-## Worked example
-
-### namespace-cycle
-
-two namespaces that reference each other — neither can be read, tested or moved alone
-
-```php
-----------[ Bad ]----------
-
-public function firstClaim(): Claim
-{
-    return new Claim($this->months);
-}
-
-----------[ Good ]----------
-
-// in Shop\Warranty\WarrantyPolicy
-public function coveredMonthsOf(CoverageClaim $claim): int
-{
-    return min($claim->claimedMonths(), $this->months);
-}
-
-final class Claim implements CoverageClaim
-{
-    public function __construct(public readonly int $coveredMonths) {}
-
-    public function claimedMonths(): int
-    {
-        return $this->coveredMonths;
-    }
-
-    public function policy(): WarrantyPolicy
-    {
-        return new WarrantyPolicy($this->coveredMonths);
-    }
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=php/dependency-direction` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `namespace-cycle`, `namespace-dependency`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `namespace-dependency`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

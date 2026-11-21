@@ -119,43 +119,6 @@ that guards it. A list that leaves classes out on purpose, such as an export lis
 - [ ] A constructor asks for what the class uses, and nothing more: a collaborator no method reads is removed, along with what the callers pass.
       _Delete the parameter and the field, then follow the callers: whatever they built or resolved only to hand it over goes too. If the class is meant to use it and does not, that is the bug the empty field is pointing at._
 
-## Worked example
-
-### constructor-side-effect
-
-A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.
-
-```php
-----------[ Bad ]----------
-
-final class LedgerExport
-{
-    public function __construct(private readonly HttpClient $client, private readonly string $period)
-    {
-        $this->client->get("/ledger/{$period}/warm");
-    }
-
-    public function body(): string
-    {
-        return $this->client->get("/ledger/{$this->period}");
-    }
-}
-
-----------[ Good ]----------
-
-final class LazyLedgerExport
-{
-    public function __construct(private readonly HttpClient $client, private readonly string $period) {}
-
-    public function body(): string
-    {
-        return $this->client->get("/ledger/{$this->period}");
-    }
-}
-```
-
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/fix-at-the-source` — find every one of these in the codebase.

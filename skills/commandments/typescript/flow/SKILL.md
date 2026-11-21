@@ -70,56 +70,6 @@ read as a list of the things that would stop it. A `forEach` callback's `return`
 that one call and not the walk, so it is not a bail-out and never reads as one — which
 is the one place where the flat-body rule and the loop rule say different things.
 
-## Rules
-
-- [ ] A walk counts on the positions it has not reached yet: never move or drop the elements of the array you are walking.
-      _Decide while you walk and change afterwards — collect what to drop and `filter` it out once the loop is done — or walk a copy and say so: `[...items]`, `items.slice()` and `Array.from(items)` are each a different array, and changing the original while walking one of those is sound._
-
-## Worked example
-
-### typescript-collection-mutated-while-iterated
-
-a `for…of` or `forEach` that splices, shifts, sorts or pops the very array it walks — every element after the change has moved, so the walk skips one or reads one twice
-
-```ts
-----------[ Bad ]----------
-
-// Dropping the empty lines of a page. The walk reads the array as it stood when it began, so splicing out of it
-// mid-walk moves every later line up one and the walk steps over the next of them. Below it, the FIX: decide while
-// walking, change once afterwards.
-export function prune(lines: string[]): void {
-    for (const line of lines) {
-        if (line.trim() === '') {
-            lines.splice(lines.indexOf(line), 1)
-        }
-    }
-}
-
-----------[ Good ]----------
-
-export function pruned(lines: string[]): string[] {
-    const empty: string[] = []
-
-    for (const line of lines) {
-        if (line.trim() === '') {
-            empty.push(line)
-        }
-    }
-
-    return lines.filter((line) => !empty.includes(line))
-}
-```
-
-## Commands
-
-- `{{binary}} judge --skill=typescript/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `typescript-collection-mutated-while-iterated`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`vue/vue-control-flow`](../../vue/vue-control-flow/SKILL.md) — the same shape in a template: a branch that belongs in the script, not in the markup.

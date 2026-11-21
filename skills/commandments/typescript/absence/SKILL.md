@@ -48,45 +48,6 @@ which is why this is its own skill rather than a translation of the PHP one.
 - [ ] Do not declare a field optional when it always has a value: drop the `?` and the `| null`, and the defences downstream go with them.
       _Declare it as its plain type — the initialiser already proves it is total._
 
-## Worked example
-
-### defended-certain-field
-
-An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out.
-
-```ts
-----------[ Bad ]----------
-
-target(): string {
-    return this.printer?.id
-}
-
-----------[ Good ]----------
-
-// in label-printer.ts
-export class LabelPrinter {
-    private queue?: string[] = []
-
-    private readonly printer: Printer = { id: 'default' }
-
-    private lastError?: string
-
-    target(): string {
-        return this.printer?.id
-    }
-
-    lastFailure(): string {
-        return this.lastError?.trim() ?? ''
-    }
-
-    labelsWaiting(): number {
-        return this.queue.length
-    }
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=typescript/absence` — find every one of these in the codebase.

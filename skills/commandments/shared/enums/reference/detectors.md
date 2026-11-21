@@ -2,9 +2,9 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
-- **`const-class-enum`** — A class of constants defines a closed set of cases — `ConstClassEnumDetector`
-- **`enum-case-or-chain`** — An or-chain asks about several cases of one enum — `EnumCaseOrChainDetector`
-- **`in-array-mirrors-enum`** — A literal membership check repeats declared enum values — `InArrayMirrorsEnumDetector`
+- **`const-class-enum`** — A class of constants defines a closed set of cases — `const-class-enum`
+- **`enum-case-or-chain`** — An or-chain asks about several cases of one enum — `enum-case-or-chain`
+- **`in-array-mirrors-enum`** — A literal membership check repeats declared enum values — `in-array-mirrors-enum`
 - **`side-table-trait`** — A separate list repeats which cases have a trait — `SideTableTraitDetector`
-- **`string-match-mirrors-enum`** — A switch repeats literal values already declared as cases — `StringMatchMirrorsEnumDetector`
-- **`type-switch`** — Dispatch branches test the same value against several concrete types — `TypeSwitchDetector`
+- **`string-match-mirrors-enum`** — A switch repeats literal values already declared as cases — `string-match-mirrors-enum`
+- **`type-switch`** — Dispatch branches test the same value against several concrete types — `type-switch`

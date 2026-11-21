@@ -48,26 +48,6 @@ not a repeated test.
 - [ ] Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject.
       _the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`._
 
-## Worked example
-
-### control-flow-on-element
-
-`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`
-
-```vue
-----------[ Bad ]----------
-
-<span v-else-if="status === 'pending'" class="badge badge-amber">Pending</span>
-
-----------[ Good ]----------
-
-<template v-if="status === 'paid'">
-  <span class="badge badge-green">Paid</span>
-</template>
-```
-
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=vue/vue-control-flow` — find every one of these in the codebase.

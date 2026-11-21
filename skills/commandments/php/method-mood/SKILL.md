@@ -58,30 +58,6 @@ nothing — a missed narration costs a reader a moment, a false one costs them t
 - [ ] Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\$user)` — never the third-person `hides()`, and never a participle.
       _drop the -s: the call site is giving the order, not narrating it_
 
-## Worked example
-
-### bare-state-predicate
-
-A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs
-
-```php
-----------[ Bad ]----------
-
-public function reports(): bool
-{
-    return $this->level === 'error';
-}
-
-----------[ Good ]----------
-
-public function isErrored(): bool
-{
-    return $this->level === 'error';
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/method-mood` — find every one of these in the codebase.

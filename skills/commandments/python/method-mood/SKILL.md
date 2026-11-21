@@ -39,49 +39,6 @@ A name you did not choose is not a sin: a method overriding its base keeps the c
 dunder is the language's. Only a verb the rule knows is judged, so a plural noun (`names`, `fields`) is
 never mistaken for narration.
 
-## Rules
-
-- [ ] Name a `bool` about the object itself as a question: `is_bound()`, `has_parent()`, `can_retry()`.
-      _Make it a question: `is_…`, `has_…`, `can_…`, `awaits_…`._
-- [ ] Name a command in the imperative: `hide()`, `lock_for_night()`, `open_for(user)` — never the third-person `hides()`.
-      _Drop the -s: the call site is giving the order, not narrating it._
-
-## Worked example
-
-### python-bare-state-predicate
-
-a `bool` about the object's own state named as a bare verb — `binds()`, `spins` — where a question belongs
-
-```py
-----------[ Bad ]----------
-
-def locks(self) -> bool:
-    return self.bolted
-
-----------[ Good ]----------
-
-class LockerHatch:
-    def __init__(self, bay: str, bolted: bool) -> None:
-        self.bay = bay
-        self.bolted = bolted
-
-    def is_locked(self) -> bool:
-        return self.bolted
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=python/method-mood` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-bare-state-predicate`, `python-narrated-command`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/method-mood`](../../php/method-mood/SKILL.md) — the same discipline over PHP methods.

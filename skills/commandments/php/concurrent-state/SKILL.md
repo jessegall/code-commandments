@@ -55,43 +55,6 @@ The house pattern (and the one you want): the wrapped value is a **plain class**
 - [ ] Compose `Concurrent<self>` via a `::for()` factory; never `extends Concurrent`.
       _Compose `Concurrent<self>` behind a `::for($id)` factory._
 
-## Worked example
-
-### concurrent-subclass
-
-Class `extends Concurrent` instead of composing `Concurrent<self>`
-
-```php
-----------[ Bad ]----------
-
-final class LiveOrderTracker extends Concurrent
-{
-    public string $stage = 'received';
-
-    public function advance(string $stage): void
-    {
-        $this->stage = $stage;
-    }
-}
-
-----------[ Good ]----------
-
-final class LiveOrderStage
-{
-    public string $stage = 'received';
-
-    public static function for(string $id): Concurrent
-    {
-        return Concurrent::for(new self());
-    }
-
-    public function advance(string $stage): void
-    {
-        $this->stage = $stage;
-    }
-}
-```
-
 ## Commands
 
 - `{{binary}} judge --skill=php/concurrent-state` — find every one of these in the codebase.

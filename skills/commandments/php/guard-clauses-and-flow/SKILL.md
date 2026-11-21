@@ -57,43 +57,6 @@ Reach for this the moment you are about to write:
       _A `match`, a method on the type, or polymorphic dispatch._
 - [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
 
-## Worked example
-
-### if-else-ladder
-
-if/elseif ladder of 4+ branches (should be match/dispatch)
-
-```php
-----------[ Bad ]----------
-
-public function band(int $grams): string
-{
-    if ($grams < 250) {
-        return 'letter';
-    } elseif ($grams < 2_000) {
-        return 'parcel-s';
-    } elseif ($grams < 10_000) {
-        return 'parcel-m';
-    } else {
-        return 'parcel-l';
-    }
-}
-
-----------[ Good ]----------
-
-public function bandByMatch(int $grams): string
-{
-    return match (true) {
-        $grams < 250 => 'letter',
-        $grams < 2_000 => 'parcel-s',
-        $grams < 10_000 => 'parcel-m',
-        default => 'parcel-l',
-    };
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/guard-clauses-and-flow` — find every one of these in the codebase.

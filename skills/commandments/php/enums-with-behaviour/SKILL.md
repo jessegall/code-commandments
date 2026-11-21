@@ -42,30 +42,6 @@ Reach for this the moment you write:
 - [ ] Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
       _A method on the backed enum (`$x->label()`, `$x->isPaid()`)._
 
-## Worked example
-
-### compare-self
-
-A strict comparison bypasses an enum's verified comparison method.
-
-```php
-----------[ Bad ]----------
-
-function hasDispatched(Dispatch $dispatch): bool
-{
-    return $dispatch !== Dispatch::Draft && $dispatch !== Dispatch::Pending;
-}
-
-----------[ Good ]----------
-
-function alreadyDispatched(Dispatch $dispatch): bool
-{
-    return $dispatch->notEqualsAny(Dispatch::Draft, Dispatch::Pending);
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/enums-with-behaviour` — find every one of these in the codebase.

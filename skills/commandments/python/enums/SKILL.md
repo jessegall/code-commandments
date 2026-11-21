@@ -46,48 +46,6 @@ A string arriving from JSON, a form or a database becomes the enum where it ente
 `Status(payload["status"])` — and fails there if it is not one of the cases. From then on the code
 passes the enum, never the string.
 
-## Rules
-
-- [ ] Seal a closed set of values as an `Enum` or `StrEnum`, so the set is a type and its cases have a home for behaviour.
-      _`class Status(StrEnum): PENDING = "pending"` — then give the per-case knowledge methods on the enum._
-- [ ] Put a mapping over an enum's cases on the enum, matching its members; never match its raw `.value` at a call site.
-      _A method on the enum — `def badge(self) -> str: match self: case Status.PAID: …` — and `status.badge()` at the call site._
-- [ ] End a `match` over an enum's members with a `case _:` that raises, or handle every member; never let the wildcard return `None`.
-      _`case _: raise UnhandledStatus.of(status)` — or `assert_never(status)` so the type checker names the member left out._
-
-## Worked example
-
-### python-constant-class-enum
-
-a class that is nothing but `PENDING = "pending"` constants — a closed set of values written out by hand instead of an `Enum`
-
-```py
-----------[ Bad ]----------
-
-class Carrier(object):
-    POSTNL = "PNL"
-    DHL = "DHL"
-
-----------[ Good ]----------
-
-class CarrierCode(StrEnum):
-    POSTNL = "PNL"
-    DHL = "DHL"
-```
-
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=python/enums` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`, `python-enum-value-match`, `python-match-wildcard-returns-none`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/enums-with-behaviour`](../../php/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend.

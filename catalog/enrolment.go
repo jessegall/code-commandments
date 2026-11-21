@@ -18,7 +18,7 @@ import (
 
 const Module = "github.com/jessegall/code-commandments"
 
-var RuleRoots = []string{"sins", "skill", "detectors", "published"}
+var RuleRoots = []string{"sins", "skill", "detectors", "published", "rules"}
 
 func Enrolment(root string) ([]byte, error) {
 	var packages []string
@@ -53,7 +53,7 @@ func rulePackages(root, rules string) ([]string, error) {
 		if err != nil {
 			return err
 		}
-		if !entry.IsDir() || path == base {
+		if !entry.IsDir() {
 			return nil
 		}
 		if name := entry.Name(); name == "testdata" || strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {

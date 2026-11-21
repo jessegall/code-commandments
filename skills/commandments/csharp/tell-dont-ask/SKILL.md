@@ -63,55 +63,6 @@ Tell instead: give the base type an abstract member — `shape.Area()` — and l
   type it reads would carry that format onto a value object. A hole that works the answer out from the element's
   members (`$"{line.Price * line.Count}"`) is this sin again: that answer belongs on the element.
 
-## Rules
-
-- [ ] Move the behaviour onto the object whose data it works on; ask it (`order.HeaviestLine()`), don't reach through it.
-      _Move the method onto the envied type and call it there; keep only the orchestration here._
-
-## Worked example
-
-### csharp-feature-envy
-
-a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on
-
-```cs
-----------[ Bad ]----------
-
-public sealed class ToteWeigher
-{
-    public int Weigh(Tote tote)
-    {
-        var grams = 0;
-
-        foreach (var item in tote.Items)
-        {
-            grams += item.Grams;
-        }
-
-        return grams;
-    }
-}
-
-----------[ Good ]----------
-
-public sealed class Tote
-{
-    public List<ToteItem> Items { get; } = [];
-
-    public int TotalGrams() => Items.Sum(item => item.Grams);
-}
-```
-
-## Commands
-
-- `{{binary}} judge --skill=csharp/tell-dont-ask` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-feature-envy`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/tell-dont-ask`](../../php/tell-dont-ask/SKILL.md) — the same discipline in PHP.

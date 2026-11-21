@@ -52,36 +52,6 @@ place it lands.
 - [ ] Never silence a nullable warning with `!` — decide the missing case where the value is created, or handle it here.
       _Make the value non-nullable at its source, throw a named exception where it must exist, handle the null branch, or narrow it honestly (`OfType<T>()`, a pattern, `TryGetValue`)._
 
-## Worked example
-
-### csharp-null-forgiven
-
-The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding
-
-```cs
-----------[ Bad ]----------
-
-// The mailing list keeps the customers who gave an address — it filters out the nulls, then tells the
-// compiler with `!` what the filter already proved, instead of letting the filter say it.
-public sealed class Mailing(IReadOnlyList<Customer> customers)
-{
-    public IReadOnlyList<string> Emails() => customers.Where(customer => customer.Email != null).Select(customer => customer.Email!).ToList();
-
-    public IReadOnlyList<string> Addresses() => customers.Select(customer => customer.Email).OfType<string>().ToList();
-}
-
-----------[ Good ]----------
-
-// The mailing list keeps the customers who gave an address — it filters out the nulls, then tells the
-// compiler with `!` what the filter already proved, instead of letting the filter say it.
-public sealed class Mailing(IReadOnlyList<Customer> customers)
-{
-    public IReadOnlyList<string> Emails() => customers.Where(customer => customer.Email != null).Select(customer => customer.Email!).ToList();
-
-    public IReadOnlyList<string> Addresses() => customers.Select(customer => customer.Email).OfType<string>().ToList();
-}
-```
-
 ## Commands
 
 - `{{binary}} judge --skill=csharp/absence` — find every one of these in the codebase.

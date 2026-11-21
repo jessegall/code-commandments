@@ -1,6 +1,0 @@
-# C# type honesty — a type must say what is true — what fires, and why
-
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
-
-- **`csharp-filled-parameter`** — a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed — `FilledParameterDetector`
-- **`csharp-impossible-guard`** — `if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing — `ImpossibleGuardDetector`

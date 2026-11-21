@@ -38,53 +38,6 @@ the object itself — and describing the object is what a question is for.
 A name you did not choose is not a sin: an override or an interface member keeps the contract's spelling.
 Only a verb the rule knows is judged, so a plural noun (`Names`, `Fields`) is never mistaken for a sentence.
 
-## Rules
-
-- [ ] Name a `bool` about the object itself as a question: `IsBound`, `IsSpinning`, `HasParent`, `CanRetry`.
-      _Rename it to a question — `Binds()` becomes `IsBound`, usually as a property._
-
-## Worked example
-
-### csharp-bare-state-predicate
-
-a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs
-
-```cs
-----------[ Bad ]----------
-
-// A parcel locker a customer can collect from.
-public sealed class Locker(int freeSlots, bool open)
-{
-    public bool Accepts() => open && freeSlots > 0;
-
-    public bool IsAccepting => open && freeSlots > 0;
-
-    public bool Fits(int parcels) => open && parcels <= freeSlots;
-}
-
-----------[ Good ]----------
-
-// A parcel locker a customer can collect from.
-public sealed class Locker(int freeSlots, bool open)
-{
-    public bool Accepts() => open && freeSlots > 0;
-
-    public bool IsAccepting => open && freeSlots > 0;
-
-    public bool Fits(int parcels) => open && parcels <= freeSlots;
-}
-```
-
-## Commands
-
-- `{{binary}} judge --skill=csharp/method-mood` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-bare-state-predicate`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/method-mood`](../../php/method-mood/SKILL.md) — the same discipline in PHP.

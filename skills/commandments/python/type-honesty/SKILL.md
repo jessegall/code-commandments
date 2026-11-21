@@ -40,46 +40,15 @@ move the value into the signature, a required attribute or a value object, and d
 
 - [ ] A `@property` must derive from the object; a value it never reads `self` for is a class attribute.
       _`kind = "box"` on the class — or a `ClassVar` — and the property goes._
-- [ ] A def that works something out gives it back: return the value, and let the caller decide where it goes.
-      _Return what the def works out and let the caller assign it, or ask the object to change itself, so the signature says what happens._
-- [ ] A guard answers a question the type leaves open: if the type says the value is there, delete the guard; if the value really can be missing, say so in the type.
-      _Delete the check when the annotation is right. When callers really do pass None, annotate the parameter `T | None` and let the reader see it, then decide absence once where the value is born._
-- [ ] Pass a per-call value as a parameter; don't save and restore one of your own attributes around the call.
-      _Hand the value down as an argument — or a small per-call object — and the attribute, its save and its restore disappear._
-
-## Worked example
-
-### python-constant-property
-
-an `@property` whose body never reads `self` — `return "box"` — a stored value made to look like a computed one.
-
-```py
-----------[ Bad ]----------
-
-@property
-def kind(self) -> str:
-    return "envelope"
-
-----------[ Good ]----------
-
-class Letter:
-    kind = "envelope"
-
-    def __init__(self, weight: float) -> None:
-        self.weight = weight
-```
-
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/type-honesty` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-property`, `python-filled-parameter`, `python-impossible-guard`, `python-scratch-state-restore`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-property`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

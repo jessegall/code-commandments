@@ -73,39 +73,6 @@ halves have an obvious name, they are already two methods — give them their na
 - [ ] Split a method whose body is one branch on a flag into two NAMED methods — never make a call site say `true`, and never widen a required parameter to `?T = null` so that leaving it out means 'all of them'.
       _name each half for what it does (`renderCompact()` / `renderFull()`), with any shared middle as a private method both call_
 
-## Worked example
-
-### flag-argument
-
-a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name
-
-```php
-----------[ Bad ]----------
-
-public function labels(?string $kind = null): array
-{
-    if ($kind === null) {
-        return array_merge(...array_values($this->labels));
-    } else {
-        return $this->labels[$kind] ?? [];
-    }
-}
-
-----------[ Good ]----------
-
-// in Shop\Dispatch\CrateInspector
-public function allLabels(): array
-{
-    return array_merge(...array_values($this->labels));
-}
-
-// in Shop\Dispatch\CrateInspector
-public function labelsOfKind(string $kind): array
-{
-    return $this->labels[$kind] ?? [];
-}
-```
-
 ## Commands
 
 - `{{binary}} judge --skill=php/behaviour-per-method` — find every one of these in the codebase.

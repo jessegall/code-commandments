@@ -2,4 +2,4 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
-- **`concurrent-subclass`** — Class `extends Concurrent` instead of composing `Concurrent<self>` — `ConcurrentSubclassDetector`
+- **`concurrent-subclass`** — Class `extends Concurrent` instead of composing `Concurrent<self>` — `concurrent-subclass`

@@ -130,41 +130,6 @@ If yes — and you're reaching past its surface into its structure — that's wh
 - [ ] Ask the object you have for the answer you want; never walk through its neighbours to find it.
       _Give the object you hold a method that answers the question, so the walk happens where the objects live: `$order->city()`, with each type asking only its own neighbour._
 
-## Worked example
-
-### feature-envy
-
-Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object
-
-```php
-----------[ Bad ]----------
-
-public function suspend(Customer $customer, string $reason): void
-{
-    $customer->suspended = true;
-    $customer->suspended_reason = $reason;
-    $customer->save();
-}
-
-----------[ Good ]----------
-
-// in Shop\Customers\CustomerUpdater
-public function suspendByTelling(Customer $customer, string $reason): void
-{
-    $customer->suspend($reason);
-}
-
-// in Shop\Models\Customer
-public function suspend(string $reason): void
-{
-    $this->suspended = true;
-    $this->suspended_reason = $reason;
-    $this->save();
-}
-```
-
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/tell-dont-ask` — find every one of these in the codebase.

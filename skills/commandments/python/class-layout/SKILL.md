@@ -37,56 +37,6 @@ what the class holds, has no way to know they reached the end of the list.
 If the head of the class feels too long to read, the class is holding too much: split it. Do not solve a
 crowded inventory by scattering it.
 
-## Rules
-
-- [ ] Declare a class's state at the top — constants, class attributes and fields above `__init__` and every method.
-      _Move the assignment up to the head of the class, with the other state._
-- [ ] Read a class's head in one fixed order: constants (`UPPER_CASE`, `Final`, `ClassVar`) first, then fields.
-      _Move the constant above the first field._
-
-## Worked example
-
-### python-member-after-method
-
-a constant, class attribute or field declared below a method — the class's state hidden among its behaviour
-
-```py
-----------[ Bad ]----------
-
-class ExportJob:
-    def __init__(self, target) -> None:
-        self.target = target
-
-    runs = 0
-
-    def run(self, rows: list) -> None:
-        self.target.write(rows)
-
-----------[ Good ]----------
-
-class ImportJob:
-    runs = 0
-
-    def __init__(self, source) -> None:
-        self.source = source
-
-    def run(self) -> list:
-        return self.source.read()
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=python/class-layout` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-member-after-method`, `python-member-out-of-order`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/class-layout`](../../php/class-layout/SKILL.md) — the same discipline over PHP classes.

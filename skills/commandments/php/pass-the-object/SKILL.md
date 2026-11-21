@@ -68,37 +68,6 @@ the parameter to the resolved type.
 - [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
       _Take the resolved object as the param; resolve once in the caller._
 
-## Worked example
-
-### computed-boolean-argument
-
-A parameter that's just true/false, computed by every caller from the same object it could be given instead.
-
-```php
-----------[ Bad ]----------
-
-public static function of(bool $tucked): string
-{
-    return $tucked ? 'tight' : 'wide';
-}
-
-----------[ Good ]----------
-
-// in Shop\Kiosk\CornerInset
-public static function for(KioskEditor $editor): string
-{
-    return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
-}
-
-// in Shop\Kiosk\KioskEditor
-public function inZenMode(): bool
-{
-    return $this->zen;
-}
-```
-
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/pass-the-object` — find every one of these in the codebase.

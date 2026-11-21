@@ -33,18 +33,3 @@ A string written out as the path of a route the server declares by name
 
 <a href="https://help.example.com/plans/archive">Help</a>
 ```
-
-### raw-fetch-in-component — in Vue
-
-A Vue component calls the global `fetch` itself instead of the one client module
-
-```vue
-----------[ Good ]----------
-
-// The one place the shop's stock screens ask the server for stock: the path, the header and the parsing live here.
-export async function stockLevels(sku: string): Promise<number[]> {
-    const response = await fetch(`/api/stock/${sku}`, { headers: { Accept: 'application/json' } })
-
-    return response.json()
-}
-```

@@ -43,8 +43,8 @@ func (d contextDetector) Find(*engine.Codebase) []engine.Match { return d.matche
 
 func TestTheReportingFunnelLeavesLibraryLocationsOutOfFindings(t *testing.T) {
 	codebase := engine.Load(&contract.Stream{Files: []*contract.File{
-		{Path: "/shop/app/Checkout.php", Language: contract.PHP, Root: &contract.Node{}},
-		{Path: "/shop/vendor/package/Schema.php", Language: contract.PHP, Root: &contract.Node{}},
+		{Path: "/shop/app/Checkout.php", Language: contract.PHP, Root: &contract.Node{Kind: "file"}},
+		{Path: "/shop/vendor/package/Schema.php", Language: contract.PHP, Root: &contract.Node{Kind: "file"}},
 	}})
 	files := codebase.Files()
 	local, library := files[0].Match(0), files[1].Match(0)

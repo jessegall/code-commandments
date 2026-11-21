@@ -36,59 +36,6 @@ when they have reached the end of the list.
 If the top of the class feels too long to read, the class holds too much: split it. Don't fix a crowded
 list by scattering it.
 
-## Rules
-
-- [ ] Declare constants, fields and stored properties above the constructor, before any method.
-      _Move the declaration up to the other state at the top of the type._
-- [ ] Declare constants first, then fields, then stored properties.
-      _Move the constant up above the fields._
-
-## Worked example
-
-### csharp-member-after-method
-
-a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour
-
-```cs
-----------[ Bad ]----------
-
-// Hands out invoice numbers in a yearly series.
-public sealed class InvoiceNumbers(int year)
-{
-    private int issued;
-
-    public string Next() => $"{year}-{++issued:D5}";
-
-    private const string Prefix = "INV";
-
-    public string Formatted() => $"{Prefix}/{Next()}";
-}
-
-----------[ Good ]----------
-
-public sealed class CreditNoteNumbers(int year)
-{
-    private const string Prefix = "CN";
-
-    private int issued;
-
-    public string Next() => $"{Prefix}/{year}-{++issued:D5}";
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
-## Commands
-
-- `{{binary}} judge --skill=csharp/class-layout` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-member-after-method`, `csharp-member-out-of-order`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
-
-## Reference
-
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
-- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
 ## Related skills
 
 - [`php/class-layout`](../../php/class-layout/SKILL.md) — the same discipline in PHP.

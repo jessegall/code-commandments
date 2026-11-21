@@ -264,61 +264,12 @@ if you think you need one, you probably want a typed accessor / method on the cl
 - [ ] Use `Optional::create()`, not `new Optional`, everywhere a static call is legal — a parameter/property default must stay `new Optional` (a factory call is illegal there), everywhere else prefer the factory.
       _Replace `new Optional` / `new Optional()` with `Optional::create()`._
 
-## Worked example
-
-### all-nullable-data
-
-All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth)
-
-```php
-----------[ Bad ]----------
-
-final class LegacyImportRow extends Data
-{
-    public function __construct(
-        public readonly ?string $sku = null,
-        public readonly ?int $quantity = null,
-        public readonly ?int $priceCents = null,
-        public readonly ?string $note = null,
-    ) {}
-
-    public function lineTotal(): int
-    {
-        return ($this->quantity ?? 0) * ($this->priceCents ?? 0);
-    }
-}
-
-----------[ Good ]----------
-
-final class RetypedImportRow extends Data
-{
-    public function __construct(
-        public readonly string $sku,
-        public readonly int $quantity,
-        public readonly int $priceCents,
-        public readonly string|Optional $note = new Optional(),
-    ) {}
-
-    public function lineTotal(): int
-    {
-        return $this->quantity * $this->priceCents;
-    }
-
-    public function annotated(): string
-    {
-        return $this->note instanceof Optional ? $this->sku : $this->sku . ' — ' . $this->note;
-    }
-}
-```
-
-The other 12 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/spatie-data` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `all-nullable-data`, `all-optional-data`, `data-collection-type`, `data-method-hint-collision`, `hook-missing-computed`, `manual-hydration-loop`, `manual-input-cast`, `nested-type-missing-typescript`, `new-data-object`, `non-final-data`, `null-to-optional-map`, `nullable-wire-object`, `prefer-optional-create`.
 - `{{binary}} scaffold --sin=<sin>` — generate the helper the fix reaches for, for `null-to-optional-map`.
-- `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

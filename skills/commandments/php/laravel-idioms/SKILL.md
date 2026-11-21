@@ -78,34 +78,6 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 - [ ] Use `toString()` to read a plain string from the typed request accessor.
       _Call `$request->string('id')->toString()` for the string value._
 
-## Worked example
-
-### bare-scope-escape
-
-an Eloquent query drops every global scope, including ones added later
-
-```php
-----------[ Bad ]----------
-
-public function perMethod(): array
-{
-    return Shipment::withoutGlobalScopes()
-        ->selectRaw('method, count(*) as total')
-        ->groupBy('method')
-        ->pluck('total', 'method')
-        ->all();
-}
-
-----------[ Good ]----------
-
-public function total(): int
-{
-    return Shipment::withoutGlobalScope(CurrentShopScope::class)->count();
-}
-```
-
-The other 14 — one per rule — are in [`reference/examples.md`](reference/examples.md).
-
 ## Commands
 
 - `{{binary}} judge --skill=php/laravel-idioms` — find every one of these in the codebase.

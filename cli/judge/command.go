@@ -698,11 +698,14 @@ func readNothing(sources scan.Sources, codebase *engine.Codebase) []string {
 	return silent
 }
 
+// wholeAndByProject splits the rules by how they are judged: a rule judging C# reads each C# project as its own unit,
+// and a rule judging any other engine reads the whole tree, so a rule of several engines is judged both ways.
 func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors.Detector) {
 	for _, rule := range rules {
 		if detectors.Judges(rule, catalog.CSharp) {
 			byProject = append(byProject, rule)
-		} else {
+		}
+		if slices.ContainsFunc(detectors.EnginesOf(rule), func(engine catalog.Engine) bool { return engine != catalog.CSharp }) {
 			whole = append(whole, rule)
 		}
 	}

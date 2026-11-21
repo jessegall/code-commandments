@@ -78,48 +78,15 @@ that names it.
 
 ## Rules
 
-- [ ] A query several callers run is one named finder or scope on the model, written once.
-      _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
 - [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
       _`$element->withMetadata($payload)` — a `withMetadata()` on the type doing `copyWith(metadata: $payload->toArray())`._
-
-## Worked example
-
-### repeated-query-chain
-
-One Eloquent query chain written alike at three or more sites outside its model
-
-```php
-----------[ Bad ]----------
-
-public function redeem(int $cardId, int $amountCents): int
-{
-    $card = GiftCard::query()->whereKey($cardId)->lockForUpdate()->sole();
-
-    return min($amountCents, $card->balance_cents);
-}
-
-----------[ Good ]----------
-
-// in Shop\Payments\GiftCardRedemption
-public function coverable(int $cardId, int $amountCents): int
-{
-    return min($amountCents, GiftCard::lockedFor($cardId)->balance_cents);
-}
-
-// in Shop\Models\GiftCard
-public static function lockedFor(int $cardId): self
-{
-    return self::query()->whereKey($cardId)->lockForUpdate()->sole();
-}
-```
-
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+- [ ] A query several callers run is one named finder or scope on the model, written once.
+      _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
 
 ## Commands
 
 - `{{binary}} judge --skill=php/repeated-call-helper` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-query-chain`, `repeated-named-call`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-named-call`, `repeated-query-chain`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
