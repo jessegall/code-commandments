@@ -72,4 +72,3 @@ func writableFolder(folder string) bool {
 
 	return true
 }
-

@@ -1,8 +1,6 @@
 package golang_test
 
-import (
-
-)
+import ()
 
 var flows = map[string]string{
 	"go.mod": "module example.com/flows\n",
@@ -107,4 +105,3 @@ func (o Order) guarded() string {
 }
 `,
 }
-

@@ -42,4 +42,3 @@ func (c Counter) FirstThenEvery() (bool, error) {
 
 	return count == 1 || c.every > 0 && count%c.every == 0, err
 }
-

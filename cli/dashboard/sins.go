@@ -2,11 +2,11 @@
 package dashboard
 
 import (
-	"github.com/jessegall/code-commandments/rules"
 	"encoding/json"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"github.com/jessegall/code-commandments/cli/reported"
+	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"path/filepath"
 	"sort"

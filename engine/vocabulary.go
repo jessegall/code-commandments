@@ -5,4 +5,3 @@ type vocabularySlot struct {
 	target   string
 	position int
 }
-

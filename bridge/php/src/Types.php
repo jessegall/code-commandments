@@ -181,6 +181,9 @@ final class Types
                 if ($node instanceof Expr) {
                     $scope = array_key_last($this->scopes);
                     $type = $this->types->typeOf($node, $this->class, $this->scopes[$scope]['variables']);
+                    if ($node instanceof Expr\CallLike && ! $node instanceof Expr\New_ && $node->isFirstClassCallable()) {
+                        $type = ['name' => 'Closure'];
+                    }
                     if ($type !== null) {
                         $node->setAttribute('type', $type);
                     }

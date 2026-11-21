@@ -1,8 +1,6 @@
 package vue
 
-import (
-
-)
+import ()
 
 const (
 	minComponentElements = 6
@@ -39,4 +37,3 @@ type splice struct {
 	start, end int
 	text       string
 }
-

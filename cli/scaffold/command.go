@@ -2,11 +2,11 @@
 package scaffold
 
 import (
-	"github.com/jessegall/code-commandments/rules"
 	"bytes"
 	"encoding/json"
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"path/filepath"
 	"strconv"

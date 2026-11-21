@@ -125,7 +125,6 @@ does not — which is how a `where` says what only a `reject` could.
 | `distinctBy` | list, name, value | list | the first item of each key the body gives, in order; unknown when a key is |
 | `distinctCount` | list | number | how many different values a list holds; unknown when one of them is |
 | `divide` | number, number | number | the first number divided by the second; unknown for a zero divisor |
-| `docTags` | value | list | the tags of a doc comment, or of its raw text, each a record of tag, type, name and text: @param int $count the count |
 | `dominant` | list, number | value | the value at least the share given of a list's items hold; unknown when none does |
 | `dominates` | node, node | truth | whether every path to the second node passes the first: the first runs on every path through what holds both, before the part that holds the second; unknown for nodes of two functions |
 | `drop` | list, number | list | the list without its first n items |

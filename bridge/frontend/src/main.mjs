@@ -115,17 +115,18 @@ function readsOf(program, sources, scripts, everywhere) {
 function typeScriptFile(tree, program) {
     const sourceFile = program.sourceFile(tree.source.path)
     const whole = tree.source.text.length
-    const module = new Translator(tree, sourceFile, 0, program).module(sourceFile.statements, 0, whole)
+    const translator = new Translator(tree, sourceFile, 0, program)
+    const module = translator.module(sourceFile.statements, 0, whole)
     const root = new Node('file', 0, whole).holdsAll('modules', [module])
 
-    return { root, found: scriptComments(sourceFile, 0), errors: sourceFile.parseDiagnostics?.length ?? 0 }
+    return { root, found: withLinks(scriptComments(sourceFile, 0), translator.docLinks()), errors: sourceFile.parseDiagnostics?.length ?? 0 }
 }
 
 function vueFile(tree, sfc, program) {
     const found = []
     const writer = new VueWriter(tree, sfc, program, found)
     const root = writer.file()
-    found.push(...scriptComments(writer.sourceFile, 0))
+    found.push(...withLinks(scriptComments(writer.sourceFile, 0), writer.scripts.docLinks()))
 
     return { root, found, errors: writer.errors }
 }
@@ -211,3 +212,13 @@ function fail(error) {
 }
 
 main().catch(fail)
+
+/** The found comments, each holding the refs of the doc links written inside it. */
+function withLinks(found, links) {
+    for (const comment of found) {
+        const refs = links.filter((link) => link.at >= comment.start && link.at < comment.end).map((link) => link.ref)
+        if (refs.length) comment.refs = refs
+    }
+
+    return found
+}

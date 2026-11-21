@@ -438,7 +438,6 @@ func (m Match) Is(neutral Neutral) bool {
 	return node.Kind == string(neutral)
 }
 
-
 func (m Match) Parent() Match {
 	if m.node == nil {
 		return Match{}
@@ -528,8 +527,43 @@ func (m Match) Closest(neutral Neutral) Match {
 	return Match{}
 }
 
+// EnclosingType is the type a node is written in, or, for a method a language declares outside its type (Go), the
+// type its function's receiver names, joined by symbol.
 func (m Match) EnclosingType() Match {
-	return m.Closest(TypeDeclaration)
+	if written := m.Closest(TypeDeclaration); written.Exists() {
+		return written
+	}
+
+	return m.ReceiverType()
+}
+
+// ReceiverType is the declaration of the type the receiver of the node's function names, through a pointer, when the
+// codebase holds it.
+func (m Match) ReceiverType() Match {
+	function := m
+	if !function.Is(Function) {
+		function = m.Closest(Function)
+	}
+	for ; function.Exists(); function = function.Closest(Function) {
+		receiver := function.Child("receiver")
+		if !receiver.Exists() {
+			continue
+		}
+		named := receiver.Child("declaredType")
+		for named.Exists() && named.node.Form == "pointer" {
+			named = named.Child("element")
+		}
+		if !named.Exists() || named.node.Refers == "" {
+			return Match{}
+		}
+		if declared := m.file.Codebase().Declarations(named.node.Refers); len(declared) > 0 {
+			return declared[0]
+		}
+
+		return Match{}
+	}
+
+	return Match{}
 }
 
 func (m Match) EnclosingFunction() Match {

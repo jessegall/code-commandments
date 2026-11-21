@@ -133,4 +133,3 @@ func cachedClassBound(cache engine.Match) string {
 	}
 	return php.ClassStringBound((php.Node{Match: cache}).EnclosingFunctionLike().Match, key.Name())
 }
-

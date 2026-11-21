@@ -240,4 +240,3 @@ type TypeDeclaration struct {
 	Members   []Member
 	Type      TypeNode
 }
-

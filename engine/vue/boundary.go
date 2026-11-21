@@ -28,4 +28,3 @@ func (e Element) IsExtractable() bool {
 		e.Height() >= componentLevels &&
 		!slices.Contains(tableBound, strings.ToLower(e.Tag()))
 }
-

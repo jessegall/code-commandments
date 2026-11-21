@@ -1,6 +1,5 @@
 package engine
 
-
 var equalities = []string{"==", "!=", "===", "!==", "is", "is not"}
 
 var orderComparisons = []string{"<", "<=", ">", ">="}
@@ -26,4 +25,3 @@ func (m Match) Grouped() Match {
 
 	return m
 }
-

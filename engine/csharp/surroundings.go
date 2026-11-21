@@ -921,4 +921,3 @@ func (n Node) declaresAMemberNamed(name string) bool {
 }
 
 var taskTypes = []string{"System.Threading.Tasks.Task", "System.Threading.Tasks.ValueTask"}
-

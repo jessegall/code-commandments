@@ -52,4 +52,3 @@ func declaresAName(parts []Match) bool {
 
 	return false
 }
-

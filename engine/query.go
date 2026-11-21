@@ -68,4 +68,3 @@ func (q *Query) passes(match Match) bool {
 
 	return true
 }
-

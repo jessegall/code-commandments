@@ -1,6 +1,5 @@
 package engine
 
-
 func IndexedArgument(kind, container, key string) func(Match) (Match, Match) {
 	return func(read Match) (Match, Match) {
 		if read.Kind() == kind {
@@ -16,4 +15,3 @@ func (m Match) MemberName() string {
 	}
 	return m.Child("sel").Name()
 }
-

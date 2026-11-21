@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/sins"
 )
 

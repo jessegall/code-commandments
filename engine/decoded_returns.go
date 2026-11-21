@@ -16,4 +16,3 @@ func IsUntypedCollection(typed *contract.Type) bool {
 	}
 	return slices.Contains([]string{"any", "unknown", "object", "interface{}"}, value.Text)
 }
-

@@ -132,4 +132,3 @@ func (n Node) subscripted() (Node, bool) {
 }
 
 var collectionViews, mappingViews = []string{"enumerate", "reversed", "iter"}, []string{"items", "keys", "values"}
-

@@ -1,8 +1,6 @@
 package typescript
 
-import (
-
-)
+import ()
 
 func (n Node) IsModuleLevelDeclaration() bool {
 	return n.Kind() == "VariableDeclaration" && !n.EnclosingFunction().Exists()
@@ -100,4 +98,3 @@ func (n Node) AsksAboutOne(held string) bool {
 }
 
 var walkMutators = []string{"pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin"}
-

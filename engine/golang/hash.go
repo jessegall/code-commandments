@@ -84,4 +84,3 @@ func (hashRules) Unwrap(node engine.Match) (engine.Match, bool) {
 
 	return statements[0], true
 }
-

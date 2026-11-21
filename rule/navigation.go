@@ -72,6 +72,9 @@ func init() {
 					return known(nil)
 				}
 			}
+			if owner := site.ReceiverType(); named == "type" && owner.Exists() {
+				return known(owner)
+			}
 
 			return known(nil)
 		},

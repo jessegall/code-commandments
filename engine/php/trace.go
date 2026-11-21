@@ -104,4 +104,3 @@ func isNullsafeReceiver(node engine.Match) bool {
 func isChild(node engine.Match, kind, field string) bool {
 	return node.Exists() && node.Parent().Kind() == kind && node.Node().InRole() == field
 }
-

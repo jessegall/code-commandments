@@ -15,4 +15,3 @@ func (m Match) DeclaresValueEquality() bool {
 	}
 	return false
 }
-

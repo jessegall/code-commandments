@@ -101,4 +101,3 @@ func (m Match) StepsFrom(start Match) bool {
 
 	return m.Is(Call) && m.Receiver().SameSyntax(start) && len(arguments) > 0 && !slices.ContainsFunc(arguments, func(argument Match) bool { return !argument.IsConstant() })
 }
-

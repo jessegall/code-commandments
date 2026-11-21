@@ -1,7 +1,6 @@
 package php
 
 import (
-
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -27,4 +26,3 @@ var lookupEnvies = engine.Memoised(func(codebase *engine.Codebase) *LookupEnvy {
 
 	return envy
 })
-

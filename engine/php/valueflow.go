@@ -630,4 +630,3 @@ func flowClass(function engine.Match) string {
 
 	return ""
 }
-

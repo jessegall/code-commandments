@@ -1,12 +1,7 @@
 package php_test
 
 import (
-	"github.com/jessegall/code-commandments/engine"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine/php"
@@ -45,43 +40,6 @@ func TestCommentTextReadsAsPhpReadsIt(t *testing.T) {
 func phpInline(text string) bool         { return php.DocblockIsInline(text) }
 func phpReferences(text string) []string { return php.DocReferences(text) }
 func phpParagraphs(text string) int      { return php.DocParagraphs(text) }
-
-func TestTheBridgeMarksCommentedOutCodeAsPhpReadsIt(t *testing.T) {
-	code := map[string]bool{}
-	var probes []string
-	for _, php := range shop.PhpProse(t) {
-		code[php.Text] = php.Code
-		if strings.HasPrefix(php.Text, "//") || strings.HasPrefix(php.Text, "#") {
-			probes = append(probes, php.Text)
-		}
-	}
-	source := filepath.Join(t.TempDir(), "Probes.php")
-	if err := os.WriteFile(source, []byte("<?php\n\nfunction probes(): void\n{\n    "+strings.Join(probes, "\n    ")+"\n    return;\n}\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Fatal("this test runs the PHP bridge, and php is not on PATH: install PHP 8.4+ and run composer install")
-	}
-	stream, err := php.Here().Stream(source)
-	if err != nil {
-		t.Fatal(err)
-	}
-	marked := 0
-	for _, file := range stream.Files {
-		for _, comment := range file.Comments {
-			flagged := engine.Commented{Comment: comment}.IsCode()
-			if flagged != code[comment.Text] {
-				t.Errorf("the bridge marks code %v, PHP reads %v: %q", flagged, code[comment.Text], comment.Text)
-			}
-			if flagged {
-				marked++
-			}
-		}
-	}
-	if marked == 0 {
-		t.Error("the probes hold commented-out code, and the bridge marks none")
-	}
-}
 
 func TestAMethodNameReadsInTheMoodPhpReadsIt(t *testing.T) {
 	for _, php := range shop.PhpMoods(t) {

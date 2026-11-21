@@ -247,4 +247,3 @@ func readersOf(c *Codebase) map[string][]Match {
 		return index
 	})
 }
-

@@ -77,4 +77,3 @@ func (f Fixture) MarkedAcrossFiles() []string {
 
 	return marked
 }
-

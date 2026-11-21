@@ -46,4 +46,3 @@ func TestWhatANodeDecidesByIsAnsweredForTheFrontend(t *testing.T) {
 		}
 	}
 }
-

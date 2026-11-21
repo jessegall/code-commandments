@@ -120,15 +120,15 @@ type definition struct {
 // keep those having holds for, and emit the node each finding reports at. A find reading the rows of a relation names
 // from, the pipeline they go through and the relations it builds instead.
 type find struct {
-	Select    selection                  `json:"select,omitempty"`
-	As        string                     `json:"as,omitempty"`
-	Where     *Expr                      `json:"where,omitempty"`
-	Let       []binding                  `json:"let,omitempty"`
-	Having    *Expr                      `json:"having,omitempty"`
-	Emit      *Expr                      `json:"emit,omitempty"`
-	From      source                     `json:"from,omitempty"`
-	Pipeline  []stage                    `json:"pipeline,omitempty"`
-	Relations map[string]relation        `json:"relations,omitempty"`
+	Select    selection           `json:"select,omitempty"`
+	As        string              `json:"as,omitempty"`
+	Where     *Expr               `json:"where,omitempty"`
+	Let       []binding           `json:"let,omitempty"`
+	Having    *Expr               `json:"having,omitempty"`
+	Emit      *Expr               `json:"emit,omitempty"`
+	From      source              `json:"from,omitempty"`
+	Pipeline  []stage             `json:"pipeline,omitempty"`
+	Relations map[string]relation `json:"relations,omitempty"`
 }
 
 // selection is the kinds a find selects, written as one name or as a list of them.

@@ -45,9 +45,9 @@ func TestEachFlagNarrowsToItsFiles(t *testing.T) {
 	defer os.Chdir(was)
 
 	for flags, want := range map[string][]string{
-		"--changes":         {"src/Edited.vue", "src/Untracked.py"},
-		"--branch":          {"src/Added.ts", "src/Branched.php", "src/Edited.vue", "src/Untracked.py"},
-		"--branch=feature":  {"src/Edited.vue", "src/Untracked.py"},
+		"--changes":        {"src/Edited.vue", "src/Untracked.py"},
+		"--branch":         {"src/Added.ts", "src/Branched.php", "src/Edited.vue", "src/Untracked.py"},
+		"--branch=feature": {"src/Edited.vue", "src/Untracked.py"},
 	} {
 		scope, err := FromArgs([]string{flags}, root, space, nil)
 

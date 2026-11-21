@@ -25,4 +25,3 @@ var (
 var ArrayCallbackInputContract = Tag{"array-callback-input-contract", "The framework supplies an array to this method's callback."}
 
 var Tags = []Tag{ArrayCallbackContract, ArrayCallbackInputContract, ArrayInputContract, ArrayReturnContract, ArrayReturning, Association, Boundary, CompositionRoot, ContractMethod, ControlSignal, DynamicMembers, NoContainer, ValidationResponse}
-

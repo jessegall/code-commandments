@@ -28,8 +28,8 @@ type KindSpec struct {
 }
 
 type kindTable struct {
-	Kinds          map[string]KindSpec `json:"kinds"`
-	Facts          map[string]struct {
+	Kinds map[string]KindSpec `json:"kinds"`
+	Facts map[string]struct {
 		Provenance string `json:"provenance"`
 	} `json:"facts"`
 	UniversalFacts []string            `json:"universalFacts"`

@@ -1,8 +1,6 @@
 package packages
 
-import (
-
-)
+import ()
 
 // By is where a finding is looked up when a detector asks whether a package excuses it.
 type By int
@@ -25,4 +23,3 @@ type Exemption struct {
 type Exemptable interface {
 	Exemptions() []Exemption
 }
-

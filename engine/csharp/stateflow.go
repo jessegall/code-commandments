@@ -1,7 +1,6 @@
 package csharp
 
-import (
-)
+import ()
 
 // StateFlow is how a type's own state moves through its members: which members read which of it, which fields may hold nothing, and every value a field is given.
 type StateFlow struct {
@@ -14,4 +13,3 @@ type MemberReads struct {
 	Member string
 	Reads  []string
 }
-

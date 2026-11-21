@@ -39,4 +39,3 @@ var envies = engine.Memoised(func(codebase *engine.Codebase) *Envy {
 
 	return envy
 })
-

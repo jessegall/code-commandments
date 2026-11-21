@@ -1060,7 +1060,9 @@ func (w *writer) typeExpression(written ast.Expr) *contract.Node {
 		return w.typeExpression(held.X)
 	case *ast.Ident:
 		node.Own().Form, node.Own().Name = "named", held.Name
-		if w.facts != nil {
+		if predeclared(held, w.facts) {
+			node.Own().Form = "keyword"
+		} else if w.facts != nil {
 			node.Own().Refers = w.refers(held)
 		}
 	case *ast.SelectorExpr:
@@ -1156,4 +1158,17 @@ func childrenOf(node *contract.Node) []*contract.Node {
 	})
 
 	return children
+}
+
+// predeclared says whether a type name is one of Go's own (int, string, bool, error and the rest), a keyword type as
+// every language writes one: the compiler's answer when the package was checked, the universe's name otherwise.
+func predeclared(name *ast.Ident, facts *types.Info) bool {
+	if facts != nil {
+		if used, resolved := facts.Uses[name]; resolved {
+			return used.Parent() == types.Universe
+		}
+	}
+	_, isType := types.Universe.Lookup(name.Name).(*types.TypeName)
+
+	return isType
 }

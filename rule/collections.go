@@ -13,53 +13,52 @@ import (
 // The operators over lists, sets and graphs, over symbols and modules, and over the rows of the find's relations.
 func init() {
 	define(map[string]operator{
-		"rest":          {operands: []valueType{list}, gives: list, says: "the list without its first item"},
-		"take":          {operands: []valueType{list, number}, gives: list, says: "the first n items of a list"},
-		"drop":          {operands: []valueType{list, number}, gives: list, says: "the list without its first n items"},
-		"slice":         {operands: []valueType{anyValue, number, number}, gives: anyValue, says: "the items or characters from the first position up to the second, a negative one counted from the end, positions past the end clamped"},
-		"append":        {operands: []valueType{list, list}, repeating: true, gives: list, says: "the lists one after another"},
-		"distinct":      {operands: []valueType{list}, gives: list, says: "the first of each equal item, in order"},
-		"distinctBy":    {operands: []valueType{list, iteratorName, anyValue}, gives: list, says: "the first item of each key the body gives, in order; unknown when a key is"},
-		"groupItems":    {operands: []valueType{list, iteratorName, anyValue}, gives: list, says: "the items grouped by the key the body gives, each group a record of key and items, in the order each key first appears; unknown when a key is"},
-		"sortBy":        {operands: []valueType{list, iteratorName, anyValue}, gives: list, says: "the items ordered by the key the body gives: numbers by size, anything else by its written form"},
-		"minBy":         {operands: []valueType{list, iteratorName, number}, gives: anyValue, says: "the item whose body gives the smallest number; no value for an empty list"},
-		"maxBy":         {operands: []valueType{list, iteratorName, number}, gives: anyValue, says: "the item whose body gives the largest number; no value for an empty list"},
-		"union":         {operands: []valueType{list, list}, gives: list, says: "every item of either list once, in order: values by equality, nodes by identity"},
-		"intersect":     {operands: []valueType{list, list}, gives: list, says: "the items of the first list the second holds too"},
-		"difference":    {operands: []valueType{list, list}, gives: list, says: "the items of the first list the second does not hold; unknown when an item of either is"},
-		"subset":        {operands: []valueType{list, list}, gives: truth, says: "whether every item of the first list is in the second, order and repeats aside"},
-		"disjoint":      {operands: []valueType{list, list}, gives: truth, says: "whether no item of the first list is in the second"},
-		"sameItems":     {operands: []valueType{list, list}, gives: truth, says: "whether two lists hold the same items, order and repeats aside"},
-		"zip":           {operands: []valueType{list, list}, gives: list, says: "each item paired with the item at its position in the other list, as a record of left and right, for as long as the shorter list"},
-		"indexOf":       {operands: []valueType{anyValue, anyValue}, gives: number, says: "the position of the first item equal to the value, or of the first place a text holds the part; no value when there is none"},
-		"min":           {operands: []valueType{anyValue}, repeating: true, gives: number, says: "the smallest of a list of numbers, or of the numbers given"},
-		"max":           {operands: []valueType{anyValue}, repeating: true, gives: number, says: "the largest of a list of numbers, or of the numbers given"},
-		"average":       {operands: []valueType{list}, gives: number, says: "the mean of a list of numbers; unknown for an empty one"},
-		"median":        {operands: []valueType{list}, gives: number, says: "the middle of a list of numbers, the mean of the two middle ones for an even count; unknown for an empty one"},
-		"dominant":      {operands: []valueType{list, number}, gives: anyValue, says: "the value at least the share given of a list's items hold; unknown when none does"},
-		"windows":       {operands: []valueType{list, number}, gives: list, says: "every run of n items in a row, each a list"},
-		"jaccard":       {operands: []valueType{list, list}, gives: number, says: "how many items two lists share against how many they hold together, from 0 to 1"},
-		"reaches":       {operands: []valueType{list, anyValue, anyValue}, gives: truth, says: "whether edges, each a record of from and to, lead from the first value to the second"},
-		"reachableFrom": {operands: []valueType{list, anyValue, number}, gives: list, says: "every value the edges lead to from the one given, in at most the steps given (0 for no limit), nearest first"},
-		"components":    {operands: []valueType{list}, gives: list, says: "the cycles of a graph of edges, each a list of the values that reach one another, a value alone only when it has an edge to itself"},
-		"inCycle":       {operands: []valueType{list, anyValue}, gives: truth, says: "whether a value lies on a cycle of the edges"},
-		"supertypes":    {operands: []valueType{anyValue}, gives: list, says: "the symbols of every type a type declaration extends, implements or mixes in, nearest first, through the declarations the codebase holds"},
-		"subtypes":      {operands: []valueType{anyValue}, gives: list, says: "every type declaration of the codebase that extends, implements or mixes in the type, at any depth"},
-		"isSubtype":     {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether the first type is the second or reaches it through what it extends, implements or mixes in; unknown past a type the codebase does not declare"},
-		"symbolOf":      {operands: []valueType{node}, gives: text, says: "the symbol a node is or names: its own symbol, what it refers to, or its call's target; unknown where none is resolved"},
-		"sameSymbol":    {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two nodes or symbols name the same declaration: for local names by the binding they reach, never by spelling"},
+		"rest":           {operands: []valueType{list}, gives: list, says: "the list without its first item"},
+		"take":           {operands: []valueType{list, number}, gives: list, says: "the first n items of a list"},
+		"drop":           {operands: []valueType{list, number}, gives: list, says: "the list without its first n items"},
+		"slice":          {operands: []valueType{anyValue, number, number}, gives: anyValue, says: "the items or characters from the first position up to the second, a negative one counted from the end, positions past the end clamped"},
+		"append":         {operands: []valueType{list, list}, repeating: true, gives: list, says: "the lists one after another"},
+		"distinct":       {operands: []valueType{list}, gives: list, says: "the first of each equal item, in order"},
+		"distinctBy":     {operands: []valueType{list, iteratorName, anyValue}, gives: list, says: "the first item of each key the body gives, in order; unknown when a key is"},
+		"groupItems":     {operands: []valueType{list, iteratorName, anyValue}, gives: list, says: "the items grouped by the key the body gives, each group a record of key and items, in the order each key first appears; unknown when a key is"},
+		"sortBy":         {operands: []valueType{list, iteratorName, anyValue}, gives: list, says: "the items ordered by the key the body gives: numbers by size, anything else by its written form"},
+		"minBy":          {operands: []valueType{list, iteratorName, number}, gives: anyValue, says: "the item whose body gives the smallest number; no value for an empty list"},
+		"maxBy":          {operands: []valueType{list, iteratorName, number}, gives: anyValue, says: "the item whose body gives the largest number; no value for an empty list"},
+		"union":          {operands: []valueType{list, list}, gives: list, says: "every item of either list once, in order: values by equality, nodes by identity"},
+		"intersect":      {operands: []valueType{list, list}, gives: list, says: "the items of the first list the second holds too"},
+		"difference":     {operands: []valueType{list, list}, gives: list, says: "the items of the first list the second does not hold; unknown when an item of either is"},
+		"subset":         {operands: []valueType{list, list}, gives: truth, says: "whether every item of the first list is in the second, order and repeats aside"},
+		"disjoint":       {operands: []valueType{list, list}, gives: truth, says: "whether no item of the first list is in the second"},
+		"sameItems":      {operands: []valueType{list, list}, gives: truth, says: "whether two lists hold the same items, order and repeats aside"},
+		"zip":            {operands: []valueType{list, list}, gives: list, says: "each item paired with the item at its position in the other list, as a record of left and right, for as long as the shorter list"},
+		"indexOf":        {operands: []valueType{anyValue, anyValue}, gives: number, says: "the position of the first item equal to the value, or of the first place a text holds the part; no value when there is none"},
+		"min":            {operands: []valueType{anyValue}, repeating: true, gives: number, says: "the smallest of a list of numbers, or of the numbers given"},
+		"max":            {operands: []valueType{anyValue}, repeating: true, gives: number, says: "the largest of a list of numbers, or of the numbers given"},
+		"average":        {operands: []valueType{list}, gives: number, says: "the mean of a list of numbers; unknown for an empty one"},
+		"median":         {operands: []valueType{list}, gives: number, says: "the middle of a list of numbers, the mean of the two middle ones for an even count; unknown for an empty one"},
+		"dominant":       {operands: []valueType{list, number}, gives: anyValue, says: "the value at least the share given of a list's items hold; unknown when none does"},
+		"windows":        {operands: []valueType{list, number}, gives: list, says: "every run of n items in a row, each a list"},
+		"jaccard":        {operands: []valueType{list, list}, gives: number, says: "how many items two lists share against how many they hold together, from 0 to 1"},
+		"reaches":        {operands: []valueType{list, anyValue, anyValue}, gives: truth, says: "whether edges, each a record of from and to, lead from the first value to the second"},
+		"reachableFrom":  {operands: []valueType{list, anyValue, number}, gives: list, says: "every value the edges lead to from the one given, in at most the steps given (0 for no limit), nearest first"},
+		"components":     {operands: []valueType{list}, gives: list, says: "the cycles of a graph of edges, each a list of the values that reach one another, a value alone only when it has an edge to itself"},
+		"inCycle":        {operands: []valueType{list, anyValue}, gives: truth, says: "whether a value lies on a cycle of the edges"},
+		"supertypes":     {operands: []valueType{anyValue}, gives: list, says: "the symbols of every type a type declaration extends, implements or mixes in, nearest first, through the declarations the codebase holds"},
+		"subtypes":       {operands: []valueType{anyValue}, gives: list, says: "every type declaration of the codebase that extends, implements or mixes in the type, at any depth"},
+		"isSubtype":      {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether the first type is the second or reaches it through what it extends, implements or mixes in; unknown past a type the codebase does not declare"},
+		"symbolOf":       {operands: []valueType{node}, gives: text, says: "the symbol a node is or names: its own symbol, what it refers to, or its call's target; unknown where none is resolved"},
+		"sameSymbol":     {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two nodes or symbols name the same declaration: for local names by the binding they reach, never by spelling"},
 		"declarationsOf": {operands: []valueType{anyValue}, gives: list, says: "every declaration of a symbol, or of what a node names: partial classes and overloads each once"},
-		"origin":        {operands: []valueType{anyValue}, gives: text, says: "where a node's declaration lies: project, library or unknown"},
-		"moduleOf":      {operands: []valueType{anyValue}, gives: text, says: "the module of a node, or of the declaration a symbol names: its namespace, package or folder; no value for a symbol the project does not declare"},
-		"sameModule":    {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two nodes or symbols lie in one module"},
-		"layerOf":       {operands: []valueType{text}, gives: text, says: "the layer the project's configuration places a module in; unknown for a module in no layer"},
-		"reached":       {operands: []valueType{node}, gives: list, says: "the symbols a function or type calls, constructs and names, each once: the resources it reaches"},
-		"commentsOf":    {operands: []valueType{node}, gives: list, says: "the comments of a node, the ones above it and inside it, each a comment record as select comment reads them"},
-		"docTags":       {operands: []valueType{anyValue}, gives: list, says: "the tags of a doc comment, or of its raw text, each a record of tag, type, name and text: @param int $count the count"},
-		"rowsOf":        {operands: []valueType{text, anyValue}, optional: 1, gives: list, says: "the rows of one of the find's relations whose fields equal a record's: every row when no record is given"},
-		"hasRow":        {operands: []valueType{text, anyValue}, gives: truth, says: "whether one of the find's relations holds a row whose fields equal a record's"},
-		"countOf":       {operands: []valueType{text, anyValue}, gives: number, says: "how many rows of one of the find's relations have fields equal to a record's"},
-		"rowOf":         {operands: []valueType{text, anyValue}, gives: anyValue, says: "the one row of a relation whose fields equal a record's; unknown when none or several do"},
+		"origin":         {operands: []valueType{anyValue}, gives: text, says: "where a node's declaration lies: project, library or unknown"},
+		"moduleOf":       {operands: []valueType{anyValue}, gives: text, says: "the module of a node, or of the declaration a symbol names: its namespace, package or folder; no value for a symbol the project does not declare"},
+		"sameModule":     {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two nodes or symbols lie in one module"},
+		"layerOf":        {operands: []valueType{text}, gives: text, says: "the layer the project's configuration places a module in; unknown for a module in no layer"},
+		"reached":        {operands: []valueType{node}, gives: list, says: "the symbols a function or type calls, constructs and names, each once: the resources it reaches"},
+		"commentsOf":     {operands: []valueType{node}, gives: list, says: "the comments of a node, the ones above it and inside it, each a comment record as select comment reads them"},
+		"rowsOf":         {operands: []valueType{text, anyValue}, optional: 1, gives: list, says: "the rows of one of the find's relations whose fields equal a record's: every row when no record is given"},
+		"hasRow":         {operands: []valueType{text, anyValue}, gives: truth, says: "whether one of the find's relations holds a row whose fields equal a record's"},
+		"countOf":        {operands: []valueType{text, anyValue}, gives: number, says: "how many rows of one of the find's relations have fields equal to a record's"},
+		"rowOf":          {operands: []valueType{text, anyValue}, gives: anyValue, says: "the one row of a relation whose fields equal a record's; unknown when none or several do"},
 	}, map[string]computation{
 		"rest": listed(func(items []value, _ []value) value { return known(items[min(1, len(items)):]) }),
 		"take": listed(func(items []value, operands []value) value {
@@ -423,17 +422,7 @@ func init() {
 				return known(found)
 			})
 		},
-		"docTags": func(_ evaluation, operands []value) value {
-			text, isText := operands[0].held.(string)
-			if fields, isRecord := operands[0].held.(record); isRecord {
-				text, isText = fields["raw"].held.(string)
-			}
-			if !operands[0].known || !isText {
-				return unknown
-			}
 
-			return known(docTags(text))
-		},
 		"rowsOf": func(e evaluation, operands []value) value {
 			rows, read := e.matchingRows(operands)
 			if !read {
@@ -876,30 +865,6 @@ func moduleOf(e evaluation, v value) value {
 	}
 
 	return known(declared[0].Source().Module)
-}
-
-// docTags is each tag a doc comment's lines write: its name, then a type, a $name and the text, where it writes them.
-func docTags(text string) []value {
-	var tags []value
-	for _, line := range strings.Split(text, "\n") {
-		line = strings.TrimLeft(strings.TrimSpace(line), "/*# ")
-		if !strings.HasPrefix(line, "@") {
-			continue
-		}
-		words := strings.Fields(line)
-		tag := record{"tag": known(strings.TrimPrefix(words[0], "@")), "type": known(""), "name": known(""), "text": known("")}
-		rest := words[1:]
-		if len(rest) > 0 && !strings.HasPrefix(rest[0], "$") {
-			tag["type"], rest = known(rest[0]), rest[1:]
-		}
-		if len(rest) > 0 && strings.HasPrefix(rest[0], "$") {
-			tag["name"], rest = known(strings.TrimPrefix(rest[0], "$")), rest[1:]
-		}
-		tag["text"] = known(strings.Join(rest, " "))
-		tags = append(tags, known(tag))
-	}
-
-	return tags
 }
 
 // rowsNamed is the relation a rowsOf, hasRow, countOf or rowOf call names, checked when the rule loads.

@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/jessegall/code-commandments/rules"
 	"bytes"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/rules"
 	"strconv"
 	"strings"
 

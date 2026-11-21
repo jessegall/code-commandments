@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/prose"
 )
 
@@ -253,34 +252,4 @@ func DocumentedThrows(text string) []string {
 	}
 
 	return thrown
-}
-
-func commentReferences(comment engine.Commented) []contract.Ref {
-	owner := comment.Documents()
-	if owner.Kind() != "Stmt_Class" && owner.Kind() != "Stmt_ClassMethod" {
-		return nil
-	}
-	root := rootNamespace(EnclosingClassName(owner))
-	if root == "" {
-		return nil
-	}
-	program := ProgramOf(owner.Codebase())
-	var refs []contract.Ref
-	for _, reference := range (Node{Match: owner}).DocReferences() {
-		if rootNamespace(reference) != root {
-			continue
-		}
-		owned := true
-		ref := contract.Ref{Text: reference, OwnedHere: &owned}
-		if _, declared := program.Declaration(reference); declared {
-			ref.Symbol = reference
-		}
-		refs = append(refs, ref)
-	}
-	return refs
-}
-
-func rootNamespace(class string) string {
-	first, _, _ := strings.Cut(strings.TrimLeft(class, "\\"), "\\")
-	return first
 }

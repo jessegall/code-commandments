@@ -1,7 +1,6 @@
 package php
 
 import (
-
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -12,4 +11,3 @@ type EnumComparison struct {
 	Enum    string
 	Negated bool
 }
-

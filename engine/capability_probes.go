@@ -21,4 +21,3 @@ func methodsByOwner(codebase *Codebase) map[string][]Match {
 		return methods
 	})
 }
-

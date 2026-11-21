@@ -1,8 +1,6 @@
 package csharp_test
 
-import (
-
-)
+import ()
 
 const orders = `using System;
 
@@ -24,4 +22,3 @@ public sealed class Orders
     }
 }
 `
-

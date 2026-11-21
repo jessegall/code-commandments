@@ -397,4 +397,3 @@ var blockingCalls = []string{
 	"requests.head", "requests.request", "urllib.request.urlopen", "subprocess.run", "subprocess.call",
 	"subprocess.check_call", "subprocess.check_output", "os.system", "socket.socket.recv", "input",
 }
-

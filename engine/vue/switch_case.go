@@ -1,7 +1,6 @@
 package vue
 
-import (
-)
+import ()
 
 const switchCases = 2
 
@@ -26,4 +25,3 @@ type SwitchCaseBranch struct {
 	Key      string
 	Fallback bool
 }
-

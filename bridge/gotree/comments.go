@@ -2,11 +2,14 @@ package gotree
 
 import (
 	"go/ast"
+	"go/doc/comment"
 	"go/parser"
 	"go/scanner"
 	"go/token"
 	"go/types"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -54,6 +57,8 @@ func (w *writer) comments(parsed *ast.File, nodes []*contract.Node) []contract.C
 		}
 		if held.Form != "doc" {
 			held.Fragment = fragment(group)
+		} else {
+			held.Description, held.Refs = w.described(group)
 		}
 		comments = append(comments, held)
 	}
@@ -147,4 +152,67 @@ func fragment(group *ast.CommentGroup) *contract.Fragment {
 	}
 
 	return read
+}
+
+// described is what a doc comment says in prose, its Deprecated: and BUG( lines left out, and the doc links it makes
+// into its own module, each resolved through the package scope when it names a declaration.
+func (w *writer) described(group *ast.CommentGroup) ([]string, []contract.Ref) {
+	text := group.Text()
+	var description []string
+	for _, line := range strings.Split(strings.TrimRight(text, "\n"), "\n") {
+		if !strings.HasPrefix(line, "Deprecated:") && !strings.HasPrefix(line, "BUG(") {
+			description = append(description, strings.TrimSpace(line))
+		}
+	}
+	parser := comment.Parser{LookupSym: func(receiver, name string) bool {
+		first, _ := utf8.DecodeRuneInString(name)
+		return receiver != "" || unicode.IsUpper(first)
+	}}
+	var refs []contract.Ref
+	for _, block := range parser.Parse(text).Content {
+		paragraph, links := block.(*comment.Paragraph)
+		if !links {
+			continue
+		}
+		for _, part := range paragraph.Text {
+			link, direct := part.(*comment.DocLink)
+			if !direct || (link.ImportPath != "" && link.ImportPath != w.module) {
+				continue
+			}
+			name, owned := link.Name, true
+			if link.Recv != "" {
+				name = link.Recv + "." + name
+			}
+			refs = append(refs, contract.Ref{Text: name, Symbol: w.linked(link.Recv, link.Name), OwnedHere: &owned})
+		}
+	}
+
+	return description, refs
+}
+
+// linked is the symbol a doc link names in the file's own package, or nothing when the package declares no such name.
+func (w *writer) linked(receiver, name string) string {
+	if w.facts == nil {
+		return ""
+	}
+	var scope *types.Package
+	for _, object := range w.facts.Defs {
+		if object != nil && object.Pkg() != nil {
+			scope = object.Pkg()
+			break
+		}
+	}
+	if scope == nil {
+		return ""
+	}
+	if receiver == "" {
+		return symbolOf(scope.Scope().Lookup(name))
+	}
+	owner, isType := scope.Scope().Lookup(receiver).(*types.TypeName)
+	if !isType {
+		return ""
+	}
+	member, _, _ := types.LookupFieldOrMethod(owner.Type(), true, scope, name)
+
+	return symbolOf(member)
 }

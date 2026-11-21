@@ -64,10 +64,7 @@ func init() {
 		Encode:              func(call engine.Match) bool { return call.TargetSymbol() == "encoding/json.Marshal" },
 		DecodedDestination:  decodedDestination,
 		UntypedReturn:       returnsUntypedData,
-		CommentReferences:   commentReferences,
 		Keywords:            keywords,
-		DocumentedSubject:   documentedSubject,
-		CommentProse:        commentProse,
 		VocabularyWords:     vocabularyWords,
 		Arguments:           engine.InFields("args"),
 	})

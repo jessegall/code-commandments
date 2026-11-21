@@ -16,10 +16,10 @@ import (
 // bound to one of its methods has, and when it happens. It names the declaration a call resolves to and never the
 // code around the call: a package entry cannot say that a loop is wrong.
 type PackageFacts struct {
-	Package    string         `json:"package"`
-	Ecosystem  string         `json:"ecosystem"`
-	Versions   string         `json:"versions"`
-	Provenance string         `json:"provenance"`
+	Package    string             `json:"package"`
+	Ecosystem  string             `json:"ecosystem"`
+	Versions   string             `json:"versions"`
+	Provenance string             `json:"provenance"`
 	Entries    []PackageEntry     `json:"entries"`
 	Exemptions []PackageExemption `json:"exemptions,omitempty"`
 	Identities []PackageIdentity  `json:"identities,omitempty"`

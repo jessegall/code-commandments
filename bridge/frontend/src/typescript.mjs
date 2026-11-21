@@ -192,11 +192,13 @@ export class Translator {
         if (ts.isTypeReferenceNode(node) || ts.isExpressionWithTypeArguments(node)) {
             const name = ts.isTypeReferenceNode(node) ? node.typeName : node.expression
 
-            return this.new('type-expression', node)
+            return this.resolvedAs(this.new('type-expression', node)
                 .fact('form', 'named')
+                .fact('name', name.getText(this.sourceFile))
                 .fact('refers', this.checker ? this.refersOf(ts.isQualifiedName(name) ? name.right : name) : undefined)
-                .holdsAll('typeArguments', (node.typeArguments ?? []).map((argument) => this.type(argument)))
+                .holdsAll('typeArguments', (node.typeArguments ?? []).map((argument) => this.type(argument))), node)
         }
+        if (ts.isTypeLiteralNode(node)) return this.resolvedAs(this.new('type-expression', node).fact('form', 'object'), node)
         if (ts.isFunctionTypeNode(node) || ts.isConstructorTypeNode(node)) {
             return this.new('type-expression', node).fact('form', 'function')
                 .holdsAll('parameters', node.parameters.map((parameter) => this.parameter(parameter)))
@@ -210,6 +212,56 @@ export class Translator {
         if (ts.isTypeQueryNode(node) || ts.isTypeReferenceNode(node)) return this.new('type-expression', node).fact('form', 'named')
 
         return this.new('type-expression', node).fact('form', 'opaque')
+    }
+
+    /**
+     * Every doc link the file's JSDoc makes (`{@link X}`, `{@linkcode X}`, `{@linkplain X}`, `@see X`), at its offset,
+     * as the contract's ref: the symbol the compiler resolves it to, or none; a name whose head the file imports is
+     * someone else's to keep, so only an unresolved name of the file's own is owned here.
+     */
+    docLinks() {
+        const imported = new Set(this.sourceFile.statements.filter(ts.isImportDeclaration)
+            .flatMap((declaration) => {
+                const clause = declaration.importClause
+                if (!clause) return []
+                const names = clause.name ? [clause.name.text] : []
+                const bindings = clause.namedBindings
+                if (bindings && ts.isNamespaceImport(bindings)) names.push(bindings.name.text)
+                if (bindings && ts.isNamedImports(bindings)) names.push(...bindings.elements.map((element) => element.name.text))
+
+                return names
+            }))
+        const links = []
+        const linked = (name) => {
+            if (!name) return
+            const text = name.getText(this.sourceFile)
+            let symbol = this.checker?.getSymbolAtLocation(ts.isQualifiedName(name) || ts.isPropertyAccessExpression(name) ? name.right ?? name.name : name)
+            if (symbol && symbol.flags & ts.SymbolFlags.Alias) symbol = this.checker.getAliasedSymbol(symbol)
+            const declaration = symbol?.declarations?.find(declaresSymbol)
+            const resolved = declaration ? this.idOf(declaration) : undefined
+            const ref = { text }
+            if (resolved) ref.symbol = resolved
+            else ref.ownedHere = !imported.has(text.split(/[.#]/)[0])
+            links.push({ at: this.offset + name.getStart(this.sourceFile), ref })
+        }
+        const visit = (node) => {
+            if (ts.isJSDocLink(node) || ts.isJSDocLinkCode(node) || ts.isJSDocLinkPlain(node)) linked(node.name)
+            if (ts.isJSDocSeeTag(node)) linked(node.name?.name)
+            ts.forEachChild(node, visit)
+            for (const doc of node.jsDoc ?? []) visit(doc)
+        }
+        visit(this.sourceFile)
+
+        return links
+    }
+
+    /** The written type node's type as the compiler reads it, its fields and members included, as its resolvedType. */
+    resolvedAs(out, node) {
+        if (!this.checker || !this.tree.checked) return out
+        const type = this.checker.getTypeFromTypeNode(node)
+        if (type.flags & ts.TypeFlags.Any || isErrorType(type)) return out
+
+        return out.fact('resolvedType', this.tree.typeIndex(type, () => this.describedType(type, 'compiler')))
     }
 
     type_declaration(node, form) {

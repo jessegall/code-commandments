@@ -211,4 +211,3 @@ func callsAName(expression engine.Match) bool {
 
 	return expression.Kind() == "Identifier"
 }
-

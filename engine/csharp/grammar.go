@@ -36,9 +36,8 @@ func init() {
 		DeclaresMethods: func(declared engine.Match) bool {
 			return slices.ContainsFunc(declared.Members(), engine.KindIn("MethodDeclaration"))
 		},
-		ReturnType:    engine.InField("ReturnType"),
-		Constructs:    engine.OfKind("ObjectCreationExpression", "Type"),
-		DocTags:       xmlTags,
+		ReturnType: engine.InField("ReturnType"),
+		Constructs: engine.OfKind("ObjectCreationExpression", "Type"),
 		Implicit: engine.KindIn("ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration",
 			"ConversionOperatorDeclaration"),
 		Inherited:          func(member engine.Match) bool { return Node{Match: member}.IsInherited() },
@@ -124,8 +123,6 @@ func init() {
 		Decode:           decodesJSON,
 		Encode:           encodesJSON,
 		UntypedReturn:    returnsUntypedData,
-		CeremonyDoc:      ceremonyDoc,
-		DocParagraphs:    func(comment engine.Commented) int { return (Comment{Commented: comment}).Paragraphs() },
 		CopyBody: func(match engine.Match) []engine.Match {
 			function := Node{Match: match}
 			if function.RunsABody() && function.FunctionBody().Exists() {
@@ -197,25 +194,6 @@ func documentable(node engine.Match) bool {
 	held := Node{Match: node}
 
 	return !held.IsExpression() && held.hierarchyRole() != "other"
-}
-
-func xmlTags(declaration engine.Match) []string {
-	var tags []string
-	for _, comment := range declaration.DocComments() {
-		for _, line := range strings.Split(comment, "\n") {
-			line = strings.TrimSpace(strings.TrimLeft(strings.TrimSpace(line), "/"))
-			if !strings.HasPrefix(line, "<") || strings.HasPrefix(line, "</") {
-				continue
-			}
-
-			name := strings.FieldsFunc(line[1:], func(r rune) bool { return r == ' ' || r == '>' || r == '/' })
-			if len(name) > 0 {
-				tags = append(tags, name[0])
-			}
-		}
-	}
-
-	return tags
 }
 
 func arguments(match engine.Match) []engine.Match {

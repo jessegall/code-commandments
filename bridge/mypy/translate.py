@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import ast
 import bisect
+import inspect
 import io
 import re
 import tokenize
@@ -807,9 +808,12 @@ class Translator:
             end = start + len(token.string.encode())
             owner, trailing = self.owner_of(start, end, nodes)
             found.append((start, end, "line", owner, trailing))
+        described: dict[int, list[str]] = {}
         for literal, owner in self.docstrings:
             start, end = self.span(literal)
             found.append((start, end, "doc", owner, False))
+            if isinstance(literal.value, str):
+                described[start] = docstring_description(literal.value)
         comments = []
         for index, (start, end, form, owner, trailing) in enumerate(sorted(found, key=lambda each: each[0])):
             comment = {"id": index, "form": form, "text": self.text(start, end), "span": [start, end, self.line(start)]}
@@ -819,6 +823,8 @@ class Translator:
                 comment["trailing"] = True
             if form == "line":
                 comment["fragment"] = fragment(self.text(start, end)[1:])
+            if form == "doc" and described.get(start):
+                comment["description"] = described[start]
             comments.append(comment)
         return comments
 
@@ -894,3 +900,29 @@ def written_name(annotation: ast.expr) -> str:
     if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
         return annotation.value
     return ast.unparse(annotation)
+
+
+VERSION_NOTE = re.compile(r"^([ \t]*)\.\. (?:versionadded|versionchanged|deprecated)::")
+
+
+def docstring_description(text: str) -> list[str]:
+    """What a docstring says in prose: its cleaned lines, a version note (``.. versionadded::`` and its kin) and the
+    lines indented under it left out as a blank line, with no blank line first or last."""
+    lines = inspect.cleandoc(text).split("\n")
+    kept: list[str] = []
+    at = 0
+    while at < len(lines):
+        note = VERSION_NOTE.match(lines[at])
+        if note is None:
+            kept.append(lines[at].strip())
+            at += 1
+            continue
+        kept.append("")
+        at += 1
+        while at < len(lines) and (lines[at].strip() == "" or (lines[at].startswith(note.group(1)) and lines[at][len(note.group(1)):][:1] in (" ", "\t"))):
+            at += 1
+    while kept and kept[0] == "":
+        kept.pop(0)
+    while kept and kept[-1] == "":
+        kept.pop()
+    return kept

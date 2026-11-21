@@ -102,12 +102,12 @@ func TestAStreamOfAnotherVersionIsRefusedNamingTheStreamAndBothVersions(t *testi
 
 func TestRefusesAStreamThatBreaksTheContract(t *testing.T) {
 	for name, lines := range map[string][]string{
-		"no header":           {handler, trailer},
-		"no trailer":          {header, handler},
-		"a short trailer":     {header, handler, `{"trailer": {"files": 2}}`},
+		"no header":            {handler, trailer},
+		"no trailer":           {header, handler},
+		"a short trailer":      {header, handler, `{"trailer": {"files": 2}}`},
 		"a field it never had": {header, strings.Replace(handler, `"kind": "binding",`, `"kind": "binding", "field": "var",`, 1), trailer},
-		"a skipped number":    {header, strings.Replace(handler, `"id": 7,`, `"id": 9,`, 1), trailer},
-		"a root not a file":   {header, strings.Replace(handler, `"root": {"id": 0, "kind": "file"`, `"root": {"id": 0, "kind": "module"`, 1), trailer},
+		"a skipped number":     {header, strings.Replace(handler, `"id": 7,`, `"id": 9,`, 1), trailer},
+		"a root not a file":    {header, strings.Replace(handler, `"root": {"id": 0, "kind": "file"`, `"root": {"id": 0, "kind": "module"`, 1), trailer},
 	} {
 		if _, err := ReadAll(strings.NewReader(stream(lines...))); err == nil {
 			t.Errorf("%s was read", name)

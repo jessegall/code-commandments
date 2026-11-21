@@ -2,7 +2,6 @@ package typescript
 
 import (
 	"slices"
-
 )
 
 func (n Node) IsOptional() bool {
@@ -19,4 +18,3 @@ func (n Node) IsAbsence() bool {
 
 	return node != nil && (node.LiteralKind == "null" || node.LiteralKind == "undefined")
 }
-

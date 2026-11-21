@@ -124,12 +124,22 @@
       "expr": [
         "case",
         [
-          "is",
-          "$f.parent",
-          "type"
+          "exists",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
         ],
         {
-          "true": "$f.parent.symbol"
+          "true": [
+            "symbolOf",
+            [
+              "enclosing",
+              "$f",
+              "type"
+            ]
+          ]
         },
         "$f.file.path"
       ]

@@ -46,8 +46,107 @@
           "$c.documents.parameters"
         ],
         0
+      ],
+      [
+        "none",
+        "$c.tags",
+        "t",
+        [
+          "not",
+          [
+            "restates",
+            "$t",
+            "$c.documents"
+          ]
+        ]
       ]
     ],
     "emit": "$c.location"
+  },
+  "definitions": {
+    "declaredText": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "coalesce",
+        "$x.name",
+        "$x.resolved.text"
+      ]
+    },
+    "restates": {
+      "args": [
+        "t",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$t.name",
+          "param",
+          "arg",
+          "argument",
+          "return",
+          "returns"
+        ],
+        [
+          "=",
+          "$t.text",
+          ""
+        ],
+        [
+          "or",
+          [
+            "=",
+            "$t.type",
+            ""
+          ],
+          [
+            "case",
+            "$t.name",
+            {
+              "return": [
+                "=",
+                [
+                  "declaredText",
+                  "$f.returnType"
+                ],
+                "$t.type"
+              ],
+              "returns": [
+                "=",
+                [
+                  "declaredText",
+                  "$f.returnType"
+                ],
+                "$t.type"
+              ]
+            },
+            [
+              "some",
+              "$f.parameters",
+              "p",
+              [
+                "and",
+                [
+                  "=",
+                  "$p.binding.name",
+                  "$t.subject"
+                ],
+                [
+                  "=",
+                  [
+                    "declaredText",
+                    "$p.declaredType"
+                  ],
+                  "$t.type"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
   }
 }

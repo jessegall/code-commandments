@@ -36,4 +36,3 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 
 	return codebase
 }
-

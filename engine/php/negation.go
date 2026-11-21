@@ -1,8 +1,6 @@
 package php
 
-import (
-
-)
+import ()
 
 var selfContained = map[string]bool{
 	"Expr_Variable": true, "Expr_PropertyFetch": true, "Expr_NullsafePropertyFetch": true, "Expr_StaticPropertyFetch": true,
@@ -16,4 +14,3 @@ var inverse = map[string]string{
 	"Expr_BinaryOp_Equal":        "!=",
 	"Expr_BinaryOp_NotEqual":     "==",
 }
-

@@ -13,4 +13,3 @@ type Codebase struct {
 type Node struct {
 	engine.Match
 }
-

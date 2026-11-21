@@ -784,7 +784,7 @@ final class Translator
                 ['form' => $type instanceof Node\UnionType ? 'union' : 'intersection']);
         }
         if ($type instanceof Node\Name && ! $type->isSpecialClassName()) {
-            $made = $this->of('type-expression', $type, ['form' => 'named', 'refers' => $this->refers($type)]);
+            $made = $this->of('type-expression', $type, ['form' => 'named', 'name' => ($type->getAttribute('originalName') ?? $type)->toString(), 'refers' => $this->refers($type)]);
             if (isset($made->facts['refers'])) {
                 $made->facts['resolvedType'] = $this->typeIndex(['name' => $made->facts['refers']]);
             }
@@ -889,6 +889,7 @@ final class Translator
             $expression instanceof Expr\BitwiseNot => $this->owning('unary', $expression, ['operand' => $this->expression($expression->expr)], ['operator' => 'bit-not']),
             $expression instanceof Expr\Ternary && $expression->if === null => $this->owning('fallback', $expression, ['subject' => $this->expression($expression->cond), 'replacement' => $this->expression($expression->else)], ['trigger' => 'falsy']),
             $expression instanceof Expr\Ternary => $this->owning('conditional', $expression, ['condition' => $this->expression($expression->cond), 'consequent' => $this->expression($expression->if), 'alternative' => $this->expression($expression->else)]),
+            $expression instanceof Expr\CallLike && ! $expression instanceof Expr\New_ && $expression->isFirstClassCallable() => $this->callableValue($expression),
             $expression instanceof Expr\FuncCall => $this->owning('call', $expression, [
                 'callee' => $expression->name instanceof Node\Name ? $this->name($expression->name) : $this->expression($expression->name),
                 'arguments' => $this->arguments($expression),
@@ -941,6 +942,26 @@ final class Translator
         $bound = is_string($variable->name) ? ($this->scopes[array_key_last($this->scopes) ?? -1][$variable->name] ?? null) : null;
         if ($bound !== null) {
             $made->links = ['binding' => [$bound]];
+        }
+
+        return $made;
+    }
+
+    /**
+     * A first-class callable (`f(...)`, `$x->f(...)`, `X::f(...)`): no call, but the function itself as a value, written
+     * as the expression naming it, as every language writes a function value, referring to the function it names.
+     */
+    private function callableValue(Expr\FuncCall|Expr\MethodCall|Expr\NullsafeMethodCall|Expr\StaticCall $callable): TreeNode
+    {
+        $made = match (true) {
+            $callable instanceof Expr\FuncCall => $callable->name instanceof Node\Name ? $this->name($callable->name) : $this->expression($callable->name),
+            $callable instanceof Expr\StaticCall => $this->access($callable, $callable->class, $callable->name, 'static', false),
+            default => $this->access($callable, $callable->var, $callable->name, 'instance', $callable instanceof Expr\NullsafeMethodCall),
+        };
+        $symbol = $callable->getAttribute('target')['symbol'] ?? null;
+        $named = $made->kind === 'access' ? ($made->parts['member'] ?? null) : $made;
+        if ($symbol !== null && $named instanceof TreeNode && $named->kind === 'reference') {
+            $named->facts['refers'] = $symbol;
         }
 
         return $made;
@@ -1145,11 +1166,65 @@ final class Translator
             }
             if ($form !== 'doc') {
                 $comment['fragment'] = self::fragment($text);
+            } else {
+                $comment += array_filter(self::docblock($text));
             }
             $comments[] = $comment;
         }
 
         return $comments;
+    }
+
+    /**
+     * What a docblock says: its prose lines before the first tag, and each tag with the type and the variable it is
+     * about, as PHPDoc writes them (`@param int $count the count`).
+     *
+     * @return array{description: list<string>, tags: list<array<string, string>>}
+     */
+    private static function docblock(string $text): array
+    {
+        $lines = preg_split('/\R/', preg_replace(['#^/\*\*#', '#\*/$#'], '', $text)) ?: [];
+        $description = [];
+        $tags = [];
+        foreach ($lines as $line) {
+            $line = rtrim(preg_replace('/^\s*\*? ?/', '', $line) ?? '');
+            if (preg_match('/^@([\w\\-]+)\s*(.*)$/', $line, $tag) === 1) {
+                $tags[] = self::docTag($tag[1], $tag[2]);
+            } elseif ($tags !== []) {
+                $tags[array_key_last($tags)]['text'] = trim(($tags[array_key_last($tags)]['text'] ?? '').' '.trim($line));
+            } else {
+                $description[] = trim($line);
+            }
+        }
+        while ($description !== [] && $description[0] === '') {
+            array_shift($description);
+        }
+        while ($description !== [] && end($description) === '') {
+            array_pop($description);
+        }
+
+        return ['description' => $description, 'tags' => array_map(static fn (array $tag): array => array_filter($tag, static fn (string $part): bool => $part !== ''), $tags)];
+    }
+
+    /**
+     * One PHPDoc tag: a typed tag (`@param`, `@var`, `@return`, `@property`, `@throws` and their kin) writes a type
+     * first and, for a variable, the `$name` it is about.
+     *
+     * @return array<string, string>
+     */
+    private static function docTag(string $name, string $rest): array
+    {
+        $tag = ['name' => $name, 'text' => trim($rest)];
+        if (preg_match('/^(?:(?:phpstan|psalm)-)?(param|var|return|returns|property|property-read|property-write|throws|method)$/', $name) !== 1) {
+            return $tag;
+        }
+        if (preg_match('/^((?:[^\s<({]|<[^>]*>|\([^)]*\)|\{[^}]*\})+)\s*(\$\w+)?\s*(.*)$/s', trim($rest), $typed) === 1 && ! str_starts_with($typed[1], '$')) {
+            $tag['type'] = $typed[1];
+            $tag['subject'] = isset($typed[2]) ? ltrim($typed[2], '$') : '';
+            $tag['text'] = trim($typed[3] ?? '');
+        }
+
+        return $tag;
     }
 
     /**

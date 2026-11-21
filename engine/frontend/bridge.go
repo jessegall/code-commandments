@@ -62,4 +62,3 @@ func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 
 	return engine.Load(stream), nil
 }
-

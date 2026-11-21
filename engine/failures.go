@@ -114,4 +114,3 @@ func (m Match) handledError() Match {
 func (m Match) IsFailureSite() bool {
 	return m.Is(Throw) || m.Is(Return) && m.Thrown().Exists()
 }
-

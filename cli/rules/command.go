@@ -261,7 +261,7 @@ func verified(root string, codebase *engine.Codebase, proven []detectors.Detecto
 			continue
 		}
 		failed = true
-		console.Write("\033[31m✗\033[0m " + source.Relative(root, marker.Location) + " marks " + marker.Name + ", which "+unknownMarker+"\n")
+		console.Write("\033[31m✗\033[0m " + source.Relative(root, marker.Location) + " marks " + marker.Name + ", which " + unknownMarker + "\n")
 	}
 
 	return failed

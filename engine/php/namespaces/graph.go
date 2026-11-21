@@ -115,4 +115,3 @@ func (g *NamespaceGraph) MutualPairs() [][2]string {
 
 	return pairs
 }
-

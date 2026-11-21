@@ -22,4 +22,3 @@ func Recurring(count int, key func(at int) (string, bool), minimum int) [][]int 
 
 	return recurring
 }
-

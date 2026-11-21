@@ -48,4 +48,3 @@ type goldenDeclaration struct {
 	Enum     []string `json:"enum"`
 	Cased    bool     `json:"cased"`
 }
-

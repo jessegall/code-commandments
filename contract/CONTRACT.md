@@ -307,7 +307,7 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`type-expression`**: a type as written. `typeArguments[]`, `members[]` (a union's or intersection's alternatives),
   `element?` (an array's or pointer's element), `parameters[]` and `returnType?` (a function type). Facts
   `form` (`named`, `keyword`, `union`, `intersection`, `nullable`, `array`, `function`, `literal`,
-  `parameter`, `pointer`, `map`, `opaque`), `refers` (a named type's id), `written` (the type as structure, see
+  `parameter`, `pointer`, `map`, `object`, `opaque`; `object` is an inline object type, its fields in its resolvedType), `refers` (a named type's id), `written` (the type as structure, see
   *Types*). `?T` is form `nullable`. A `keyword` type carries the keyword as written as its `name` (`int`, `void`,
   `string`, `None`), so two keyword types are told apart without a resolver.
 - **`tuple-type`**: `elements[]` (`tuple-element`). Separate from a `return` of several values, so a single
@@ -407,6 +407,8 @@ Comments are a list on the file, not nodes. Each names the node it belongs to.
 | `trailing` | it sits after code on its line | `true` |
 | `refs` | a doc comment names code | `[{"text", "symbol"?, "owner"?, "ownedHere"?, "blind"?}]` |
 | `fragment` | the bridge tried to parse its words as code | `{"context", "diagnostics", "statements", "expressionKind"?}`: the parse context tried (`statement`, or `array-element` for PHP), the parser's diagnostics count, how many statements it parsed, and the neutral kind of a lone expression. Which fragments are commented-out code is the shared rule's decision, never the bridge's |
+| `description` | a doc comment says something in prose | `["line", …]`: its prose lines in order, blank lines kept, with the comment's markers (`/**`, `*`, `///`, `#`, quotes) and its tags left out, as the language's own doc parser reads it |
+| `tags` | a doc comment has tagged parts | `[{"name", "text"?, "type"?, "subject"?}]`: each `@tag` of PHPDoc or JSDoc, each XML element of a C# doc comment, each section of a Python docstring (`Args`, `Returns`, `Raises` …), with the type it writes and the name it is about when it has them. A rule asks what a doc says through these, the same way in every language |
 
 A Python docstring stays in the tree as an `expression-statement` and is also listed here as a `doc` comment
 attached to what it documents, so every documentation rule reads one list.

@@ -614,14 +614,27 @@ type Target struct {
 
 // Comment is one comment, attached to the node it belongs to.
 type Comment struct {
-	ID       int            `json:"id"`
-	Form     string         `json:"form"`
-	Text     string         `json:"text"`
-	Span     Span           `json:"span"`
-	Attached *int           `json:"attached,omitempty"`
-	Trailing bool           `json:"trailing,omitempty"`
-	Refs     []Ref          `json:"refs,omitempty"`
-	Fragment *Fragment      `json:"fragment,omitempty"`
+	ID       int       `json:"id"`
+	Form     string    `json:"form"`
+	Text     string    `json:"text"`
+	Span     Span      `json:"span"`
+	Attached *int      `json:"attached,omitempty"`
+	Trailing bool      `json:"trailing,omitempty"`
+	Refs     []Ref     `json:"refs,omitempty"`
+	Fragment *Fragment `json:"fragment,omitempty"`
+	// Description is what a doc comment says in prose, line by line, its markers and tags left out.
+	Description []string `json:"description,omitempty"`
+	// Tags are a doc comment's tagged parts, in the language's own syntax read by its own parser.
+	Tags []DocTag `json:"tags,omitempty"`
+}
+
+// DocTag is one tagged part of a doc comment: an @param of PHPDoc or JSDoc, an XML element of a C# doc comment, a
+// section of a Python docstring. Type is the type it writes and Subject the name it is about, when it has them.
+type DocTag struct {
+	Name    string `json:"name"`
+	Text    string `json:"text,omitempty"`
+	Type    string `json:"type,omitempty"`
+	Subject string `json:"subject,omitempty"`
 }
 
 // Fragment is what the bridge's parser made of a comment's words read as code; whether that is commented-out code is
@@ -644,12 +657,12 @@ type Ref struct {
 
 // Program holds the facts about the whole program that no file carries.
 type Program struct {
-	Symbols    []OutsideSymbol    `json:"symbols,omitempty"`
-	Unreadable []UnreadableSymbol `json:"unreadable,omitempty"`
+	Symbols        []OutsideSymbol    `json:"symbols,omitempty"`
+	Unreadable     []UnreadableSymbol `json:"unreadable,omitempty"`
 	Packages       []Package          `json:"packages,omitempty"`
 	PackageFolders []string           `json:"packageFolders,omitempty"`
 	Aliases        []Alias            `json:"aliases,omitempty"`
-	Loader     string             `json:"loader,omitempty"`
+	Loader         string             `json:"loader,omitempty"`
 }
 
 // Package is one installed package and its version, which package facts are keyed by.

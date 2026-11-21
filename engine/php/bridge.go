@@ -65,4 +65,3 @@ func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 
 	return codebase, nil
 }
-

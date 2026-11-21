@@ -25,4 +25,3 @@ func Contribution[T any](key any, file *File, build func(*File) T) T {
 
 	return held.(T)
 }
-

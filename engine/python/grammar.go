@@ -70,7 +70,6 @@ func init() {
 		ReturnType:         engine.InField("returns"),
 		Constructs:         constructed,
 		Callers:            callers,
-		DocTags:            docTags,
 		CodeWords:          func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
 		TestFile:           testFile,
 		Implicit:           implicit,
@@ -140,9 +139,9 @@ func init() {
 			}
 			return engine.CapabilityTest{Subject: arguments[0]}
 		},
-		PhantomFields:   phantomFields,
-		NullableLookup:  nullableLookup,
-		MaskedInvariant: engine.As(Node.MasksOwnState),
+		PhantomFields:    phantomFields,
+		NullableLookup:   nullableLookup,
+		MaskedInvariant:  engine.As(Node.MasksOwnState),
 		NullableCallback: engine.As(Node.HasNullNormalisedOptionalCallback),
 		Decode: func(call engine.Match) bool {
 			node := Node{Match: call}
@@ -151,14 +150,6 @@ func init() {
 		UntypedReturn: func(function engine.Match) bool {
 			written := Node{Match: function.Child("returns")}
 			return !written.Exists() || !Of(function.Codebase()).IsTypedDict(written)
-		},
-		CeremonyDoc: engine.As(Node.HasCeremonyDocstring),
-		CommentProse: func(comment engine.Commented) []string {
-			return strings.Split(WithoutVersionNotes(strings.Join(comment.ProseLines(), "\n")), "\n")
-		},
-		DocParagraphs: func(comment engine.Commented) int {
-			text, _ := (Node{Match: comment.Documents()}).Docstring()
-			return ProseParagraphs(text)
 		},
 		CopyExclusions: func(match engine.Match) engine.CopyExclusions {
 			function := Node{Match: match}
@@ -169,16 +160,16 @@ func init() {
 			program := Of(codebase)
 			return engine.TwinPairs{Units: program.TwinUnits(), Pairs: program.Divergences()}
 		},
-		Guard:          guard,
-		MechanismFacts: mechanismFacts,
-		IsConstructor:  func(held engine.Match) bool { return Node{Match: held}.IsConstructorDeclaration() },
+		Guard:            guard,
+		MechanismFacts:   mechanismFacts,
+		IsConstructor:    func(held engine.Match) bool { return Node{Match: held}.IsConstructorDeclaration() },
 		NamedConstructor: func(held engine.Match) bool { return Node{Match: held}.IsNamedConstructor() },
 		Inherited: func(held engine.Match) bool {
 			program := In(held.Codebase()).Program
 
 			return program.IsOverride(Node{Match: held}) || program.AnswersAProtocol(Node{Match: held})
 		},
-		ValueParameters:  func(held engine.Match) []string { return Node{Match: held}.ValueParamSignature() },
+		ValueParameters: func(held engine.Match) []string { return Node{Match: held}.ValueParamSignature() },
 		Fallback: func(held engine.Match) engine.Match {
 			fallback, _ := Node{Match: held}.Fallback()
 
@@ -209,30 +200,6 @@ func testFile(file, path string) bool {
 
 		return matched
 	})
-}
-
-func docTags(definition engine.Match) []string {
-	text, documented := Node{Match: definition}.Docstring()
-	if !documented {
-		return nil
-	}
-
-	var tags []string
-	for _, line := range strings.Split(text, "\n") {
-		line = strings.TrimSpace(line)
-
-		switch {
-		case strings.HasPrefix(line, ".. ") && strings.Contains(line, "::"):
-			tags = append(tags, strings.TrimSpace(strings.TrimPrefix(line[:strings.Index(line, "::")], ".. ")))
-		case strings.HasPrefix(line, ":") && strings.Count(line, ":") >= 2:
-			name, _, _ := strings.Cut(strings.TrimPrefix(line, ":"), ":")
-			tags = append(tags, strings.Fields(name + " x")[0])
-		case section.MatchString(line):
-			tags = append(tags, strings.ToLower(strings.TrimSuffix(line, ":")))
-		}
-	}
-
-	return tags
 }
 
 func values(call engine.Match) []engine.Match {

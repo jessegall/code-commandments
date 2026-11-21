@@ -60,4 +60,3 @@ func TestDocParagraphsExcludeFencedExamples(t *testing.T) {
 		t.Fatalf("prose after an example should still count, found %d", paragraphs)
 	}
 }
-

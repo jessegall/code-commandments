@@ -100,10 +100,13 @@ func (cm Commented) Prose() string {
 	return strings.Join(said, " ")
 }
 
+// Description is what the comment says in prose: the description its bridge read from a doc comment, or else its
+// prose lines with tag lines left out.
 func (cm Commented) Description() []string {
-	if read := grammarOf(cm.File.Language()).CommentProse; read != nil {
-		return read(cm)
+	if cm.Comment.Description != nil || cm.Comment.Tags != nil {
+		return cm.Comment.Description
 	}
+
 	return slices.DeleteFunc(cm.ProseLines(), func(line string) bool { return strings.HasPrefix(line, "@") })
 }
 
@@ -150,25 +153,6 @@ func HasBlankLine(text string) bool {
 	return blankLine.MatchString(text)
 }
 
-func (cm Commented) IsBloatedDoc() bool {
-	if cm.Form != "doc" {
-		return false
-	}
-	documented := cm.Documents()
-	grammar := grammarOf(cm.File.Language())
-	if read := grammar.DocumentedSubject; read != nil {
-		documented = read(documented)
-	}
-	if !documented.Is(TypeDeclaration) {
-		return false
-	}
-	if read := grammar.DocParagraphs; read != nil {
-		return read(cm) >= 2
-	}
-
-	return prose.Paragraphs(prose.WithoutFencedExamples(cm.Description()), func(line string) bool { return line != "" }) >= 2
-}
-
 func (cm Commented) Words() []string {
 	var words []string
 	for _, word := range prose.Words(cm.Prose()) {
@@ -198,8 +182,7 @@ func (cm Commented) Dangling() bool {
 	if slices.ContainsFunc(cm.Refs, Dangling) {
 		return true
 	}
-	read := grammarOf(cm.File.Language()).CommentReferences
-	return cm.Form == "doc" && read != nil && slices.ContainsFunc(read(cm), Dangling)
+	return false
 }
 
 func Dangling(ref contract.Ref) bool {
@@ -269,10 +252,13 @@ func (cm Commented) Match() Match {
 	return cm.File.CommentMatch(cm.Comment, cm.Line())
 }
 
+// Location is where a finding on the comment reports: the node it documents, or the comment itself when it documents
+// none.
 func (cm Commented) Location() Match {
-	if read := grammarOf(cm.File.Language()).CommentLocation; read != nil {
-		return read(cm)
+	if documented := cm.Documents(); documented.Exists() {
+		return documented
 	}
+
 	return cm.Match()
 }
 

@@ -31,14 +31,13 @@ func init() {
 		LooseRecordType:     looseRecordType,
 		Constructs:          constructed,
 		Callers:             callers,
-		DocTags:             phpDocTags,
 		CodeWords:           func(node engine.Match) []string { return Node{Match: node}.CodeWords() },
 		ElementOf:           func(node engine.Match) *contract.Type { return TypesOf(node.Codebase()).ElementOf(node) },
 		TestFile:            testFile,
 		Implicit:            magic,
 		Labels:              func(name engine.Match) bool { return name.Parent().Kind() == "Arg" && name.Node().InRole() == "name" },
-		NamedConstructor: func(method engine.Match) bool { return Node{Match: method}.IsNamedConstructor() },
-		ValueParameters:  func(method engine.Match) []string { return Node{Match: method}.ValueParamSignature() },
+		NamedConstructor:    func(method engine.Match) bool { return Node{Match: method}.IsNamedConstructor() },
+		ValueParameters:     func(method engine.Match) []string { return Node{Match: method}.ValueParamSignature() },
 		IsConstructor: func(method engine.Match) bool {
 			return method.Kind() == "Stmt_ClassMethod" && method.Name() == "__construct"
 		},
@@ -52,8 +51,10 @@ func init() {
 		IsValueClass:       isValueDependency,
 		ListedClasses:      listedProjectClasses,
 		PublishedContracts: publishedContracts,
-		Types:              func(codebase *engine.Codebase) engine.TypeSystem { return engine.TypesFromDeclarations(codebase.Of(contract.PHP)) },
-		MemberLookup:       memberLookup,
+		Types: func(codebase *engine.Codebase) engine.TypeSystem {
+			return engine.TypesFromDeclarations(codebase.Of(contract.PHP))
+		},
+		MemberLookup: memberLookup,
 		NamespacesNaming: func(contract engine.Match) []string {
 			return TypeReferencesOf(contract.Codebase()).NamespacesNaming(contract.Identity())
 		},
@@ -67,13 +68,13 @@ func init() {
 
 			return engine.Before(strings.TrimSuffix(class, "()"), `\`)
 		},
-		Continues:         engine.KindIn("Stmt_ElseIf"),
-		NestedChoice:      engine.KindIn("Stmt_If"),
-		NestingLimit:      2,
-		Steps:             engine.InFields("loop"),
-		Thrown:            engine.OfKind("Expr_Throw", "expr"),
-		FailureLocation:   engine.Match.Thrown,
-		MessageParts:      messageParts,
+		Continues:       engine.KindIn("Stmt_ElseIf"),
+		NestedChoice:    engine.KindIn("Stmt_If"),
+		NestingLimit:    2,
+		Steps:           engine.InFields("loop"),
+		Thrown:          engine.OfKind("Expr_Throw", "expr"),
+		FailureLocation: engine.Match.Thrown,
+		MessageParts:    messageParts,
 		EmptyCollection: func(held engine.Match) bool { return Node{Match: held}.IsEmptyArrayLiteral() },
 		ConstructedType: func(held engine.Match) string { return strings.TrimLeft(Node{Match: held}.ConstructedClass(), `\`) },
 		GenericFailures: genericFailures,
@@ -132,10 +133,6 @@ func init() {
 			node := Node{Match: call}
 			return node.CallsFunction("json_decode") && !node.DecodesItsOwnEncoding() && !node.IsWithinInheritedMethod()
 		},
-		CommentReferences: commentReferences,
-		CommentLocation:   engine.Commented.Documents,
-		DocParagraphs:     func(comment engine.Commented) int { return DocParagraphs(comment.Text) },
-		CeremonyDoc:       engine.As(Node.HasCeremonyDocblock),
 		CopyExclusions:    copyExclusions,
 		UnnamedVocabulary: unnamedVocabulary,
 		TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
@@ -232,18 +229,6 @@ func attributes(declaration engine.Match) []engine.Match {
 
 func magic(declaration engine.Match) bool {
 	return declaration.Kind() == "Stmt_ClassMethod" && Node{Match: declaration}.IsMagicMethod()
-}
-
-func phpDocTags(declaration engine.Match) []string {
-	var tags []string
-	for _, comment := range declaration.DocComments() {
-		for _, tag := range docTags(comment) {
-			name, _, _ := strings.Cut(strings.TrimPrefix(tag, "@"), " ")
-			tags = append(tags, name)
-		}
-	}
-
-	return tags
 }
 
 func otherwise(branch engine.Match) []engine.Match {

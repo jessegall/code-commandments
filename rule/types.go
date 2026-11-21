@@ -10,25 +10,25 @@ import (
 // The operators over types and declarations, read from the types the bridges resolved.
 func init() {
 	define(map[string]operator{
-		"typeOf":         {operands: []valueType{node}, gives: anyValue, says: "a node's type: an expression's resolved type, a declaration's declared type, a function's return type; unknown where the compiler gave none"},
-		"typeCategory":   {operands: []valueType{anyValue}, gives: text, says: "the neutral category of a type, the same in every language: text, integer, float, boolean, null, void, never, any, bytes, list, set, map, tuple, function, iterator, object or named; unknown for an unresolved or opaque type"},
-		"isNullable":     {operands: []valueType{anyValue}, gives: truth, says: "whether a type admits absence: a nullable type, a union holding null, or one the compiler states is nullable; false only where the compiler says so"},
-		"typeMembers":    {operands: []valueType{anyValue}, gives: list, says: "the alternatives of a union or intersection, nested ones flattened, a nullable type as its type and null; the type itself for any other"},
-		"typeArguments":  {operands: []valueType{anyValue}, gives: list, says: "the type arguments of a generic type, in order; empty for one with none"},
-		"typeArgument":   {operands: []valueType{anyValue, number}, gives: anyValue, says: "the type argument at a position, counted from 0; no value past the end"},
-		"elementType":    {operands: []valueType{anyValue}, gives: anyValue, says: "the type of what a list, set, array, iterator or map holds; no value for a type that holds nothing"},
-		"keyType":        {operands: []valueType{anyValue}, gives: anyValue, says: "the type of a map's keys; no value for a type that is no map"},
-		"isCollection":   {operands: []valueType{anyValue}, gives: truth, says: "whether a type's category is list, set, map, tuple or iterator"},
-		"sameType":       {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two types are the same by their shape, however each is spelled and wherever it came from"},
-		"fieldsOf":       {operands: []valueType{anyValue}, gives: list, says: "the fields of an object type or a type declaration, each a record of name, type and optional"},
-		"fieldType":      {operands: []valueType{anyValue, text}, gives: anyValue, says: "the type of the field named; no value when there is no such field"},
-		"hasField":       {operands: []valueType{anyValue, text}, gives: truth, says: "whether a type has the field named"},
-		"originRank":     {operands: []valueType{anyValue}, gives: number, says: "how much a type's origin is to be trusted: compiler 4, written 3, attribute 2, documented 1, inferred 0"},
-		"typeKind":       {operands: []valueType{node}, gives: text, says: "what a type declaration declares: class, interface, enum, record, struct, trait, protocol, object or alias"},
-		"memberGroup":    {operands: []valueType{node}, gives: text, says: "the group a member belongs to in a type's layout: enum-case, constant, static-field, field-public, field-protected, field-private, field-hooked, constructor or method"},
-		"functionRole":   {operands: []valueType{node}, gives: list, says: "the roles a function plays: constructor, named-constructor, getter, setter, override, test, sole-statement"},
-		"parameterOf":    {operands: []valueType{node}, gives: node, says: "the parameter of the called declaration an argument binds to, by its label or its position; unknown where the call's target is not resolved"},
-		"annotated":      {operands: []valueType{node, text}, gives: list, says: "the attributes, annotations or decorators on a declaration that name the symbol given, by what they resolve to"},
+		"typeOf":        {operands: []valueType{node}, gives: anyValue, says: "a node's type: an expression's resolved type, a declaration's declared type, a function's return type; unknown where the compiler gave none"},
+		"typeCategory":  {operands: []valueType{anyValue}, gives: text, says: "the neutral category of a type, the same in every language: text, integer, float, boolean, null, void, never, any, bytes, list, set, map, tuple, function, iterator, object or named; unknown for an unresolved or opaque type"},
+		"isNullable":    {operands: []valueType{anyValue}, gives: truth, says: "whether a type admits absence: a nullable type, a union holding null, or one the compiler states is nullable; false only where the compiler says so"},
+		"typeMembers":   {operands: []valueType{anyValue}, gives: list, says: "the alternatives of a union or intersection, nested ones flattened, a nullable type as its type and null; the type itself for any other"},
+		"typeArguments": {operands: []valueType{anyValue}, gives: list, says: "the type arguments of a generic type, in order; empty for one with none"},
+		"typeArgument":  {operands: []valueType{anyValue, number}, gives: anyValue, says: "the type argument at a position, counted from 0; no value past the end"},
+		"elementType":   {operands: []valueType{anyValue}, gives: anyValue, says: "the type of what a list, set, array, iterator or map holds; no value for a type that holds nothing"},
+		"keyType":       {operands: []valueType{anyValue}, gives: anyValue, says: "the type of a map's keys; no value for a type that is no map"},
+		"isCollection":  {operands: []valueType{anyValue}, gives: truth, says: "whether a type's category is list, set, map, tuple or iterator"},
+		"sameType":      {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two types are the same by their shape, however each is spelled and wherever it came from"},
+		"fieldsOf":      {operands: []valueType{anyValue}, gives: list, says: "the fields of an object type or a type declaration, each a record of name, type and optional"},
+		"fieldType":     {operands: []valueType{anyValue, text}, gives: anyValue, says: "the type of the field named; no value when there is no such field"},
+		"hasField":      {operands: []valueType{anyValue, text}, gives: truth, says: "whether a type has the field named"},
+		"originRank":    {operands: []valueType{anyValue}, gives: number, says: "how much a type's origin is to be trusted: compiler 4, written 3, attribute 2, documented 1, inferred 0"},
+		"typeKind":      {operands: []valueType{node}, gives: text, says: "what a type declaration declares: class, interface, enum, record, struct, trait, protocol, object or alias"},
+		"memberGroup":   {operands: []valueType{node}, gives: text, says: "the group a member belongs to in a type's layout: enum-case, constant, static-field, field-public, field-protected, field-private, field-hooked, constructor or method"},
+		"functionRole":  {operands: []valueType{node}, gives: list, says: "the roles a function plays: constructor, named-constructor, getter, setter, override, test, sole-statement"},
+		"parameterOf":   {operands: []valueType{node}, gives: node, says: "the parameter of the called declaration an argument binds to, by its label or its position; unknown where the call's target is not resolved"},
+		"annotated":     {operands: []valueType{node, text}, gives: list, says: "the attributes, annotations or decorators on a declaration that name the symbol given, by what they resolve to"},
 	}, map[string]computation{
 		"typeOf": func(_ evaluation, operands []value) value { return onNode(operands, typeOf) },
 		"typeCategory": typeComputation(func(e evaluation, resolved *contract.Type) value {
@@ -129,7 +129,9 @@ func init() {
 		},
 		"memberGroup":  func(_ evaluation, operands []value) value { return onNode(operands, memberGroup) },
 		"functionRole": func(_ evaluation, operands []value) value { return onNode(operands, functionRoles) },
-		"parameterOf":  func(e evaluation, operands []value) value { return onNode(operands, func(site engine.Match) value { return parameterOf(e, site) }) },
+		"parameterOf": func(e evaluation, operands []value) value {
+			return onNode(operands, func(site engine.Match) value { return parameterOf(e, site) })
+		},
 		"annotated": func(_ evaluation, operands []value) value {
 			site, isNode := nodeOf(operands[0])
 			symbol, isText := operands[1].held.(string)

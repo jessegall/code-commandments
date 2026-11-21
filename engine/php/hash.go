@@ -90,4 +90,3 @@ func CanonicalHash(node engine.Match, aliases map[string]engine.Match) string {
 
 // literalRules keep every string and number as written while a hash blanks local variable names.
 type literalRules struct{ hashRules }
-

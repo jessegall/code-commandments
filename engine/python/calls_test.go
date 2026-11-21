@@ -1,6 +1,3 @@
 package python_test
 
-import (
-
-)
-
+import ()

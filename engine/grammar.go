@@ -36,7 +36,6 @@ type Grammar struct {
 	ReturnType          func(Match) Match
 	Constructs          func(Match) Match
 	Callers             func(Match) []Match
-	DocTags             func(Match) []string
 	TestFile            func(judged, path string) bool
 	TestAssertion       func(Match) bool
 	Implicit            func(Match) bool
@@ -101,13 +100,7 @@ type Grammar struct {
 	CopyBody            func(Match) []Match
 	CopyExclusions      func(Match) CopyExclusions
 	MethodOwner         func(Match) string
-	CommentProse        func(Commented) []string
-	DocumentedSubject   func(Match) Match
 	Keywords            map[string]prose.Spelled
-	DocParagraphs       func(Commented) int
-	CeremonyDoc         func(Match) bool
-	CommentReferences   func(Commented) []contract.Ref
-	CommentLocation     func(Commented) Match
 	ErrorHandler        func(Match) Match
 	Decode              func(Match) bool
 	Encode              func(Match) bool

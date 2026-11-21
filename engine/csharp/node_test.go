@@ -48,4 +48,3 @@ public sealed class Ledger
     public int Sum() => Total + Count;
 }
 `
-

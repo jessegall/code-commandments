@@ -3,6 +3,7 @@ package rule
 import (
 	"strings"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/prose"
 )
@@ -29,6 +30,7 @@ func commentsOf(codebase *engine.Codebase) []record {
 				"text":        known(comment.Prose()),
 				"raw":         known(comment.Text),
 				"description": known(description),
+				"tags":        known(tagRecords(comment.Comment.Tags)),
 				"words":       known(texts(comment.Words())),
 				"paragraphs":  known(float64(prose.Paragraphs(prose.WithoutFencedExamples(comment.Description()), func(line string) bool { return line != "" }))),
 				"form":        known(comment.Form),
@@ -59,6 +61,16 @@ func commentRecords(site engine.Match) []record {
 	}
 
 	return found
+}
+
+// tagRecords are a doc comment's tags as records: name, text, type and subject, each empty text when the tag has none.
+func tagRecords(tags []contract.DocTag) []value {
+	held := make([]value, len(tags))
+	for at, tag := range tags {
+		held[at] = known(record{"name": known(tag.Name), "text": known(tag.Text), "type": known(tag.Type), "subject": known(tag.Subject)})
+	}
+
+	return held
 }
 
 func texts(words []string) []value {

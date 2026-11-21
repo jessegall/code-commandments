@@ -223,16 +223,21 @@ func init() {
 
 			return known(counted)
 		},
-		"lower":        textual(strings.ToLower),
-		"upper":        textual(strings.ToUpper),
-		"trim":         textual(strings.TrimSpace),
-		"stem":         textual(prose.Stem),
-		"endsWith":     textTest(strings.HasSuffix),
-		"matchesText":  textTest(func(text, pattern string) bool { held, err := compiledPattern(pattern); return err == nil && held.MatchString(text) }),
-		"stripPrefix":  textPair(strings.TrimPrefix),
-		"stripSuffix":  textPair(strings.TrimSuffix),
-		"split":        textList(func(text string, operands []string) []string { return strings.Split(text, operands[0]) }, 1),
-		"lines":        textList(func(text string, _ []string) []string { return strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") }, 0),
+		"lower":    textual(strings.ToLower),
+		"upper":    textual(strings.ToUpper),
+		"trim":     textual(strings.TrimSpace),
+		"stem":     textual(prose.Stem),
+		"endsWith": textTest(strings.HasSuffix),
+		"matchesText": textTest(func(text, pattern string) bool {
+			held, err := compiledPattern(pattern)
+			return err == nil && held.MatchString(text)
+		}),
+		"stripPrefix": textPair(strings.TrimPrefix),
+		"stripSuffix": textPair(strings.TrimSuffix),
+		"split":       textList(func(text string, operands []string) []string { return strings.Split(text, operands[0]) }, 1),
+		"lines": textList(func(text string, _ []string) []string {
+			return strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
+		}, 0),
 		"words":        textList(func(text string, _ []string) []string { return nameWords(text) }, 0),
 		"contentWords": textList(func(text string, _ []string) []string { return prose.Words(text) }, 0),
 		"pathSegments": textList(func(text string, _ []string) []string { return pathSegments(text) }, 0),

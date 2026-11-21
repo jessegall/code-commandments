@@ -35,7 +35,6 @@ func init() {
 			TypeTest:        typeTest,
 			Declares:        engine.KindIn("VariableDeclaration", "Parameter", "BindingElement"),
 			Binds:           engine.KindIn("VariableStatement"),
-			DocTags:         jsDocTags,
 			WritesAttribute: func(element engine.Match, name string) bool {
 				return vue.Of(element).Writes(name)
 			},
@@ -106,17 +105,15 @@ func init() {
 				}
 				return engine.CapabilityTest{}
 			},
-			KeyedStore:        typescript.KeyedStore,
-			DefaultValue:      engine.InField("initializer"),
-			Decode:            typescript.DecodesJSON,
-			Encode:            typescript.EncodesJSON,
-			UntypedReturn:     typescript.ReturnsUntypedData,
-			CommentReferences: commentReferences,
-			Keywords:          keywords,
-			CeremonyDoc:       ceremonyDoc,
-			VocabularyWords:   typescript.VocabularyWords,
-			CopyBody:          typescript.CopyBody,
-			CopyExclusions:    typescript.CopyExclusions,
+			KeyedStore:      typescript.KeyedStore,
+			DefaultValue:    engine.InField("initializer"),
+			Decode:          typescript.DecodesJSON,
+			Encode:          typescript.EncodesJSON,
+			UntypedReturn:   typescript.ReturnsUntypedData,
+			Keywords:        keywords,
+			VocabularyWords: typescript.VocabularyWords,
+			CopyBody:        typescript.CopyBody,
+			CopyExclusions:  typescript.CopyExclusions,
 			TwinPairs: func(codebase *engine.Codebase) engine.TwinPairs {
 				return engine.ResolvedTwinPairs(typescript.In(codebase).Codebase)
 			},
@@ -174,28 +171,6 @@ func decorators(declaration engine.Match) []engine.Match {
 	}
 
 	return names
-}
-
-func atTags(comment string) []string {
-	var tags []string
-	for _, line := range strings.Split(comment, "\n") {
-		line = strings.TrimLeft(strings.TrimSpace(line), "/*")
-		word, _, _ := strings.Cut(strings.TrimSpace(line), " ")
-		if name, tagged := strings.CutPrefix(word, "@"); tagged && name != "" {
-			tags = append(tags, strings.TrimRight(name, "{}"))
-		}
-	}
-
-	return tags
-}
-
-func jsDocTags(declaration engine.Match) []string {
-	var tags []string
-	for _, comment := range declaration.DocComments() {
-		tags = append(tags, atTags(comment)...)
-	}
-
-	return tags
 }
 
 var sentTo = []string{"PropertyAccessExpression", "ElementAccessExpression"}

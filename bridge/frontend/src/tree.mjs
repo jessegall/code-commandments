@@ -126,10 +126,52 @@ export class Tree {
                 if (owner) out.attached = owner.id
             }
             if (comment.form === 'line' || comment.form === 'block') out.fragment = fragment(out.text)
+            if (comment.form === 'doc') Object.assign(out, jsDoc(out.text))
+            if (comment.refs) out.refs = comment.refs
 
             return out
         })
     }
+}
+
+/**
+ * What a JSDoc comment says: its prose lines before the first tag, and each tag with the type in braces and the name
+ * it is about, as JSDoc writes them (`@param {number} count the count`). Empty parts are left out.
+ */
+export function jsDoc(text) {
+    const description = []
+    const tags = []
+    for (const raw of text.replace(/^\/\*\*/, '').replace(/\*\/$/, '').split(/\r?\n/)) {
+        const line = raw.replace(/^\s*\*? ?/, '').trimEnd()
+        const tagged = /^@([\w-]+)\s*(.*)$/.exec(line)
+        if (tagged) tags.push(jsDocTag(tagged[1], tagged[2]))
+        else if (tags.length > 0) tags[tags.length - 1].text = `${tags[tags.length - 1].text ?? ''} ${line.trim()}`.trim()
+        else description.push(line.trim())
+    }
+    while (description[0] === '') description.shift()
+    while (description[description.length - 1] === '') description.pop()
+    const out = {}
+    if (description.length > 0) out.description = description
+    const kept = tags.map((tag) => Object.fromEntries(Object.entries(tag).filter(([, part]) => part !== '' && part !== undefined)))
+    if (kept.length > 0) out.tags = kept
+
+    return out
+}
+
+/** One JSDoc tag: a `{type}` first when it writes one, then for `@param` and `@property` the name it is about. */
+function jsDocTag(name, rest) {
+    const typed = /^\{([^}]*)\}\s*(.*)$/.exec(rest.trim())
+    const tag = { name, text: (typed ? typed[2] : rest).trim() }
+    if (typed) tag.type = typed[1]
+    if (['param', 'arg', 'argument', 'property', 'prop'].includes(name)) {
+        const named = /^\[?([\w$.]+)[^\]\s]*\]?\s*(?:-\s*)?(.*)$/.exec(tag.text)
+        if (named) {
+            tag.subject = named[1]
+            tag.text = named[2].trim()
+        }
+    }
+
+    return tag
 }
 
 /** Where the code a comment leads starts, other comments skipped; none past a blank line. */

@@ -1,7 +1,6 @@
 package vue
 
 import (
-
 	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
@@ -56,4 +55,3 @@ type PropTypes struct {
 	graph   *ComponentGraph
 	modules Modules
 }
-

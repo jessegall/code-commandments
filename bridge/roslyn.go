@@ -31,6 +31,8 @@ type RoslynUnavailable struct {
 	reason string
 }
 
+func (RoslynUnavailable) unavailable() {}
+
 func (e RoslynUnavailable) Error() string {
 	return "the C# bridge is not available (" + e.reason + "), so C# is not judged; everything else is"
 }
@@ -39,6 +41,8 @@ func (e RoslynUnavailable) Error() string {
 type RoslynFailed struct {
 	reason string
 }
+
+func (RoslynFailed) unavailable() {}
 
 func RoslynFailure(err error) error {
 	var failed *BridgeFailed

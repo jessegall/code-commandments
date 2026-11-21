@@ -1,7 +1,6 @@
 package typescript
 
 import (
-
 	"github.com/jessegall/code-commandments/contract"
 )
 

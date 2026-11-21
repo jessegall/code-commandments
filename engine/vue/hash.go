@@ -1,6 +1,3 @@
 package vue
 
-import (
-
-)
-
+import ()

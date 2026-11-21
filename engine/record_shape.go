@@ -99,4 +99,3 @@ func (m Match) IsNamedConstructor() bool {
 
 	return read != nil && read(m)
 }
-

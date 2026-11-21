@@ -1,6 +1,5 @@
 package engine
 
-
 func fieldOnSelf(node Match) Match {
 	for read := node; read.Exists(); read = read.Receiver() {
 		if read.Is(MemberAccess) && read.Receiver().isSelfReceiver() {
@@ -17,4 +16,3 @@ func (m Match) isSelfReceiver() bool {
 	read := m.grammar().SelfReceiver
 	return read != nil && read(m)
 }
-

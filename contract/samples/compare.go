@@ -20,6 +20,9 @@ type Expected struct {
 	Source    string
 	Language  contract.Language
 	File      *contract.File
+	// Tree is the expected tree's own file, and Header the stream header it opens with.
+	Tree   string
+	Header contract.Header
 }
 
 // Name is the construct and the source's own name, as a subtest names it.
@@ -50,6 +53,8 @@ func AllExpected(folder string) ([]Expected, error) {
 			Source:    filepath.Join(filepath.Dir(tree), filepath.Base(file.Path)),
 			Language:  stream.Header.Language,
 			File:      file,
+			Tree:      tree,
+			Header:    stream.Header,
 		})
 	}
 
@@ -257,6 +262,9 @@ func (c *comparison) comments(expected, actual *contract.File) {
 		}
 		if want.Fragment != nil && !reflect.DeepEqual(want.Fragment, got.Fragment) {
 			c.says("%s: fragment %+v expected, %+v written", where, *want.Fragment, got.Fragment)
+		}
+		if !slices.Equal(want.Description, got.Description) || !slices.Equal(want.Tags, got.Tags) || !reflect.DeepEqual(want.Refs, got.Refs) {
+			c.says("%s: description %q, tags %+v and refs %+v expected, %q, %+v and %+v written", where, want.Description, want.Tags, want.Refs, got.Description, got.Tags, got.Refs)
 		}
 		c.attached(where, expected, want, got)
 	}

@@ -1,8 +1,8 @@
 package custom
 
 import (
-	"github.com/jessegall/code-commandments/rules"
 	"fmt"
+	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"regexp"
 	"slices"

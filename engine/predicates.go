@@ -16,4 +16,3 @@ type Predicate struct {
 func Offers(language contract.Language, predicates ...Predicate) {
 	registers(language, func(row *spoken) { row.predicates = append(slices.Clone(row.predicates), predicates...) })
 }
-

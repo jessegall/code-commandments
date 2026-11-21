@@ -2,7 +2,6 @@ package php_test
 
 import (
 	"testing"
-
 )
 
 func TestCrossModuleDependenciesAllowTheContextSuppliedByAFactory(t *testing.T) {
@@ -35,4 +34,3 @@ final class Receipt {
 		t.Fatalf("the factory supplies the scope for the current operation, found %v", findings)
 	}
 }
-

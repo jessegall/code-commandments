@@ -1,9 +1,9 @@
 package hooks
 
 import (
-	"github.com/jessegall/code-commandments/rules"
 	"encoding/json"
 	"fmt"
+	"github.com/jessegall/code-commandments/rules"
 	"os"
 	"path/filepath"
 	"strconv"
