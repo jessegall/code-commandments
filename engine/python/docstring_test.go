@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine/python"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
@@ -30,15 +29,6 @@ class Cart:
     def empty(self):
         pass
 `
-
-func texts(comments []contract.Comment) string {
-	var words []string
-	for _, comment := range comments {
-		words = append(words, comment.Text)
-	}
-
-	return strings.Join(words, "|")
-}
 
 func TestADocstringIsReadAsProseOrAsARestatement(t *testing.T) {
 	text := "Price an order.\n\n    Held per session.\n\n    .. versionadded:: 2.0\n        The rate.\n\n    Args:\n        order: the order.\n    "

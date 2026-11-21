@@ -26,12 +26,3 @@ var ArrayCallbackInputContract = Tag{"array-callback-input-contract", "The frame
 
 var Tags = []Tag{ArrayCallbackContract, ArrayCallbackInputContract, ArrayInputContract, ArrayReturnContract, ArrayReturning, Association, Boundary, CompositionRoot, ContractMethod, ControlSignal, DynamicMembers, NoContainer, ValidationResponse}
 
-func Tagged(slug string) (Tag, bool) {
-	for _, tag := range Tags {
-		if tag.Slug == slug {
-			return tag, true
-		}
-	}
-
-	return Tag{}, false
-}

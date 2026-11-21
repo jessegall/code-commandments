@@ -385,24 +385,6 @@ var transientNullables = engine.Memoised(func(codebase *engine.Codebase) map[str
 	return byClass
 })
 
-func ParamForArgument(params []engine.Match, argument engine.Match, position int) engine.Match {
-	name := argument.Child("name")
-	if !name.Exists() {
-		if position < len(params) {
-			return params[position]
-		}
-
-		return engine.Match{}
-	}
-	for _, param := range params {
-		if param.Child("var").Name() == name.Name() {
-			return param
-		}
-	}
-
-	return engine.Match{}
-}
-
 var wireTypeAttributes = []string{"LiteralTypeScriptType", "TypeScriptType"}
 
 func (n Node) DeclaresNullableWireType() bool {

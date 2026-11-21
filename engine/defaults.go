@@ -60,15 +60,6 @@ func (m Match) IsEmptyScalar() bool {
 	return false
 }
 
-func (call Match) parameterAt(position int) Match {
-	for _, target := range call.Codebase().Declarations(call.TargetSymbol()) {
-		if parameters := target.Parameters(); position < len(parameters) {
-			return parameters[position]
-		}
-	}
-	return Match{}
-}
-
 func (m Match) IsConditionalSpread() bool {
 	grammar := m.grammar()
 	if grammar.ConditionalSpread != nil {

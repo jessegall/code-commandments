@@ -101,25 +101,6 @@ func (n Node) IsUsedOn(classes ...string) bool {
 	return false
 }
 
-func IsEverProduced(codebase *engine.Codebase, class string, statically ...string) bool {
-	if class == "" {
-		return false
-	}
-	program := ProgramOf(codebase)
-	built := In(codebase).WhereKind("Expr_New").Where(func(m engine.Match) bool {
-		return program.IsA(Node{Match: m}.NewClassName(), class)
-	}).Count() > 0
-	if built || len(statically) == 0 {
-		return built
-	}
-
-	return In(codebase).WhereKind("Expr_StaticCall").Where(func(m engine.Match) bool {
-		call := Node{Match: m}
-
-		return slices.Contains(statically, call.StaticCallMethod()) && program.IsA(call.StaticCallClass(), class)
-	}).Count() > 0
-}
-
 func (n Node) IsPropertyFetchNamed(name string) bool {
 	return isPropertyRead(n.Match) && n.Child("name").Kind() == "Identifier" && n.Child("name").Name() == name
 }

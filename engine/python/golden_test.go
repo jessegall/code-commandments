@@ -61,15 +61,6 @@ func itoa(n int) string {
 	return string(raw)
 }
 
-func defs(codebase *python.Codebase) map[string][]python.Node {
-	found := map[string][]python.Node{}
-	for _, match := range codebase.WhereFunction().Get() {
-		found[match.Node().Symbol] = append(found[match.Node().Symbol], python.Node{Match: match})
-	}
-
-	return found
-}
-
 func unrecorded[T any](want map[string]T, key string) bool {
 	_, held := want[key]
 

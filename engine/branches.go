@@ -34,37 +34,6 @@ func VariedSide(left, right Match, constant func(Match) bool) Match {
 	return Match{}
 }
 
-func EndsEveryBranchAlike(branch Match) bool {
-	if !branch.Is(Branch) || branch.IsContinuation() {
-		return false
-	}
-	rungs := LadderRungs(branch)
-	arms := [][]Match{withoutInertTail(rungs[len(rungs)-1].Otherwise())}
-	for _, rung := range rungs {
-		arms = append(arms, withoutInertTail(rung.Body()))
-	}
-	if slices.ContainsFunc(arms, func(arm []Match) bool { return len(arm) == 0 }) {
-		return false
-	}
-	tail := arms[0][len(arms[0])-1]
-
-	return !slices.ContainsFunc(arms[1:], func(arm []Match) bool { return !arm[len(arm)-1].SameSyntax(tail) })
-}
-
-// withoutInertTail is an arm without the empty statements that close it, such as the one a parser keeps for a comment
-// before the closing brace: the arm ends where its last real statement does.
-func withoutInertTail(arm []Match) []Match {
-	for len(arm) > 0 && arm[len(arm)-1].isInert() {
-		arm = arm[:len(arm)-1]
-	}
-
-	return arm
-}
-
-func (m Match) isInert() bool {
-	return len(m.Children()) == 0 && !m.Is(BailOut)
-}
-
 func IsEvaluated(m Match) bool {
 	if m.Role() != "expression" {
 		return false
@@ -78,22 +47,8 @@ func IsEvaluated(m Match) bool {
 	return true
 }
 
-func IsConditionalExpression(m Match) bool {
-	return m.Is(Branch) && IsEvaluated(m) && m.Condition().Exists()
-}
-
 func ResultIsDiscarded(m Match) bool {
 	return IsEvaluated(m) && m.Parent().Is(ExpressionStatement)
-}
-
-func (m Match) crossesAFunctionBelow(top Match) bool {
-	for at := m.Parent(); at.Exists() && at.Node() != top.Node(); at = at.Parent() {
-		if at.Is(Function) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func IsChoice(m Match) bool {

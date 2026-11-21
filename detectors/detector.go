@@ -164,16 +164,6 @@ type Candidate struct {
 	Record any
 }
 
-func Aggregate(detector Aggregating, codebase *engine.Codebase) []engine.Match {
-	candidates := detector.Candidates(codebase)
-	var sins []engine.Match
-	for _, at := range detector.Decide(candidates) {
-		sins = append(sins, candidates[at].At)
-	}
-
-	return sins
-}
-
 // SameSin says whether two detectors find one sin: the same name under the same engine. A sin is compared by what
 // it is, never by its value, since a rule's sin holds lists.
 func SameSin(one, other Detector) bool {

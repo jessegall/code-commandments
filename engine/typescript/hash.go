@@ -133,40 +133,6 @@ func CopyExclusions(match engine.Match) engine.CopyExclusions {
 	return engine.CopyExclusions{Exact: match.IsConstructor() || match.IsSoleStatement(), Near: function.IsLiteralLookup() || function.IsLiteralScript()}
 }
 
-func (n Node) BodyHash() string {
-	if body := n.Body(); body.Exists() {
-		return engine.SyntaxHash([]engine.Match{body.Match}, Hashing, false)
-	}
-
-	return ""
-}
-
-func (n Node) BodyShape() string {
-	if body := n.Body(); body.Exists() {
-		return engine.SyntaxHash([]engine.Match{body.Match}, Hashing, true)
-	}
-
-	return ""
-}
-
-func (n Node) BodyWeight() int {
-	body := n.Body()
-	if !body.Exists() {
-		return 0
-	}
-
-	return engine.SyntaxWeight([]engine.Match{body.Match}, Hashing)
-}
-
-func (n Node) SoleStatement() Node {
-	statements := n.Body().ChildrenIn("statements")
-	if len(statements) != 1 {
-		return Node{}
-	}
-
-	return Node{statements[0]}
-}
-
 func (n Node) IsLiteralLookup() bool {
 	body := n.Body()
 	returns := 0
@@ -246,6 +212,3 @@ func callsAName(expression engine.Match) bool {
 	return expression.Kind() == "Identifier"
 }
 
-func (n Node) NodeHash(normalize bool) string {
-	return engine.SyntaxHash([]engine.Match{n.Match}, Hashing, normalize)
-}

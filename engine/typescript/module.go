@@ -23,10 +23,6 @@ func ModuleOf(statements []engine.Match) Module {
 	return module
 }
 
-func ModuleOfNodes(statements []Node) Module {
-	return Module{statements: statements}
-}
-
 // Import is an import: the names it binds, each to what it imports, where from, and the statement as written.
 type Import struct {
 	Names     []string
@@ -35,10 +31,6 @@ type Import struct {
 	HasFrom   bool
 	Resolves  string
 	Statement string
-}
-
-func (i Import) BindsAny(test func(string) bool) bool {
-	return slices.ContainsFunc(i.Names, test)
 }
 
 func (m Module) Imports() []Import {
@@ -103,17 +95,6 @@ func (m Module) ImportOf(name string) (Import, bool) {
 	return Import{}, false
 }
 
-func (m Module) ReExports() []string {
-	var files []string
-	for _, statement := range m.statements {
-		if statement.Kind() == "ExportDeclaration" && statement.Resolves() != "" && !slices.Contains(files, statement.Resolves()) {
-			files = append(files, statement.Resolves())
-		}
-	}
-
-	return files
-}
-
 // Call is a call at the top of a script, or the one a variable is initialised with: to a plain name.
 type Call struct {
 	Callee        string
@@ -145,18 +126,6 @@ type Variable struct {
 	Initializer   Node
 	InitCall      *Call
 	Arrow         *FunctionType
-}
-
-func (v Variable) Render() string {
-	typed, init := "", ""
-	if v.Annotation != nil {
-		typed = ": " + v.Annotation.Render()
-	}
-	if v.Initializer.Exists() {
-		init = " = " + strings.TrimRight(strings.TrimSpace(v.Initializer.Source()), ";")
-	}
-
-	return v.Keyword + " " + v.Pattern + typed + init + ";"
 }
 
 func variableOf(statement Node) (Variable, bool) {
@@ -216,39 +185,6 @@ type Function struct {
 	Body         Module
 }
 
-func (f Function) Signature() FunctionType {
-	var returns TypeNode = KeywordType{Name: "void"}
-	if f.ReturnType != nil {
-		returns = f.ReturnType
-	}
-
-	return FunctionType{Params: f.Params, Returns: returns}
-}
-
-func functionOf(statement Node) (Function, bool) {
-	if statement.Kind() != "FunctionDeclaration" || statement.Name() == "" {
-		return Function{}, false
-	}
-	params, ok := paramsOf(statement.ChildrenIn("parameters"))
-	if !ok {
-		return Function{}, false
-	}
-	function := Function{Name: statement.Name(), Params: params}
-	if statement.Child("type").Exists() {
-		function.ReturnType = TypeOf(Node{statement.Child("type")})
-	}
-	body := statement.Child("body")
-	function.Body = ModuleOf(body.ChildrenIn("statements"))
-	for _, returned := range body.ChildrenIn("statements") {
-		object := Node{returned.Child("expression")}
-		if returned.Kind() == "ReturnStatement" && object.Kind() == "ObjectLiteralExpression" {
-			function.ReturnObject = objectShape(object)
-		}
-	}
-
-	return function, true
-}
-
 // Returned is a key of a returned object literal and the local it returns, empty when its value is anything else.
 type Returned struct {
 	Key, Local string
@@ -296,151 +232,6 @@ func (m Module) Variable(name string) (Variable, bool) {
 	return Variable{}, false
 }
 
-func (m Module) Function(name string) (Function, bool) {
-	for _, statement := range m.statements {
-		if function, ok := functionOf(statement); ok && function.Name == name {
-			return function, true
-		}
-	}
-
-	return Function{}, false
-}
-
-func (m Module) Call(callee string) (Call, bool) {
-	for _, statement := range m.statements {
-		if call, ok := CallOf(Node{statement.Child("expression")}); statement.Kind() == "ExpressionStatement" && ok && call.Callee == callee {
-			return call, true
-		}
-		if variable, ok := variableOf(statement); ok && variable.InitCall != nil && variable.InitCall.Callee == callee {
-			return *variable.InitCall, true
-		}
-	}
-
-	return Call{}, false
-}
-
-func (m Module) LocalNames() []string {
-	var names []string
-	add := func(declared ...string) {
-		for _, name := range declared {
-			if name != "" && !slices.Contains(names, name) {
-				names = append(names, name)
-			}
-		}
-	}
-	for _, statement := range m.statements {
-		if variable, ok := variableOf(statement); ok {
-			add(variable.Names...)
-		}
-		if statement.Kind() == "FunctionDeclaration" || statement.Kind() == "ClassDeclaration" {
-			add(statement.Name())
-		}
-	}
-
-	return names
-}
-
-func (m Module) VariableNamedFrom(test func(Call) bool) (string, bool) {
-	for _, statement := range m.statements {
-		if variable, ok := variableOf(statement); ok && variable.NamePattern && variable.InitCall != nil && test(*variable.InitCall) {
-			return variable.Pattern, true
-		}
-	}
-
-	return "", false
-}
-
-func (m Module) DeclaredType(name string) (TypeNode, bool) {
-	if function, ok := m.Function(name); ok {
-		return function.Signature(), true
-	}
-	variable, ok := m.Variable(name)
-	switch {
-	case !ok:
-		return nil, false
-	case variable.Annotation != nil:
-		return variable.Annotation, true
-	case variable.Arrow != nil:
-		arrow := *variable.Arrow
-		if arrow.Returns == nil {
-			arrow.Returns = KeywordType{Name: "void"}
-		}
-
-		return arrow, true
-	case variable.InitCall != nil:
-		return reactiveType(*variable.InitCall)
-	case variable.Initializer.Exists():
-		return variable.Initializer.InferType()
-	}
-
-	return nil, false
-}
-
-func reactiveType(call Call) (TypeNode, bool) {
-	if !slices.Contains(reactive, call.Callee) {
-		return nil, false
-	}
-	if len(call.TypeArguments) > 0 {
-		return call.TypeArguments[0], true
-	}
-	if len(call.Arguments) == 0 {
-		return nil, false
-	}
-	if call.Callee == "computed" {
-		return call.Arguments[0].ReturnType()
-	}
-
-	return call.Arguments[0].InferType()
-}
-
-func (m Module) StaticConst(name string) (string, bool) {
-	variable, ok := m.Variable(name)
-	if !ok || variable.Keyword != "const" || variable.InitCall != nil || !variable.NamePattern {
-		return "", false
-	}
-
-	return variable.Render(), true
-}
-
-func (m Module) DestructuredCall(name string) (string, bool) {
-	variable, ok := m.Variable(name)
-	if !ok || !variable.ObjectPattern || variable.InitCall == nil {
-		return "", false
-	}
-
-	return variable.InitCall.Callee, true
-}
-
-func (m Module) ReturnTypeName(function string) (TypeNode, bool) {
-	if declared, ok := m.Function(function); ok {
-		return declared.ReturnType, declared.ReturnType != nil
-	}
-	variable, ok := m.Variable(function)
-	if !ok || variable.Arrow == nil || variable.Arrow.Returns == nil {
-		return nil, false
-	}
-
-	return variable.Arrow.Returns, true
-}
-
-func (m Module) InferredReturnFields(function string) Fields {
-	declared, ok := m.Function(function)
-	if !ok || declared.ReturnObject == nil {
-		return Fields{}
-	}
-	var fields Fields
-	for _, returned := range declared.ReturnObject {
-		if returned.Local == "" {
-			continue
-		}
-		if typed, ok := declared.Body.DeclaredType(returned.Local); ok {
-			fields.Set(returned.Key, typed.UnwrapRef())
-		}
-	}
-
-	return fields
-}
-
 // TypeDeclaration is an interface or a type alias.
 type TypeDeclaration struct {
 	Name      string
@@ -450,123 +241,3 @@ type TypeDeclaration struct {
 	Type      TypeNode
 }
 
-func (d TypeDeclaration) Render() string {
-	if !d.Interface {
-		return "type " + d.Name + d.Header + " = " + d.Type.Render() + ";"
-	}
-	lines := make([]string, 0, len(d.Members))
-	for _, member := range d.Members {
-		lines = append(lines, "    "+member.Render()+";")
-	}
-
-	return "interface " + d.Name + d.Header + " {\n" + strings.Join(lines, "\n") + "\n}"
-}
-
-func (d TypeDeclaration) References() []string {
-	if !d.Interface {
-		return d.Type.References()
-	}
-
-	return ObjectType{Members: d.Members}.References()
-}
-
-func (d TypeDeclaration) Fields() Fields {
-	if d.Interface {
-		return ObjectType{Members: d.Members}.Fields()
-	}
-	if object, ok := d.Type.(ObjectType); ok {
-		return object.Fields()
-	}
-
-	return Fields{}
-}
-
-func declarationOf(statement Node) (TypeDeclaration, bool) {
-	name := statement.Child("name")
-	switch statement.Kind() {
-	case "InterfaceDeclaration":
-		declaration := TypeDeclaration{Name: statement.Name(), Header: headerOf(statement, name, "{"), Interface: true}
-		for _, member := range statement.ChildrenIn("members") {
-			if read, ok := memberOf(Node{member}); ok {
-				declaration.Members = append(declaration.Members, read)
-			}
-		}
-
-		return declaration, true
-	case "TypeAliasDeclaration":
-		return TypeDeclaration{Name: statement.Name(), Header: headerOf(statement, name, "="), Type: TypeOf(Node{statement.Child("type")})}, true
-	}
-
-	return TypeDeclaration{}, false
-}
-
-func headerOf(statement Node, name engine.Match, opener string) string {
-	whole, err := statement.Span()
-	named, nameErr := name.Span()
-	if err != nil || nameErr != nil {
-		return ""
-	}
-	rest := string(whole.Source[named.End:whole.End])
-	if end := strings.Index(rest, opener); end >= 0 {
-		rest = rest[:end]
-	}
-
-	return strings.TrimSpace(rest)
-}
-
-func (m Module) TypeDeclaration(name string) (TypeDeclaration, bool) {
-	for _, wantInterface := range []bool{true, false} {
-		for _, statement := range m.statements {
-			if declaration, ok := declarationOf(statement); ok && declaration.Interface == wantInterface && declaration.Name == name {
-				return declaration, true
-			}
-		}
-	}
-
-	return TypeDeclaration{}, false
-}
-
-func (m Module) TypeFields(name string) Fields {
-	declaration, declared := m.TypeDeclaration(name)
-	if !declared {
-		return Fields{}
-	}
-
-	return declaration.Fields()
-}
-
-func (m Module) LocalTypes(names []string) []TypeDeclaration {
-	var reached []TypeDeclaration
-	seen := map[string]bool{}
-	var queue []string
-	for _, name := range names {
-		if !slices.Contains(queue, name) {
-			queue = append(queue, name)
-		}
-	}
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-		if seen[name] {
-			continue
-		}
-		seen[name] = true
-		declaration, declared := m.TypeDeclaration(name)
-		if !declared {
-			continue
-		}
-		reached = append(reached, declaration)
-		queue = append(queue, declaration.References()...)
-	}
-
-	return reached
-}
-
-func (m Module) FieldType(typeName, field string) (TypeNode, bool) {
-	typed, ok := m.TypeFields(typeName).Get(field)
-	if !ok {
-		return nil, false
-	}
-
-	return typed.UnwrapRef(), true
-}

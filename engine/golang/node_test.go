@@ -1,10 +1,7 @@
 package golang_test
 
 import (
-	"testing"
 
-	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/golang"
 )
 
 var shop = map[string]string{
@@ -14,14 +11,3 @@ var shop = map[string]string{
 	"cart/till.go":   "package cart\n\nfunc ring(c *Cart) int {\n\treturn c.Total().Cents()\n}\n",
 }
 
-func funcNamed(t *testing.T, codebase *engine.Codebase, name string) engine.Match {
-	t.Helper()
-	for _, held := range golang.In(codebase).WhereKind("FuncDecl").Get() {
-		if held.Name() == name {
-			return held
-		}
-	}
-	t.Fatalf("the codebase holds no function %s", name)
-
-	return engine.Match{}
-}

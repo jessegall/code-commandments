@@ -76,26 +76,6 @@ func DocReferences(text string) []string {
 	return references
 }
 
-func DocblockCanonical(text, indent string) string {
-	return docblockOf(docblockContent(text), indent)
-}
-
-func DocblockMerge(texts []string, indent string) string {
-	var lines []string
-	for _, text := range texts {
-		content := docblockContent(text)
-		if len(content) == 0 {
-			continue
-		}
-		if len(lines) > 0 {
-			lines = append(lines, "")
-		}
-		lines = append(lines, content...)
-	}
-
-	return docblockOf(lines, indent)
-}
-
 func DocblocksFoldable(texts []string) bool {
 	seen := map[string]bool{}
 	for _, text := range texts {
@@ -149,19 +129,6 @@ func docTags(text string) []string {
 	}
 
 	return tags
-}
-
-func docblockOf(lines []string, indent string) string {
-	var body strings.Builder
-	for _, line := range lines {
-		if line == "" {
-			body.WriteString("\n" + indent + " *")
-		} else {
-			body.WriteString("\n" + indent + " * " + line)
-		}
-	}
-
-	return "/**" + body.String() + "\n" + indent + " */"
 }
 
 func (n Node) DocblockStackIsFoldable() bool {
@@ -274,18 +241,6 @@ func replaceSubmatches(pattern *regexp.Regexp, text string, replace func([]strin
 
 func isWordByte(c byte) bool {
 	return c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
-}
-
-func DocblockWithoutTag(text, tag string) []string {
-	tagLine := regexp.MustCompile(`^\s*\*?\s*@` + regexp.QuoteMeta(tag) + `\b`)
-	var kept []string
-	for _, line := range prose.Lines(text) {
-		if !tagLine.MatchString(line) {
-			kept = append(kept, line)
-		}
-	}
-
-	return kept
 }
 
 func DocumentedThrows(text string) []string {

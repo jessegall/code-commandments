@@ -53,7 +53,7 @@ func init() {
 		IsValueClass:       isValueDependency,
 		ListedClasses:      listedProjectClasses,
 		PublishedContracts: publishedContracts,
-		Types:              func(codebase *engine.Codebase) engine.TypeSystem { return ProgramOf(codebase) },
+		Types:              func(codebase *engine.Codebase) engine.TypeSystem { return engine.TypesFromDeclarations(codebase.Of(contract.PHP)) },
 		MemberLookup:       memberLookup,
 		NamespacesNaming: func(contract engine.Match) []string {
 			return TypeReferencesOf(contract.Codebase()).NamespacesNaming(contract.Identity())

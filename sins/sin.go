@@ -54,14 +54,6 @@ func All() []Sin {
 	return sins.All()
 }
 
-func Every(engine catalog.Engine) []Sin {
-	return sins.Every(engine)
-}
-
-func Of(engine catalog.Engine) []Sin {
-	return sins.Of(engine)
-}
-
 func EngineOf(sin Sin) (catalog.Engine, bool) {
 	return sins.EngineOf(sin)
 }

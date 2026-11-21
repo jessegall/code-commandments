@@ -6,10 +6,6 @@ import (
 	"testing"
 )
 
-func sourceOf(origin, path, find string) Source {
-	return Source{Origin: origin, Path: path, Text: written(find)}
-}
-
 func named(origin, path, sin, find string) Source {
 	text := strings.Replace(string(written(find)), `"name":"empty-handler"`, `"name":"`+sin+`"`, 1)
 

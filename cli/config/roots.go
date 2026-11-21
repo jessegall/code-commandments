@@ -160,30 +160,6 @@ func isWithin(folder, root string) bool {
 	return walk.Within(root, folder)
 }
 
-func ToParse(project, path string) ([]string, error) {
-	target := strings.TrimRight(walk.Real(path), "/")
-	home := strings.TrimRight(walk.Real(project), "/")
-
-	if !walk.Within(home, target) {
-		return []string{target}, nil
-	}
-
-	roots, err := DeclaredRoots(project)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, root := range roots {
-		real := strings.TrimRight(walk.Real(root), "/")
-
-		if walk.Within(real, target) {
-			return roots, nil
-		}
-	}
-
-	return append(roots, target), nil
-}
-
 func BuiltFolders(root string) []string {
 	var found []string
 

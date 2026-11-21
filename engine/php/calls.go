@@ -199,10 +199,6 @@ type Chains struct {
 
 var chains = engine.Memoised(indexChains)
 
-func ChainsOf(codebase *engine.Codebase) *Chains {
-	return chains.Of(codebase)
-}
-
 var declaringKinds = []string{"Stmt_Class", "Stmt_Enum"}
 
 func indexChains(codebase *engine.Codebase) *Chains {
@@ -249,46 +245,6 @@ func (c *Chains) index(declaration engine.Match) {
 	}
 	c.properties[declaration.Node().Symbol] = properties
 	c.returns[declaration.Node().Symbol] = returns
-}
-
-func (c *Chains) Resolve(expr engine.Match, variables map[string]string) string {
-	switch expr.Kind() {
-	case "Expr_Variable":
-		return variables[expr.Name()]
-	case "Expr_PropertyFetch", "Expr_NullsafePropertyFetch":
-		base, name := strings.TrimLeft(c.Resolve(expr.Child("var"), variables), `\`), expr.Child("name")
-		if base == "" || name.Kind() != "Identifier" {
-			return ""
-		}
-
-		return c.properties[base][name.Name()]
-	case "Expr_MethodCall", "Expr_NullsafeMethodCall":
-		for _, arg := range expr.Children() {
-			if arg.Node().InRole() == "args" {
-				return ""
-			}
-		}
-		base, name := strings.TrimLeft(c.Resolve(expr.Child("var"), variables), `\`), expr.Child("name")
-		if base == "" || name.Kind() != "Identifier" {
-			return ""
-		}
-
-		return c.returns[base][strings.ToLower(name.Name())]
-	}
-
-	return ""
-}
-
-func ParamTypes(function engine.Match) map[string]string {
-	types := map[string]string{}
-	for _, param := range Params(function) {
-		own := param.Child("var")
-		if written := Written(param.Node().Written).SimpleName(); written != "" && own.Kind() == "Expr_Variable" && own.Name() != "" {
-			types[own.Name()] = written
-		}
-	}
-
-	return types
 }
 
 func SharedFetchReceiver(array engine.Match) (engine.Match, bool) {

@@ -4,7 +4,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/typescript"
 )
@@ -14,10 +13,6 @@ var refs = map[string]bool{"Ref": true, "ShallowRef": true, "ComputedRef": true,
 // Component is a .vue file: its root, and the script its template reads names from.
 type Component struct {
 	engine.Match
-}
-
-func (Component) Decorate(m engine.Match) Component {
-	return Component{m}
 }
 
 func ComponentOf(m engine.Match) Component {
@@ -40,16 +35,6 @@ func (c Component) Statements() []typescript.Node {
 	}
 
 	return statements
-}
-
-func (c Component) Binding(name string) typescript.Node {
-	for _, statement := range c.Statements() {
-		if declaration := statement.Binds(name); declaration.Exists() {
-			return declaration
-		}
-	}
-
-	return typescript.Node{}
 }
 
 func (c Component) DefineProps() typescript.Node {
@@ -83,32 +68,6 @@ func (c Component) Prop(codebase *engine.Codebase, name string) typescript.Node 
 	return typescript.Node{}
 }
 
-func (c Component) TypeOf(codebase *engine.Codebase, name string) (*contract.Type, bool) {
-	if prop := c.Prop(codebase, name); prop.Declared() != nil {
-		return prop.Declared(), true
-	}
-	binding := c.Binding(name)
-	if binding.Kind() != "VariableDeclaration" {
-		return nil, false
-	}
-	if declared := binding.Declared(); declared != nil {
-		return unwrapped(declared), true
-	}
-	if resolved := typescript.Of(binding.Child("initializer")).Resolved(); resolved != nil {
-		return unwrapped(resolved), true
-	}
-
-	return nil, false
-}
-
-func unwrapped(t *contract.Type) *contract.Type {
-	if t.Kind == "named" && refs[typescript.DeclaredName(t.Name)] && len(t.Args) > 0 {
-		return t.Args[0]
-	}
-
-	return t
-}
-
 func (c Component) Template() engine.Match {
 	for _, block := range c.ChildrenIn("blocks") {
 		if block.Name() == "template" {
@@ -117,15 +76,6 @@ func (c Component) Template() engine.Match {
 	}
 
 	return engine.Match{}
-}
-
-func (c Component) Size() int {
-	size := 0
-	for _, element := range c.TemplateElements() {
-		size += element.Rendered()
-	}
-
-	return size
 }
 
 func (c Component) TemplateLines() int {

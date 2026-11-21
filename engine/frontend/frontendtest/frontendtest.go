@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
@@ -38,26 +37,3 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	return codebase
 }
 
-func Where(t testing.TB, codebase *engine.Codebase, kind, text string) engine.Match {
-	t.Helper()
-	for _, match := range codebase.WhereKind(kind).Get() {
-		if span, err := match.Span(); err == nil && strings.TrimSpace(span.Text()) == text {
-			return match
-		}
-	}
-	t.Fatalf("no %s reads %q", kind, text)
-
-	return engine.Match{}
-}
-
-func Named(t testing.TB, codebase *engine.Codebase, kind, name string) engine.Match {
-	t.Helper()
-	for _, match := range codebase.WhereKind(kind).Get() {
-		if match.Name() == name {
-			return match
-		}
-	}
-	t.Fatalf("no %s is named %q", kind, name)
-
-	return engine.Match{}
-}

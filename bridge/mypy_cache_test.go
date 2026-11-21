@@ -2,9 +2,7 @@ package bridge_test
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -35,26 +33,6 @@ func TestAServedPythonBridgeEndsOnceTheRunThatStartedItIsKilled(t *testing.T) {
 	}
 
 	bridgetest.EndsWithItsRun(t, command)
-}
-
-// countingBuilds runs a script after a prelude that counts mypy's builds: each is named by how it was asked and the files it compiled.
-func countingBuilds(t *testing.T, script string, args ...string) string {
-	t.Helper()
-
-	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
-	if python == "" {
-		t.Skip("no python with mypy is named here")
-	}
-
-	read := exec.Command(python, append([]string{"-c", countedBuilds + script}, args...)...)
-	read.Env = append(os.Environ(), "JOURNAL_PLUGIN_DATA="+t.TempDir())
-
-	out, err := read.CombinedOutput()
-	if err != nil {
-		t.Fatalf("%v: %s", err, out)
-	}
-
-	return strings.TrimSpace(string(out))
 }
 
 const countedBuilds = `

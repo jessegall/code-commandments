@@ -88,20 +88,6 @@ var CollectionTypes = []string{
 	`Illuminate\Support\LazyCollection`,
 }
 
-func (n Node) HandsOutItsOwnCollection(typeOf func(engine.Match) string) bool {
-	body := n.Match.ChildrenIn("stmts")
-	if n.Match.Kind() != "Stmt_ClassMethod" || len(body) != 1 || body[0].Kind() != "Stmt_Return" {
-		return false
-	}
-
-	returned := body[0].Child("expr")
-	if returned.Kind() != "Expr_PropertyFetch" || !returned.Child("var").Is(engine.SelfReference) {
-		return false
-	}
-
-	return slices.Contains(CollectionTypes, strings.TrimLeft(typeOf(returned), "?\\"))
-}
-
 var BuilderTypes = []string{
 	EloquentBuilder,
 	`Illuminate\Database\Query\Builder`,
@@ -109,49 +95,6 @@ var BuilderTypes = []string{
 	`Illuminate\Database\Eloquent\Relations\HasMany`,
 	`Illuminate\Database\Eloquent\Relations\BelongsTo`,
 	`Illuminate\Database\Eloquent\Relations\BelongsToMany`,
-}
-
-func CallReceiverClass(call engine.Match) string {
-	if class := php.CallReceiverClass(call); class != "" {
-		return class
-	}
-	receiver := call.Child("var")
-	if !receiver.Exists() {
-		return ""
-	}
-	program := php.ProgramOf(call.Codebase())
-	if php.CallName(receiver) == "query" && program.IsA(php.StaticCallClass(receiver), Model) {
-		return EloquentBuilder
-	}
-	if php.CallName(receiver) == "state" {
-		if class := CallReceiverClass(receiver); program.IsA(class, Factory) {
-			return class
-		}
-	}
-
-	return ""
-}
-
-func CollectionMapConsumer(call engine.Match) engine.Match {
-	if php.CallName(call) != "map" {
-		return engine.Match{}
-	}
-	class := php.CallReceiverClass(call)
-	program := php.ProgramOf(call.Codebase())
-	if !slices.ContainsFunc(CollectionTypes, func(collection string) bool { return program.IsA(class, collection) }) {
-		return engine.Match{}
-	}
-
-	mapped := call
-	for mapped.Parent().Is(engine.Call) && mapped.Node().InRole() == "var" {
-		next := mapped.Parent()
-		if !slices.Contains([]string{"filter", "values", "all"}, php.CallName(next)) {
-			return engine.Match{}
-		}
-		mapped = next
-	}
-
-	return php.ArgumentConsumer(mapped)
 }
 
 var (
@@ -284,10 +227,6 @@ func (n Node) ThinDelegationTarget() string {
 	return n.delegationTarget(false)
 }
 
-func (n Node) DelegatedOperation() string {
-	return n.delegationTarget(true)
-}
-
 func (n Node) delegationTarget(includeCalls bool) string {
 	call, ok := n.soleDelegationCall()
 	if !ok || call.Child("name").Kind() != "Identifier" {
@@ -344,32 +283,6 @@ func (n Node) InServiceProvider() bool {
 	return php.ProgramOf(n.Codebase()).Extends(php.EnclosingClassName(n.Match), ServiceProvider)
 }
 
-func (n Node) ReplacesUnboundedBuilderRead() bool {
-	if !slices.Contains([]string{"chunk", "each", "chunkById", "lazy", "lazyById"}, n.Name()) {
-		return false
-	}
-	class := php.EnclosingClass(n.Match)
-	if !php.ProgramOf(n.Codebase()).Extends(php.EnclosingClassName(n.Match), `Illuminate\Database\Eloquent\Builder`) {
-		return false
-	}
-	for _, statement := range n.ChildrenIn("stmts") {
-		throw := statement.Child("expr")
-		call := throw.Child("expr")
-		arguments := php.Arguments(call)
-		if throw.Kind() != "Expr_Throw" || call.Kind() != "Expr_StaticCall" || len(arguments) != 2 {
-			continue
-		}
-		refused, _ := arguments[0].Child("value").Node().Value.Text()
-		replacement, _ := arguments[1].Child("value").Node().Value.Text()
-		name, _, _ := strings.Cut(replacement, "(")
-		if _, declared := php.Method(class, name); refused == n.Name() && name != refused && declared {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (n Node) IsEloquentCast() bool {
 	program := php.ProgramOf(n.Codebase())
 	for _, contract := range CastContracts {
@@ -390,22 +303,6 @@ func (n Node) ReceiverIsModel() bool {
 	receiver := php.ReceiverTypeOf(n.Match)
 
 	return receiver != "" && php.ProgramOf(n.Codebase()).Extends(receiver, Model)
-}
-
-func (n Node) QueriedModel() string {
-	if n.Kind() != "Expr_MethodCall" || (n.Parent().Kind() == "Expr_MethodCall" && n.Node().InRole() == "var") {
-		return ""
-	}
-	calls, root := 1, n.Child("var")
-	for root.Kind() == "Expr_MethodCall" {
-		calls, root = calls+1, root.Child("var")
-	}
-	model := strings.TrimLeft(php.StaticCallClass(root), `\`)
-	if calls < 2 || model == "" || !php.ProgramOf(n.Codebase()).Extends(model, Model) {
-		return ""
-	}
-
-	return model
 }
 
 func (n Node) IsMassArrayUpdate() bool {
@@ -475,42 +372,6 @@ func (n Node) ResolvesFromContainer() bool {
 	return isClassLiteral(call.Argument(0).Match) && php.IsContainerCall(n.Match)
 }
 
-// BuildsWithParameters is a container resolution handed the constructor's runtime values, `make(X::class, [...])`: the
-// container is used as a factory, since no constructor could be injected with values known only at the call.
-func (n Node) BuildsWithParameters() bool {
-	return php.Node{Match: n.Match}.ArgumentCount() >= 2
-}
-
-func (n Node) DropsEveryGlobalScope() bool {
-	name := strings.ToLower(php.CallName(n.Match))
-	if name != "withoutglobalscopes" && name != "withoutglobalscopesexcept" {
-		return false
-	}
-	if !n.hasEloquentScopeReceiver() {
-		return false
-	}
-	arguments := n.ChildrenIn("args")
-	if len(arguments) == 0 {
-		return true
-	}
-	if len(arguments) != 1 || arguments[0].Kind() != "Arg" {
-		return false
-	}
-	value := php.Node{Match: arguments[0].Child("value")}
-	if name == "withoutglobalscopes" {
-		return value.IsNull()
-	}
-
-	return value.IsEmptyArrayLiteral()
-}
-
-func (n Node) hasEloquentScopeReceiver() bool {
-	class := strings.TrimLeft(CallReceiverClass(n.Match), `\`)
-	program := php.ProgramOf(n.Codebase())
-
-	return program.IsA(class, Model) || program.IsA(class, EloquentBuilder) || program.IsA(class, EloquentRelation)
-}
-
 func isClassLiteral(value engine.Match) bool {
 	return php.ClassLiteral(value) != ""
 }
@@ -524,135 +385,6 @@ var QueryRunners = []string{
 	"findMany", "count", "exists", "doesntExist", "sum", "avg", "min", "max", "pluck", "value", "paginate",
 	"simplePaginate", "cursorPaginate", "toArray", "save", "update", "delete", "increment", "decrement",
 	"create", "updateOrCreate", "insert", "refresh",
-}
-
-func (n Node) RunsAQueryInALoop() bool {
-	name := n.Child("name")
-	if n.Kind() != "Expr_MethodCall" && n.Kind() != "Expr_StaticCall" {
-		return false
-	}
-	if name.Kind() != "Identifier" || !slices.Contains(QueryRunners, name.Name()) {
-		return false
-	}
-	walked, inAForeach := n.foreachAround()
-	if !inAForeach {
-		return false
-	}
-	if walked.isChunked() || n.loadsAWholeChunk(walked) || n.isInATransactionPerTurn() || n.queriesTheTableItWalks(walked) {
-		return false
-	}
-
-	return n.reachesTheDatabase()
-}
-
-func (n Node) queriesTheTableItWalks(walked Node) bool {
-	root := n.chainRoot()
-
-	return root.Kind() == "Expr_StaticCall" && php.CallName(root.Match) == "table" && (php.Node{Match: root.Match}).Argument(0).SameSyntax(walked.Parent().Child("valueVar"))
-}
-
-func (n Node) loadsAWholeChunk(walked Node) bool {
-	loop := walked.Parent()
-	chunk := loop.Child("valueVar")
-	if chunk.Kind() != "Expr_Variable" {
-		return false
-	}
-	for call := n.Match; call.Kind() == "Expr_MethodCall"; {
-		method := php.Node{Match: call}
-		if php.CallName(call) == "whereIn" && method.Argument(1).SameSyntax(chunk) {
-			return walked.readsAssignedChunks(loop)
-		}
-		call = call.Child("var")
-	}
-	return false
-}
-
-func (n Node) readsAssignedChunks(loop engine.Match) bool {
-	for _, use := range slices.Backward(php.Trace(n.Match)) {
-		assignment := use.Node.Parent()
-		if !use.IsWrite() || !assignment.EndsBefore(loop) {
-			continue
-		}
-		return assignment.Kind() == "Expr_Assign" && assignment.Parent().Parent() == loop.Parent() && isArrayChunk(assignment.Child("expr"))
-	}
-	return false
-}
-
-func (n Node) isInATransactionPerTurn() bool {
-	for held := n.Parent(); held.Exists() && held.Kind() != "Stmt_Foreach"; held = held.Parent() {
-		call := held.Parent().Parent()
-		if (held.Kind() == "Expr_Closure" || held.Kind() == "Expr_ArrowFunction") && held.Parent().Kind() == "Arg" && call.Child("name").Name() == "transaction" {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (n Node) foreachAround() (Node, bool) {
-	for from, held := n.Match, n.Parent(); held.Exists(); from, held = held, held.Parent() {
-		if held.Kind() == "Stmt_Foreach" && held.Child("expr").Node() != from.Node() {
-			return Node{Match: held.Child("expr")}, true
-		}
-	}
-
-	return Node{}, false
-}
-
-func (n Node) isChunked() bool {
-	if isArrayChunk(n.Match) {
-		return true
-	}
-	held := n
-	for held.Exists() {
-		if held.Kind() == "Expr_MethodCall" && held.Child("name").Name() == "chunk" {
-			return true
-		}
-		if held.Kind() != "Expr_MethodCall" && held.Kind() != "Expr_StaticCall" {
-			return false
-		}
-		held = Node{Match: held.Child("var")}
-	}
-
-	return false
-}
-
-func isArrayChunk(call engine.Match) bool {
-	return call.Kind() == "Expr_FuncCall" && isName(call.Child("name")) && strings.TrimLeft(call.Child("name").Name(), `\`) == "array_chunk"
-}
-
-func (n Node) reachesTheDatabase() bool {
-	root := n.chainRoot()
-	program := php.ProgramOf(n.Codebase())
-	if root.Kind() == "Expr_StaticCall" {
-		class := root.Child("class")
-		if !isName(class) {
-			return false
-		}
-		name := strings.TrimLeft(class.Name(), `\`)
-
-		return program.Extends(name, Model) || name == DatabaseFacade && php.CallName(root.Match) == "table"
-	}
-	held := strings.TrimLeft(php.TypesOf(n.Codebase()).TypeOf(root.Match), `?\`)
-	if held == "" {
-		return false
-	}
-
-	return program.Extends(held, Model) || slices.Contains(BuilderTypes, held)
-}
-
-func (n Node) chainRoot() Node {
-	held := n
-	for {
-		receiver := held.Child("var")
-		if held.Kind() == "Expr_StaticCall" {
-			return held
-		}
-		if receiver.Kind() != "Expr_MethodCall" && receiver.Kind() != "Expr_NullsafeMethodCall" && receiver.Kind() != "Expr_StaticCall" {
-			return Node{Match: receiver}
-		}
-		held = Node{Match: receiver}
-	}
 }
 
 func (n Node) SpellsANamedRoutePath() bool {

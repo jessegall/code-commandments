@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -632,6 +631,3 @@ func flowClass(function engine.Match) string {
 	return ""
 }
 
-func Location(match engine.Match) string {
-	return match.File() + ":" + strconv.Itoa(match.Line())
-}

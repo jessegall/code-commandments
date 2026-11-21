@@ -68,10 +68,6 @@ const (
 	Bookkeeping Category = "bookkeeping"
 )
 
-func (c Category) IsSpeech() bool {
-	return c == Prompt || c == Reply
-}
-
 var (
 	bookkeeping = []string{
 		"summary", "last-prompt", "ai-title", "agent-name", "mode", "permission-mode",

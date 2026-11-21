@@ -131,48 +131,5 @@ func (n Node) subscripted() (Node, bool) {
 	return n.Child("value"), true
 }
 
-func (n Node) namesOneCollection() bool {
-	return slices.Contains([]string{"Name", "Attribute"}, n.Kind())
-}
-
 var collectionViews, mappingViews = []string{"enumerate", "reversed", "iter"}, []string{"items", "keys", "values"}
 
-func (n Node) blockHolding() []Node {
-	for held := n; held.Exists(); held = held.Parent() {
-		if field := held.Node().InRole(); slices.Contains([]string{"body", "orelse", "finalbody"}, field) {
-			return held.Parent().ChildrenIn(field)
-		}
-	}
-
-	return nil
-}
-
-func (n Node) leaves(loop Node) bool {
-	if slices.Contains([]string{"Return", "Raise"}, n.Kind()) {
-		return true
-	}
-
-	return n.Kind() == "Break" && n.nearestLoop().Node() == loop.Node()
-}
-
-func (n Node) nearestLoop() Node {
-	return Node{n.Closest(engine.Loop)}
-}
-
-func (n Node) collectionWalkedLive() (Node, bool) {
-	if n.namesOneCollection() {
-		return n, true
-	}
-	if !n.IsCall() {
-		return Node{}, false
-	}
-	callee, arguments := n.Callee(), n.Arguments()
-	if slices.Contains(collectionViews, callee.DottedName()) && len(arguments) == 1 {
-		return arguments[0].collectionWalkedLive()
-	}
-	if slices.Contains(mappingViews, callee.Name()) && callee.Kind() == "Attribute" && len(arguments) == 0 {
-		return callee.Child("value").collectionWalkedLive()
-	}
-
-	return Node{}, false
-}

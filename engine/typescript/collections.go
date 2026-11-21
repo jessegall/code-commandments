@@ -1,9 +1,7 @@
 package typescript
 
 import (
-	"slices"
 
-	"github.com/jessegall/code-commandments/engine"
 )
 
 func (n Node) IsModuleLevelDeclaration() bool {
@@ -103,26 +101,3 @@ func (n Node) AsksAboutOne(held string) bool {
 
 var walkMutators = []string{"pop", "shift", "unshift", "splice", "sort", "reverse", "fill", "copyWithin"}
 
-func (n Node) blockHolding() []Node {
-	for held := n.Match; held.Exists(); held = held.Parent() {
-		if !held.Parent().Is(engine.Block) {
-			continue
-		}
-		var statements []Node
-		for _, each := range held.Parent().Children() {
-			statements = append(statements, Node{each})
-		}
-
-		return statements
-	}
-
-	return nil
-}
-
-func (n Node) leaves(loop Node) bool {
-	if slices.Contains([]string{"ReturnStatement", "ThrowStatement"}, n.Kind()) {
-		return true
-	}
-
-	return n.Kind() == "BreakStatement" && n.Closest(engine.Loop).Node() == loop.Node()
-}

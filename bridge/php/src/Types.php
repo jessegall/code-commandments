@@ -160,6 +160,7 @@ final class Types
                     foreach ($node->getParams() as $parameter) {
                         if ($parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
                             $variables[$parameter->var->name] = $this->types->written($parameter->type, $this->class);
+                            $parameter->var->setAttribute('type', $variables[$parameter->var->name]);
                         }
                     }
                     if ($node instanceof Expr\Closure) {
@@ -325,7 +326,7 @@ final class Types
             return $declared['returns'];
         }
         $global = $call->name->getLast();
-        if (function_exists($global)) {
+        if (function_exists($global) || $call->name->isUnqualified()) {
             $call->setAttribute('target', ['symbol' => $global, 'name' => $global]);
         }
 

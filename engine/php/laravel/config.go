@@ -3,7 +3,6 @@ package laravel
 import (
 	"github.com/jessegall/code-commandments/contract"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
@@ -46,30 +45,6 @@ var configKeys = engine.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
 
 	return keys
 })
-
-func ConfigKeysOf(codebase *engine.Codebase) *ConfigKeys {
-	return configKeys.Of(codebase)
-}
-
-func (k *ConfigKeys) DeclaresDefault(key string) bool {
-	return key != "" && k.defaults[key]
-}
-
-func (k *ConfigKeys) DeadKeyAt(node engine.Match) string {
-	key, declared := k.declared[node.Node()]
-	file, _, _ := strings.Cut(key, ".")
-	if !declared || !k.files[file] || k.isRead(key) {
-		return ""
-	}
-
-	return key
-}
-
-func (k *ConfigKeys) isRead(key string) bool {
-	return slices.ContainsFunc(k.literals, func(literal string) bool {
-		return literal == key || strings.HasPrefix(literal, key+".") || strings.HasPrefix(key, literal+".")
-	})
-}
 
 // vendorConfigs is, per project root, the config names its vendor packages publish.
 type vendorConfigs map[string]map[string]bool
@@ -202,39 +177,6 @@ var constructions = engine.Memoised(func(codebase *engine.Codebase) *constructio
 
 	return made
 })
-
-func ContainerResolves(codebase *engine.Codebase, class string) bool {
-	if class == "" {
-		return false
-	}
-	want := strings.TrimLeft(class, `\`)
-	made := constructions.Of(codebase)
-	if builtByEloquent(php.ProgramOf(codebase), want) {
-		return false
-	}
-
-	return made.injected[want] || !made.built[want]
-}
-
-func builtByEloquent(program *php.Program, class string) bool {
-	return modelOrModelTrait(program, class, map[string]bool{})
-}
-
-func modelOrModelTrait(program *php.Program, class string, seen map[string]bool) bool {
-	if slices.ContainsFunc(eloquentBases, func(base string) bool { return program.Extends(class, base) }) {
-		return true
-	}
-	if seen[class] {
-		return false
-	}
-	seen[class] = true
-	defer delete(seen, class)
-	users := program.UsersOfTrait(class)
-
-	return len(users) > 0 && !slices.ContainsFunc(users, func(user string) bool {
-		return !modelOrModelTrait(program, user, seen)
-	})
-}
 
 var eloquentBases = []string{
 	Model,

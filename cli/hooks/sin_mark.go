@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"slices"
 	"strconv"
 	"strings"
 
@@ -22,10 +21,6 @@ type SinMark struct {
 
 func (m SinMark) IsFiled() bool {
 	return m.Filed.Issue > 0
-}
-
-func touchedAndUnfiled(marks []SinMark) []SinMark {
-	return slices.DeleteFunc(marks, func(mark SinMark) bool { return !mark.Touched || mark.IsFiled() })
 }
 
 // Marking makes the marks of one look, holding what this project has reported so the record is read once for the whole look rather than once for every finding.
@@ -58,10 +53,6 @@ func (m Marking) Of(rule detectors.Detector, match engine.Match, changed git.Cha
 	mark.Filed, _ = m.record.Reported(append([]string{catalog.Name(rule)}, rule.Sin().Definition().Names()...), m.root, match.File(), match.Line())
 
 	return mark
-}
-
-func MarkOf(rule detectors.Detector, match engine.Match, changed git.ChangedLines) SinMark {
-	return SinMark{Rule: rule, Match: match, Touched: changed.Covers(match.Line())}
 }
 
 func (m SinMark) Finding() engine.Finding {

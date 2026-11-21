@@ -1,7 +1,6 @@
 package fixture
 
 import (
-	"slices"
 	"sort"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -79,13 +78,3 @@ func (f Fixture) MarkedAcrossFiles() []string {
 	return marked
 }
 
-func (f Fixture) UnmarkedAcrossFiles() []string {
-	var missing []string
-	for _, name := range f.ReadsAcrossFiles() {
-		if !slices.Contains(f.MarkedAcrossFiles(), name) {
-			missing = append(missing, name)
-		}
-	}
-
-	return missing
-}

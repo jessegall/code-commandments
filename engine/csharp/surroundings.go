@@ -588,45 +588,6 @@ func (n Node) IsInTest() bool {
 
 var collectionMutators = []string{"Add", "AddRange", "Insert", "InsertRange", "Remove", "RemoveAt", "RemoveAll", "RemoveRange", "Clear", "Sort", "Reverse", "Enqueue", "Dequeue", "Push", "Pop", "TryAdd", "TryRemove"}
 
-func (n Node) collectionWalkedLive() (Node, bool) {
-	if n.Is("SimpleMemberAccessExpression") && slices.Contains([]string{"Keys", "Values"}, n.ReferencedName()) {
-		return n.At(0).collectionWalkedLive()
-	}
-	if strings.Contains(n.Type().Name(), "System.Collections.Concurrent.") {
-		return Node{}, false
-	}
-
-	return n, n.Is("IdentifierName", "SimpleMemberAccessExpression")
-}
-
-func (n Node) statementsHolding() []Node {
-	for held := n; held.Exists(); held = held.Parent() {
-		if held.Parent().Is("Block") {
-			return held.Parent().Children()
-		}
-	}
-
-	return nil
-}
-
-func (n Node) leaves(loop Node) bool {
-	if n.Is("ReturnStatement", "ThrowStatement", "YieldBreakStatement") {
-		return true
-	}
-
-	return n.Is("BreakStatement") && n.nearestLoop().Node() == loop.Node()
-}
-
-func (n Node) nearestLoop() Node {
-	for loop := n.Parent(); loop.Exists(); loop = loop.Parent() {
-		if loop.IsLoop() {
-			return loop
-		}
-	}
-
-	return Node{}
-}
-
 func (n Node) IsUnreadCollaborator() bool {
 	name, taken := n.collaboratorTaken()
 	owner := n.EnclosingType()
@@ -793,18 +754,6 @@ func (n Node) ownStatement() Node {
 	}
 
 	return Node{}
-}
-
-func CallsBySymbol(codebase *engine.Codebase) map[string][]Node {
-	calls := map[string][]Node{}
-	for _, match := range In(codebase).WhereCall().Get() {
-		call := Node{Match: match}
-		if symbol := call.Target().Symbol(); symbol != "" {
-			calls[symbol] = append(calls[symbol], call)
-		}
-	}
-
-	return calls
 }
 
 func (n Node) ParameterPosition(name string) int {

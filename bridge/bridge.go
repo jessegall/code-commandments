@@ -461,4 +461,3 @@ func (e ToolchainMissing) Error() string {
 	return "the " + e.Language + " bridge needs " + e.Need + ", which is not installed here, so " + e.Language + " is not judged; everything else is"
 }
 
-func (ToolchainMissing) unavailable() {}

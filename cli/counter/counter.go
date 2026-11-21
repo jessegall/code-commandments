@@ -43,26 +43,3 @@ func (c Counter) FirstThenEvery() (bool, error) {
 	return count == 1 || c.every > 0 && count%c.every == 0, err
 }
 
-func (c Counter) Due() bool {
-	if count, _ := c.Bump(); count < c.every {
-		return false
-	}
-
-	c.Reset()
-
-	return true
-}
-
-func (c Counter) Reset() {
-	c.file.Write(state.New(state.Int("count", 0)))
-}
-
-func (c Counter) MovedBy(work, stretch int) bool {
-	if marked := c.Count(); marked > 0 && work-(marked-1) < stretch {
-		return false
-	}
-
-	c.file.Write(state.New(state.Int("count", work+1)))
-
-	return true
-}

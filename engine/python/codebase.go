@@ -19,20 +19,8 @@ func (c *Codebase) WhereFunction() *engine.Query {
 	return c.WhereKind("FunctionDef", "AsyncFunctionDef")
 }
 
-func (c *Codebase) WhereMethodDeclaration() *engine.Query {
-	return c.WhereFunction().Where(engine.As(Node.IsMethod))
-}
-
 func (c *Codebase) WhereClass() *engine.Query {
 	return c.WhereKind("ClassDef")
-}
-
-func (c *Codebase) WhereStatement() *engine.Query {
-	return c.Where(engine.As(Node.IsStatement))
-}
-
-func (c *Codebase) WhereExpression() *engine.Query {
-	return c.Where(engine.As(Node.IsEvaluated))
 }
 
 func (c *Codebase) WhereCall() *engine.Query {

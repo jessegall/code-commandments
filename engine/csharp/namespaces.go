@@ -14,12 +14,6 @@ type NamespaceGraph struct {
 	elsewhere engine.ArrowCounts
 }
 
-func Namespaces(codebase *engine.Codebase) *NamespaceGraph {
-	return engine.Analysis(codebase, "csharp.namespaces", func(codebase *engine.Codebase) *NamespaceGraph {
-		return graphOf(codebase, Of(codebase).facts, nil)
-	})
-}
-
 func graphOf(codebase *engine.Codebase, facts, own *Summary) *NamespaceGraph {
 	graph := &NamespaceGraph{homes: facts.homes}
 	if own != nil {

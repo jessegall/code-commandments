@@ -2,7 +2,6 @@
 package typescript
 
 import (
-	"slices"
 
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -24,10 +23,6 @@ func (n Node) Operator() string {
 	return n.Match.Operator()
 }
 
-func (n Node) IsEquality() bool {
-	return n.Kind() == "BinaryExpression" && slices.Contains([]string{"===", "=="}, n.Operator())
-}
-
 func (n Node) Left() Node {
 	return Node{n.Child("left")}
 }
@@ -40,10 +35,6 @@ func (n Node) IsLiteral() bool {
 	node := n.Node()
 
 	return node != nil && node.LiteralKind != "" && node.LiteralKind != "interpolated"
-}
-
-func (n Node) IsReference() bool {
-	return slices.Contains([]string{"Identifier", "PropertyAccessExpression", "ElementAccessExpression"}, n.Kind())
 }
 
 func (n Node) Source() string {

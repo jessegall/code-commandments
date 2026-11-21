@@ -35,8 +35,6 @@ func (e RoslynUnavailable) Error() string {
 	return "the C# bridge is not available (" + e.reason + "), so C# is not judged; everything else is"
 }
 
-func (RoslynUnavailable) unavailable() {}
-
 // RoslynFailed is a C# bridge that started and then failed: C# goes unjudged, and everything else is judged.
 type RoslynFailed struct {
 	reason string
@@ -54,8 +52,6 @@ func RoslynFailure(err error) error {
 func (e RoslynFailed) Error() string {
 	return "the C# bridge failed: " + e.reason + ", so C# is not judged; everything else is"
 }
-
-func (RoslynFailed) unavailable() {}
 
 func Roslyn(roots ...string) ([]string, error) {
 	switch named := os.Getenv(roslynVariable); named {

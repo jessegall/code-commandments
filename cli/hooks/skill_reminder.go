@@ -289,15 +289,6 @@ var refusals sync.Map
 
 func refused(file string, why string) { refusals.Store(file, why) }
 
-func RefusalOf(file string) string {
-	why, found := refusals.Load(file)
-	if !found {
-		return ""
-	}
-
-	return why.(string)
-}
-
 func projectOf(folder string) string {
 	if project := git.ProjectRoot(folder); project != "" {
 		return project

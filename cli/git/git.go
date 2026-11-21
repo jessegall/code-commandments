@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -295,39 +294,6 @@ func WorkStart(root string) string {
 
 const headCommit = "HEAD"
 
-func DeletedVsBranch(root, base string) (deleted []string, ok bool) {
-	mergeBase := MergeBase(root, base)
-	if mergeBase == "" {
-		return nil, false
-	}
-
-	return deletedSince(root, mergeBase), true
-}
-
-func deletedSince(root, commit string) []string {
-	var deleted []string
-
-	for _, relative := range anyLineBreak.Split(run(root, "diff", "--name-only", "--diff-filter=D", commit), -1) {
-		relative = trim(relative)
-
-		if relative == "" || !source.Judges(relative) {
-			continue
-		}
-
-		deleted = append(deleted, relative)
-	}
-
-	return deleted
-}
-
-func DiffersFromTip(root, branch string) (changed map[string]bool, deleted []string, ok bool) {
-	if MergeBase(root, branch) == "" {
-		return nil, nil, false
-	}
-
-	return ChangedSince(root, branch), deletedSince(root, branch), true
-}
-
 func ChangedOn(root, base, head string) (changed map[string]bool, ok bool) {
 	if head == CurrentBranch(root) {
 		return ChangedVsBranch(root, base)
@@ -377,18 +343,6 @@ func ChangedBetween(root, before, after string) []string {
 
 func Listed(root string, relative []string) map[string]bool {
 	return pathSet(root, strings.Join(relative, "\n"))
-}
-
-func StillChanged(root string, relative []string) []string {
-	changed := ChangedVsHead(root)
-
-	return slices.DeleteFunc(slices.Clone(relative), func(one string) bool {
-		for path := range Listed(root, []string{one}) {
-			return !changed[path]
-		}
-
-		return true
-	})
 }
 
 // Tracked is every file git tracks under the folders, named relative to the checkout.

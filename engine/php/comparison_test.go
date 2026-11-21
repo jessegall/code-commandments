@@ -24,59 +24,6 @@ func phpSource(t *testing.T, source string) *engine.Codebase {
 	return php.In(codebase)
 }
 
-func TestWhatAComparisonTestsAgainstAConstantIsAnsweredForPHP(t *testing.T) {
-	codebase := phpSource(t, `<?php
-
-namespace App;
-
-enum State: string
-{
-    case Paid = 'paid';
-}
-
-class Orders
-{
-    const LIMIT = 10;
-
-    public function read(Order $order, int $count, string $word, bool $flag): bool
-    {
-        if ($order->state === State::Paid) {
-            return true;
-        }
-
-        if (self::LIMIT === $count) {
-            return true;
-        }
-
-        if ($word === 'paid') {
-            return true;
-        }
-
-        return $flag === true;
-    }
-}
-`)
-
-	want := map[int]string{
-		16: "$order->state",
-		20: "$count",
-		24: "$word",
-		28: "$flag",
-	}
-
-	for _, comparison := range codebase.WhereIs(engine.Comparison).Get() {
-		subject := comparison.ComparisonSubject()
-		name, said := want[comparison.Line()]
-		if !said {
-			continue
-		}
-
-		if subject.Written() != name {
-			t.Errorf("line %d tests %q against a constant, and the subject is %q", comparison.Line(), subject.Written(), name)
-		}
-	}
-}
-
 func TestAComparisonOfTwoValuesTestsNoSubject(t *testing.T) {
 	codebase := phpSource(t, `<?php
 

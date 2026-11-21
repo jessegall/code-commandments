@@ -5,43 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jessegall/code-commandments/contract"
 )
-
-func parsingFor(t *testing.T, asked chan []string, hold chan struct{}) *parsing {
-	t.Helper()
-
-	parser := &parsing{
-		held:   map[string]read{},
-		asking: map[string]bool{},
-		filled: make(chan struct{}),
-		wake:   make(chan struct{}, 1),
-		ahead:  true,
-		reading: func(files []string) ([]*contract.Stream, error) {
-			asked <- files
-
-			if hold != nil {
-				<-hold
-			}
-
-			return []*contract.Stream{{
-				Header: contract.Header{Language: contract.Python},
-				Files:  parsedFiles(files),
-			}}, nil
-		},
-	}
-
-	return parser
-}
-
-func parsedFiles(files []string) []*contract.File {
-	var written []*contract.File
-	for _, file := range files {
-		written = append(written, &contract.File{Path: file, Language: contract.Python})
-	}
-
-	return written
-}
 
 func TestAHalfWrittenFileDoesNotLoseTheGroupsParse(t *testing.T) {
 	folder, err := filepath.EvalSymlinks(t.TempDir())

@@ -14,10 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/walk"
 )
 
-func (n Node) AssignedPropertyName() string {
-	return assignedPropertyName(n.Match)
-}
-
 func assignedPropertyName(node engine.Match) string {
 	target := node.Child("var")
 	if node.Kind() != "Expr_Assign" || target.Kind() != "Expr_PropertyFetch" || !isThis(target.Child("var")) || target.Child("name").Kind() != "Identifier" {

@@ -3,8 +3,6 @@ package story
 import (
 	"flag"
 	"fmt"
-	"os"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -33,30 +31,6 @@ const (
 	relayVariable   = "STORY_RELAY"
 	projectVariable = "STORY_PROJECT"
 )
-
-func Begin(t *testing.T) *Story {
-	t.Helper()
-
-	_, file, _, _ := runtime.Caller(1)
-
-	if *rehearsing {
-		s := &Story{t: t, journal: Journal{rehearsing: true}, project: "/rehearsal", file: file, began: map[string]int{}, rehearsal: true}
-		t.Cleanup(func() { thisRun.Keeps(Told{Name: t.Name(), File: s.file, Steps: s.steps}) })
-
-		return s
-	}
-
-	address, project := os.Getenv(relayVariable), os.Getenv(projectVariable)
-	if address == "" || project == "" {
-		t.Fatalf("a story runs through scripts/stories, which starts the relay and names the project in %s and %s",
-			relayVariable, projectVariable)
-	}
-
-	s := &Story{t: t, journal: Reached(address), project: project, file: file, began: costsOf(project)}
-	t.Cleanup(func() { thisRun.Keeps(Told{Name: t.Name(), File: s.file, Steps: s.steps}) })
-
-	return s
-}
 
 func (s *Story) Asks(argv ...string) Ran {
 	s.t.Helper()
@@ -171,17 +145,3 @@ func costsOf(project string) map[string]int {
 	return counted
 }
 
-func Checked(m *testing.M) int {
-	code := m.Run()
-
-	overlaps := thisRun.Overlaps()
-	for _, overlap := range overlaps {
-		fmt.Fprintln(os.Stderr, "✗ "+overlap)
-	}
-
-	if len(overlaps) > 0 {
-		return 1
-	}
-
-	return code
-}

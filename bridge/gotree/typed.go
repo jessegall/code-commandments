@@ -34,14 +34,6 @@ func (w *writer) symbol(name *ast.Ident) string {
 	return w.fieldSymbol(name, object)
 }
 
-func (w *writer) oneSymbol(names []*ast.Ident) string {
-	if len(names) != 1 {
-		return ""
-	}
-
-	return w.symbol(names[0])
-}
-
 func (w *writer) fieldSymbol(name *ast.Ident, object types.Object) string {
 	variable, isVariable := object.(*types.Var)
 	if !isVariable || !variable.IsField() {

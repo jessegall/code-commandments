@@ -3,8 +3,6 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
@@ -62,20 +60,6 @@ class Till:
 def shadowed(Decimal: int) -> int:
     return Decimal
 `,
-}
-
-func callTo(t *testing.T, file *engine.File, spelled string) *contract.Node {
-	t.Helper()
-	source, _ := file.Source()
-	for _, node := range file.Nodes() {
-		callee := file.Match(node.ID).Child("func")
-		if node.Kind == "Call" && callee.Exists() && string(source[callee.Node().Span.Start:callee.Node().Span.End]) == spelled {
-			return node
-		}
-	}
-	t.Fatalf("no call to %s", spelled)
-
-	return nil
 }
 
 func TestAnOverridingMethodIsInherited(t *testing.T) {

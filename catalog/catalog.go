@@ -85,10 +85,6 @@ func LanguagesOf(engine Engine) []contract.Language {
 	return languages[engine]
 }
 
-func Reads(engine Engine, language contract.Language) bool {
-	return slices.Contains(languages[engine], language)
-}
-
 var formerly = map[string]Engine{"backend": PHP, "frontend": Vue}
 
 func FormerNames() []string {

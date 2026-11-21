@@ -2,11 +2,9 @@ package config
 
 import (
 	"encoding/json"
-	"os/exec"
 	"path/filepath"
 	"sync"
 
-	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 // served is the config a version-5 journal holds for its project and serves to every checkout: the copy this process fetched, the version it was at, and the project it belongs to. It is fetched only once the journal has said it holds one, by a version on a line it sent.
@@ -64,11 +62,3 @@ func TheJournalHolds(project string, version int, fetch func() ([]byte, error)) 
 	return was, parsed, moved
 }
 
-func FetchedFromTheJournal(journal, project string) func() ([]byte, error) {
-	return func() ([]byte, error) {
-		asked := exec.Command(journal, "plugin", "config", workspace.JournalPlugin, "--json")
-		asked.Dir = project
-
-		return asked.Output()
-	}
-}

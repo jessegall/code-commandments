@@ -1,7 +1,6 @@
 package vue
 
 import (
-	"slices"
 	"strings"
 )
 
@@ -12,23 +11,6 @@ type WrittenAttribute struct {
 	Valued bool
 	Start  int
 	End    int
-}
-
-func (a WrittenAttribute) Render() string {
-	if !a.Valued {
-		return a.Name
-	}
-
-	return a.Name + `="` + a.Value + `"`
-}
-
-func RenderAll(attributes []WrittenAttribute) string {
-	rendered := make([]string, 0, len(attributes))
-	for _, attribute := range attributes {
-		rendered = append(rendered, attribute.Render())
-	}
-
-	return strings.Join(rendered, " ")
 }
 
 func (e Element) WrittenAttributes() []WrittenAttribute {
@@ -57,66 +39,6 @@ func (e Element) WrittenAttribute(name string) (WrittenAttribute, bool) {
 	}
 
 	return WrittenAttribute{}, false
-}
-
-func (e Element) CarriedDirectives() []WrittenAttribute {
-	var carried []WrittenAttribute
-	for _, name := range []string{"v-if", "v-else-if", "v-else", "v-for"} {
-		if attribute, written := e.WrittenAttribute(name); written {
-			carried = append(carried, attribute)
-		}
-	}
-	if _, loops := e.WrittenAttribute("v-for"); !loops {
-		return carried
-	}
-	for _, key := range []string{":key", "key"} {
-		if attribute, written := e.WrittenAttribute(key); written {
-			return append(carried, attribute)
-		}
-	}
-
-	return carried
-}
-
-func (e Element) IsTemplate() bool {
-	return strings.EqualFold(e.Tag(), "template")
-}
-
-func (e Element) SourceOmitting(source string, from, to int, names []string) string {
-	type cut struct{ start, end int }
-	var cuts []cut
-	for _, name := range names {
-		attribute, written := e.WrittenAttribute(name)
-		if !written || attribute.Start < from || attribute.End > to {
-			continue
-		}
-		start, end := RemovalSpan(source, from, to, attribute.Start, attribute.End)
-		cuts = append(cuts, cut{start, end})
-	}
-	slices.SortStableFunc(cuts, func(a, b cut) int { return b.start - a.start })
-	text := source[from:to]
-	for _, removed := range cuts {
-		text = text[:removed.start-from] + text[removed.end-from:]
-	}
-
-	return text
-}
-
-func RemovalSpan(source string, from, to, start, end int) (int, int) {
-	for start > from && (source[start-1] == ' ' || source[start-1] == '\t') {
-		start--
-	}
-	if start == from || source[start-1] == '\n' {
-		scan := end
-		for scan < to && (source[scan] == ' ' || source[scan] == '\t') {
-			scan++
-		}
-		if scan < to && source[scan] == '\n' {
-			end = scan + 1
-		}
-	}
-
-	return start, end
 }
 
 func readAttribute(text string, start, end int) WrittenAttribute {

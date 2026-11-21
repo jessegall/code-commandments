@@ -14,18 +14,6 @@ func In(codebase *engine.Codebase) *Codebase {
 	return &Codebase{Codebase: codebase.Of(contract.TypeScript, contract.Vue)}
 }
 
-func (c *Codebase) WhereField() *engine.Query {
-	return c.WhereKind("PropertyDeclaration")
-}
-
-func (c *Codebase) WhereMemberAccess() *engine.Query {
-	return c.WhereKind("PropertyAccessExpression")
-}
-
-func (c *Codebase) WhereFunction() *engine.Query {
-	return c.Where(engine.As(Node.IsFunction))
-}
-
 func (c *Codebase) WhereObjectType() *engine.Query {
 	return c.Where(engine.As(Node.IsObjectType))
 }

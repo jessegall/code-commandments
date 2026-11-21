@@ -549,7 +549,7 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		wanted := operand(0)
 		result := engine.False
 		for at := range operands[1:] {
-			result = result.Or(equal(wanted, operand(at + 1)))
+			result = result.Or(equal(wanted, operand(at+1)))
 		}
 
 		return truthValue(result)
@@ -756,6 +756,9 @@ func (e evaluation) assignable(v, named value) engine.Truth {
 	resolved, isType := v.held.(*contract.Type)
 	if site, isNode := nodeOf(v); isNode {
 		resolved, isType = site.Typed(), site.Typed() != nil
+		if node := site.Node(); !isType && node != nil && node.Kind == "type" && node.Symbol != "" {
+			resolved, isType = &contract.Type{Kind: "named", Name: node.Symbol}, true
+		}
 	}
 	base, isText := named.held.(string)
 	if identities := engine.PackageIdentitiesNamed(base); len(identities) > 1 {

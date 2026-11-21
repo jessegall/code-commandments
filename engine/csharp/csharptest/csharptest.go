@@ -4,13 +4,11 @@ package csharptest
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/csharp"
 )
 
 func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
@@ -36,20 +34,3 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 	return engine.Load(stream)
 }
 
-func First(t testing.TB, codebase *engine.Codebase, path, kind string) csharp.Node {
-	t.Helper()
-	for _, file := range codebase.Files() {
-		if !strings.HasSuffix(file.Path, "/"+path) {
-			continue
-		}
-		for _, match := range file.Match(0).Descendants() {
-			if match.Kind() == kind {
-				return csharp.Node{Match: match}
-			}
-		}
-		t.Fatalf("no %s in %s", kind, path)
-	}
-	t.Fatalf("no file %s", path)
-
-	return csharp.Node{}
-}

@@ -18,10 +18,6 @@ func (c *Codebase) WhereElement() *engine.Query {
 	return c.WhereKind("Element")
 }
 
-func (c *Codebase) WhereComponent() *engine.Query {
-	return c.WhereKind("Component")
-}
-
 func (c *Codebase) Component(path string) (Component, bool) {
 	for _, file := range c.Files() {
 		if file.Path == path {

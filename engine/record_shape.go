@@ -100,10 +100,3 @@ func (m Match) IsNamedConstructor() bool {
 	return read != nil && read(m)
 }
 
-func (m Match) clumpOwner() string {
-	if owner := m.methodOwner(); owner != "" {
-		return owner
-	}
-
-	return m.File()
-}

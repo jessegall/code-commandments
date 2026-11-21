@@ -2,7 +2,6 @@
 package vue
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
@@ -34,10 +33,6 @@ func (e Element) IsComponent() bool {
 	return e.IsElement() && e.HasFlag("component")
 }
 
-func (e Element) IsHandedToAComponent() bool {
-	return e.IsComponent() || e.Tag() == "template" && e.Parent().IsComponent()
-}
-
 func (e Element) Writes(name string) bool {
 	_, plain := e.WrittenAttribute(name)
 
@@ -45,19 +40,6 @@ func (e Element) Writes(name string) bool {
 }
 
 var formControls = []string{"input", "select", "textarea"}
-
-func (e Element) HoldsState() bool {
-	for _, element := range append([]Element{e}, e.DescendantElements()...) {
-		if element.IsComponent() || element.Tag() == "slot" || slices.Contains(formControls, element.Tag()) {
-			return true
-		}
-		if _, ref := element.WrittenAttribute("ref"); ref || element.Has(Model) || element.Binding("ref").Exists() {
-			return true
-		}
-	}
-
-	return false
-}
 
 func (e Element) Directives() []Directive {
 	var directives []Directive
@@ -78,25 +60,6 @@ func (e Element) Directive(name Name) Directive {
 	}
 
 	return Directive{}
-}
-
-func (e Element) Has(name Name) bool {
-	return e.Directive(name).Exists()
-}
-
-func (e Element) HasAny(names ...Name) bool {
-	return slices.ContainsFunc(names, e.Has)
-}
-
-func (e Element) Attributes() []engine.Match {
-	var attributes []engine.Match
-	for _, child := range e.Children() {
-		if child.Kind() == "Attribute" {
-			attributes = append(attributes, child)
-		}
-	}
-
-	return attributes
 }
 
 func (e Element) Elements() []Element {
@@ -127,17 +90,6 @@ func (e Element) Siblings() []Element {
 	}
 
 	return siblings
-}
-
-func (e Element) Following() []Element {
-	siblings := e.Siblings()
-	for index, sibling := range siblings {
-		if sibling.Node() == e.Node() {
-			return siblings[index+1:]
-		}
-	}
-
-	return nil
 }
 
 func (e Element) Binding(prop string) Directive {
@@ -177,18 +129,6 @@ func (e Element) Size() int {
 	return size
 }
 
-func (e Element) Rendered() int {
-	rendered := 0
-	if !e.IsTemplate() {
-		rendered = 1
-	}
-	for _, child := range e.Elements() {
-		rendered += child.Rendered()
-	}
-
-	return rendered
-}
-
 func (e Element) Expressions() []typescript.Node {
 	var expressions []typescript.Node
 	for _, child := range e.Children() {
@@ -206,16 +146,6 @@ func (e Element) Expressions() []typescript.Node {
 	}
 
 	return expressions
-}
-
-func (e Element) DescendantElements() []Element {
-	var below []Element
-	for _, child := range e.Elements() {
-		below = append(below, child)
-		below = append(below, child.DescendantElements()...)
-	}
-
-	return below
 }
 
 func (e Element) IsTemplateRoot() bool {

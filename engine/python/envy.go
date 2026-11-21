@@ -77,15 +77,6 @@ func (n Node) delegatesElements(loops []Node, _ string) bool {
 	return !slices.ContainsFunc(loops, func(loop Node) bool { return !engine.PassesItsElementOn(loop.Match) })
 }
 
-func (n Node) bodyExpressions() []Node {
-	var within []Node
-	for _, statement := range n.ChildrenIn("body") {
-		within = append(within, statement.evaluatedIn()...)
-	}
-
-	return within
-}
-
 func (n Node) AttributeReachesOn(names []string) map[string]int {
 	reaches := map[string]int{}
 	for _, expression := range n.ExpressionsWithin() {

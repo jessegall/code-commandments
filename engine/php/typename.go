@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/engine"
 )
 
 var builtins = []string{
@@ -138,19 +137,6 @@ func (n TypeName) Render() string {
 	return ""
 }
 
-func (n TypeName) UnionIncludes(fqcn string) bool {
-	if !n.isUnion() {
-		return false
-	}
-	for _, member := range n.members() {
-		if member.isWrittenAsName() && strings.TrimLeft(member.written.Name, `\`) == strings.TrimLeft(fqcn, `\`) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (n TypeName) Names() []string {
 	if n.written == nil {
 		return nil
@@ -168,14 +154,6 @@ func (n TypeName) Names() []string {
 	}
 
 	return nil
-}
-
-func PromisesScalar(param engine.Match, scalar string) bool {
-	declared := Written(param.Node().Written)
-
-	return param.Exists() && !param.Child("default").Exists() && declared.written != nil && !declared.isSugared() &&
-		declared.written.Kind == "keyword" && !declared.isWrittenAsName() &&
-		declared.written.Name == scalar
 }
 
 func Overlaps(one, other string) bool {

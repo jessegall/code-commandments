@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -74,6 +73,3 @@ func writableFolder(folder string) bool {
 	return true
 }
 
-func bookkeepingFile(root, name string) string {
-	return filepath.Join(bookkeepingIn(root), name)
-}

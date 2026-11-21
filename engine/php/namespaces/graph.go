@@ -116,23 +116,3 @@ func (g *NamespaceGraph) MutualPairs() [][2]string {
 	return pairs
 }
 
-func Distinct(references []engine.Match) []engine.Match {
-	seen := map[[2]string]bool{}
-	var kept []engine.Match
-	for _, reference := range references {
-		if reference.Parent().Kind() == "UseItem" {
-			continue
-		}
-		referrer := php.EnclosingClassName(reference)
-		if referrer == "" {
-			referrer = reference.File()
-		}
-		key := [2]string{referrer, reference.Name()}
-		if !seen[key] {
-			seen[key] = true
-			kept = append(kept, reference)
-		}
-	}
-
-	return kept
-}

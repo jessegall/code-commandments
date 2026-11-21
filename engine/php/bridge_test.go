@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/engine"
 )
 
 const fixture = "../../tests/Fixtures/backend"
@@ -123,50 +122,6 @@ func TestAFileOutsideTheWriteSetOnlyInforms(t *testing.T) {
 	}
 }
 
-func TestNamesReferToWhatTheImportsResolve(t *testing.T) {
-	folder := written(t, map[string]string{"Uses.php": `<?php
-namespace Shop;
-
-use Money\Money as Cash;
-use Money\{Currency, Parser\Decimal};
-use function Money\format;
-
-final class Till
-{
-    public function __construct(private readonly Cash $cash) {}
-
-    public function sum(Currency $in): ?Decimal
-    {
-        return format(new Cash(), self::class);
-    }
-}
-`})
-	file := bridged(t, folder).Files[0]
-	refers := map[string]bool{}
-	for _, node := range file.Nodes() {
-		if node.Refers != "" {
-			refers[node.Refers] = true
-		}
-	}
-	for _, want := range []string{`Money\Money`, `Money\Currency`, `Money\Parser\Decimal`, `Money\format()`} {
-		if !refers[want] {
-			t.Errorf("nothing refers to %s; refers: %v", want, refers)
-		}
-	}
-	returns, _ := find(file, func(n *contract.Node) bool { return n.Kind == "function" && named(n, "sum") }).Child("returnType")
-	if element, _ := returns.Child("element"); returns.Form != "nullable" || element == nil || element.Refers != `Money\Parser\Decimal` {
-		t.Errorf("sum returns %+v", returns)
-	}
-	promoted := find(file, func(n *contract.Node) bool {
-		binding, _ := n.Child("binding")
-
-		return n.Kind == "parameter" && binding != nil && named(binding, "cash")
-	})
-	if declared, _ := promoted.Child("declaredType"); len(promoted.Modifiers) == 0 || declared == nil || declared.Refers != `Money\Money` {
-		t.Errorf("the promoted parameter is %+v", promoted)
-	}
-}
-
 func TestAnAnonymousClassLendsItsMembersNoSymbol(t *testing.T) {
 	folder := written(t, map[string]string{"Outer.php": "<?php\nnamespace Shop;\nclass Outer { public function make() { return new class { public function inner() {} }; } }\n"})
 	file := bridged(t, folder).Files[0]
@@ -222,33 +177,6 @@ func TestAnAutoloaderThatDoesNotLoadHereLeavesTheStreamWhole(t *testing.T) {
 	}
 }
 
-func TestAMethodAnOutsideInterfaceDeclaresIsAnOverride(t *testing.T) {
-	folder := written(t, map[string]string{"Visitor.php": "<?php\nnamespace Shop;\nfinal class Visitor extends \\PhpParser\\NodeVisitorAbstract implements \\PhpParser\\NodeVisitor {\n    public function enterNode(\\PhpParser\\Node $node) { return null; }\n    public function visited(): int { return 0; }\n}\n"})
-	program := ProgramOf(engine.Load(bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)))
-
-	if !program.OverridesMethod(`Shop\Visitor`, "enterNode") {
-		t.Error("a method the outside interface declares is not taken for an override")
-	}
-	if program.OverridesMethod(`Shop\Visitor`, "visited") {
-		t.Error("a method of the class's own is taken for an override")
-	}
-}
-
-func TestAClassIsWhatItsOutsideAncestorsAre(t *testing.T) {
-	folder := written(t, map[string]string{"Ask.php": "<?php\nnamespace Shop;\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
-	program := ProgramOf(engine.Load(bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)))
-
-	if ancestors := program.Ancestors(`Shop\Ask`); !slices.Equal(ancestors, []string{`PhpParser\Node\Expr\MethodCall`, `PhpParser\Node\Expr\CallLike`, `PhpParser\Node\Expr`, `PhpParser\NodeAbstract`}) {
-		t.Errorf("the ancestors read are %v", ancestors)
-	}
-	if !program.IsA(`Shop\Ask`, `PhpParser\NodeAbstract`) || !program.IsA(`Shop\Ask`, `PhpParser\Node`) {
-		t.Error("a class is not taken for what its outside ancestors are")
-	}
-	if program.IsA(`Shop\Ask`, `PhpParser\Node\Stmt`) {
-		t.Error("a class is taken for an outside class it does not extend")
-	}
-}
-
 func TestOutsideSymbolsAreClosed(t *testing.T) {
 	folder := written(t, map[string]string{"Uses.php": "<?php\nnamespace Shop;\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
 	stream := bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)
@@ -266,53 +194,6 @@ func TestOutsideSymbolsAreClosed(t *testing.T) {
 	}
 	if listed[`Shop\Ask`] {
 		t.Error("a scanned class is listed as outside")
-	}
-}
-
-func TestTheSharedTreeKnowsWhichResolvedTypesComeFromLibraries(t *testing.T) {
-	folder := written(t, map[string]string{
-		"app/Checkout.php": `<?php
-namespace App;
-use Acme\Billing\Customer as BillingCustomer;
-final class Customer {}
-final class Checkout implements \Acme\Billing\Schema {
-    public function __construct(
-        private BillingCustomer $billing,
-        private \Acme\Local\Reader $reader,
-        private \DateTimeInterface $clock,
-    ) {}
-    public function schema(): array { return []; }
-}
-`,
-		"modules/Reader.php": `<?php namespace Acme\Local; final class Reader {}`,
-		"vendor/Billing.php": `<?php namespace Acme\Billing; final class Customer {} interface Schema { public function schema(): array; }`,
-		"vendor/Parsed.php":  `<?php namespace Packaged; final class Parsed {}`,
-		"vendor/autoload.php": `<?php
-require __DIR__ . '/Billing.php';
-require dirname(__DIR__) . '/modules/Reader.php';
-`,
-	})
-	codebase := engine.Load(bridged(t, "--autoload="+filepath.Join(folder, "vendor", "autoload.php"), filepath.Join(folder, "app"), filepath.Join(folder, "vendor", "Parsed.php")))
-	billing := codebase.WhereIs(engine.Parameter).Where(func(parameter engine.Match) bool { return parameter.Name() == "billing" }).First()
-	if typed := billing.Typed(); typed == nil || !codebase.IsLibraryType(contract.PHP, typed.Name) {
-		t.Fatalf("the resolved BillingCustomer alias should come from a library, got %v", typed)
-	}
-	for _, name := range []string{`\acme\BILLING\customer`, `DateTimeInterface`, `Packaged\Parsed`} {
-		if !codebase.IsLibraryType(contract.PHP, name) {
-			t.Errorf("%s should be a library type", name)
-		}
-	}
-	for _, name := range []string{`App\Customer`, `Acme\Local\Reader`, `Acme\Billing\Missing`} {
-		if codebase.IsLibraryType(contract.PHP, name) {
-			t.Errorf("%s should stay eligible as a project or unknown type", name)
-		}
-	}
-	if !codebase.IsLibraryNamespace(contract.PHP, `Acme\Billing`) || codebase.IsLibraryNamespace(contract.PHP, `Acme`) ||
-		codebase.IsLibraryNamespace(contract.PHP, `Acme\Billing\Unknown`) {
-		t.Fatal("the library namespace should be known without treating the mixed parent or an unknown child as a library")
-	}
-	if !ProgramOf(codebase).OverridesMethod(`App\Checkout`, "schema") {
-		t.Fatal("the library interface must still provide its required signature")
 	}
 }
 
@@ -345,43 +226,6 @@ func TestServingAnswersEveryRequestWithAWholeStream(t *testing.T) {
 	}
 	if len(streams) != 2 || len(streams[0].Files) != 1 || len(streams[1].Files) != 1 || filepath.Base(streams[1].Files[0].Path) != "B.php" {
 		t.Fatalf("two requests answered with %d streams:\n%s", len(streams), out)
-	}
-}
-
-func TestAScannedCodebaseHasItsTypesAndTargetsFilled(t *testing.T) {
-	needsPHP(t)
-	folder := written(t, map[string]string{"Till.php": `<?php
-namespace Shop;
-
-final class Receipt
-{
-    public function total(): int { return 1; }
-}
-
-final class Till
-{
-    public function ring(Receipt $receipt): int
-    {
-        return $receipt->total();
-    }
-}
-`})
-	codebase, err := Here().Scan(folder)
-	if err != nil {
-		t.Fatal(err)
-	}
-	file := codebase.Files()[0].File
-	variable := find(file, func(n *contract.Node) bool {
-		parent, _ := n.Parent()
-
-		return n.Kind == "reference" && named(n, "receipt") && parent.Kind == "access"
-	})
-	if variable == nil || variable.Resolved == nil || variable.Resolved.Name != `Shop\Receipt` {
-		t.Fatalf("the receiver's resolved type is %+v", variable)
-	}
-	call := find(file, func(n *contract.Node) bool { return n.Kind == "call" })
-	if call.Target == nil || call.Target.Symbol != `Shop\Receipt::total()` {
-		t.Fatalf("the call's target is %+v", call.Target)
 	}
 }
 

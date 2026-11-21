@@ -1,13 +1,9 @@
 package backend
 
 import (
-	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors/shared"
-	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/engine/php/packages"
 )
 
 // language is what PHP states about judging the shared rules: the engine it judges them under.
@@ -26,15 +22,3 @@ var (
 	RepeatedFolderPathDetector            = shared.Bind[shared.RepeatedFolderPath, language]()
 )
 
-func usesDynamicMembers(codebase *engine.Codebase, access engine.Match) bool {
-	return packages.Excuses(codebase, packages.DynamicMembers, php.TypesOf(codebase).TypeAtRead(access.Receiver()), "")
-}
-
-func isContractMethod(match engine.Match) bool {
-	return packages.Excuses(match.Codebase(), packages.ContractMethod, php.EnclosingClassName(match), php.EnclosingFunctionName(match))
-}
-
-func buildsValidationResponse(codebase *engine.Codebase, thrown engine.Match) bool {
-	return thrown.Kind() == "Expr_StaticCall" && packages.Excuses(codebase, packages.ValidationResponse,
-		strings.TrimLeft(thrown.Child("class").Name(), `\`), thrown.Child("name").Name())
-}

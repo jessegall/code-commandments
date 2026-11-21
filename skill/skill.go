@@ -60,10 +60,6 @@ func All() []Skill {
 	return skills.All()
 }
 
-func Every(engine catalog.Engine) []Skill {
-	return skills.Every(engine)
-}
-
 func Of(engine catalog.Engine) []Skill {
 	return skills.Of(engine)
 }

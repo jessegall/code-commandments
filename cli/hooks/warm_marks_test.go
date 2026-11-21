@@ -77,19 +77,6 @@ func tells(t *testing.T, data string) string {
 	return strings.Join(said, "\n")
 }
 
-func warming(t *testing.T) bool {
-	t.Helper()
-
-	running := false
-	reading.Range(func(_, _ any) bool {
-		running = true
-
-		return false
-	})
-
-	return running
-}
-
 func TestADetachedHeadIsNoBranch(t *testing.T) {
 	root, _ := migrationProject(t)
 

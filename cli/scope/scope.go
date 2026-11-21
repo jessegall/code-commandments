@@ -509,24 +509,6 @@ type Path struct {
 	root string
 }
 
-func Under(root string) Path {
-	real, err := walk.Resolved(root)
-	if err != nil {
-		real = root
-	}
-
-	return Path{strings.TrimRight(real, "/")}
-}
-
-func (p Path) Includes(file string) bool {
-	real, err := walk.Resolved(file)
-	if err != nil {
-		real = file
-	}
-
-	return walk.Within(p.root, real)
-}
-
 // Excluded leaves out what the project excluded.
 type Excluded struct {
 	paths source.Excluded

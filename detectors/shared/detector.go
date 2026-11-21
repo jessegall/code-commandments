@@ -100,28 +100,9 @@ type binding struct {
 	reject      engine.Check
 }
 
-func Rejecting(reject engine.Check, exemptions ...packages.Exemption) Option {
-	return func(bound *binding) {
-		bound.reject = reject
-		bound.exemptions = exemptions
-	}
-}
-
 // CandidateRule can apply an exemption before evaluating a group of candidates.
 type CandidateRule interface {
 	FindRejecting(*engine.Codebase, engine.Check) []engine.Match
-}
-
-func Unpublished(bound *binding) {
-	bound.unpublished = true
-}
-
-// Excusing is a language's own exemption from a shared rule: the package tags it honours, and the finding they excuse.
-func Excusing(excused func(*engine.Codebase, engine.Match) bool, exemptions ...packages.Exemption) Option {
-	return func(bound *binding) {
-		bound.excused = excused
-		bound.exemptions = exemptions
-	}
 }
 
 var registered sync.Map
@@ -140,16 +121,6 @@ type TracedRule interface {
 type TracedDetector struct {
 	Detector
 	traced TracedRule
-}
-
-func BindTraced[R TracedRule, L Language](options ...Option) TracedDetector {
-	var rule R
-
-	return register(TracedDetector{bound[R, L](options), rule})
-}
-
-func (d TracedDetector) ChainPath(finding engine.Match, codebase *engine.Codebase) []string {
-	return d.traced.ChainPath(finding, codebase)
 }
 
 // GroupedRule is a shared rule whose findings recur in groups: the key says which group a finding is in, the same in every language.

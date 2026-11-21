@@ -376,19 +376,6 @@ func (n Node) FirstMethodOfItsClass() (engine.Match, bool) {
 	return engine.Match{}, false
 }
 
-func PromotedParamName(params []engine.Match, index int) (string, bool) {
-	if index >= len(params) {
-		return "", false
-	}
-	param := params[index]
-	name := variableName(param.Child("var"))
-	if len(param.Node().Modifiers) == 0 || slices.Contains(param.Node().Modifiers, "variadic") || name == "" {
-		return "", false
-	}
-
-	return name, true
-}
-
 const crossings = 3
 
 func (n Node) ReachesThroughThreeTypes() bool {

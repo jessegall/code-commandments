@@ -61,10 +61,6 @@ func CountedVisit() {
 	visited.Add(1)
 }
 
-func CountedResolve() {
-	resolved.Add(1)
-}
-
 func CountedWalk(files int) {
 	walked.Add(int64(files))
 }

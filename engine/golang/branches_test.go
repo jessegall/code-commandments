@@ -2,7 +2,6 @@ package golang_test
 
 import (
 
-	"github.com/jessegall/code-commandments/engine"
 )
 
 var flows = map[string]string{
@@ -109,12 +108,3 @@ func (o Order) guarded() string {
 `,
 }
 
-func branchOf(function engine.Match) engine.Match {
-	for _, held := range function.Descendants() {
-		if held.Is(engine.Branch) {
-			return held
-		}
-	}
-
-	return engine.Match{}
-}

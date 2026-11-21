@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 func TestAQueuedAnswerNamesTheAgentItIsFor(t *testing.T) {
@@ -97,20 +96,3 @@ func TestTheMomentCarriesTheAgentTheEventNamed(t *testing.T) {
 	}
 }
 
-func queuedWithin(t *testing.T, data string, within time.Duration) []map[string]any {
-	t.Helper()
-	queue, _ := Queue4In(data)
-	until := time.Now().Add(within)
-
-	for time.Now().Before(until) {
-		if files, _ := filepath.Glob(filepath.Join(queue.Path(), "*.json")); len(files) > 0 {
-			return drained(t, data)
-		}
-
-		time.Sleep(50 * time.Millisecond)
-	}
-
-	t.Fatalf("nothing reached the queue in %s", within)
-
-	return nil
-}

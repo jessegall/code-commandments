@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -10,15 +9,8 @@ type Codebase struct {
 	*engine.Codebase
 }
 
-func In(codebase *engine.Codebase) *Codebase {
-	return &Codebase{Codebase: codebase.Of(contract.Go)}
-}
-
 // Node is the Go view of a match: what only a reader of Go can say about a Go node.
 type Node struct {
 	engine.Match
 }
 
-func (Node) Decorate(match engine.Match) Node {
-	return Node{match}
-}

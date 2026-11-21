@@ -134,19 +134,6 @@ func (c Checklist) PruneArchives() {
 	}
 }
 
-func (c Checklist) ClearAll() {
-	os.Remove(c.path)
-
-	for _, archive := range c.archives() {
-		os.Remove(archive)
-	}
-
-	if dir := filepath.Dir(c.path); filepath.Base(dir) == workspace.Sins {
-		os.Remove(dir + "/" + notes)
-		os.Remove(dir)
-	}
-}
-
 func (c Checklist) Delete() {
 	if walk.IsFile(c.path) {
 		os.Remove(c.path)

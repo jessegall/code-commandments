@@ -2,7 +2,6 @@ package rule_test
 
 import (
 	"fmt"
-	_ "github.com/jessegall/code-commandments/rules"
 	"os"
 	"path/filepath"
 	"slices"
@@ -11,7 +10,9 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/skill"
 )
 
@@ -32,14 +33,12 @@ func judged(t *testing.T, shipped string, sources map[string]string) []string {
 			t.Fatal(err)
 		}
 	}
-	written, err := os.ReadFile(filepath.Join("..", "rules", shipped))
-	if err != nil {
-		t.Fatal(err)
+	name := strings.TrimSuffix(filepath.Base(shipped), ".json")
+	index := slices.IndexFunc(rules.All(), func(each detectors.Detector) bool { return each.Sin().Definition().Name == name })
+	if index < 0 {
+		t.Fatalf("no shipped rule is named %s", name)
 	}
-	read, err := rule.Parse(strings.TrimSuffix(filepath.Base(shipped), ".json"), written, func(string) (skill.Skill, bool) { return nil, true })
-	if err != nil {
-		t.Fatal(err)
-	}
+	read := rules.All()[index]
 	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Load()
 	if err != nil {
 		t.Fatal(err)
@@ -245,4 +244,20 @@ func TestAPrivateFieldAFetchReadsIsUsed(t *testing.T) {
 	expect(t, "php", judged(t, "php-type-honesty/unused-private-member.json", map[string]string{
 		"src/Digest.php": "<?php\nnamespace Shop;\n\nfinal class Digest\n{\n    private int $points = 0;\n\n    private int $never = 0;\n\n    public function __construct(private string $name) {}\n\n    public function add(): string\n    {\n        $this->points++;\n\n        return $this->name;\n    }\n}\n",
 	}), "src/Digest.php:8")
+}
+
+// A parameter written in the body is reassigned; a local of another name, and a by-reference parameter, are not.
+func TestAReassignedPhpParameterIsFound(t *testing.T) {
+	expect(t, "php", judged(t, "shared-flow/reassigned-parameter.json", map[string]string{
+		"src/Bay.php": "<?php\nnamespace Shop;\n\nfinal class Bay\n{\n    public function receive(int $parcels, int $capacity, array &$log): int\n    {\n        if ($parcels > $capacity) {\n            $parcels = $capacity;\n        }\n        $log = [];\n        $kept = $parcels;\n\n        return $kept;\n    }\n}\n",
+	}), "src/Bay.php:9")
+}
+
+// A service pulled from the container inside a class it could be handed to is container reach: app() resolves to
+// the global function, and the enclosing class is assignable as itself.
+func TestAppResolvingAServiceInsideAClassIsContainerReach(t *testing.T) {
+	expect(t, "php", judged(t, "php-laravel-idioms/container-reach.json", map[string]string{
+		"src/Checkout.php": "<?php\nnamespace Shop;\n\nfinal class Checkout\n{\n    public function pay(): void\n    {\n        app(Payments::class)->charge();\n    }\n}\n",
+		"src/Payments.php": "<?php\nnamespace Shop;\n\nfinal class Payments\n{\n    public function charge(): void\n    {\n    }\n}\n",
+	}), "src/Checkout.php:8")
 }

@@ -59,6 +59,11 @@ final class Translator
      */
     private array $closing = [];
 
+    /**
+     * @var list<array<string, TreeNode>> the bindings each enclosing function brings into scope, innermost last
+     */
+    private array $scopes = [];
+
     private const COMPARISONS = [
         'Expr_BinaryOp_Identical' => 'identical', 'Expr_BinaryOp_NotIdentical' => 'not-identical', 'Expr_BinaryOp_Equal' => 'equal',
         'Expr_BinaryOp_NotEqual' => 'not-equal', 'Expr_BinaryOp_Smaller' => 'less', 'Expr_BinaryOp_SmallerOrEqual' => 'less-or-equal',
@@ -626,14 +631,35 @@ final class Translator
             $parts['returnType'] = $this->writtenType($function->getReturnType());
             $after = $this->end($function->getReturnType());
         }
+        $this->scopes[] = $this->scopeOf($function, [...($parts['captures'] ?? []), ...array_map(static fn (TreeNode $parameter): TreeNode => $parameter->parts['binding'], $parameters)]);
         if ($function instanceof Expr\ArrowFunction) {
             $parts['body'] = $this->expression($function->expr);
         } elseif ($function->getStmts() !== null) {
             $parts['body'] = $this->body($after, $function->getStmts(), $class);
         }
+        array_pop($this->scopes);
         $made->parts = array_filter($parts, static fn (TreeNode|array $held): bool => $held !== []);
 
         return $made;
+    }
+
+    /**
+     * The names a function's body sees bound: its own parameters and captures, over the enclosing scope for an arrow
+     * function, which reads that scope by value.
+     *
+     * @param  list<TreeNode>  $bindings
+     * @return array<string, TreeNode>
+     */
+    private function scopeOf(Node\FunctionLike $function, array $bindings): array
+    {
+        $scope = $function instanceof Expr\ArrowFunction ? ($this->scopes[array_key_last($this->scopes)] ?? []) : [];
+        foreach ($bindings as $binding) {
+            if (isset($binding->facts['name'])) {
+                $scope[$binding->facts['name']] = $binding;
+            }
+        }
+
+        return $scope;
     }
 
     private function parameter(Node\Param $parameter): TreeNode
@@ -758,7 +784,12 @@ final class Translator
                 ['form' => $type instanceof Node\UnionType ? 'union' : 'intersection']);
         }
         if ($type instanceof Node\Name && ! $type->isSpecialClassName()) {
-            return $this->of('type-expression', $type, ['form' => 'named', 'refers' => $this->refers($type)]);
+            $made = $this->of('type-expression', $type, ['form' => 'named', 'refers' => $this->refers($type)]);
+            if (isset($made->facts['refers'])) {
+                $made->facts['resolvedType'] = $this->typeIndex(['name' => $made->facts['refers']]);
+            }
+
+            return $made;
         }
 
         return $this->of('type-expression', $type, ['form' => 'keyword', 'name' => $type->toString()]);
@@ -793,6 +824,10 @@ final class Translator
         $target = $expression->getAttribute('target');
         if (is_array($target) && in_array($node->kind, ['call', 'construction'], true)) {
             $node->facts['target'] = $target;
+            $callee = $node->parts['callee'] ?? null;
+            if ($expression instanceof Expr\FuncCall && $callee instanceof TreeNode && $callee->kind === 'reference' && ! isset($callee->facts['refers'])) {
+                $callee->facts['refers'] = $target['symbol'];
+            }
         }
 
         return $node;
@@ -825,10 +860,7 @@ final class Translator
     private function expressionNode(Expr $expression): TreeNode
     {
         return match (true) {
-            $expression instanceof Expr\Variable => $this->of('reference', $expression, [
-                'name' => is_string($expression->name) ? $expression->name : null,
-                'form' => $expression->name === 'this' ? 'self' : 'name',
-            ]),
+            $expression instanceof Expr\Variable => $this->variable($expression),
             $expression instanceof Node\Scalar\String_ => $this->of('literal', $expression, ['literalKind' => 'string']) ->with('value', $expression->value),
             $expression instanceof Node\Scalar\Int_ => $this->of('literal', $expression, ['literalKind' => 'integer', 'value' => (string) $expression->value]),
             $expression instanceof Node\Scalar\Float_ => $this->of('literal', $expression, ['literalKind' => 'float', 'value' => $this->decimal($expression->value)]),
@@ -897,6 +929,23 @@ final class Translator
         };
     }
 
+    /**
+     * A variable read or written: a reference, linked to the binding of its name in the enclosing function's scope.
+     */
+    private function variable(Expr\Variable $variable): TreeNode
+    {
+        $made = $this->of('reference', $variable, [
+            'name' => is_string($variable->name) ? $variable->name : null,
+            'form' => $variable->name === 'this' ? 'self' : 'name',
+        ]);
+        $bound = is_string($variable->name) ? ($this->scopes[array_key_last($this->scopes) ?? -1][$variable->name] ?? null) : null;
+        if ($bound !== null) {
+            $made->links = ['binding' => [$bound]];
+        }
+
+        return $made;
+    }
+
     private function comparison(Expr\BinaryOp $comparison): TreeNode
     {
         $operator = self::COMPARISONS[$comparison->getType()];
@@ -938,7 +987,13 @@ final class Translator
     {
         $name = $variable instanceof Expr\Variable && is_string($variable->name) ? $variable->name : null;
 
-        return $this->of('binding', $variable, ['name' => $name]);
+        $made = $this->of('binding', $variable, ['name' => $name]);
+        $type = $variable->getAttribute('type');
+        if (is_array($type)) {
+            $made->facts['resolvedType'] = $this->typeIndex($type);
+        }
+
+        return $made;
     }
 
     /**

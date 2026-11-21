@@ -3,20 +3,8 @@ package frontend_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 )
-
-func sent(t *testing.T, codebase *engine.Codebase, kind string) engine.Match {
-	t.Helper()
-	for _, node := range codebase.WhereKind(kind).Get() {
-		return node.Receiver()
-	}
-
-	t.Fatalf("no %s in the sources", kind)
-
-	return engine.Match{}
-}
 
 func TestWhatANodeDecidesByIsAnsweredForTheFrontend(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{

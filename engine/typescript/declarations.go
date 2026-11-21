@@ -6,29 +6,6 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-func (n Node) Binds(name string) Node {
-	switch n.Kind() {
-	case "VariableStatement":
-		for _, declaration := range n.Child("declarationList").ChildrenIn("declarations") {
-			if declaration.Child("name").Name() == name {
-				return Node{declaration}
-			}
-		}
-	case "FunctionDeclaration", "ClassDeclaration":
-		if n.Name() == name {
-			return n
-		}
-	case "ImportDeclaration":
-		for _, node := range n.Descendants() {
-			if node.Node().InRole() == "name" && node.Name() == name {
-				return Node{node.Parent()}
-			}
-		}
-	}
-
-	return Node{}
-}
-
 func (n Node) Members(codebase *engine.Codebase) []Node {
 	return n.members(codebase, 0)
 }

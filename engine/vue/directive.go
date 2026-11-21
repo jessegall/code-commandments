@@ -51,10 +51,6 @@ func (d Directive) Iterable() engine.Match {
 	return d.Child("iterable")
 }
 
-func (d Directive) Aliases() []engine.Match {
-	return d.ChildrenIn("alias")
-}
-
 func (d Directive) Target() string {
 	argument := d.Argument()
 	if !argument.Exists() || argument.Role() != "other" {

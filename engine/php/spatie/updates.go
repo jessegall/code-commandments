@@ -19,10 +19,6 @@ type guardedUpdate struct {
 
 var sparseUpdates = engine.Memoised(findSparseUpdates)
 
-func (n Node) IsSparseUpdate() bool {
-	return sparseUpdates.Of(n.Codebase())[n.Identity()]
-}
-
 func findSparseUpdates(codebase *engine.Codebase) map[string]bool {
 	var groups []guardedUpdate
 	for _, test := range engine.ProjectMatches(codebase.WhereKind("Expr_Instanceof").Get()) {

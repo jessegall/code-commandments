@@ -14,7 +14,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
-	"github.com/jessegall/code-commandments/engine"
 )
 
 const (
@@ -260,33 +259,6 @@ func (m merging) cutFrom() string {
 	}
 
 	return scope.BaseOf(m.worktree)
-}
-
-func (m merging) marks(codebase *engine.Codebase, rules []detectors.Detector, changed map[string]bool) []SinMark {
-	marking := Marks(projectOf(m.worktree)).In(m.worktree)
-	lines := map[string]git.ChangedLines{}
-	changedLines := git.ChangedLinesSinceEach(m.worktree, m.since, slices.Collect(maps.Keys(changed)))
-	var marks []SinMark
-
-	for _, rule := range rules {
-		for _, match := range safely(rule, codebase) {
-			if !changed[match.File()] {
-				continue
-			}
-			if _, read := lines[match.File()]; !read {
-				lines[match.File()] = changedLines(match.File())
-			}
-			if !lines[match.File()].Covers(match.Line()) {
-				continue
-			}
-
-			if mark := marking.Of(rule, match, lines[match.File()]); !mark.IsFiled() {
-				marks = append(marks, mark)
-			}
-		}
-	}
-
-	return marks
 }
 
 func worker4Of(fields map[string]any) string {

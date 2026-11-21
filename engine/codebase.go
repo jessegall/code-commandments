@@ -286,13 +286,6 @@ func built(read func(path string) ([]byte, error), streams ...*contract.Stream) 
 	return codebase
 }
 
-func Filling(changed []string, streams ...*contract.Stream) *Codebase {
-	codebase := onDisk(built(os.ReadFile, streams...))
-	codebase.fill(changed)
-
-	return codebase
-}
-
 func (c *Codebase) fill(changed []string) {
 	filled := map[contract.Language]bool{}
 	for _, stream := range c.streams {

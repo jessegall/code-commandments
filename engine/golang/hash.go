@@ -85,14 +85,3 @@ func (hashRules) Unwrap(node engine.Match) (engine.Match, bool) {
 	return statements[0], true
 }
 
-func BodyHash(function engine.Match) string {
-	if !function.Is(engine.Function) {
-		return ""
-	}
-
-	return engine.SyntaxHash(function.Body(), hashing, false)
-}
-
-func NodeHash(node engine.Match, normalize bool) string {
-	return engine.SyntaxHash([]engine.Match{node}, hashing, normalize)
-}

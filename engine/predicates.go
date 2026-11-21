@@ -2,7 +2,6 @@ package engine
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -18,20 +17,3 @@ func Offers(language contract.Language, predicates ...Predicate) {
 	registers(language, func(row *spoken) { row.predicates = append(slices.Clone(row.predicates), predicates...) })
 }
 
-func PredicatesOf(language contract.Language) []Predicate {
-	sorted := slices.Clone(spokenIn(language).predicates)
-	slices.SortFunc(sorted, func(a, b Predicate) int { return strings.Compare(a.Name, b.Name) })
-
-	return sorted
-}
-
-func PredicateOf(language contract.Language, name string) (Predicate, bool) {
-	predicates := PredicatesOf(language)
-
-	at := slices.IndexFunc(predicates, func(predicate Predicate) bool { return predicate.Name == name })
-	if at < 0 {
-		return Predicate{}, false
-	}
-
-	return predicates[at], true
-}

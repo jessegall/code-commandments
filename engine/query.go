@@ -69,6 +69,3 @@ func (q *Query) passes(match Match) bool {
 	return true
 }
 
-func Answers(neutral Neutral) Check {
-	return func(m Match) bool { return m.Is(neutral) }
-}

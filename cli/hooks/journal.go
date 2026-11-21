@@ -238,17 +238,6 @@ func (a JournalAnswer) JSON() string {
 	return text
 }
 
-func (a JournalAnswer) said() []string {
-	switch {
-	case a.Refuse != nil:
-		return []string{*a.Refuse}
-	case a.Whisper != nil:
-		return []string{*a.Whisper}
-	default:
-		return nil
-	}
-}
-
 func answerOf(merged Response) JournalAnswer {
 	if merged.blockReason != nil {
 		reason := *merged.blockReason

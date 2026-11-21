@@ -26,14 +26,3 @@ func Contribution[T any](key any, file *File, build func(*File) T) T {
 	return held.(T)
 }
 
-func Forgotten() int {
-	count := 0
-	perFile.Range(func(key, _ any) bool {
-		perFile.Delete(key)
-		count++
-
-		return true
-	})
-
-	return count
-}

@@ -63,13 +63,3 @@ func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 	return engine.Load(stream), nil
 }
 
-func Over(server *bridge.Server, request bridge.Request) (*engine.Codebase, error) {
-	stream, err := server.Ask(request)
-	if err != nil {
-		return nil, err
-	}
-
-	bridge.InWalkOrder(stream, request.Paths)
-
-	return engine.New(engine.ReadThrough(request.Contents), stream), nil
-}

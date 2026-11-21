@@ -17,18 +17,6 @@ func (n Node) IsExported() bool {
 	return unicode.IsUpper(first)
 }
 
-func (n Node) OwnerType() engine.Match {
-	id := n.OwnerSymbol()
-	if id == "" {
-		return engine.Match{}
-	}
-	for _, declaration := range n.Codebase().Declarations(id) {
-		return declaration
-	}
-
-	return engine.Match{}
-}
-
 func (n Node) OwnerSymbol() string {
 	if n.Kind() != "FuncDecl" || !n.Child("recv").Exists() {
 		return ""

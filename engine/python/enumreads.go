@@ -170,48 +170,6 @@ func (n Node) patternKey() string {
 	return n.Child("value").LiteralKey()
 }
 
-func (n Node) memberCaseClasses() []Node {
-	var alternatives []Node
-	for _, match := range n.ChildrenIn("cases") {
-		if !match.isWildcardCase() {
-			alternatives = append(alternatives, match.Child("pattern").alternatives()...)
-		}
-	}
-	var classes []Node
-	var named []string
-	for _, pattern := range alternatives {
-		member := pattern.Child("value")
-		if pattern.Kind() != "MatchValue" || member.Kind() != "Attribute" || member.Child("value").Kind() != "Name" {
-			return nil
-		}
-		if owner := member.Child("value"); !slices.Contains(named, owner.DottedName()) {
-			named = append(named, owner.DottedName())
-			classes = append(classes, owner)
-		}
-	}
-
-	return classes
-}
-
-func (n Node) isWildcardCase() bool {
-	return n.Child("pattern").isWildcardPattern() && !n.Child("guard").Exists()
-}
-
-func (n Node) onlyTheWildcardAnswersAbsence() bool {
-	wildcard, handled := false, false
-	for _, match := range n.ChildrenIn("cases") {
-		body := match.ChildrenIn("body")
-		absent := len(body) > 0 && body[len(body)-1].returnsAbsence()
-		if match.isWildcardCase() {
-			wildcard = wildcard || absent
-		} else {
-			handled = handled || absent
-		}
-	}
-
-	return wildcard && !handled
-}
-
 func (n Node) returnsAbsence() bool {
 	if n.Kind() != "Return" {
 		return false

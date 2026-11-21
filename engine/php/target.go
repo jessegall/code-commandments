@@ -34,12 +34,6 @@ var targets = engine.Memoised(func(codebase *engine.Codebase) string {
 	return ""
 })
 
-func SupportsCloneWith(codebase *engine.Codebase) bool {
-	lowest := targets.Of(codebase)
-
-	return lowest != "" && compareVersions(lowest, cloneWith) >= 0
-}
-
 func lowestVersion(constraint string) string {
 	lowest := ""
 	for _, clause := range strings.Fields(strings.NewReplacer("||", " ", ",", " ", "|", " ").Replace(constraint)) {
