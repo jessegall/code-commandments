@@ -57,6 +57,9 @@ func (m Match) IsOverride() bool {
 	if !m.Is(Function) || !owner.Is(TypeDeclaration) || m.Name() == "" {
 		return false
 	}
+	if len(m.node.Obligations) > 0 {
+		return true
+	}
 
 	for _, supertype := range append(owner.Lineage(), owner.Contracts()...) {
 		if owner.declaresMember(supertype, m.Name()) {
