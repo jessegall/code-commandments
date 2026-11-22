@@ -57,7 +57,7 @@ func TestEvaluateTheSection18RuleOnTheExpectedHandlerTrees(t *testing.T) {
 		{"shadowed-exception", "python", []int{8}},
 		{"pass-and-comment", "python", []int{4}},
 		{"flags", "python", []int{11}},
-		{"filtered-catch", "csharp", []int{11}},
+		{"filtered-catch", "csharp", []int{22}},
 		{"filtered-empty-catch", "csharp", []int{13}},
 		{"handler-single-exit", "php", []int{7, 17}},
 		{"test-catch-resolved", "ReaderTest", []int{13}},

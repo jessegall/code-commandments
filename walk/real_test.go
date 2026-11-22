@@ -55,7 +55,7 @@ func TestOnlyTheWalkerResolvesLinks(t *testing.T) {
 		return strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go") && path != funnel &&
 			!strings.HasSuffix(filepath.Dir(path), "test")
 	}
-	for _, path := range Files(module, Under(module, []string{"bin"}), written) {
+	for _, path := range Files(module, Under(module, []string{"bin", "scratchpad"}), written) {
 		if text, err := os.ReadFile(path); err == nil && strings.Contains(string(text), "filepath.EvalSymlinks(") {
 			t.Errorf("%s resolves links on its own: ask walk.Real or walk.Resolved", path)
 		}
