@@ -418,9 +418,10 @@ func (c *Codebase) Reports(file *File) bool {
 
 // ResolvedImport is one import that reaches a file of the project: the module it is written in and the module it reaches.
 type ResolvedImport struct {
-	At   Match
-	From string
-	To   string
+	At          Match
+	From        string
+	To          string
+	Associative bool
 }
 
 // ResolvedImports is every import of the project's own files that reaches another of its modules, in file and source
@@ -445,8 +446,9 @@ func ResolvedImports(codebase *Codebase) []ResolvedImport {
 			var reached []string
 			for _, node := range file.OfKind("import") {
 				at := Match{node: node, file: file}
+				associative := namesOnlyAssociations(file, at)
 				for _, to := range codebase.reached(at, byPath, modules) {
-					resolved = append(resolved, ResolvedImport{At: at, From: from, To: to})
+					resolved = append(resolved, ResolvedImport{At: at, From: from, To: to, Associative: associative})
 					reached = append(reached, to)
 				}
 			}
@@ -455,6 +457,45 @@ func ResolvedImports(codebase *Codebase) []ResolvedImport {
 
 		return resolved
 	})
+}
+
+func namesOnlyAssociations(file *File, imported Match) bool {
+	symbols := map[string]bool{}
+	for _, symbol := range []string{imported.node.Refers, imported.node.Resolves} {
+		symbols[symbol] = symbol != ""
+	}
+	bindings, _ := imported.node.Role("bindings")
+	for _, binding := range bindings {
+		symbols[binding.Refers] = binding.Refers != ""
+	}
+	uses := 0
+	for _, kind := range []string{"reference", "type-expression"} {
+		for _, node := range file.OfKind(kind) {
+			if !symbols[node.Refers] && !symbols[node.Resolves] {
+				continue
+			}
+			use := Match{node: node, file: file}
+			if use.insideAnImport() {
+				continue
+			}
+			if !use.NamesAnAssociation() {
+				return false
+			}
+			uses++
+		}
+	}
+
+	return uses > 0
+}
+
+func (m Match) insideAnImport() bool {
+	for owner := m.Parent(); owner.Exists(); owner = owner.Parent() {
+		if owner.node.Kind == "import" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Codebase) writtenInFull(file *File, from string, reached []string, byPath map[string]string) []ResolvedImport {

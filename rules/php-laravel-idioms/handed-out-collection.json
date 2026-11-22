@@ -16,9 +16,9 @@
       "python-handed-out-collection"
     ],
     "skill": "php/laravel-idioms",
-    "description": "a getter whose whole body returns the class's own `Collection`, untouched \u2014 a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
-    "rule": "A class keeps its own Collection: hand out something a caller cannot change, and give the class the methods callers were reaching in to use.",
-    "suggestion": "Return `$this->lines->collect()` or `$this->lines->all()` \u2014 a copy and a plain array, neither of which the caller can change on you \u2014 and add the methods the callers were doing by hand: `addLine()`, `totalFor()`, `without($line)`. A PHP array returned from a getter is already copied, which is why this is about a Collection and not about every getter."
+    "description": "A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back.",
+    "rule": "An object keeps its own collection: hand out something a caller cannot change, and give the object the methods callers were reaching in to use.",
+    "suggestion": "Return a copy or a read-only view of the collection, and add the methods the callers were doing by hand (`addLine()`, `totalFor()`, `without(line)`)."
   },
   "definitions": {
     "declaredTypeOf": {

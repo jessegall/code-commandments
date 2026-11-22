@@ -9,7 +9,7 @@ import (
 
 // readsAcrossFiles are the operators whose answer for a node rests on files other than the node's own: who refers to a
 // declaration, and the declaration a call resolves to.
-var readsAcrossFiles = []string{"referrers", "overriders", "subtypes", "declarationOf", "programEnums", "programTexts", "typeDeclaration"}
+var readsAcrossFiles = []string{"referrers", "overriders", "subtypes", "declarationOf", "programEnums", "programTexts", "typeDeclaration", "declarationBySymbol", "docTags"}
 
 // readsTheWholeTree are the operators whose answer for a node can turn on any file of the tree, not only on the files
 // the node's own file reads: who refers to a declaration, and every enum the program declares.

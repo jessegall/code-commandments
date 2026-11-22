@@ -53,6 +53,10 @@
                   "$i.to",
                   "$i.from"
                 ]
+              ],
+              [
+                "not",
+                "$i.associative"
               ]
             ]
           }

@@ -559,6 +559,7 @@ func importRecords(codebase *engine.Codebase) []value {
 			"sourceOrder": known(float64(each.At.Node().Span.Start)),
 			"test":        known(file.Purpose() != engine.Ordinary),
 			"held":        known(codebase.Reports(file)),
+			"associative": known(each.Associative),
 		}))
 	}
 

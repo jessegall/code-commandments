@@ -69,11 +69,43 @@
       ]
     ],
     "having": [
-      "throws",
+      "and",
       [
-        "at",
-        "$f.body.statements",
-        0
+        "throws",
+        [
+          "at",
+          "$f.body.statements",
+          0
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "map",
+            "$f.obligations",
+            "o",
+            [
+              "declarationBySymbol",
+              "$o.symbol"
+            ]
+          ],
+          "p",
+          [
+            "some",
+            [
+              "docTags",
+              "$p"
+            ],
+            "g",
+            [
+              "=",
+              "$g.name",
+              "throws"
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$f"

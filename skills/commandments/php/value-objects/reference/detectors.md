@@ -2,8 +2,8 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
-- **`array-bag`** — String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined. — `array-bag`
-- **`array-bag-parameter`** — A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to. — `array-bag-parameter`
+- **`array-bag`** — Reading a named field by string key off a loose map or array parameter instead of giving the record a type: the type was never defined. — `array-bag`
+- **`array-bag-parameter`** — A parameter typed as a loose map or array that callers fill with string-keyed records: the method never defined the type its fields belong to. — `array-bag-parameter`
 - **`array-return-bag`** — Returning a multi-field string-keyed array literal (a bag that should be a value object) — `array-return-bag`
 - **`coupled-fields`** — A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object. — `coupled-fields`
 - **`flat-field-cluster`** — A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`. — `flat-field-cluster`

@@ -589,6 +589,14 @@ class Translator:
             node = self.of("type-expression", annotation, form="nullable")
             node.parts = {"element": self.type(annotation.slice)}
             return node
+        if isinstance(annotation, ast.Subscript) and self.repeats_one_type(annotation):
+            element = self.type(annotation.slice.elts[0])
+            node = self.of("type-expression", annotation, form="array")
+            node.parts = {"element": element}
+            held = self.table[element.facts["resolvedType"]] if "resolvedType" in element.facts else None
+            node.facts["resolvedType"] = self.typed({"text": ast.unparse(annotation), "kind": "array", "name": "builtins.tuple", "nullable": False,
+                                                     "origin": "compiler", **({"args": [held], "element": held} if held else {})})
+            return node
         if isinstance(annotation, ast.Subscript):
             node = self.named_type(annotation, self.refers(annotation.value))
             items = annotation.slice.elts if isinstance(annotation.slice, ast.Tuple) else [annotation.slice]
@@ -599,6 +607,11 @@ class Translator:
         if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
             return self.named_type(annotation, self.refers(forward_reference(annotation.value)))
         return self.of("type-expression", annotation, form="opaque")
+
+    def repeats_one_type(self, annotation: ast.Subscript) -> bool:
+        written = annotation.slice
+        return (self.refers(annotation.value) in ("builtins.tuple", "typing.Tuple") and isinstance(written, ast.Tuple) and len(written.elts) == 2
+                and isinstance(written.elts[1], ast.Constant) and written.elts[1].value is Ellipsis)
 
     def named_type(self, annotation: ast.expr, refers: str | None) -> Node:
         """A written type naming a class: when mypy resolved the name, it stands for an instance of that class."""

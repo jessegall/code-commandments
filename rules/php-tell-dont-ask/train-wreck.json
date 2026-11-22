@@ -14,9 +14,9 @@
       "TrainWreck"
     ],
     "skill": "php/tell-dont-ask",
-    "description": "`$order->customer()->address()->city()` \u2014 a chain crossing three of the project's own types, so a change three objects away reaches this caller",
+    "description": "A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller.",
     "rule": "Ask the object you have for the answer you want; never walk through its neighbours to find it.",
-    "suggestion": "Give the object you hold a method that answers the question, so the walk happens where the objects live: `$order->city()`, with each type asking only its own neighbour.",
+    "suggestion": "Give the object you hold a method that answers the question, so the walk happens where the objects live (`order.city()`), each type asking only its own neighbour.",
     "reporting": {
       "crossFile": true
     }

@@ -335,7 +335,15 @@ func (m Match) exemptionSubject() (class, method, attribute string) {
 		return node.Resolved.Name, "", ""
 	case node.Target != nil:
 		return node.Target.Type, node.Target.Name, ""
-	case node.Kind == "attribute":
+	case node.Kind == "call" && node.Refers == "":
+		return "", m.writtenCallee(), ""
+	case node.Kind == "field":
+		for owner := m.Parent(); owner.Exists(); owner = owner.Parent() {
+			if owner.node.Kind == "type" {
+				return owner.node.Symbol, m.fieldName(), ""
+			}
+		}
+	case node.Kind == "annotation":
 		return "", "", node.Refers
 	case node.Refers != "":
 		return node.Refers, "", ""
@@ -460,4 +468,45 @@ func PackagesIn(folder string) map[string]map[string]string {
 	readManifests(folder, versions)
 
 	return versions
+}
+
+func (m Match) writtenCallee() string {
+	callees, _ := m.node.Role("callee")
+	for _, callee := range callees {
+		if callee.Kind == "reference" {
+			return callee.Name
+		}
+		if members, _ := callee.Role("member"); len(members) == 1 {
+			return members[0].Name
+		}
+	}
+
+	return ""
+}
+
+func (m Match) fieldName() string {
+	if m.node.Name != "" {
+		return m.node.Name
+	}
+	declarators, _ := m.node.Role("declarators")
+	for _, declarator := range declarators {
+		if bindings, _ := declarator.Role("binding"); len(bindings) == 1 {
+			return bindings[0].Name
+		}
+	}
+
+	return ""
+}
+
+func (m Match) NamesAnAssociation() bool {
+	for owner := m.Parent(); owner.Exists(); owner = owner.Parent() {
+		switch owner.node.Kind {
+		case "call", "annotation", "field":
+			return owner.ExemptedBy("association") == True
+		case "function", "type", "module", "file":
+			return false
+		}
+	}
+
+	return false
 }

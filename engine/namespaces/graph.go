@@ -20,7 +20,7 @@ var graphs = engine.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
 	graph := &NamespaceGraph{references: map[string]map[string]bool{}, arrows: map[string]map[string][]engine.Match{}, targets: map[string][]string{}}
 	for _, reference := range codebase.WhereKind("reference", "type-expression").Get() {
 		from, to := reference.Namespace(), declaredNamespace(codebase, reference.Refers())
-		if from == "" || to == "" {
+		if from == "" || to == "" || reference.NamesAnAssociation() {
 			continue
 		}
 		graph.node(from)

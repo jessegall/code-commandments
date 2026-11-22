@@ -186,6 +186,19 @@ final class Types
         return $this->classes[strtolower(ltrim($class, '\\'))]['file'] ?? null;
     }
 
+    public function declared(string $class): ?array
+    {
+        return $this->declaration($class);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function readSoFar(string $path): array
+    {
+        return array_values(array_filter(array_keys($this->read), static fn (string $file): bool => $file !== $path));
+    }
+
     public function declareFunction(Stmt\Function_ $function, string $path): void
     {
         $name = $function->namespacedName->toString();

@@ -12,9 +12,9 @@
       "python-enum-value-match"
     ],
     "skill": "php/enums-with-behaviour",
-    "description": "A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead.",
-    "rule": "Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.",
-    "suggestion": "A method on the backed enum (`$x->label()`, `$x->isPaid()`)."
+    "description": "A `match` or `switch` over an enum's backing value at the call site: logic that belongs on the enum but lives elsewhere instead.",
+    "rule": "Put per-case behaviour on the enum; never `match` or `switch` over its backing value at a call site.",
+    "suggestion": "A method on the enum that answers for each case (`label()`, `isPaid()`)."
   },
   "find": {
     "select": "dispatch",

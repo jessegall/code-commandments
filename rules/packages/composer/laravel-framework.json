@@ -2408,7 +2408,12 @@
         "morphedByMany"
       ],
       "tag": "association",
-      "why": "One end of a two-way association the framework requires both ends to name: it carries no dependency direction and cannot close a cycle."
+      "why": "One end of a two-way association the framework requires both ends to name (a relation's class argument, a factory's model, an observer or policy attribute): it carries no dependency direction and cannot close a cycle.",
+      "on": {
+        "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
+          "model"
+        ]
+      }
     },
     {
       "classes": [
@@ -2695,6 +2700,34 @@
     {
       "name": "facade",
       "type": "Illuminate\\Support\\Facades\\Vite"
+    },
+    {
+      "name": "container-accessor",
+      "type": "Illuminate\\Container\\Container::getInstance"
+    },
+    {
+      "name": "singleton-attribute",
+      "type": "Illuminate\\Container\\Attributes\\Singleton"
+    },
+    {
+      "name": "scoped-attribute",
+      "type": "Illuminate\\Container\\Attributes\\Scoped"
+    },
+    {
+      "name": "singleton-binding",
+      "type": "singleton"
+    },
+    {
+      "name": "singleton-binding",
+      "type": "singletonIf"
+    },
+    {
+      "name": "scoped-binding",
+      "type": "scoped"
+    },
+    {
+      "name": "scoped-binding",
+      "type": "scopedIf"
     }
   ]
 }

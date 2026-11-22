@@ -78,8 +78,8 @@ that names it.
 
 ## Rules
 
-- [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
-      _`$element->withMetadata($payload)` — a `withMetadata()` on the type doing `copyWith(metadata: $payload->toArray())`._
+- [ ] Promote a repeated call of a `with…` method with the same named argument into a method on the receiver's type that hides the call and its construction boilerplate.
+      _A method on the type (`withMetadata(payload)`) that makes the call once._
 - [ ] A query several callers run is one named finder or scope on the model, written once.
       _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
 

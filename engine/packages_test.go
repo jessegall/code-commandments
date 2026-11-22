@@ -134,3 +134,25 @@ func TestIdentityNamesALibraryType(t *testing.T) {
 		t.Errorf("the identity reads %q, %v", named, found)
 	}
 }
+
+func TestExemptedByAnAttributeThePackageNames(t *testing.T) {
+	engine.RegisterPackageFacts(engine.PackageFacts{Package: "probe/attributes", Ecosystem: engine.Composer, Versions: ">=1",
+		Exemptions: []engine.PackageExemption{{Tag: "probe-attribute", Attributes: []string{`Probe\Singleton`}}}})
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "composer.lock"), []byte(`{"packages": [{"name": "probe/attributes", "version": "1.0.0"}]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "probe.source")
+	stream := fmt.Sprintf(`{"header": {"contract": "tree", "version": 5, "language": "php", "bridge": {"name": "probe", "version": "8.0.0"}, "roots": [%q]}}
+{"file": {"path": %q, "language": "php", "errors": 0, "module": "probe", "resolver": {"tool": "php-parser", "ran": true}, "root": {"id": 0, "kind": "file", "span": [0, 99, 1], "parts": {"modules": [{"id": 1, "kind": "module", "span": [0, 99, 1], "name": "probe", "parts": {"statements": [ {"id": 2, "kind": "annotation", "span": [0, 1, 1], "name": "Singleton", "refers": "Probe\\Singleton", "parts": {"callee": {"id": 3, "kind": "reference", "span": [0, 1, 1], "name": "Singleton", "refers": "Probe\\Singleton"}}}, {"id": 4, "kind": "annotation", "span": [1, 2, 2], "name": "Scoped", "refers": "Probe\\Scoped", "parts": {"callee": {"id": 5, "kind": "reference", "span": [1, 2, 2], "name": "Scoped", "refers": "Probe\\Scoped"}}}]}}]}}, "comments": []}}
+{"trailer": {"files": 1}}
+`, root, path)
+	codebase, err := engine.FromString(stream, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	annotations := codebase.WhereKind("annotation").Get()
+	if len(annotations) != 2 || annotations[0].ExemptedBy("probe-attribute") != engine.True || annotations[1].ExemptedBy("probe-attribute") != engine.False {
+		t.Errorf("the named attribute and another read %d annotations: %v", len(annotations), annotations)
+	}
+}

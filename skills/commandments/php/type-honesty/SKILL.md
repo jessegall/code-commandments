@@ -52,8 +52,8 @@ field, or a value object, and delete the defence.
       _Remove the parameter and the argument at each call site, or use it where it was meant to be used._
 - [ ] A class carries only what it uses; a private member nothing reads is dead and is deleted.
       _Delete the member, or call it from where it was meant to be used._
-- [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
-      _Make it a stored property: a constant body becomes a property default (`public ?Transition $t = null;`); a constructed value (`get => Transition::make(...)`) is assigned ONCE in the constructor. Keep the hook only when the body genuinely derives from `$this` state._
+- [ ] A property getter must earn its body: one that reads none of the object's state computes nothing from the object and yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares a getter and the implementer mimics the syntax; a plain property satisfies it just as well.
+      _Make it a stored property: a constant body becomes the property's default, a constructed value is assigned once in the constructor. Keep the getter only when its body derives from the object's state._
 
 ## Commands
 

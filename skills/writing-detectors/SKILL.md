@@ -138,6 +138,7 @@ judged.
 | `contentWords` | text | list | the stems of a text's content words, the small words left out |
 | `count` | list | number | how many items a list holds; unknown when the list is |
 | `countOf` | text, value | number | how many rows of one of the find's relations have fields equal to a record's |
+| `declarationBySymbol` | text | node | the project's declaration, of any kind, whose symbol is the text; none when the project declares none |
 | `declarationOf` | node | node | the declaration a call's target, a reference or an access's member resolves to, or the local binding a name is linked to; unknown when neither is known |
 | `declarationsOf` | value | list | every declaration of a symbol, or of what a node names: partial classes and overloads each once |
 | `declaredIn` | node | list | the bindings written directly in a node, not inside a block, function, type, loop, handler or comprehension written in it |
@@ -153,6 +154,7 @@ judged.
 | `distinctBy` | list, name, value | list | the first item of each key the body gives, in order; unknown when a key is |
 | `distinctCount` | list | number | how many different values a list holds; unknown when one of them is |
 | `divide` | number, number | number | the first number divided by the second; unknown for a zero divisor |
+| `docTags` | node | list | the tags of the doc comments that document the node: name, text, type and subject of each |
 | `dominant` | list, number | value | the value at least the share given of a list's items hold; unknown when none does |
 | `dominates` | node, node | truth | whether every path to the second node passes the first: the first runs on every path through what holds both, before the part that holds the second; unknown for nodes of two functions |
 | `drop` | list, number | list | the list without its first n items |

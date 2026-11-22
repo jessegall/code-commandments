@@ -14,7 +14,7 @@
     "skill": "shared/duplication",
     "description": "One function asks a static factory for the same object twice, with the same arguments, and asks each one something, instead of holding the object and asking it",
     "rule": "Call a static factory once per function for one set of arguments, keep the object it returns in a variable, and ask that.",
-    "suggestion": "`$type = Reflector::of($class);` once, then `$type->isSubclassOf(Tool::class) || $type->isAbstract()`."
+    "suggestion": "Call the factory once (`type = Reflector.of(class)`), then ask that object each question."
   },
   "definitions": {
     "askedOfAFactory": {

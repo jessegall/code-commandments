@@ -61,8 +61,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
       _Drop the reader's fallback and let the config file answer — or delete the key from the file and let the reader's default be the one truth._
 - [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
       _Constructor-inject the dependency behind its interface._
-- [ ] A class keeps its own Collection: hand out something a caller cannot change, and give the class the methods callers were reaching in to use.
-      _Return `$this->lines->collect()` or `$this->lines->all()` — a copy and a plain array, neither of which the caller can change on you — and add the methods the callers were doing by hand: `addLine()`, `totalFor()`, `without($line)`. A PHP array returned from a getter is already copied, which is why this is about a Collection and not about every getter._
+- [ ] An object keeps its own collection: hand out something a caller cannot change, and give the object the methods callers were reaching in to use.
+      _Return a copy or a read-only view of the collection, and add the methods the callers were doing by hand (`addLine()`, `totalFor()`, `without(line)`)._
 - [ ] A route's path is declared once, in its registration; everywhere else builds it from the route's name.
       _Build the URL with `route('name', $parameters)` so a changed path changes every link with it._
 - [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.

@@ -70,8 +70,8 @@ sit in it.
 
 ## Rules
 
-- [ ] State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies — never as a list of line fragments joined by a newline.
-      _A heredoc (`<<<PHP` / `<<<'PHP'`), with the computed part as one interpolation._
+- [ ] State a fixed multi-line string as one multi-line literal, at its real indentation, and interpolate what varies; never as a list of line fragments joined by a newline.
+      _The language's multi-line string (a heredoc, a triple-quoted or raw string, a template literal), with the computed part as one interpolation._
 
 ## Commands
 

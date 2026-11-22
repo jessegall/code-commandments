@@ -120,15 +120,15 @@ If yes — and you're reaching past its surface into its structure — that's wh
 ## Rules
 
 - [ ] Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
-      _Move the method onto the object (`$node->edges()`)._
+      _Move the method onto the object it works on (`node.edges()`)._
 - [ ] The method that changes an object's state carries the rule for when it may; a caller tells the object and lets it refuse.
-      _Move the check and the throw into the method the caller runs (`$request->approveSample()` throws `SampleRefused`), and delete the caller's copy._
+      _Move the check and the failure into the method the caller runs (an `approveSample()` that fails with `SampleRefused`), and delete the caller's copy._
 - [ ] Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
       _Move the lookup onto the object that owns the identity._
 - [ ] A class earns its place by doing something; one that only forwards every call to one collaborator is a middle man — let callers talk to that collaborator.
       _Inject the collaborator where the middle man is used and delete the class, or move real behaviour into it._
 - [ ] Ask the object you have for the answer you want; never walk through its neighbours to find it.
-      _Give the object you hold a method that answers the question, so the walk happens where the objects live: `$order->city()`, with each type asking only its own neighbour._
+      _Give the object you hold a method that answers the question, so the walk happens where the objects live (`order.city()`), each type asking only its own neighbour._
 
 ## Commands
 

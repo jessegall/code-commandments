@@ -16,9 +16,9 @@
       "python-feature-envy"
     ],
     "skill": "php/tell-dont-ask",
-    "description": "Exiled behaviour / feature envy \u2014 a method operating on ONE other owned object's internals that belongs ON that object",
-    "rule": "Behaviour belongs with its data \u2014 move a method that loops or queries one other owned object onto that object.",
-    "suggestion": "Move the method onto the object (`$node->edges()`).",
+    "description": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
+    "rule": "Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.",
+    "suggestion": "Move the method onto the object it works on (`node.edges()`).",
     "reporting": {
       "crossFile": true
     }

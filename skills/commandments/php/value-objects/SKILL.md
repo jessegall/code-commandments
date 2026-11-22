@@ -30,20 +30,20 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
 
 ## Rules
 
-- [ ] Give a structured array a typed value object — never read a named field by string key off an `array` param.
-      _A Spatie `Data` object built via `::from($array)`._
-- [ ] A method of your own takes values and objects, never an `array` of named fields — the definition is at fault, not the caller filling it.
-      _Type the parameter as a Spatie `Data` object or a final readonly value object, and have callers construct it._
+- [ ] Give a structured record a typed value object; never read a named field by string key off a loose map parameter.
+      _A value object (a data class, a record, a struct) built once from the incoming map._
+- [ ] A method of your own takes values and objects, never a loose map of named fields; the definition is at fault, not the caller filling it.
+      _Type the parameter as a value object with those fields, and have callers construct it._
 - [ ] Return a typed value object, not a multi-field string-keyed array literal.
-      _Return a Spatie `Data` object via `::from(...)`._
+      _Return a value object with those fields (a data class, a record, a struct) instead of the keyed literal._
 - [ ] Fields that always change together are really one type — extract them into a value object and use it directly; don't keep a field that just duplicates a nested object's property.
       _Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property._
 - [ ] When scalar fields on a Data class share a prefix that names a value object the codebase already declares, they restate that object flat. Nest them into the existing sub-object and shed the prefix — `wireType`/`wireLabel` become `wire: Wire{type, label}`.
       _Replace the prefixed siblings with a single nested property typed as the existing value object, dropping the prefix from each member._
-- [ ] A wither should only say what changes: `clone($this, ['x' => $x])` states the intent, while re-listing every field just repeats the constructor in every wither.
-      _Replace `new self($this->a, $this->b, $changed)` with `clone($this, ['c' => $changed])`._
+- [ ] A wither should only say what changes: copying the object with the one field replaced states the intent, while re-listing every field just repeats the constructor in every wither.
+      _Replace the constructor call that re-lists every field with the language's copy-with-change (`clone` with the changed field, a record's `with`, `dataclasses.replace`, an object spread)._
 - [ ] Make a value immutable: build it complete and derive a NEW one to change it; never write its fields after construction.
-      _`readonly` on the class, and a `with…()`/named derivation that returns a new instance (PHP 8.5's `clone with`)._
+      _Make the type immutable (read-only fields, a frozen data class, a record) and give it a `with…()` or named derivation that returns a new instance._
 - [ ] Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.
       _A small `readonly` result object._
 

@@ -30,7 +30,7 @@ Put the shared code where its data or responsibility lives. Pass the values that
 - [ ] Give a repeated condition one name and have the callers use it.
       _Put a named predicate on the object that owns most of the condition and use it at each site._
 - [ ] Call a static factory once per function for one set of arguments, keep the object it returns in a variable, and ask that.
-      _`$type = Reflector::of($class);` once, then `$type->isSubclassOf(Tool::class) || $type->isAbstract()`._
+      _Call the factory once (`type = Reflector.of(class)`), then ask that object each question._
 - [ ] Give a repeated type test one name and use it at each site.
       _Extract the combined test to a predicate that describes which values it accepts._
 - [ ] Use the vocabulary the parameter already has.

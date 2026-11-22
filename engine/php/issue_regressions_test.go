@@ -7,7 +7,7 @@ import (
 )
 
 func TestEloquentFactoryBindingDoesNotCloseNamespaceCycle(t *testing.T) {
-	codebase := phpSource(t, `<?php
+	codebase := phpSourceHolding(t, `{"packages": [{"name": "laravel/framework", "version": "v11.9.0"}]}`, `<?php
 namespace App\Models;
 use App\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

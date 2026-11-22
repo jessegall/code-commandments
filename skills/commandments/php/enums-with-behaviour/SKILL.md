@@ -39,8 +39,8 @@ Reach for this the moment you write:
 
 - [ ] Use the enum's comparison method when the comparison carries no type narrowing.
       _Ask the enum to compare itself with the case._
-- [ ] Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
-      _A method on the backed enum (`$x->label()`, `$x->isPaid()`)._
+- [ ] Put per-case behaviour on the enum; never `match` or `switch` over its backing value at a call site.
+      _A method on the enum that answers for each case (`label()`, `isPaid()`)._
 
 ## Commands
 

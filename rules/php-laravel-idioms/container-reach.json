@@ -118,6 +118,32 @@
                 "assignable",
                 "$c.callee.subject.resolved",
                 "application"
+              ],
+              [
+                "and",
+                [
+                  "=",
+                  "$c.callee.subject.kind",
+                  "call"
+                ],
+                [
+                  "some",
+                  [
+                    "identities",
+                    "container-accessor"
+                  ],
+                  "i",
+                  [
+                    "=",
+                    "$i",
+                    [
+                      "concat",
+                      "$c.callee.subject.callee.subject.refers",
+                      "::",
+                      "$c.callee.subject.callee.member.name"
+                    ]
+                  ]
+                ]
               ]
             ]
           ]
@@ -248,6 +274,144 @@
             "=",
             "$m.kind",
             "parameter"
+          ]
+        ]
+      ]
+    },
+    "boundBy": {
+      "args": [
+        "t",
+        "attributes",
+        "bindings"
+      ],
+      "expr": [
+        "or",
+        [
+          "some",
+          [
+            "identities",
+            "$attributes"
+          ],
+          "a",
+          [
+            "nonempty",
+            [
+              "annotated",
+              "$t",
+              "$a"
+            ]
+          ]
+        ],
+        [
+          "some",
+          [
+            "referrers",
+            "$t"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$r.parent.member.name",
+              "class"
+            ],
+            [
+              "=",
+              "$r.parent.parent.parent.kind",
+              "call"
+            ],
+            [
+              "some",
+              [
+                "identities",
+                "$bindings"
+              ],
+              "n",
+              [
+                "=",
+                "$n",
+                "$r.parent.parent.parent.callee.member.name"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "longLived": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "or",
+        [
+          "boundBy",
+          "$t",
+          "singleton-attribute",
+          "singleton-binding"
+        ],
+        [
+          "some",
+          [
+            "referrers",
+            "$t"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "declaredType"
+            ],
+            [
+              "=",
+              "$r.parent.kind",
+              "parameter"
+            ],
+            [
+              "boundBy",
+              [
+                "enclosing",
+                "$r",
+                "type"
+              ],
+              "singleton-attribute",
+              "singleton-binding"
+            ]
+          ]
+        ]
+      ]
+    },
+    "reachExempt": {
+      "args": [
+        "c",
+        "owner"
+      ],
+      "expr": [
+        "proven",
+        [
+          "and",
+          [
+            "longLived",
+            "$owner"
+          ],
+          [
+            "boundBy",
+            [
+              "typeDeclaration",
+              [
+                "classLiteral",
+                "$c"
+              ]
+            ],
+            "scoped-attribute",
+            "scoped-binding"
           ]
         ]
       ]
@@ -390,6 +554,14 @@
             [
               "containerBuilt",
               "$owner"
+            ],
+            [
+              "not",
+              [
+                "reachExempt",
+                "$c",
+                "$owner"
+              ]
             ]
           ]
         },

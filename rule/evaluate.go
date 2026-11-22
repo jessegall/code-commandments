@@ -364,6 +364,36 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		}
 
 		return known(declared[0])
+	case "declarationBySymbol":
+		symbol, isSymbol := operand(0).held.(string)
+		if !operand(0).known {
+			return unknown
+		}
+		if !isSymbol || symbol == "" {
+			return known(nil)
+		}
+		if declared := e.codebase.Declarations(symbol); len(declared) > 0 {
+			return known(declared[0])
+		}
+
+		return known(nil)
+	case "docTags":
+		site, isNode := nodeOf(operand(0))
+		if !isNode {
+			return unknown
+		}
+		tags := []value{}
+		if site.Exists() {
+			for _, comment := range commentRecords(site) {
+				documented, _ := nodeOf(comment["documents"])
+				words, held := comment[derivedAt].held.(commentWords)
+				if held && documented.Exists() && documented.Node() == site.Node() && words.comment.Form == "doc" {
+					tags = append(tags, tagRecords(words.comment.Comment.Tags)...)
+				}
+			}
+		}
+
+		return known(tags)
 	case "typeDeclaration":
 		symbol, isSymbol := operand(0).held.(string)
 		if !operand(0).known {

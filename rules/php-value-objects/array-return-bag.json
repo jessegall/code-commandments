@@ -20,7 +20,7 @@
     "skill": "php/value-objects",
     "description": "Returning a multi-field string-keyed array literal (a bag that should be a value object)",
     "rule": "Return a typed value object, not a multi-field string-keyed array literal.",
-    "suggestion": "Return a Spatie `Data` object via `::from(...)`.",
+    "suggestion": "Return a value object with those fields (a data class, a record, a struct) instead of the keyed literal.",
     "reporting": {
       "crossFile": true
     }

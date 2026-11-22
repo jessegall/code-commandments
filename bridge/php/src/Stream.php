@@ -50,7 +50,8 @@ final readonly class Stream
         foreach ($judged as $path) {
             $code = $this->request->contents[$path] ?? (string) file_get_contents($path);
             [, $statements, $errors, $tokens] = $this->read($code, $parser);
-            $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types->infer($statements, $path));
+            $types->infer($statements, $path);
+            $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types);
             $this->line($out, ['file' => $file]);
             $referenced += $file->translator->referenced;
             $declared += $file->translator->declared;
@@ -77,11 +78,10 @@ final readonly class Stream
 
     /**
      * @param  list<\PhpParser\Node>  $statements
-     * @param  list<string>  $reads  the other files whose declarations typed this one
      */
-    private function parsed(string $path, string $code, array $statements, Collecting $errors, array $tokens, array $reads): ParsedFile
+    private function parsed(string $path, string $code, array $statements, Collecting $errors, array $tokens, Types $types): ParsedFile
     {
-        $translator = new Translator($code, $tokens);
+        $translator = new Translator($code, $tokens, $types);
         $root = $translator->file($statements);
         $nodes = $root->numbered();
         $modules = $root->parts['modules'];
@@ -97,7 +97,7 @@ final readonly class Stream
             $translator->comments($nodes),
             $translator,
             $translator->types,
-            array_merge($reads, $this->publishing($path)[1]),
+            array_merge($types->readSoFar($path), $this->publishing($path)[1]),
             $this->publishing($path)[0],
         );
     }

@@ -11,7 +11,19 @@ import (
 
 func phpSource(t *testing.T, source string) *engine.Codebase {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "Orders.php")
+
+	return phpSourceHolding(t, "", source)
+}
+
+func phpSourceHolding(t *testing.T, lock, source string) *engine.Codebase {
+	t.Helper()
+	root := t.TempDir()
+	if lock != "" {
+		if err := os.WriteFile(filepath.Join(root, "composer.lock"), []byte(lock), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	path := filepath.Join(root, "Orders.php")
 	if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}

@@ -67,7 +67,7 @@ _179 sins across 40 skills._
 | Sin | What it flags |
 |---|---|
 | `compare-self` | A strict comparison bypasses an enum's verified comparison method. |
-| `enum-value-match` | A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead. |
+| `enum-value-match` | A `match` or `switch` over an enum's backing value at the call site: logic that belongs on the enum but lives elsewhere instead. |
 
 #### `php/fix-at-the-source`
 
@@ -96,14 +96,14 @@ _179 sins across 40 skills._
 | Sin | What it flags |
 |---|---|
 | `computed-boolean-argument` | A parameter that's just true/false, computed by every caller from the same object it could be given instead. |
-| `derived-argument` | Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object. |
-| `param-resolved-from-param` | Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly. |
+| `derived-argument` | Passing the same object twice, once whole and once broken into a piece, or broken into several pieces at once, when the callee could derive each piece itself from the one object. |
+| `param-resolved-from-param` | Unpacking the target out of a container parameter: a method takes a container and a key (a workflow and a node id) and resolves the node itself, when it could just receive the node. |
 
 #### `php/repeated-call-helper`
 
 | Sin | What it flags |
 |---|---|
-| `repeated-named-call` | The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type |
+| `repeated-named-call` | The same `with`-style method is called with the same named argument at 2+ sites, instead of a named helper on the type. |
 | `repeated-query-chain` | One Eloquent query chain written alike at three or more sites outside its model |
 
 #### `php/role-vocabulary`
@@ -120,7 +120,7 @@ _179 sins across 40 skills._
 | `guard-beside-transition` | A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards |
 | `keyed-lookup-envy` | Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator |
 | `middle-man` | A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work. |
-| `train-wreck` | `$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller |
+| `train-wreck` | A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller. |
 
 #### `php/templates`
 
@@ -135,17 +135,17 @@ _179 sins across 40 skills._
 | `filled-parameter` | a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed |
 | `impossible-guard` | `if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing |
 | `refused-bequest` | A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep. |
-| `scratch-state-restore` | Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input |
+| `scratch-state-restore` | Scratch state on the object: a method saves one of its own fields to a local and restores it later, the field really a per-call input. |
 | `unused-parameter` | A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses. |
 | `unused-private-member` | A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries. |
-| `useless-property-hook` | A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax |
+| `useless-property-hook` | A property's getter that reads nothing from the object: a stored property wearing computed syntax. |
 
 #### `php/value-objects`
 
 | Sin | What it flags |
 |---|---|
-| `array-bag` | String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined. |
-| `array-bag-parameter` | A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to. |
+| `array-bag` | Reading a named field by string key off a loose map or array parameter instead of giving the record a type: the type was never defined. |
+| `array-bag-parameter` | A parameter typed as a loose map or array that callers fill with string-keyed records: the method never defined the type its fields belong to. |
 | `array-return-bag` | Returning a multi-field string-keyed array literal (a bag that should be a value object) |
 | `coupled-fields` | A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object. |
 | `flat-field-cluster` | A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`. |
@@ -170,7 +170,7 @@ _179 sins across 40 skills._
 | `dead-event-wiring` | An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring |
 | `duplicated-config-default` | A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently |
 | `facade-call` | Laravel facade call (`Cache::`, `Log::`, `Mail::` …) |
-| `handed-out-collection` | a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back |
+| `handed-out-collection` | A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back. |
 | `hard-coded-route-path` | A path written out by hand where a named route already declares it |
 | `mass-update-at-call-site` | Bare `$model->update([...])` mass-array update at a call site |
 | `model-mutation-at-call-site` | Set-property-then-`save()` at a call site (should be an intention method) |

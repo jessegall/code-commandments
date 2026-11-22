@@ -9,7 +9,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`dead-event-wiring`** — An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring — `dead-event-wiring`
 - **`duplicated-config-default`** — A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently — `duplicated-config-default`
 - **`facade-call`** — Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `facade-call`
-- **`handed-out-collection`** — a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back — `handed-out-collection`
+- **`handed-out-collection`** — A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back. — `handed-out-collection`
 - **`hard-coded-route-path`** — A path written out by hand where a named route already declares it — `hard-coded-route-path`
 - **`mass-update-at-call-site`** — Bare `$model->update([...])` mass-array update at a call site — `mass-update-at-call-site`
 - **`model-mutation-at-call-site`** — Set-property-then-`save()` at a call site (should be an intention method) — `model-mutation-at-call-site`

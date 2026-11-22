@@ -72,6 +72,18 @@ final class Translator
      */
     private array $classes = [];
 
+    private ?string $namespace = null;
+
+    /**
+     * @var array<string, string>
+     */
+    private array $aliases = [];
+
+    /**
+     * @var list<array{int, int, string}>
+     */
+    private array $typeSpans = [];
+
     private const COMPARISONS = [
         'Expr_BinaryOp_Identical' => 'identical', 'Expr_BinaryOp_NotIdentical' => 'not-identical', 'Expr_BinaryOp_Equal' => 'equal',
         'Expr_BinaryOp_NotEqual' => 'not-equal', 'Expr_BinaryOp_Smaller' => 'less', 'Expr_BinaryOp_SmallerOrEqual' => 'less-or-equal',
@@ -87,7 +99,7 @@ final class Translator
     /**
      * @param  list<Token>  $tokens
      */
-    public function __construct(private readonly string $code, private readonly array $tokens)
+    public function __construct(private readonly string $code, private readonly array $tokens, private readonly ?Types $known = null)
     {
         preg_match_all('/\n/', $code, $breaks, PREG_OFFSET_CAPTURE);
         foreach ($breaks[0] as [, $at]) {
@@ -266,6 +278,7 @@ final class Translator
      */
     private function module(?string $name, int $start, int $end, array $statements): TreeNode
     {
+        $this->namespace = $name;
         $module = $this->made('module', $start, $end, ['name' => $name]);
         $roles = ['imports' => [], 'declarations' => [], 'statements' => []];
         foreach ($this->written($statements) as $statement) {
@@ -485,6 +498,9 @@ final class Translator
             default => 'class',
         };
         $made = $this->of('type', $type, ['name' => $type->name?->toString(), 'symbol' => $symbol, 'form' => $form, 'modifiers' => $this->modifiers($type)]);
+        if ($symbol !== null) {
+            $this->typeSpans[] = [$this->start($type), $this->end($type), $symbol];
+        }
         $parts = [];
         $extends = match (true) {
             $type instanceof Stmt\Class_ => $type->extends !== null ? [$type->extends] : [],
@@ -666,6 +682,7 @@ final class Translator
         }
         if ($function->getReturnType() !== null) {
             $parts['returnType'] = $this->writtenType($function->getReturnType());
+            $this->documentedReturn($function, $parts['returnType']);
             $after = $this->end($function->getReturnType());
         }
         $this->scopes[] = $this->scopeOf($function, [...($parts['captures'] ?? []), ...array_map(static fn (TreeNode $parameter): TreeNode => $parameter->parts['binding'], $parameters)]);
@@ -752,6 +769,7 @@ final class Translator
         foreach ($use->uses as $item) {
             $name = $prefix . $item->name->toString();
             $kind = $item->type !== Stmt\Use_::TYPE_UNKNOWN ? $item->type : $use->type;
+            $this->aliases[strtolower($item->alias?->toString() ?? $item->name->getLast())] = $name;
             if ($kind === Stmt\Use_::TYPE_NORMAL) {
                 $this->referenced[strtolower($name)] = $name;
             }
@@ -1252,6 +1270,9 @@ final class Translator
                 $comment['fragment'] = self::fragment($text);
             } else {
                 $comment += array_filter(self::docblock($text));
+                if (($refs = $this->references($text, $token->pos)) !== []) {
+                    $comment['refs'] = $refs;
+                }
             }
             $comments[] = $comment;
         }
@@ -1296,6 +1317,128 @@ final class Translator
      *
      * @return array<string, string>
      */
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function references(string $text, int $at): array
+    {
+        preg_match_all('/@(?:see|link)\s+(\\\\?[A-Za-z_][\\\\\w]*)(?:::(\$?\w+))?(\(\))?(?=[\s.,;)}]|$)/', $text, $found, PREG_SET_ORDER);
+        $enclosing = null;
+        foreach ($this->typeSpans as [$start, $end, $symbol]) {
+            if ($start <= $at && $at < $end) {
+                $enclosing = $symbol;
+            }
+        }
+        $refs = [];
+        foreach ($found as $one) {
+            $written = $one[1];
+            $member = isset($one[2]) && $one[2] !== '' ? ltrim($one[2], '$') : null;
+            $ofThis = ($one[3] ?? '') !== '' && ! str_contains($written, '\\') && $member === null && $enclosing !== null;
+            $class = $ofThis ? $enclosing : $this->qualified($written);
+            $member = $ofThis ? $written : $member;
+            $declared = $this->known?->declared($class);
+            $ref = ['text' => $written.($member !== null && ! $ofThis ? '::'.$member : '')];
+            $has = $declared !== null && ($member === null
+                || isset($declared['methods'][strtolower($member)])
+                || isset($declared['constants'][$member])
+                || isset($declared['properties'][$member]));
+            if ($has) {
+                $ref['symbol'] = $member === null ? $declared['name'] : $declared['name'].'::'.$member;
+            } else {
+                $ref['ownedHere'] = strtok($class, '\\') === strtok((string) $this->namespace, '\\');
+            }
+            $refs[] = $ref;
+        }
+
+        return $refs;
+    }
+
+    private function qualified(string $written): string
+    {
+        if (str_starts_with($written, '\\')) {
+            return ltrim($written, '\\');
+        }
+        $head = (string) strtok($written, '\\');
+        $alias = $this->aliases[strtolower($head)] ?? null;
+        if ($alias !== null) {
+            return $alias.substr($written, strlen($head));
+        }
+
+        return ($this->namespace !== null ? $this->namespace.'\\' : '').$written;
+    }
+
+    private function documentedReturn(Node\FunctionLike $function, TreeNode $written): void
+    {
+        $doc = $function->getDocComment()?->getText();
+        if (($written->facts['name'] ?? null) !== 'array' || $doc === null
+            || preg_match('/@(?:(?:phpstan|psalm)-)?return\s+(\S.*?)\s*(?:\*\/|\R|$)/', $doc, $found) !== 1) {
+            return;
+        }
+        $type = self::documentedType(self::docTag('return', $found[1])['type'] ?? '');
+        if ($type !== null) {
+            $this->types[] = $type;
+            $written->facts['resolvedType'] = array_key_last($this->types);
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function documentedType(string $said): ?array
+    {
+        $said = trim($said);
+        if (str_starts_with($said, 'array{')) {
+            return ['text' => $said, 'kind' => 'object', 'origin' => 'docblock', 'nullable' => false, 'valueType' => true,
+                'fields' => array_map(static fn (string $name): array => ['name' => $name, 'type' => ['text' => 'mixed', 'kind' => 'opaque', 'origin' => 'docblock']], array_keys(self::shapeKeys($said)))];
+        }
+        if (preg_match('/^array<\s*(?:int|string|array-key)\s*,\s*(.+)>$/', $said, $map) === 1) {
+            $element = self::documentedElement($map[1]);
+
+            return ['text' => $said, 'kind' => 'map', 'origin' => 'docblock', 'nullable' => false, 'valueType' => true, 'args' => [['text' => 'string', 'kind' => 'keyword', 'name' => 'string', 'origin' => 'docblock'], $element], 'element' => $element];
+        }
+        if (preg_match('/^(?:non-empty-)?(?:list|array)<(.+)>$/', $said, $list) === 1 || preg_match('/^([\w\\\\]+)\[\]$/', $said, $list) === 1) {
+            $element = self::documentedElement($list[1]);
+
+            return ['text' => $said, 'kind' => 'array', 'origin' => 'docblock', 'nullable' => false, 'valueType' => true, 'args' => [$element], 'element' => $element];
+        }
+
+        return null;
+    }
+
+    /** @return array<string, string> */
+    private static function documentedElement(string $said): array
+    {
+        $said = trim($said);
+        $keywords = ['string', 'int', 'float', 'bool', 'mixed', 'array', 'null', 'object', 'callable', 'iterable', 'true', 'false'];
+        if (in_array($said, $keywords, true) || str_starts_with($said, 'class-string') || str_contains($said, '|') || str_contains($said, '{')) {
+            return ['text' => $said, 'kind' => 'keyword', 'name' => in_array($said, $keywords, true) ? $said : 'string', 'origin' => 'docblock'];
+        }
+
+        return ['text' => $said, 'kind' => 'named', 'name' => ltrim(preg_replace('/<.*$/s', '', $said) ?? $said, '\\'), 'origin' => 'docblock'];
+    }
+
+    /** @return array<string, true> */
+    private static function shapeKeys(string $shape): array
+    {
+        $start = 1 + (int) strpos($shape, '{');
+        $body = substr($shape, $start, (int) strrpos($shape, '}') - $start);
+        $keys = [];
+        $depth = 0;
+        $entry = '';
+        foreach (str_split($body.',') as $char) {
+            $depth += match ($char) { '{', '<', '(' => 1, '}', '>', ')' => -1, default => 0 };
+            if ($depth === 0 && $char === ',') {
+                if (preg_match('/^\s*([A-Za-z_][A-Za-z0-9_]*)\??\s*:/', $entry, $key) === 1) {
+                    $keys[$key[1]] = true;
+                }
+                $entry = '';
+
+                continue;
+            }
+            $entry .= $char;
+        }
+
+        return $keys;
+    }
+
     private static function docTag(string $name, string $rest): array
     {
         $tag = ['name' => $name, 'text' => trim($rest)];
