@@ -65,19 +65,33 @@
                 0
               ],
               [
-                "=",
-                "$g.value.kind",
-                "literal"
+                "messageText",
+                "$g.value",
+                "$d"
               ],
               [
-                "=",
-                "$g.value.literalKind",
-                "string"
-              ],
-              [
-                "contains",
-                "$g.value.value",
-                " "
+                "not",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$g.value.kind",
+                    "literal"
+                  ],
+                  [
+                    "=",
+                    "$g.value.literalKind",
+                    "string"
+                  ],
+                  [
+                    "not",
+                    [
+                      "contains",
+                      "$g.value.value",
+                      " "
+                    ]
+                  ]
+                ]
               ]
             ]
           ]
