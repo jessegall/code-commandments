@@ -1,8 +1,10 @@
 package engine
 
 import (
-	"github.com/jessegall/code-commandments/contract"
+	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
 )
 
 func (m Match) ResultType() *contract.Type {
@@ -31,8 +33,56 @@ func (m Match) Typed() *contract.Type {
 	if m.Kind() == "type-expression" {
 		return m.writtenType()
 	}
+	if m.Kind() == "call" && m.node.Target == nil {
+		return m.forwardedType()
+	}
 
 	return nil
+}
+
+func (m Match) forwardedType() *contract.Type {
+	if m.file == nil {
+		return nil
+	}
+	receiver, method := m.writtenReceiver(), m.writtenCallee()
+	if receiver == "" || method == "" {
+		return nil
+	}
+	for _, facts := range registeredPackageFacts() {
+		for _, forward := range facts.Forwards {
+			if !m.declaredBy(receiver, forward.Type) && !m.declaredBy(receiver, forward.To) {
+				continue
+			}
+			listed, found := outsideSymbols(m.file.Codebase(), m.file.Language())[forward.To]
+			if !found {
+				return nil
+			}
+			for _, member := range listed.Members {
+				if member.Name == method {
+					return returnedBy(member, forward.To)
+				}
+			}
+
+			return &contract.Type{Kind: "named", Name: forward.To}
+		}
+	}
+
+	return nil
+}
+
+func returnedBy(member contract.OutsideMember, owner string) *contract.Type {
+	returned := member.Documented
+	if returned == nil || returned.Kind == "opaque" {
+		returned = member.Returns
+	}
+	if returned == nil {
+		return nil
+	}
+	if returned.Kind == "named" && slices.Contains([]string{"static", "self", "$this"}, returned.Name) {
+		return &contract.Type{Kind: "named", Name: owner}
+	}
+
+	return returned
 }
 
 // writtenType is the type a type-expression states, for one no compiler resolved: a keyword, a named type, a nullable,

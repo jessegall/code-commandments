@@ -186,6 +186,10 @@ final class OutsideSymbols
             if ($method->hasReturnType()) {
                 $member['returns'] = $this->type($method->getReturnType());
             }
+            $doc = $method->getDocComment();
+            if ($doc !== false && preg_match('/@return\s+([^\s<]+)/', $doc, $documented)) {
+                $member['documented'] = $this->documentedType($documented[1], $reflection->getName());
+            }
             $parameters = [];
             foreach ($method->getParameters() as $parameter) {
                 $entry = ['name' => $parameter->getName()];
@@ -320,7 +324,7 @@ final class OutsideSymbols
     {
         $parts = explode('|', $written);
         if (count($parts) > 1) {
-            return new OutsideType($written, 'union', 'documented', members: array_map(fn (string $part) => $this->documentedType($part, $self), $parts));
+            return new OutsideType($written, 'union', 'docblock', members: array_map(fn (string $part) => $this->documentedType($part, $self), $parts));
         }
         $nullable = str_starts_with($written, '?');
         $name = ltrim($written, '?\\');
@@ -328,14 +332,14 @@ final class OutsideSymbols
             $name = $self;
         }
         if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\\\\]*$/', $name)) {
-            return new OutsideType($written, 'opaque', 'documented', nullable: $nullable);
+            return new OutsideType($written, 'opaque', 'docblock', nullable: $nullable);
         }
         if (in_array(strtolower($name), OutsideType::BUILTINS, true)) {
-            return new OutsideType($written, 'keyword', 'documented', strtolower($name), nullable: $nullable);
+            return new OutsideType($written, 'keyword', 'docblock', strtolower($name), nullable: $nullable);
         }
         $this->add($name);
 
-        return new OutsideType(($nullable ? '?' : '') . '\\' . $name, 'named', 'documented', $name, nullable: $nullable);
+        return new OutsideType(($nullable ? '?' : '') . '\\' . $name, 'named', 'docblock', $name, nullable: $nullable);
     }
 
     private function type(ReflectionType $type): OutsideType
