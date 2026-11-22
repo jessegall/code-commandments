@@ -81,3 +81,37 @@ func TestAnEditOutsideTheJudgedFoldersSaysNothing(t *testing.T) {
 		t.Errorf("an edit outside the folders the project judges was told: %s", *said.context)
 	}
 }
+
+func TestARuleOfTheProjectsOwnThatJudgesNothingIsToldOnce(t *testing.T) {
+	root, _ := workerProject(t)
+	own := filepath.Join(root, ".commandments", "custom", "OldRule.json")
+	if err := os.MkdirAll(filepath.Dir(own), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(own, []byte(`{"$schema":"commandments:custom-rule/v1","engine":"python","sin":{"name":"old-rule","skill":"x"}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	edited := filepath.Join("src", "orders.py")
+	if err := os.WriteFile(filepath.Join(root, edited), []byte("class Orders:\n    pass\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	edit := func() string {
+		said := SkillReminder{}.Handle(NewEvent(map[string]any{
+			"hook_event_name": "PostToolUse",
+			"tool_name":       "Write",
+			"cwd":             root,
+			"tool_input":      map[string]any{"file_path": edited},
+		}, root))
+		if said.context == nil {
+			return ""
+		}
+
+		return *said.context
+	}
+	if first := edit(); !strings.Contains(first, "OldRule") {
+		t.Errorf("the first edit was not told of the rule that judges nothing: %q", first)
+	}
+	if second := edit(); strings.Contains(second, "OldRule") {
+		t.Errorf("the second edit was told of it again: %q", second)
+	}
+}

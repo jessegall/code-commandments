@@ -65,7 +65,9 @@ func (SkillReminder) Handle(event Event) Response {
 		return Silent()
 	}
 
-	enabled = append(enabled, custom.InForce(home).Enabled(project)...)
+	own := custom.InForce(home)
+	enabled = append(enabled, own.Enabled(project)...)
+	warned := strings.Join(own.Warnings(project), "\n")
 
 	project = project.Judging(enabled)
 	files, lost := edited(event, project)
@@ -125,6 +127,9 @@ func (SkillReminder) Handle(event Event) Response {
 	}
 
 	var said []string
+	if told := SaidIn(event.Workspace()).Fresh(map[string]Narrowed{workspace.CustomDir(workspace.SettingsRoot(home)): Narrowed(warned)}); len(told) > 0 && warned != "" {
+		said = append(said, "Code Commandments: the project's own rules are not all judged:\n"+warned)
+	}
 	if len(fresh) > 0 {
 		said = append(said, nudge(event, fresh))
 	}
