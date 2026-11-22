@@ -237,6 +237,32 @@
           ]
         ]
       ]
+    },
+    "mayBeNull": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$s.nullConditional",
+          true
+        ],
+        [
+          "some",
+          [
+            "descendants",
+            "$s"
+          ],
+          "x",
+          [
+            "=",
+            "$x.nullConditional",
+            true
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -370,6 +396,18 @@
         [
           "compared",
           "$p"
+        ]
+      ],
+      [
+        "none",
+        "$parts",
+        "p",
+        [
+          "mayBeNull",
+          [
+            "subjectOf",
+            "$p"
+          ]
         ]
       ],
       [

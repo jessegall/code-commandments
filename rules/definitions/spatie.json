@@ -333,6 +333,24 @@
               ]
             ]
           ]
+        ],
+        [
+          "some",
+          [
+            "typeMembers",
+            [
+              "typeOf",
+              "$s"
+            ]
+          ],
+          "m",
+          [
+            "documentsData",
+            [
+              "elementType",
+              "$m"
+            ]
+          ]
         ]
       ]
     },
@@ -829,6 +847,18 @@
           "=",
           "$a.refers",
           "Spatie\\TypeScriptTransformer\\Attributes\\TypeScript"
+        ]
+      ]
+    },
+    "documentsData": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "isData",
+        [
+          "typeDeclaration",
+          "$e.name"
         ]
       ]
     }

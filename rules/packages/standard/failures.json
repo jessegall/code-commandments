@@ -5,33 +5,133 @@
   "provenance": "Each language's own failure types: the root every thrown value derives from, and the generic types that name no particular failure (report 96 rows F13 and F14). A language's compiler spells them as listed.",
   "entries": [],
   "identities": [
-    {"name": "failure-root", "type": "Throwable"},
-    {"name": "failure-root", "type": "builtins.BaseException"},
-    {"name": "failure-root", "type": "System.Exception"},
-    {"name": "failure-root", "type": "global::System.Exception"},
-    {"name": "failure-root", "type": "Error"},
-    {"name": "failure-root", "type": "error"},
-    {"name": "failure-generic", "type": "Exception"},
-    {"name": "failure-generic", "type": "RuntimeException"},
-    {"name": "failure-generic", "type": "ErrorException"},
-    {"name": "failure-generic", "type": "builtins.Exception"},
-    {"name": "failure-generic", "type": "builtins.RuntimeError"},
-    {"name": "failure-generic", "type": "System.Exception"},
-    {"name": "failure-generic", "type": "global::System.Exception"},
-    {"name": "failure-generic", "type": "System.ApplicationException"},
-    {"name": "failure-generic", "type": "global::System.ApplicationException"},
-    {"name": "failure-generic", "type": "System.SystemException"},
-    {"name": "failure-generic", "type": "global::System.SystemException"},
-    {"name": "failure-generic", "type": "Error"},
-    {"name": "failure-generic", "type": "LogicException"},
-    {"name": "failure-generic", "type": "InvalidArgumentException"},
-    {"name": "failure-generic", "type": "DomainException"},
-    {"name": "failure-generic", "type": "UnexpectedValueException"},
-    {"name": "failure-generic", "type": "OutOfRangeException"},
-    {"name": "failure-generic", "type": "OutOfBoundsException"},
-    {"name": "failure-generic", "type": "RangeException"},
-    {"name": "failure-generic", "type": "LengthException"},
-    {"name": "failure-generic", "type": "System.InvalidOperationException"},
-    {"name": "failure-generic", "type": "global::System.InvalidOperationException"}
+    {
+      "name": "failure-root",
+      "type": "Throwable"
+    },
+    {
+      "name": "failure-root",
+      "type": "builtins.BaseException"
+    },
+    {
+      "name": "failure-root",
+      "type": "System.Exception"
+    },
+    {
+      "name": "failure-root",
+      "type": "global::System.Exception"
+    },
+    {
+      "name": "failure-root",
+      "type": "Error"
+    },
+    {
+      "name": "failure-root",
+      "type": "error"
+    },
+    {
+      "name": "failure-generic",
+      "type": "Exception"
+    },
+    {
+      "name": "failure-generic",
+      "type": "RuntimeException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "ErrorException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "builtins.Exception"
+    },
+    {
+      "name": "failure-generic",
+      "type": "builtins.RuntimeError"
+    },
+    {
+      "name": "failure-generic",
+      "type": "System.Exception"
+    },
+    {
+      "name": "failure-generic",
+      "type": "global::System.Exception"
+    },
+    {
+      "name": "failure-generic",
+      "type": "System.ApplicationException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "global::System.ApplicationException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "System.SystemException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "global::System.SystemException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "Error"
+    },
+    {
+      "name": "failure-generic",
+      "type": "LogicException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "InvalidArgumentException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "DomainException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "UnexpectedValueException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "OutOfRangeException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "OutOfBoundsException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "RangeException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "LengthException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "BadMethodCallException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "BadFunctionCallException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "OverflowException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "UnderflowException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "System.InvalidOperationException"
+    },
+    {
+      "name": "failure-generic",
+      "type": "global::System.InvalidOperationException"
+    }
   ]
 }

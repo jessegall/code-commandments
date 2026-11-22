@@ -25,6 +25,12 @@ final class CustomerProfileBuilder
     }
 
     #[Righteous(NewDataObject::class)]
+    public function guest(): CustomerData
+    {
+        return new CustomerData(id: 0, name: 'Guest', email: 'guest@example.com');
+    }
+
+    #[Righteous(NewDataObject::class)]
     public function buildFrom(Customer $customer): CustomerData
     {
         return CustomerData::from($customer);

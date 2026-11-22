@@ -373,7 +373,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring"
+        "help": "A listener wired to an event class no live code path can fire (`Event::listen`, or an entry of an event service provider's `$listen`) — a listener chain that dead-ends but reads as live wiring"
     },
     {
         "key": "sin_duplicated-config-default",

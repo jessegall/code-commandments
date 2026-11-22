@@ -49,6 +49,15 @@
         ]
       ]
     ],
+    "let": [
+      [
+        "slot",
+        [
+          "spatie.slotOf",
+          "$c"
+        ]
+      ]
+    ],
     "having": [
       "and",
       [
@@ -69,6 +78,48 @@
         "spatie.fits",
         "$c",
         "$c.callee.subject.refers"
+      ],
+      [
+        "not",
+        [
+          "case",
+          "$slot.declaredType.form",
+          {
+            "union": [
+              "some",
+              "$slot.declaredType.members",
+              "m",
+              [
+                "and",
+                [
+                  "=",
+                  "$m.form",
+                  "named"
+                ],
+                [
+                  "not",
+                  [
+                    "in",
+                    "$m.refers",
+                    "Spatie\\LaravelData\\Lazy",
+                    "Spatie\\LaravelData\\Optional"
+                  ]
+                ],
+                [
+                  "not",
+                  [
+                    "spatie.isData",
+                    [
+                      "typeDeclaration",
+                      "$m.refers"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          },
+          false
+        ]
       ]
     ],
     "emit": "$c"

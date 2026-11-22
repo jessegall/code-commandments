@@ -70,7 +70,14 @@
         "$x.kind",
         {
           "call": "$x.callee.subject",
-          "access": "$x.subject"
+          "access": [
+            "case",
+            "$x.form",
+            {
+              "instance": "$x.subject"
+            },
+            null
+          ]
         },
         null
       ]

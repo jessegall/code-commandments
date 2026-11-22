@@ -308,8 +308,26 @@
           [
             "some",
             [
-              "descendants",
-              "$m"
+              "flatten",
+              [
+                "map",
+                [
+                  "flatten",
+                  [
+                    "list",
+                    [
+                      "list",
+                      "$m"
+                    ],
+                    "$m.hooks"
+                  ]
+                ],
+                "h",
+                [
+                  "descendants",
+                  "$h"
+                ]
+              ]
             ],
             "x",
             [

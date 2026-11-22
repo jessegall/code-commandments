@@ -59,8 +59,19 @@
             [
               "map",
               [
-                "fragments",
-                "$c"
+                "filter",
+                [
+                  "fragments",
+                  "$c"
+                ],
+                "x",
+                [
+                  "not",
+                  [
+                    "extended",
+                    "$x"
+                  ]
+                ]
               ],
               "x",
               [
@@ -226,6 +237,44 @@
           ]
         },
         null
+      ]
+    },
+    "extended": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "reference"
+        ],
+        [
+          "exists",
+          "$x.binding"
+        ],
+        [
+          "some",
+          [
+            "referrers",
+            "$x.binding"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "index"
+            ],
+            [
+              "=",
+              "$r.parent.parent.kind",
+              "assignment"
+            ]
+          ]
+        ]
       ]
     },
     "fragments": {

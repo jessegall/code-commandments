@@ -302,6 +302,10 @@
         "construction"
       ],
       [
+        "exists",
+        "$parameter"
+      ],
+      [
         "or",
         [
           "not",

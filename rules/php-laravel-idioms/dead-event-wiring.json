@@ -10,7 +10,7 @@
       "DeadEventWiring"
     ],
     "skill": "php/laravel-idioms",
-    "description": "An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring",
+    "description": "A listener wired to an event class no live code path can fire (`Event::listen`, or an entry of an event service provider's `$listen`) — a listener chain that dead-ends but reads as live wiring",
     "rule": "A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.",
     "suggestion": "Delete the registration (and the listener, if nothing else reaches it) — or restore the dispatch the listener was waiting for.",
     "requires": {
@@ -23,6 +23,121 @@
   },
   "definitions": {
     "listenedBy": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "call": [
+            "listenedByCall",
+            "$c"
+          ],
+          "entry": [
+            "case",
+            [
+              "and",
+              [
+                "classKey",
+                "$c.key"
+              ],
+              [
+                "mapOf",
+                "$c.parent",
+                "listen",
+                "event-service-provider"
+              ]
+            ],
+            {
+              "true": "$c.key.subject.refers"
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "produced": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "some",
+        [
+          "referrers",
+          "$d"
+        ],
+        "r",
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "construction"
+            ],
+            [
+              "=",
+              "$r.role",
+              "type"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "subject"
+            ],
+            [
+              "=",
+              "$r.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$r.parent.parent.kind",
+              "call"
+            ],
+            [
+              "in",
+              "$r.parent.member.name",
+              "dispatch",
+              "dispatchIf",
+              "dispatchUnless",
+              "broadcast"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$r.parent.member.name",
+              "class"
+            ],
+            [
+              "=",
+              "$r.parent.parent.kind",
+              "entry"
+            ],
+            [
+              "mapOf",
+              "$r.parent.parent.parent",
+              "dispatchesEvents",
+              "model"
+            ]
+          ]
+        ]
+      ]
+    },
+    "listenedByCall": {
       "args": [
         "c"
       ],
@@ -92,64 +207,70 @@
         null
       ]
     },
-    "produced": {
+    "mapOf": {
       "args": [
-        "d"
+        "m",
+        "property",
+        "owner"
       ],
       "expr": [
-        "some",
+        "and",
         [
-          "referrers",
-          "$d"
+          "=",
+          "$m.kind",
+          "collection"
         ],
-        "r",
         [
-          "or",
+          "=",
+          "$m.parent.kind",
+          "declarator"
+        ],
+        [
+          "=",
+          "$m.parent.binding.name",
+          "$property"
+        ],
+        [
+          "proven",
           [
-            "and",
+            "assignable",
             [
-              "=",
-              "$r.parent.kind",
-              "construction"
-            ],
-            [
-              "=",
-              "$r.role",
+              "enclosing",
+              "$m",
               "type"
-            ]
-          ],
-          [
-            "and",
-            [
-              "=",
-              "$r.role",
-              "subject"
             ],
             [
-              "=",
-              "$r.parent.kind",
-              "access"
-            ],
-            [
-              "=",
-              "$r.parent.parent.kind",
-              "call"
-            ],
-            [
-              "in",
-              "$r.parent.member.name",
-              "dispatch",
-              "dispatchIf",
-              "dispatchUnless",
-              "broadcast"
+              "identity",
+              "$owner"
             ]
           ]
+        ]
+      ]
+    },
+    "classKey": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$x.member.name",
+          "class"
         ]
       ]
     }
   },
   "find": {
-    "select": "call",
+    "select": [
+      "call",
+      "entry"
+    ],
     "as": "c",
     "where": [
       "and",

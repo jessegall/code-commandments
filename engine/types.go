@@ -37,11 +37,41 @@ func (types DeclarationTypes) Declarations() map[string]Match {
 }
 
 func (types DeclarationTypes) Ancestors(symbol string) []string {
-	return types[symbol].Lineage()
+	if declared, found := types[symbol]; found {
+		return declared.Lineage()
+	}
+	anchor, found := types.anchor()
+	if !found {
+		return nil
+	}
+
+	return anchor.climb(anchor.extendsOf(symbol), anchor.extendsOf)
 }
 
 func (types DeclarationTypes) Contracts(symbol string) []string {
-	return types[symbol].Contracts()
+	if declared, found := types[symbol]; found {
+		return declared.Contracts()
+	}
+	anchor, found := types.anchor()
+	if !found {
+		return nil
+	}
+	direct := anchor.implementsOf(symbol)
+	for _, ancestor := range types.Ancestors(symbol) {
+		direct = append(direct, anchor.implementsOf(ancestor)...)
+	}
+
+	return anchor.climb(direct, func(contract string) []string {
+		return append(anchor.extendsOf(contract), anchor.implementsOf(contract)...)
+	})
+}
+
+func (types DeclarationTypes) anchor() (Match, bool) {
+	for _, declaration := range types {
+		return declaration, true
+	}
+
+	return Match{}, false
 }
 
 // Types is the type system of the node's language, read from the declarations the codebase holds: the same for every

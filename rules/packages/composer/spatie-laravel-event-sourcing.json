@@ -12,6 +12,14 @@
       ],
       "tag": "keyed-state",
       "why": "An aggregate holds keyed domain state it replays from events; it is not a store of registered collaborators."
+    },
+    {
+      "classes": [
+        "Spatie\\EventSourcing\\AggregateRoots\\AggregateRoot",
+        "Spatie\\EventSourcing\\AggregateRoots\\AggregatePartial"
+      ],
+      "tag": "no-container",
+      "why": "An aggregate is built by AggregateRoot::retrieve() with new static, never by the container, and the repository getters it overrides are declared by the package."
     }
   ],
   "identities": [

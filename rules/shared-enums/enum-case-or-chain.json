@@ -138,6 +138,10 @@
     "where": [
       "and",
       [
+        "not",
+        "$l.file.test"
+      ],
+      [
         "=",
         "$l.operator",
         "or"

@@ -2,30 +2,30 @@
 
 namespace Shop\Kiosk;
 
-use JesseGall\CodeCommandments\Sins\Backend\ImpossibleGuard;
-use JesseGall\CodeCommandments\Testing\Sinful;
+use JesseGall\CodeCommandments\Sins\Backend\MemberOutOfOrder;
+use JesseGall\CodeCommandments\Testing\Righteous;
 
 /**
- * The screen a customer stands at, which the till asks about while they are there. The guard
- * below answers "no minutes left" for a session the type says is always there, so the till can
- * never tell a real zero from a session nobody passed.
+ * The tiles a kiosk screen shows, counted by hooks that read the field declared above them.
  */
+#[Righteous(MemberOutOfOrder::class)]
 final class KioskScreen
 {
-    private const IDLE = 0;
+    /**
+     * @var list<KioskTile>
+     */
+    private array $tiles = [];
 
-    #[Sinful(ImpossibleGuard::class)]
-    public function minutesLeft(KioskSession $session): int
-    {
-        if ($session === null) {
-            return self::IDLE;
-        }
-
-        return $session->minutes;
+    protected int $hidden {
+        get => count(array_filter($this->tiles, static fn (KioskTile $tile) => $tile->hidden));
     }
 
-    public function isIdle(KioskSession $session): bool
-    {
-        return $this->minutesLeft($session) === self::IDLE;
+    public int $visible {
+        get => count($this->tiles) - $this->hidden;
     }
+}
+
+final class KioskTile
+{
+    public function __construct(public readonly bool $hidden) {}
 }

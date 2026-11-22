@@ -7,7 +7,9 @@ use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\FacadeCall;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use Illuminate\Http\Request;
 use Shop\Services\PaymentProcessor;
 
 final class CheckoutTest
@@ -30,5 +32,11 @@ final class CheckoutTest
     {
         assert($payload['currency'] === 'EUR');
         assert($payload['amount_cents'] === 100);
+    }
+
+    #[Righteous(RawRequestInput::class)]
+    public function checkTheRewrittenQuery(Request $request): void
+    {
+        assert($request->input('currency') === 'EUR');
     }
 }

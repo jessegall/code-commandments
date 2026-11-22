@@ -33,6 +33,8 @@ Route::post('/export/{id}', [ExportController::class, 'run']);
 Route::post('/admin/export/{id}', [AdminExportController::class, 'run']);
 Route::post('/labels/{sku}', [LabelController::class, 'print']);
 Route::post('/kiosk/labels/{sku}', [KioskLabelController::class, 'print']);
+Route::get('/kiosk/status/{code}', [KioskLabelController::class, 'status']);
+Route::get('/kiosk/idle', [KioskLabelController::class, 'idle']);
 Route::post('/reviews/{reviewId}', [ReviewController::class, 'publish']);
 Route::post('/public/reviews/{reviewId}', [PublicReviewController::class, 'publish']);
 

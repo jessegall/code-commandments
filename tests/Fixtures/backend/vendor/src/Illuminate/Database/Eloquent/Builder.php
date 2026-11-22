@@ -2,6 +2,9 @@
 
 namespace Illuminate\Database\Eloquent;
 
+/**
+ * @mixin \Illuminate\Database\Query\Builder
+ */
 class Builder implements \Illuminate\Contracts\Database\Eloquent\Builder, \Illuminate\Contracts\Database\Query\Builder
 {
     use \Illuminate\Database\Concerns\BuildsQueries, \Illuminate\Support\Traits\ForwardsCalls, \Illuminate\Database\Eloquent\Concerns\QueriesRelationships;

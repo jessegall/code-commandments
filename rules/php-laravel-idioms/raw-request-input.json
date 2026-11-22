@@ -24,30 +24,55 @@
     "where": [
       "and",
       [
-        "=",
-        "$c.callee.kind",
-        "access"
+        "not",
+        "$c.file.test"
       ],
       [
-        "in",
-        "$c.callee.member.name",
-        "input",
-        "get",
-        "query",
-        "post"
-      ],
-      [
-        ">",
+        "or",
         [
-          "count",
-          "$c.arguments"
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "in",
+            "$c.callee.member.name",
+            "input",
+            "get",
+            "query",
+            "post"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            0
+          ],
+          [
+            "laravel.request",
+            "$c"
+          ]
         ],
-        0
+        [
+          "and",
+          [
+            "laravel.requestCall",
+            "$c"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            0
+          ]
+        ]
       ]
-    ],
-    "having": [
-      "laravel.request",
-      "$c"
     ],
     "emit": "$c"
   }

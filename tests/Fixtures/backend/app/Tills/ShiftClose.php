@@ -2,7 +2,7 @@
 
 namespace Shop\Tills;
 
-use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Foundation\Application;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
 use JesseGall\CodeCommandments\Testing\Righteous;
 

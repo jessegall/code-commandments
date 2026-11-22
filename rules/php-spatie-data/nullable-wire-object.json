@@ -201,6 +201,13 @@
         ]
       ],
       [
+        "not",
+        [
+          "spatie.optional",
+          "$s.declaredType"
+        ]
+      ],
+      [
         "or",
         [
           "=",

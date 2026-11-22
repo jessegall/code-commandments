@@ -72,4 +72,10 @@ final class RoundedRates
 
         return self::$rounded[$region];
     }
+
+    #[Righteous(MutableStaticState::class)]
+    public static function ceiling(string $region, float $rate): float
+    {
+        return self::$rounded[$region . ':ceiling'] ??= ceil($rate);
+    }
 }

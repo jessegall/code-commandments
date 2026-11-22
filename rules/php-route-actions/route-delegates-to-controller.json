@@ -171,6 +171,24 @@
                 "$f"
               ]
             ]
+          ],
+          [
+            "!=",
+            [
+              "targetType",
+              [
+                "sole",
+                "$f"
+              ]
+            ],
+            [
+              "tree.ownSymbol",
+              [
+                "enclosing",
+                "$f",
+                "type"
+              ]
+            ]
           ]
         ],
         {

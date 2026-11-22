@@ -592,6 +592,7 @@ final class Translator
             }
             if ($member->type !== null) {
                 $made->parts['declaredType'] = $this->writtenType($member->type);
+                $this->documentedVar($member, $made->parts['declaredType']);
             }
 
             return $made;
@@ -923,6 +924,9 @@ final class Translator
      */
     private function typeIndex(array $type): int
     {
+        if (isset($type['name'])) {
+            $this->referenced[strtolower($type['name'])] = $type['name'];
+        }
         $written = array_filter([
             'text' => ($type['nullable'] ?? false ? '?' : '').($type['name'] ?? $type['keyword'] ?? ''),
             'kind' => isset($type['name']) ? 'named' : 'keyword',
@@ -1400,6 +1404,81 @@ final class Translator
         }
     }
 
+    /**
+     * A property's @var type, when it names the element of a collection its written type leaves out
+     * (`@var Collection<int, Line>|Lazy` on `Collection|Lazy`): each member of the documented union, with the
+     * element of a generic class or array, named in the file's namespace and imports.
+     */
+    private function documentedVar(Stmt\Property $property, TreeNode $written): void
+    {
+        $doc = $property->getDocComment()?->getText();
+        if ($doc === null || preg_match('/@(?:(?:phpstan|psalm)-)?var\s+(\S.*?)\s*(?:\*\/|\R|$)/', $doc, $found) !== 1) {
+            return;
+        }
+        $members = array_map($this->documentedMember(...), self::topLevel(self::docTag('var', $found[1])['type'] ?? '', '|'));
+        if (array_filter($members, static fn (array $member): bool => isset($member['element'])) === []) {
+            return;
+        }
+        $said = implode('|', array_map(static fn (array $member): string => $member['text'], $members));
+        $this->types[] = count($members) === 1 ? $members[0] : ['text' => $said, 'kind' => 'union', 'origin' => 'docblock', 'members' => $members];
+        $written->facts['resolvedType'] = array_key_last($this->types);
+    }
+
+    /** @return array<string, mixed> */
+    private function documentedMember(string $said): array
+    {
+        $said = trim($said);
+        $listed = self::documentedType($said);
+        if ($listed !== null) {
+            return isset($listed['element']) ? ['element' => $this->documentedName($listed['element'])] + $listed : $listed;
+        }
+        if (preg_match('/^(\\?[A-Za-z_][\\\w]*)<(.+)>$/s', $said, $generic) === 1) {
+            $args = array_map(fn (string $arg): array => $this->documentedName(self::documentedElement($arg)), self::topLevel($generic[2], ','));
+
+            return ['text' => $said, 'kind' => 'named', 'name' => $this->qualified($generic[1]), 'origin' => 'docblock', 'args' => $args, 'element' => $args[array_key_last($args)]];
+        }
+
+        return $this->documentedName(self::documentedElement($said));
+    }
+
+    /**
+     * @param  array<string, mixed>  $type
+     * @return array<string, mixed>
+     */
+    private function documentedName(array $type): array
+    {
+        return ($type['kind'] ?? null) === 'named' ? ['name' => $this->qualified($type['name'])] + $type : $type;
+    }
+
+    /**
+     * A doc type's parts split at a separator written outside any `<>`, `{}` or `()`.
+     *
+     * @return list<string>
+     */
+    private static function topLevel(string $said, string $separator): array
+    {
+        $parts = [];
+        $depth = 0;
+        $part = '';
+        foreach (str_split($said) as $character) {
+            $depth += match ($character) {
+                '<', '{', '(' => 1,
+                '>', '}', ')' => -1,
+                default => 0,
+            };
+            if ($character === $separator && $depth === 0) {
+                $parts[] = trim($part);
+                $part = '';
+
+                continue;
+            }
+            $part .= $character;
+        }
+        $parts[] = trim($part);
+
+        return array_values(array_filter($parts, static fn (string $each): bool => $each !== ''));
+    }
+
     /** @return array<string, mixed>|null */
     private static function documentedType(string $said): ?array
     {
@@ -1408,12 +1487,12 @@ final class Translator
             return ['text' => $said, 'kind' => 'object', 'origin' => 'docblock', 'nullable' => false, 'valueType' => true,
                 'fields' => array_map(static fn (string $name): array => ['name' => $name, 'type' => ['text' => 'mixed', 'kind' => 'opaque', 'origin' => 'docblock']], array_keys(self::shapeKeys($said)))];
         }
-        if (preg_match('/^array<\s*(?:int|string|array-key)\s*,\s*(.+)>$/', $said, $map) === 1) {
+        if (preg_match('/^array<\s*(?:string|array-key)\s*,\s*(.+)>$/', $said, $map) === 1) {
             $element = self::documentedElement($map[1]);
 
             return ['text' => $said, 'kind' => 'map', 'origin' => 'docblock', 'nullable' => false, 'valueType' => true, 'args' => [['text' => 'string', 'kind' => 'keyword', 'name' => 'string', 'origin' => 'docblock'], $element], 'element' => $element];
         }
-        if (preg_match('/^(?:non-empty-)?(?:list|array)<(.+)>$/', $said, $list) === 1 || preg_match('/^([\w\\\\]+)\[\]$/', $said, $list) === 1) {
+        if (preg_match('/^(?:non-empty-)?(?:list|array)<(?:\s*int\s*,)?(.+)>$/', $said, $list) === 1 || preg_match('/^([\w\\\\]+)\[\]$/', $said, $list) === 1) {
             $element = self::documentedElement($list[1]);
 
             return ['text' => $said, 'kind' => 'array', 'origin' => 'docblock', 'nullable' => false, 'valueType' => true, 'args' => [$element], 'element' => $element];

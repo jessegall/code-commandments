@@ -28,6 +28,12 @@ final class CustomerService
         return 'Hello, ' . Cache::get('name:' . $this->find($request->input('email'))->id, 'guest');
     }
 
+    #[Sinful(RawRequestInput::class)]
+    public function preferredLocale(): string
+    {
+        return request('locale', 'en');
+    }
+
     public function isRegistered(string $email): bool
     {
         return $this->find($email)->exists;

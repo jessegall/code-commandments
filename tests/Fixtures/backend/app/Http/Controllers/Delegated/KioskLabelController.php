@@ -3,6 +3,7 @@
 namespace Shop\Http\Controllers\Delegated;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RouteDelegatesToController;
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -31,5 +32,11 @@ final class KioskLabelController
             1 => 'printing',
             default => 'error',
         };
+    }
+
+    #[Righteous(RouteDelegatesToController::class)]
+    public function idle(): string
+    {
+        return $this->status(0);
     }
 }

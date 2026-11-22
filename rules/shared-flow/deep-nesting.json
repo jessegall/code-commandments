@@ -121,9 +121,19 @@
         "$s.file.language",
         {
           "php": [
-            "=",
-            "$a.kind",
-            "if"
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "if"
+            ],
+            [
+              "not",
+              [
+                "tree.continuation",
+                "$a"
+              ]
+            ]
           ]
         },
         [

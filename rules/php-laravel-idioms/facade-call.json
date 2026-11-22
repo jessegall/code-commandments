@@ -32,16 +32,17 @@
       "expr": [
         "some",
         [
-          "list",
-          [
-            "enclosing",
-            "$c",
-            "function"
-          ]
+          "ancestors",
+          "$c"
         ],
         "f",
         [
           "and",
+          [
+            "=",
+            "$f.kind",
+            "function"
+          ],
           [
             "some",
             "$f.modifiers",

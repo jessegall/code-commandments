@@ -2313,6 +2313,12 @@
       "name": "query",
       "effect": "deferred-query",
       "execution": "iteration"
+    },
+    {
+      "type": "Illuminate\\Container\\Container",
+      "name": "forgetScopedInstances",
+      "effect": "resets-scope",
+      "execution": "call"
     }
   ],
   "exemptions": [
@@ -3116,6 +3122,10 @@
     {
       "name": "eloquent-relation",
       "type": "Illuminate\\Database\\Eloquent\\Relations\\MorphToMany"
+    },
+    {
+      "name": "event-service-provider",
+      "type": "Illuminate\\Foundation\\Support\\Providers\\EventServiceProvider"
     }
   ],
   "forwards": [

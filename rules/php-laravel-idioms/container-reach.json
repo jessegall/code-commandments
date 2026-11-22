@@ -464,10 +464,6 @@
         [
           "and",
           [
-            "longLived",
-            "$owner"
-          ],
-          [
             "boundBy",
             [
               "typeDeclaration",
@@ -478,6 +474,55 @@
             ],
             "scoped-attribute",
             "scoped-binding"
+          ],
+          [
+            "or",
+            [
+              "longLived",
+              "$owner"
+            ],
+            [
+              "scopeResetBefore",
+              "$c"
+            ]
+          ]
+        ]
+      ]
+    },
+    "scopeResetBefore": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownDescendants",
+          [
+            "enclosing",
+            "$c",
+            "function"
+          ]
+        ],
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "call"
+          ],
+          [
+            "<",
+            "$x.line",
+            "$c.line"
+          ],
+          [
+            "proven",
+            [
+              "hasEffect",
+              "$x",
+              "resets-scope"
+            ]
           ]
         ]
       ]

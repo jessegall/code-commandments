@@ -136,6 +136,7 @@ final class Types
                 default => [],
             }),
             'traits' => $traits,
+            'mixins' => $class->getAttribute('documentedMixins', []),
             'trait' => $class instanceof Stmt\Trait_,
             'methods' => $methods,
             'properties' => $properties,
@@ -688,6 +689,7 @@ final class Types
                 $waiting[] = $declared['parent'];
             }
             array_push($waiting, ...$declared['interfaces']);
+            array_push($waiting, ...$declared['mixins'] ?? []);
         }
 
         return null;
@@ -816,6 +818,7 @@ final class Types
             'parent' => $parent !== false ? $parent->getName() : null,
             'interfaces' => $reflection->getInterfaceNames(),
             'traits' => $reflection->getTraitNames(),
+            'mixins' => self::documentedMixins($reflection->getDocComment()),
             'trait' => $reflection->isTrait(),
             'methods' => $methods,
             'properties' => $properties,
@@ -830,7 +833,7 @@ final class Types
      */
     private static function documentedReturn(string|false $doc): ?array
     {
-        if ($doc === false || preg_match('/@return\s+(\S+)/', $doc, $found) !== 1) {
+        if ($doc === false || preg_match('/@return\s+((?:[^\s<]|<[^>]*>)+)/', $doc, $found) !== 1) {
             return null;
         }
         $written = $found[1];
@@ -849,6 +852,22 @@ final class Types
             preg_match('/^\\\\[A-Za-z_][\\\\\w]*$/', $named[0]) === 1 => ['name' => ltrim($named[0], '\\')] + $nullable,
             default => null,
         };
+    }
+
+    /**
+     * The classes a library class's doc comment forwards its undeclared calls to (@mixin), read only when written fully
+     * qualified, since no import is read for a library file.
+     *
+     * @return list<string>
+     */
+    private static function documentedMixins(string|false $doc): array
+    {
+        if ($doc === false) {
+            return [];
+        }
+        preg_match_all('/@mixin\s+\\\\([A-Za-z_][\\\\\w]*)/', $doc, $mixins);
+
+        return $mixins[1];
     }
 
     private function reflectedType(?ReflectionType $type, ?string $class): ?array

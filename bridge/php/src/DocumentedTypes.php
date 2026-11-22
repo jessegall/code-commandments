@@ -9,7 +9,7 @@ use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitorAbstract;
 
 /**
- * Gives a parameter, a class's undeclared properties and the variables an inline @var names the class a doc comment
+ * Gives a parameter, a class's undeclared properties, the classes it forwards to (@mixin) and the variables an inline @var names the class a doc comment
  * documents for them, read in the file's own namespace and imports.
  */
 final class DocumentedTypes extends NodeVisitorAbstract
@@ -22,6 +22,8 @@ final class DocumentedTypes extends NodeVisitorAbstract
     {
         if ($node instanceof Node\Stmt\ClassLike && ($doc = $node->getDocComment()) !== null) {
             $node->setAttribute('documentedProperties', $this->documented('@property(?:-read)?', $doc->getText()));
+            preg_match_all('/@mixin\s+([\\\\A-Za-z_][\\\\A-Za-z0-9_]*)/', $doc->getText(), $mixins);
+            $node->setAttribute('documentedMixins', array_map(fn (string $mixin): string => $this->names->getNameContext()->getResolvedClassName(new Node\Name($mixin))->toString(), $mixins[1]));
 
             return null;
         }

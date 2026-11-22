@@ -65,6 +65,15 @@
         ]
       ],
       [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "carried",
+          "$a"
+        ]
+      ],
+      [
         "not",
         [
           "some",
@@ -406,6 +415,41 @@
                   "$a"
                 ]
               ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "carried": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "and",
+        [
+          "not",
+          [
+            "=",
+            "$a.value.kind",
+            "literal"
+          ]
+        ],
+        [
+          "not",
+          [
+            "and",
+            [
+              "=",
+              "$a.value.kind",
+              "collection"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$a.value.entries"
+              ],
+              0
             ]
           ]
         ]

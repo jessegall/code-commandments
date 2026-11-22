@@ -34,7 +34,7 @@ class TermController extends Controller
      * @return list<Product>
      */
     #[Fixed(RequestAccessorRecast::class)]
-    public function searchNamed(SearchProductRequest $request): array
+    public function searchByTerm(SearchProductRequest $request): array
     {
         return Product::query()
             ->where('name', 'like', "%{$request->term()}%")

@@ -37,6 +37,7 @@ func TestAStrawmanIsToldFromARuntimeCondition(t *testing.T) {
 		"The stream id is deterministic, not random.":                                          true,
 		"There is no green anywhere in this palette, and that is not an oversight.":            true,
 		"This is deliberate, not a mistake.":                                                   true,
+		"Not using a strict comparison is on purpose as the token might be null.":              false,
 		"Visibility is deliberately not re-checked.":                                           true,
 		"The website is not here either: it is on the record.":                                 true,
 		"Operation capabilities are NOT declared here.":                                        true,
@@ -81,6 +82,21 @@ func TestABareVerbIsTheVerbAndNothingElse(t *testing.T) {
 	for _, name := range []string{"isShown", "approval", ""} {
 		if IsBareVerb(name) {
 			t.Errorf("%s is no third-person verb, so it cannot be a bare one", name)
+		}
+	}
+}
+
+func TestAStateVerbNamesABareStateWhereNoQuestionDoes(t *testing.T) {
+	for name, bare := range map[string]bool{
+		"divides":    true,
+		"bursts":     true,
+		"proposes":   true,
+		"narrows":    true,
+		"isDivided":  false,
+		"canPropose": false,
+	} {
+		if IsBareStateName(name) != bare {
+			t.Errorf("IsBareStateName(%q) = %v, want %v", name, !bare, bare)
 		}
 	}
 }
