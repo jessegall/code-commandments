@@ -204,6 +204,19 @@
               ]
             ]
           ]
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "ownElement",
+              [
+                "declarationOf",
+                "$x.subject"
+              ]
+            ]
+          ]
         ]
       ]
     },
@@ -613,11 +626,8 @@
           [
             "or",
             [
-              "in",
-              "$v.kind",
-              "collection",
-              "construction",
-              "interpolation"
+              "shaped",
+              "$v"
             ],
             [
               "and",
@@ -627,15 +637,30 @@
                 "call"
               ],
               [
-                "=",
-                "$v.callee.kind",
-                "access"
-              ],
-              [
-                "=",
-                "$v.callee.form",
-                "static"
+                "some",
+                [
+                  "tree.insideOf",
+                  "$v"
+                ],
+                "g",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$g.parent.kind",
+                    "argument"
+                  ],
+                  [
+                    "shapes",
+                    "$g"
+                  ]
+                ]
               ]
+            ],
+            [
+              "built",
+              "$v",
+              "$f"
             ]
           ]
         ]
@@ -1446,6 +1471,222 @@
                 [
                   "projection",
                   "$f"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "ownElement": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$d.kind",
+          "binding"
+        ],
+        [
+          "=",
+          "$d.parent.kind",
+          "loop"
+        ],
+        [
+          "or",
+          [
+            "ownReach",
+            "$d.parent.iterable"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$d.parent.iterable.kind",
+              "call"
+            ],
+            [
+              "or",
+              [
+                "ownReach",
+                "$d.parent.iterable.callee.subject"
+              ],
+              [
+                "isSelf",
+                "$d.parent.iterable.callee.subject"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "shaped": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "or",
+        [
+          "in",
+          "$v.kind",
+          "collection",
+          "construction",
+          "interpolation"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$v.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$v.callee.form",
+            "static"
+          ]
+        ]
+      ]
+    },
+    "shapes": {
+      "args": [
+        "g"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$g.kind",
+          "function"
+        ],
+        [
+          "nonempty",
+          [
+            "resultsOf",
+            "$g"
+          ]
+        ],
+        [
+          "every",
+          [
+            "resultsOf",
+            "$g"
+          ],
+          "v",
+          [
+            "or",
+            [
+              "shaped",
+              "$v"
+            ],
+            [
+              "=",
+              "$v.kind",
+              "dispatch"
+            ]
+          ]
+        ]
+      ]
+    },
+    "built": {
+      "args": [
+        "v",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$v.kind",
+          "reference"
+        ],
+        [
+          "some",
+          [
+            "descendants",
+            "$f.body"
+          ],
+          "l",
+          [
+            "and",
+            [
+              "=",
+              "$l.kind",
+              "loop"
+            ],
+            [
+              "=",
+              [
+                "count",
+                [
+                  "tree.effective",
+                  "$l.body"
+                ]
+              ],
+              1
+            ],
+            [
+              "some",
+              [
+                "tree.effective",
+                "$l.body"
+              ],
+              "s",
+              [
+                "and",
+                [
+                  "=",
+                  "$s.kind",
+                  "expression-statement"
+                ],
+                [
+                  "=",
+                  "$s.expression.kind",
+                  "assignment"
+                ],
+                [
+                  "some",
+                  "$s.expression.targets",
+                  "t",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$t.kind",
+                      "index"
+                    ],
+                    [
+                      "=",
+                      "$t.subject.kind",
+                      "reference"
+                    ],
+                    [
+                      "=",
+                      "$t.subject.name",
+                      "$v.name"
+                    ]
+                  ]
+                ],
+                [
+                  "!=",
+                  [
+                    "at",
+                    [
+                      "map",
+                      "$s.expression.values",
+                      "x",
+                      "$x.kind"
+                    ],
+                    0
+                  ],
+                  "literal"
                 ]
               ]
             ]
