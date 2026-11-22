@@ -67,22 +67,6 @@
             "assignment"
           ],
           [
-            "=",
-            [
-              "count",
-              [
-                "ownDescendants",
-                [
-                  "enclosing",
-                  "$c",
-                  "function"
-                ],
-                "throw"
-              ]
-            ],
-            0
-          ],
-          [
             "some",
             "$c.parent.targets",
             "t",
@@ -130,10 +114,90 @@
                       "$t.name"
                     ]
                   ]
+                ],
+                [
+                  "=",
+                  [
+                    "count",
+                    [
+                      "ownDescendants",
+                      [
+                        "enclosing",
+                        "$x",
+                        "if"
+                      ],
+                      "throw"
+                    ]
+                  ],
+                  0
                 ]
               ]
             ]
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.parent.kind",
+            "argument"
+          ],
+          [
+            "some",
+            [
+              "list",
+              [
+                "at",
+                [
+                  "calleeParameters",
+                  "$c.parent.parent"
+                ],
+                [
+                  "position",
+                  "$c.parent"
+                ]
+              ]
+            ],
+            "q",
+            [
+              "and",
+              [
+                "exists",
+                "$q"
+              ],
+              [
+                "isNullable",
+                "$q.declaredType.resolved"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "calleeParameters": {
+      "args": [
+        "call"
+      ],
+      "expr": [
+        "parametersOfDeclaration",
+        [
+          "declarationOf",
+          "$call"
+        ]
+      ]
+    },
+    "parametersOfDeclaration": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "function": "$d.parameters"
+        },
+        [
+          "list"
         ]
       ]
     }
@@ -199,6 +263,28 @@
               [
                 "tree.nullish",
                 "$r.parent.replacement"
+              ],
+              [
+                "=",
+                "$r.parent.parent.kind",
+                "return"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "conditional"
+              ],
+              [
+                "=",
+                "$r.role",
+                "consequent"
+              ],
+              [
+                "tree.nullish",
+                "$r.parent.alternative"
               ],
               [
                 "=",
