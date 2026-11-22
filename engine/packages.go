@@ -1,8 +1,11 @@
 package engine
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
@@ -156,6 +159,34 @@ func readPackageVersions(c *Codebase) map[string]map[string]string {
 	}
 
 	return versions
+}
+
+var packageFiles = []string{"composer.lock", "vendor/composer/installed.json", "requirements.txt", "poetry.lock", "uv.lock", "*.csproj",
+	"Directory.Packages.props", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "go.sum"}
+
+// InstalledPackages names the packages the projects above the roots hold, by the contents of every lock file and
+// installed list found there, so what a bridge resolved through them is asked again when one changes.
+func InstalledPackages(roots []string) string {
+	digest := sha256.New()
+	visited := map[string]bool{}
+	for _, root := range roots {
+		for _, folder := range foldersUpFrom(root) {
+			if visited[folder] {
+				break
+			}
+			visited[folder] = true
+			for _, pattern := range packageFiles {
+				found, _ := filepath.Glob(filepath.Join(folder, pattern))
+				for _, file := range found {
+					if text, err := os.ReadFile(file); err == nil {
+						fmt.Fprintf(digest, "%s\x00%x\x00", file, sha256.Sum256(text))
+					}
+				}
+			}
+		}
+	}
+
+	return hex.EncodeToString(digest.Sum(nil))[:16]
 }
 
 func foldersUpFrom(folder string) []string {

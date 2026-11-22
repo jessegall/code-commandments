@@ -23,6 +23,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/walk"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // keptLines is the one cache of every bridge's file lines, shared by every checkout of a project and keyed on contents
@@ -34,6 +36,7 @@ type keptLines struct {
 	root   string
 	// identity is the code of the bridge that wrote the lines, so a release that leaves the bridge alone keeps them.
 	identity string
+	packages string
 	outlines sync.Map
 	// staged are the lines a read wrote, held on disk until its stream ends and every outline they stand on is known.
 	staged  []stagedLine
@@ -66,7 +69,7 @@ func linesKeptFor(b Bridge, roots []string) *keptLines {
 	}
 	go removeOtherBuilds(kind)
 
-	return &keptLines{folder: folder, root: root, identity: identity}
+	return &keptLines{folder: folder, root: root, identity: identity, packages: engine.InstalledPackages(roots)}
 }
 
 // thisBuildsFolder makes the folder the lines of this bridge's build are kept in. A bridge's lines are keyed on its
@@ -455,7 +458,7 @@ func (k *keptLines) indexOf(file string) string {
 }
 
 func (k *keptLines) recordOf(file string, reads []string) string {
-	parts := []string{k.identity, "outlined", k.marked(file), k.print(file)}
+	parts := []string{k.identity, k.packages, "outlined", k.marked(file), k.print(file)}
 	for _, read := range reads {
 		parts = append(parts, read, k.outlineOf(k.unmarkedPath(read)))
 	}

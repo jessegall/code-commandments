@@ -29,6 +29,60 @@
         "$c.file.test"
       ],
       [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "assignable",
+              "$t",
+              "Illuminate\\Database\\Seeder"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "assignable",
+              "$t",
+              "Illuminate\\Database\\Eloquent\\Factories\\Factory"
+            ]
+          ]
+        ]
+      ],
+      [
         "some",
         [
           "flatten",
@@ -56,8 +110,69 @@
             "in",
             "$a.role",
             "body",
-            "condition",
             "steps"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$c"
+              ],
+              [
+                "ownAncestors",
+                "$c"
+              ]
+            ]
+          ],
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.parent.kind",
+              "loop"
+            ],
+            [
+              "in",
+              "$a.role",
+              "body",
+              "steps"
+            ],
+            [
+              "or",
+              [
+                "=",
+                "$a.parent.iterable.kind",
+                "collection"
+              ],
+              [
+                "and",
+                [
+                  "=",
+                  "$a.parent.iterable.kind",
+                  "call"
+                ],
+                [
+                  "=",
+                  [
+                    "tree.formOf",
+                    [
+                      "typeDeclaration",
+                      "$a.parent.iterable.callee.subject.refers"
+                    ]
+                  ],
+                  "enum"
+                ]
+              ]
+            ]
           ]
         ]
       ],

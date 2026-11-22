@@ -68,6 +68,106 @@
         ],
         0
       ]
+    },
+    "constrains": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "filter",
+          [
+            "ownDescendants",
+            "$c"
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$x.callee.kind",
+              "access"
+            ]
+          ]
+        ],
+        "x",
+        [
+          "or",
+          [
+            "and",
+            [
+              ">=",
+              [
+                "count",
+                "$x.arguments"
+              ],
+              2
+            ],
+            [
+              "literalIs",
+              [
+                "at",
+                [
+                  "map",
+                  "$x.arguments",
+                  "a",
+                  "$a.value"
+                ],
+                0
+              ],
+              "string"
+            ],
+            [
+              "!=",
+              [
+                "literalValue",
+                [
+                  "at",
+                  [
+                    "map",
+                    "$x.arguments",
+                    "a",
+                    "$a.value"
+                  ],
+                  0
+                ]
+              ],
+              "id"
+            ]
+          ],
+          [
+            "and",
+            [
+              ">=",
+              [
+                "count",
+                "$x.arguments"
+              ],
+              1
+            ],
+            [
+              "=",
+              [
+                "at",
+                [
+                  "map",
+                  "$x.arguments",
+                  "a",
+                  "$a.value.member.name"
+                ],
+                0
+              ],
+              "class"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -75,12 +175,11 @@
     "as": "c",
     "pipeline": [
       {
+        "reject": "$c.file.test"
+      },
+      {
         "where": [
           "and",
-          [
-            "not",
-            "$c.file.test"
-          ],
           [
             "=",
             "$c.callee.kind",
@@ -106,6 +205,10 @@
                 "subject"
               ]
             ]
+          ],
+          [
+            "constrains",
+            "$c"
           ]
         ]
       },

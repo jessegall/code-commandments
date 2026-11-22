@@ -27,6 +27,37 @@
     "where": [
       "and",
       [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "assignable",
+              "$t",
+              "Illuminate\\Database\\Seeder"
+            ]
+          ]
+        ]
+      ],
+      [
         "laravel.named",
         "$c",
         "update"
