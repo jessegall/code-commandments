@@ -70,9 +70,9 @@ func subjectOf(call Match) Match {
 		return receiver
 	}
 
-	for _, argument := range call.Arguments() {
-		if !argument.HasFlag("named") {
-			return argument
+	for _, argument := range call.ChildrenIn("arguments") {
+		if argument.node.Label == "" {
+			return argument.Child("value")
 		}
 	}
 

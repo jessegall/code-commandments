@@ -6,7 +6,12 @@ import (
 )
 
 func (m Match) Arguments() []Match {
-	return nil
+	var values []Match
+	for _, argument := range m.ChildrenIn("arguments") {
+		values = append(values, argument.Child("value"))
+	}
+
+	return values
 }
 
 func (m Match) InheritedMembers() []Match {
