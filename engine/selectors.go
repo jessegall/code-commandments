@@ -20,6 +20,22 @@ func (c *Codebase) WhereKind(kinds ...string) *Query {
 	}}
 }
 
+func (c *Codebase) WhereKindReadAsContext(kinds ...string) *Query {
+	queries.Add(1)
+
+	return &Query{selected: func(yield func(Match) bool) {
+		for _, kind := range kinds {
+			for _, file := range c.files {
+				for _, node := range file.OfKind(kind) {
+					if !yield(Match{node: node, file: file}) {
+						return
+					}
+				}
+			}
+		}
+	}}
+}
+
 func (c *Codebase) WhereIs(neutral Neutral) *Query {
 	return c.nodes().Where(func(m Match) bool { return m.Is(neutral) })
 }

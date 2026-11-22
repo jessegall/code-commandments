@@ -30,6 +30,14 @@ func Write(writer io.Writer, stream *Stream) error {
 	return encoder.Encode(Line{Trailer: &trailer})
 }
 
+func Encoded(line Line) ([]byte, error) {
+	if line.File != nil {
+		line.File = line.File.onTheWire()
+	}
+
+	return json.Marshal(line)
+}
+
 func (f *File) onTheWire() *File {
 	wire := *f
 	named := map[*Type]int{}

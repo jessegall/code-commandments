@@ -88,7 +88,7 @@ func TestFortifyRouteContextSharesTheCacheAcrossCheckouts(t *testing.T) {
 			t.Fatal(err)
 		}
 		installed := 0
-		for _, call := range codebase.WhereKind("call").Get() {
+		for _, call := range codebase.WhereKindReadAsContext("call").Get() {
 			fromPackage := strings.HasSuffix(filepath.ToSlash(call.File()), "vendor/laravel/fortify/routes/routes.php")
 			if fromPackage {
 				installed++

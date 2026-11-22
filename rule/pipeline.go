@@ -213,6 +213,38 @@ func (r rows) from(names source, as string) []row {
 	return started
 }
 
+func (r rows) relationFrom(names source, as string) []row {
+	var started []row
+	for _, name := range names {
+		_, isRelation := r.relations[name]
+		_, isProgram := programRelations[name]
+		items := r.relationRows(name)
+		if !isRelation && !isProgram {
+			items = r.contextRows(name)
+		}
+		for _, item := range items {
+			started = append(started, row{}.with(as, item))
+		}
+	}
+
+	return started
+}
+
+func (r rows) contextRows(name string) []value {
+	key := "read as context: " + name
+	if built, done := r.built[key]; done {
+		return built
+	}
+	kinds, _ := selected([]string{name})
+	var items []value
+	for _, site := range r.codebase.WhereKindReadAsContext(kinds...).Get() {
+		items = append(items, known(site))
+	}
+	r.built[key] = items
+
+	return items
+}
+
 func (r rows) relationRows(name string) []value {
 	if built, done := r.built[name]; done {
 		return built
@@ -250,7 +282,7 @@ func (r rows) build(defined relation) []value {
 	as := cmp.Or(defined.As, "item")
 	projects := slices.ContainsFunc(defined.Pipeline, func(step stage) bool { return step.Project != nil })
 	var items []value
-	for _, each := range r.stages(r.from(defined.From, as), defined.Pipeline) {
+	for _, each := range r.stages(r.relationFrom(defined.From, as), defined.Pipeline) {
 		if projects {
 			items = append(items, asRecord(each))
 		} else {

@@ -1,7 +1,6 @@
 package scan
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -161,7 +160,7 @@ func (p inProcess) AskEach(request bridge.Request, each func(line contract.Line,
 	}
 	lines = append(lines, contract.Line{Program: stream.Program}, contract.Line{Trailer: &stream.Trailer})
 	for _, line := range lines {
-		raw, err := json.Marshal(line)
+		raw, err := contract.Encoded(line)
 		if err != nil {
 			return err
 		}

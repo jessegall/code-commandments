@@ -109,3 +109,42 @@ func goTree(t *testing.T, files map[string]string) string {
 
 	return strings.TrimRight(root, string(filepath.Separator))
 }
+
+func TestAGoLineKeptForTheCacheCarriesItsResolvedTypes(t *testing.T) {
+	root := goTree(t, map[string]string{
+		"go.mod":  "module example.com/shop\n",
+		"read.go": "package shop\n\nfunc read() error { return nil }\n\nfunc run() {\n\tif err := read(); err != nil {\n\t}\n}\n",
+	})
+	held, _ := scan.Named("go")
+	asker, err := held.Reach.Open(held, []string{root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer asker.Close()
+	path := filepath.Join(root, "read.go")
+	var kept strings.Builder
+	err = asker.AskEach(bridge.Request{Paths: []string{root}, Write: []string{path}}, func(line contract.Line, raw []byte) error {
+		if line.Header != nil || line.File != nil || line.Trailer != nil {
+			kept.Write(append(raw, '\n'))
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream, err := contract.ReadAll(strings.NewReader(kept.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, node := range stream.Files[0].Nodes() {
+		if node.Kind == "reference" && node.Facts != nil && node.Name == "err" {
+			if node.Resolved == nil || node.Resolved.Name != "error" {
+				t.Errorf("err read back from the kept line has the type %+v, not error", node.Resolved)
+			}
+
+			return
+		}
+	}
+	t.Fatal("no read of err was written")
+}
