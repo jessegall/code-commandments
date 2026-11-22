@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 	"unicode/utf8"
 
@@ -92,6 +93,7 @@ type evaluation struct {
 	codebase    *engine.Codebase
 	// relations is the rows of a relation the find builds, by its name, for an expression that reads them.
 	relations func(name string) []value
+	graphs    *sync.Map
 }
 
 // Judge asks the rule of every node it selects: selection first, then where, then the let bindings in order, then
@@ -103,9 +105,9 @@ func (r Rule) Judge(codebase *engine.Codebase) Judged {
 		return judgeRows(asked, codebase, r.parameters())
 	}
 	run := rows{evaluation{definitions: asked.Definitions, parameters: r.parameters(), codebase: codebase}, codebase, written.Relations, map[string][]value{}}
-	parameters, relations := r.parameters(), run.relationRows
+	parameters, relations, graphs := r.parameters(), run.relationRows, &sync.Map{}
 	asking := func(site engine.Match) evaluation {
-		return evaluation{definitions: asked.Definitions, site: site, parameters: parameters, codebase: codebase, relations: relations}
+		return evaluation{definitions: asked.Definitions, site: site, parameters: parameters, codebase: codebase, relations: relations, graphs: graphs}
 	}
 	var judged Judged
 	note := func(site, emitted engine.Match, verdict engine.Truth) {

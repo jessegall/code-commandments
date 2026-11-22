@@ -5,6 +5,8 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"sync/atomic"
+	"unsafe"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -239,15 +241,15 @@ func init() {
 
 			return known(float64(len(distinctShared)) / float64(len(together)))
 		}),
-		"reaches": func(_ evaluation, operands []value) value {
-			edges, read := edgesOf(operands[0])
+		"reaches": func(e evaluation, operands []value) value {
+			edges, read := e.edgesOf(operands[0])
 			if !read || !operands[1].known || !operands[2].known {
 				return unknown
 			}
 			return truthValue(engine.TruthOf(slices.Contains(reachedFrom(edges, operands[1].String(), 0), operands[2].String())))
 		},
-		"reachableFrom": func(_ evaluation, operands []value) value {
-			edges, read := edgesOf(operands[0])
+		"reachableFrom": func(e evaluation, operands []value) value {
+			edges, read := e.edgesOf(operands[0])
 			steps, readSteps := wholeNumber(operands[2])
 			if !read || !readSteps || !operands[1].known {
 				return unknown
@@ -259,8 +261,8 @@ func init() {
 
 			return known(found)
 		},
-		"components": func(_ evaluation, operands []value) value {
-			edges, read := edgesOf(operands[0])
+		"components": func(e evaluation, operands []value) value {
+			edges, read := e.edgesOf(operands[0])
 			if !read {
 				return unknown
 			}
@@ -275,8 +277,8 @@ func init() {
 
 			return known(cycles)
 		},
-		"inCycle": func(_ evaluation, operands []value) value {
-			edges, read := edgesOf(operands[0])
+		"inCycle": func(e evaluation, operands []value) value {
+			edges, read := e.edgesOf(operands[0])
 			if !read || !operands[1].known {
 				return unknown
 			}
@@ -709,7 +711,32 @@ type graph struct {
 	order  []string
 }
 
+type graphKey struct {
+	rows  *value
+	count int
+}
+
+func (e evaluation) edgesOf(v value) (graph, bool) {
+	items, isList := listOf(v)
+	if e.graphs == nil || !isList || len(items) == 0 {
+		return edgesOf(v)
+	}
+	key := graphKey{unsafe.SliceData(items), len(items)}
+	if kept, found := e.graphs.Load(key); found {
+		return kept.(graph), true
+	}
+	edges, read := edgesOf(v)
+	if read {
+		e.graphs.Store(key, edges)
+	}
+
+	return edges, read
+}
+
+var graphsBuilt atomic.Int64
+
 func edgesOf(v value) (graph, bool) {
+	graphsBuilt.Add(1)
 	items, isList := listOf(v)
 	edges := graph{values: map[string]value{}, next: map[string][]string{}}
 	if !isList {

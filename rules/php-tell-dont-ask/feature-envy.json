@@ -375,6 +375,29 @@
             "iterator",
             "tuple",
             "array"
+          ],
+          [
+            "not",
+            [
+              "some",
+              "$o.parent.parent.arguments",
+              "g",
+              [
+                "and",
+                [
+                  "=",
+                  "$g.value.kind",
+                  "function"
+                ],
+                [
+                  "proven",
+                  [
+                    "projection",
+                    "$g.value"
+                  ]
+                ]
+              ]
+            ]
           ]
         ],
         [
@@ -444,6 +467,17 @@
                     ]
                   ]
                 ]
+              ],
+              [
+                "not",
+                [
+                  "proven",
+                  [
+                    "assignable",
+                    "$a.callee.subject.resolved",
+                    "option"
+                  ]
+                ]
               ]
             ]
           ]
@@ -490,6 +524,17 @@
                     "$g.value"
                   ]
                 ]
+              ]
+            ]
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "assignable",
+                "$o.parent.parent.parent.callee.subject.resolved",
+                "option"
               ]
             ]
           ]
@@ -629,6 +674,119 @@
         ]
       ]
     },
+    "handedBack": {
+      "args": [
+        "f",
+        "r"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$f.form",
+          "closure",
+          "arrow"
+        ],
+        [
+          "=",
+          "$f.parent.kind",
+          "argument"
+        ],
+        [
+          "=",
+          "$f.parent.parent.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$f.parent.parent.callee.kind",
+          "access"
+        ],
+        [
+          "assignable",
+          "$f.parent.parent.callee.subject.resolved",
+          [
+            "typeName",
+            "$r.subject"
+          ]
+        ]
+      ]
+    },
+    "deferred": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$f.form",
+          "closure",
+          "arrow"
+        ],
+        [
+          "in",
+          "$f.parent.kind",
+          "return",
+          "assignment"
+        ]
+      ]
+    },
+    "registeredByName": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$f.form",
+          "method"
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$f",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "some",
+            [
+              "tree.insideOf",
+              "$t"
+            ],
+            "n",
+            [
+              "and",
+              [
+                "=",
+                "$n.kind",
+                "entry"
+              ],
+              [
+                "exists",
+                "$n.key"
+              ],
+              [
+                "=",
+                "$n.value.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$n.value.value",
+                "$f.name"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
     "reflective": {
       "args": [
         "f"
@@ -670,36 +828,143 @@
         ]
       ]
     },
-    "returnedContract": {
+    "collectsOnly": {
       "args": [
-        "f"
+        "o"
       ],
       "expr": [
-        "and",
+        "some",
         [
-          "=",
-          "$f.parent.kind",
-          "return"
-        ],
-        [
-          "some",
+          "list",
           [
-            "list",
+            "container",
             [
-              "enclosing",
-              "$f.parent",
-              "function"
+              "holder",
+              "$o"
             ]
-          ],
-          "g",
+          ]
+        ],
+        "h",
+        [
+          "and",
           [
-            ">",
+            "=",
+            "$h.kind",
+            "loop"
+          ],
+          [
+            "=",
             [
               "count",
-              "$g.obligations"
+              [
+                "tree.effective",
+                "$h.body"
+              ]
             ],
-            0
+            1
+          ],
+          [
+            "some",
+            [
+              "tree.effective",
+              "$h.body"
+            ],
+            "s",
+            [
+              "and",
+              [
+                "=",
+                "$s.kind",
+                "expression-statement"
+              ],
+              [
+                "=",
+                "$s.expression.kind",
+                "assignment"
+              ],
+              [
+                "some",
+                "$s.expression.targets",
+                "t",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$t.kind",
+                    "index"
+                  ],
+                  [
+                    "not",
+                    [
+                      "exists",
+                      "$t.key"
+                    ]
+                  ]
+                ]
+              ]
+            ]
           ]
+        ]
+      ]
+    },
+    "heavyParams": {
+      "args": [
+        "envies",
+        "body"
+      ],
+      "expr": [
+        "distinctCount",
+        [
+          "map",
+          [
+            "filter",
+            "$envies",
+            "e",
+            [
+              "and",
+              [
+                "some",
+                [
+                  "list",
+                  [
+                    "declarationOf",
+                    "$e.subject"
+                  ]
+                ],
+                "d",
+                [
+                  "=",
+                  "$d.parent.kind",
+                  "parameter"
+                ]
+              ],
+              [
+                ">",
+                [
+                  "count",
+                  [
+                    "mine",
+                    "$e",
+                    "$envies"
+                  ]
+                ],
+                [
+                  "count",
+                  [
+                    "filter",
+                    "$body",
+                    "n",
+                    [
+                      "ownReach",
+                      "$n"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "e",
+          "$e.subject.name"
         ]
       ]
     },
@@ -1063,6 +1328,17 @@
           ]
         ],
         [
+          "not",
+          [
+            "proven",
+            [
+              "handedBack",
+              "$f",
+              "$r"
+            ]
+          ]
+        ],
+        [
           "or",
           [
             "and",
@@ -1122,6 +1398,16 @@
                     "walksWithState",
                     "$f",
                     "$body"
+                  ]
+                ],
+                [
+                  "not",
+                  [
+                    "proven",
+                    [
+                      "collectsOnly",
+                      "$o"
+                    ]
                   ]
                 ]
               ]
@@ -1234,7 +1520,17 @@
         [
           "proven",
           [
-            "returnedContract",
+            "deferred",
+            "$f"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "registeredByName",
             "$f"
           ]
         ]
@@ -1302,6 +1598,15 @@
             ]
           ]
         ]
+      ],
+      [
+        "<=",
+        [
+          "heavyParams",
+          "$envies",
+          "$body"
+        ],
+        1
       ],
       [
         "some",

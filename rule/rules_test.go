@@ -192,10 +192,18 @@ func TestRelationOfLaravelRouteRegistrations(t *testing.T) {
 	}
 	probe := []byte(`{"$schema":"commandments:neutral-rule/v2","engine":"php","sin":{"name":"route-probe","skill":"x"},
 		"find":{"from":"laravel-route-registrations","as":"r","pipeline":[{"where":["some","$r.actions","a",["in","$a","Shop\\OrderController::index","Shop\\ExportOrders::__invoke"]]},{"emit":"$r.anchor"}]}}`)
-	library := rule.Load([]rule.Source{
+	sources := []rule.Source{
 		{Origin: rule.Installed, Path: "rules/relations/laravel-route-registrations.json", Text: relationText},
 		{Origin: rule.Project, Path: ".commandments/custom/route-probe.json", Text: probe},
-	}, func(string) (skill.Skill, bool) { return nil, true })
+	}
+	for _, definitions := range []string{"tree.json", "laravel.json"} {
+		text, err := os.ReadFile(filepath.Join("..", "rules", "definitions", definitions))
+		if err != nil {
+			t.Fatal(err)
+		}
+		sources = append(sources, rule.Source{Origin: rule.Installed, Path: "rules/definitions/" + definitions, Text: text})
+	}
+	library := rule.Load(sources, func(string) (skill.Skill, bool) { return nil, true })
 	if len(library.Problems) != 0 || len(library.Rules) != 1 {
 		t.Fatalf("the loader said %v", library.Problems)
 	}

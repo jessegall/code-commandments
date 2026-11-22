@@ -1,0 +1,33 @@
+{
+  "package": "bounded-iteration",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "calls that cut a list into batches (PHP array_chunk, an Illuminate collection's chunk) or bound its length (array_slice), and a model's reload of the row it already holds: a loop over them is batched or bounded, and a loop that reloads polls on purpose",
+  "entries": [
+    {
+      "type": "",
+      "name": "array_chunk",
+      "effect": "gives-batches",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Support\\Collection",
+      "name": "chunk",
+      "effect": "gives-batches",
+      "execution": "call"
+    },
+    {
+      "type": "",
+      "name": "array_slice",
+      "effect": "bounds-count",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "name": "refresh",
+      "effect": "reloads-receiver",
+      "execution": "call"
+    }
+  ],
+  "identities": []
+}
