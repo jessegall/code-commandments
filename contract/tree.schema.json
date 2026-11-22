@@ -1937,7 +1937,8 @@
     "literal": {
       "facts": [
         "literalKind",
-        "value"
+        "value",
+        "target"
       ],
       "required": [
         "literalKind"

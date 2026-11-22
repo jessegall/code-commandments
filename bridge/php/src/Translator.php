@@ -901,7 +901,7 @@ final class Translator
             $node->facts['constantValue'] = $folded;
         }
         $target = $expression->getAttribute('target');
-        if (is_array($target) && in_array($node->kind, ['call', 'construction', 'collection'], true)) {
+        if (is_array($target) && in_array($node->kind, ['call', 'construction', 'collection', 'literal'], true)) {
             $node->facts['target'] = $target;
             $callee = $node->parts['callee'] ?? null;
             if ($expression instanceof Expr\FuncCall && $callee instanceof TreeNode && $callee->kind === 'reference' && ! isset($callee->facts['refers'])) {

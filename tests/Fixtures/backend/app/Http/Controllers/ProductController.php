@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
+use JesseGall\CodeCommandments\Sins\Backend\DivergentTwin;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\CreateProductRequest;
@@ -44,6 +45,7 @@ class ProductController extends Controller
      * @return list<Product>
      */
     #[Fixed(RawRequestInput::class)]
+    #[Sinful(DivergentTwin::class)]
     public function searchNamed(SearchProductRequest $request): array
     {
         return Product::query()

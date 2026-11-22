@@ -87,6 +87,50 @@
                 "$t"
               ],
               [
+                "none",
+                [
+                  "ownAncestors",
+                  "$r"
+                ],
+                "k",
+                [
+                  "and",
+                  [
+                    "within",
+                    "$k",
+                    "$t"
+                  ],
+                  [
+                    "or",
+                    [
+                      "=",
+                      "$k.kind",
+                      "call"
+                    ],
+                    [
+                      "and",
+                      [
+                        "=",
+                        "$k.kind",
+                        "index"
+                      ],
+                      [
+                        "exists",
+                        "$k.key"
+                      ],
+                      [
+                        "proven",
+                        [
+                          "within",
+                          "$r",
+                          "$k.key"
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
                 "not",
                 [
                   "and",

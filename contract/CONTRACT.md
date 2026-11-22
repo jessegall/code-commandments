@@ -309,6 +309,7 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   number as a decimal string so no width is lost, `true` or `false`; none for `null` and `undefined`). Python
   `None` and PHP `null` are `null`. Go's `nil`, `true` and `false` are literals when the compiler resolves them
   to the universe, and references otherwise: a shadowed `nil` is an ordinary name.
+  A string the language calls as a callable (PHP's `'self::total'`) has a `target` naming the method it calls.
 - **`default-value`**: C# `default` and `default(T)`. `writtenType?`. Fact `resolvedType` (the contextual type).
 - **`collection`**: `entries[]`, in order. Fact `form` (`list`, `array`, `set`, `map`, `tuple`, `object`), and
   `target` when the language calls it as a callable: PHP's `[Order::class, 'total']` and `[$this, 'total']` name

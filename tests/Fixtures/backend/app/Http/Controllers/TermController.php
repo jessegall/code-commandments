@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\Laravel\RequestAccessorRecast;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use JesseGall\CodeCommandments\Sins\Backend\DivergentTwin;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\SearchProductRequest;
@@ -34,6 +35,7 @@ class TermController extends Controller
      * @return list<Product>
      */
     #[Fixed(RequestAccessorRecast::class)]
+    #[Sinful(DivergentTwin::class)]
     public function searchByTerm(SearchProductRequest $request): array
     {
         return Product::query()

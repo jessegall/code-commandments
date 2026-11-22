@@ -310,6 +310,9 @@ final class Types
                 if ($node instanceof Expr\Array_) {
                     $this->types->callableTarget($node, $this->class);
                 }
+                if ($node instanceof Node\Scalar\String_) {
+                    $this->types->callableString($node, $this->class);
+                }
                 if ($node instanceof Expr) {
                     $scope = array_key_last($this->scopes);
                     $type = $this->types->typeOf($node, $this->class, $this->scopes[$scope]['variables']);
@@ -530,6 +533,20 @@ final class Types
         if ($declaring !== null) {
             $found = $this->methods($declaring)[strtolower($method->value->value)];
             $array->setAttribute('target', ['symbol' => "{$declaring}::{$found['name']}", 'type' => $declaring, 'name' => $found['name']]);
+        }
+    }
+
+    /** A string callable, 'self::method', 'static::method' or 'Class::method', names the method it calls as its target. */
+    public function callableString(Node\Scalar\String_ $string, ?string $class): void
+    {
+        if (preg_match('/^(self|static|\\\\?[A-Za-z_][\\\\\w]*)::([A-Za-z_]\w*)$/', $string->value, $named) !== 1) {
+            return;
+        }
+        $owner = in_array(strtolower($named[1]), ['self', 'static'], true) ? $class : ltrim($named[1], '\\');
+        $declaring = $owner !== null ? $this->declaring($owner, $named[2]) : null;
+        if ($declaring !== null) {
+            $found = $this->methods($declaring)[strtolower($named[2])];
+            $string->setAttribute('target', ['symbol' => "{$declaring}::{$found['name']}", 'type' => $declaring, 'name' => $found['name']]);
         }
     }
 

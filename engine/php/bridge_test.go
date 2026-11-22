@@ -482,6 +482,30 @@ final class Casters {
 	}
 }
 
+func TestAStringCallableNamesTheMethodItCalls(t *testing.T) {
+	folder := written(t, map[string]string{"Sorter.php": `<?php
+namespace App;
+final class Order { public static function byTotal(): int { return 0; } }
+final class Sorter {
+    public function sort(array $rows): array {
+        uasort($rows, 'self::byTime');
+        usort($rows, 'App\\Order::byTotal');
+        return [$rows, 'self::missing', 'plain words'];
+    }
+    private static function byTime(): int { return 0; }
+}
+`})
+	var targets []string
+	for _, node := range bridged(t, folder).Files[0].Nodes() {
+		if node.Kind == "literal" && node.Target != nil {
+			targets = append(targets, node.Target.Symbol)
+		}
+	}
+	if !slices.Equal(targets, []string{`App\Sorter::byTime`, `App\Order::byTotal`}) {
+		t.Errorf("the string callables name %v, not Sorter::byTime and Order::byTotal", targets)
+	}
+}
+
 func TestACallToAClassTheAutoloaderLoadsByItsWrittenCaseIsResolved(t *testing.T) {
 	folder := written(t, map[string]string{
 		"vendor/autoload.php": `<?php
