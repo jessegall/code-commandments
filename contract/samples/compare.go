@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/contract/marker"
 )
 
 // Expected is one expected tree: the construct it shows, the source it is the tree of, and the file it must read as.
@@ -349,28 +350,40 @@ func (c *comparison) attached(where string, expected *contract.File, want, got c
 // with its dashes as underscores, so every language's module path is a valid name; a Python folder is a package, so
 // the module is named for the construct too.
 func (e Expected) Placed(root string) (string, error) {
-	source, err := os.ReadFile(e.Source)
+	module := ""
+	if e.Language == contract.Go && e.File.Resolver != nil && e.File.Resolver.Ran {
+		module = e.File.Module
+	}
+
+	return Place(root, e.Construct, e.Source, e.Language, module)
+}
+
+func Place(root, construct, source string, language contract.Language, module string) (string, error) {
+	text, err := os.ReadFile(source)
 	if err != nil {
 		return "", err
 	}
-	folder := filepath.Join(root, strings.ReplaceAll(e.Construct, "-", "_"))
+	folder := filepath.Join(root, PlacedFolder(construct))
 	if err := os.MkdirAll(folder, 0o755); err != nil {
 		return "", err
 	}
-	placed := filepath.Join(folder, filepath.Base(e.Source))
-	if e.Language == contract.Python {
+	placed := filepath.Join(folder, filepath.Base(source))
+	if language == contract.Python {
 		if err := os.WriteFile(filepath.Join(folder, "__init__.py"), nil, 0o644); err != nil {
 			return "", err
 		}
 	}
-	// A Go file is type-checked only inside a module, so a tree whose resolver ran is placed in the module it names.
-	if e.Language == contract.Go && e.File.Resolver != nil && e.File.Resolver.Ran {
-		if err := os.WriteFile(filepath.Join(folder, "go.mod"), []byte("module "+e.File.Module+"\n"), 0o644); err != nil {
+	if module != "" {
+		if err := os.WriteFile(filepath.Join(folder, "go.mod"), []byte("module "+module+"\n"), 0o644); err != nil {
 			return "", err
 		}
 	}
 
-	return placed, os.WriteFile(placed, source, 0o644)
+	return placed, os.WriteFile(placed, text, 0o644)
+}
+
+func PlacedFolder(construct string) string {
+	return strings.ReplaceAll(construct, "-", "_")
 }
 
 // Merged is every expected tree of the language as one stream, its files in path order: a whole small program of the
@@ -395,4 +408,19 @@ func Merged(folder string, language contract.Language) (*contract.Stream, error)
 	}
 
 	return contract.Accept(header, files, nil, contract.Trailer{Files: len(files)})
+}
+
+func WithoutMarkers(language contract.Language, source []byte, file *contract.File) *contract.File {
+	markers, _ := marker.Read(language, "", source)
+	if len(markers) == 0 {
+		return file
+	}
+	starts := map[int]bool{}
+	for _, each := range markers {
+		starts[each.Start] = true
+	}
+	kept := *file
+	kept.Comments = slices.DeleteFunc(slices.Clone(file.Comments), func(comment contract.Comment) bool { return starts[comment.Span.Start] })
+
+	return &kept
 }

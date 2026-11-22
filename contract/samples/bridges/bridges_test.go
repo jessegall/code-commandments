@@ -88,6 +88,9 @@ func sampleWritten(t *testing.T, served *servedBridges, expected samples.Expecte
 
 		return
 	}
+	if source, err := os.ReadFile(expected.Source); err == nil {
+		written = samples.WithoutMarkers(expected.Language, source, written)
+	}
 	differences, observed := samples.Observed(expected.File, written)
 	for _, difference := range differences {
 		t.Error(difference)
