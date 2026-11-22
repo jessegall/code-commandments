@@ -118,6 +118,42 @@ validates against `contract/tree.schema.json` and that every span points into it
 | `contract-vue-script-expressions` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
 | `contract-vue-script-statements` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
 | `contract-vue-template-markup` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-csharp-expressions` | doc 65, the contract markers | csharp | marked for the csharp bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-csharp-imports` | doc 65, the contract markers | csharp | marked for the csharp bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-csharp-script` | doc 65, the contract markers | csharp | marked for the csharp bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-go-alias` | doc 65, the contract markers | go | marked for the go bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-go-expressions` | doc 65, the contract markers | go | marked for the go bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-go-literal` | doc 65, the contract markers | go | marked for the go bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-go-loops` | doc 65, the contract markers | go | marked for the go bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-go-satisfies` | doc 65, the contract markers | go | marked for the go bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-php-annotations` | doc 65, the contract markers | php | marked for the php bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-php-members` | doc 65, the contract markers | php | marked for the php bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-php-module` | doc 65, the contract markers | php | marked for the php bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-php-statements` | doc 65, the contract markers | php | marked for the php bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-calls` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-conditions` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-exceptions` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-file` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-file-modules` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-loops` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-module` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-module-declarations` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-module-imports` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-module-statements` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-parameters` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-patterns` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-python-union` | doc 65, the contract markers | python | marked for the python bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-typescript-operators` | doc 65, the contract markers | typescript | marked for the typescript bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-typescript-top-level` | doc 65, the contract markers | typescript | marked for the typescript bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-file` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-file-modules` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-script-imports` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-script-jumps` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-script-obligations` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-script-operators` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-script-types` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-script-unsupported` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-template-directives` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
 
 Stories 20 to 22 and 24 are about how a run uses the tree, not about the tree itself: 20 and 21 are package facts
 (tasks 1245 and 1291), 22 is the cache (task 1230), and 24 is the reader's version refusal (`contract/reader_test.go`).

@@ -3,6 +3,7 @@ package samples
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -20,10 +21,11 @@ type Score struct {
 	Missing    []string
 	Faults     []string
 	Incomplete bool
+	Proofs     map[string]string
 }
 
 func ScoreOf(language contract.Language, occurrences []Occurrence, debt Debt, faults []error, incomplete bool) Score {
-	score := Score{Language: language, Owed: len(debt.Owed), Incomplete: incomplete}
+	score := Score{Language: language, Owed: len(debt.Owed), Incomplete: incomplete, Proofs: map[string]string{}}
 	for _, fault := range faults {
 		score.Faults = append(score.Faults, fault.Error())
 	}
@@ -52,6 +54,8 @@ func ScoreOf(language contract.Language, occurrences []Occurrence, debt Debt, fa
 		case failed:
 		case witnessed:
 			score.Proven++
+			proof := held[slices.IndexFunc(held, func(each Occurrence) bool { return each.Status == Passed && !each.AbsenceOnly })]
+			score.Proofs[key] = fmt.Sprintf("%s:%d", proof.Marker.Path, proof.Marker.Line)
 		default:
 			score.Missing = append(score.Missing, key)
 		}
@@ -84,6 +88,9 @@ func (s Score) Report() []string {
 	}
 	for _, key := range s.Missing {
 		lines = append(lines, fmt.Sprintf("%s: %s: no marker proves it", s.Language, key))
+	}
+	for _, key := range slices.Sorted(maps.Keys(s.Proofs)) {
+		lines = append(lines, fmt.Sprintf("%s: %s proven at %s", s.Language, key, s.Proofs[key]))
 	}
 
 	return lines

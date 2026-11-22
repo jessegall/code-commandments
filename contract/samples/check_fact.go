@@ -39,6 +39,11 @@ func CheckFact(scenario map[string]Written, from Written, each marker.Marker) Oc
 	if !present && isZero(expected) && !slices.Contains(factsTellZeroFromAbsent, name) {
 		return occurrence.failed(Invalid, "false is indistinguishable from absent in this fact")
 	}
+	if !present && defaults[name] != nil && expected == defaults[name] {
+		occurrence.Status = Passed
+
+		return occurrence
+	}
 	if !present {
 		return occurrence.failed(Wrong, name+" is not written")
 	}
@@ -145,6 +150,19 @@ func constantHolds(expected, written any) bool {
 }
 
 func fieldsHold(expected, written any) bool {
+	if listed, isList := expected.([]any); isList {
+		held, isHeld := written.([]any)
+		if !isHeld || len(held) != len(listed) {
+			return false
+		}
+		for index := range listed {
+			if !fieldsHold(listed[index], held[index]) {
+				return false
+			}
+		}
+
+		return true
+	}
 	stated, isObject := expected.(map[string]any)
 	if !isObject {
 		return reflect.DeepEqual(expected, written)

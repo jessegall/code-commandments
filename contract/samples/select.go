@@ -3,6 +3,7 @@ package samples
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -65,6 +66,10 @@ func Select(file *contract.File, source []byte, each marker.Marker) (*contract.N
 }
 
 func NodeAt(file *contract.File, source []byte, line int, kind string, column int) (*contract.Node, error) {
+	return NestedNodeAt(file, source, line, kind, column, false)
+}
+
+func NestedNodeAt(file *contract.File, source []byte, line int, kind string, column int, inner bool) (*contract.Node, error) {
 	var candidates []*contract.Node
 	for _, node := range file.Nodes() {
 		if node.Kind == kind && node.Span.Line == line && (column == 0 || ColumnOf(source, node.Span.Start) == column) {
@@ -74,12 +79,26 @@ func NodeAt(file *contract.File, source []byte, line int, kind string, column in
 	if len(candidates) == 1 {
 		return candidates[0], nil
 	}
+	if chain := nested(candidates); chain != nil {
+		if inner {
+			return chain[len(chain)-1], nil
+		}
+
+		return chain[0], nil
+	}
 	columns := make([]string, len(candidates))
 	for index, candidate := range candidates {
 		columns[index] = fmt.Sprint(ColumnOf(source, candidate.Span.Start))
 	}
 	if len(candidates) == 0 {
-		return nil, fmt.Errorf("no %s starts on line %d", kind, line)
+		var there []string
+		for _, node := range file.Nodes() {
+			if node.Span.Line == line {
+				there = append(there, fmt.Sprintf("%s at %d", node.Kind, ColumnOf(source, node.Span.Start)))
+			}
+		}
+
+		return nil, fmt.Errorf("no %s starts on line %d (there: %s)", kind, line, strings.Join(there, ", "))
 	}
 
 	return nil, fmt.Errorf("%d nodes of kind %s start on line %d, at columns %s: write at COLUMN", len(candidates), kind, line, strings.Join(columns, ", "))
@@ -87,4 +106,35 @@ func NodeAt(file *contract.File, source []byte, line int, kind string, column in
 
 func ColumnOf(source []byte, offset int) int {
 	return offset - (bytes.LastIndexByte(source[:min(offset, len(source))], '\n') + 1) + 1
+}
+
+func nested(candidates []*contract.Node) []*contract.Node {
+	chain := slices.Clone(candidates)
+	slices.SortFunc(chain, func(a, b *contract.Node) int { return depthOf(a) - depthOf(b) })
+	for index := 1; index < len(chain); index++ {
+		if chain[index].Span.Start != chain[0].Span.Start || !within(chain[index], chain[index-1]) {
+			return nil
+		}
+	}
+
+	return chain
+}
+
+func depthOf(node *contract.Node) int {
+	depth := 0
+	for parent, found := node.Parent(); found; parent, found = parent.Parent() {
+		depth++
+	}
+
+	return depth
+}
+
+func within(node, ancestor *contract.Node) bool {
+	for parent, found := node.Parent(); found; parent, found = parent.Parent() {
+		if parent == ancestor {
+			return true
+		}
+	}
+
+	return false
 }

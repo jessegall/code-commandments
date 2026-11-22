@@ -761,7 +761,7 @@ public sealed partial class ContractWriter
             var refers = named switch
             {
                 INamedTypeSymbol type => Remembered(type),
-                IFieldSymbol or IPropertySymbol or IEventSymbol when named.Locations.Any(location => location.IsInSource) => Spelled(named),
+                IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol when named.Locations.Any(location => location.IsInSource) => Spelled(named),
                 _ => null,
             };
 

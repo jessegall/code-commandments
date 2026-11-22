@@ -365,11 +365,13 @@ export class Translator {
                 .holds('else', node.elseStatement && this.statement(node.elseStatement))
         }
         if (ts.isForStatement(node)) {
-            const initializer = node.initializer && (ts.isVariableDeclarationList(node.initializer) ? this.variable(node.initializer, node.initializer) : this.expression(node.initializer))
+            const initializer = node.initializer && ts.isVariableDeclarationList(node.initializer)
+                ? [this.variable(node.initializer, node.initializer)]
+                : commaParts(node.initializer).map((part) => this.expression(part))
 
-            return this.new('loop', node).fact('form', 'for').holdsAll('initializer', [initializer])
+            return this.new('loop', node).fact('form', 'for').holdsAll('initializer', initializer)
                 .holds('condition', node.condition && this.expression(node.condition))
-                .holdsAll('steps', [node.incrementor && this.expression(node.incrementor)])
+                .holdsAll('steps', commaParts(node.incrementor).map((part) => this.expression(part)))
                 .holds('body', this.statement(node.statement))
         }
         if (ts.isForOfStatement(node) || ts.isForInStatement(node)) {
@@ -978,4 +980,13 @@ export function fragment(raw) {
     }
 
     return read
+}
+
+function commaParts(expression) {
+    if (!expression) return []
+    if (ts.isBinaryExpression(expression) && expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
+        return [...commaParts(expression.left), ...commaParts(expression.right)]
+    }
+
+    return [expression]
 }

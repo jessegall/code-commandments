@@ -1,3 +1,3 @@
 {"header": {"contract": "tree", "version": 5, "language": "python", "bridge": {"name": "python-bridge", "version": "8.0.0"}, "roots": ["/expected/parse-failure"]}}
 {"file": {"comments": [], "errors": 1, "language": "python", "module": "parse_failure.python", "path": "/expected/parse-failure/python.py", "resolver": {"ran": false, "tool": "mypy"}, "root": {"id": 0, "incomplete": true, "kind": "file", "span": [0, 26, 1]}}}
-{"trailer": {"files": 1}}
+{"trailer":{"files":1}}

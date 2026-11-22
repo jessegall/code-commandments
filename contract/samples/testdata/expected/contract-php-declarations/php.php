@@ -34,8 +34,12 @@ final class Item implements Named
     public const int LIMIT = 3;
 
     #[Tag('name')]
+    // @label firstMember type-expression 42 inner
+    // @label secondMember type-expression 49
+    // @contract role/type-expression/members at 42 -> [firstMember, secondMember]
     public function name(#[Tag('label')] string|int $label = 'x'): string
     {
+        // @contract fact/*/constantValue on access at 30 = 3
         return $this->size > self::LIMIT ? 'big' : 'none';
     }
 }

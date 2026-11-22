@@ -1,6 +1,7 @@
 package bridges
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"slices"
@@ -33,6 +34,10 @@ func TestEveryBridgeProvesItsMarkers(t *testing.T) {
 	for language, found := range parityFaults(t, held) {
 		faults[language] = append(faults[language], found...)
 	}
+	scenarios, read := samples.Scenarios(filepath.Join("..", "testdata", "scenarios"))
+	for _, language := range contract.Languages {
+		faults[language] = append(faults[language], read...)
+	}
 	var requests atomic.Int64
 	var mutex sync.Mutex
 	occurrences := map[contract.Language][]samples.Occurrence{}
@@ -41,7 +46,7 @@ func TestEveryBridgeProvesItsMarkers(t *testing.T) {
 	t.Run("bridges", func(t *testing.T) {
 		for _, language := range contract.Languages {
 			own := held[language]
-			if len(own) == 0 {
+			if len(own) == 0 && !slices.ContainsFunc(scenarios, func(each samples.Scenario) bool { _, has := each.Languages[language]; return has }) {
 				continue
 			}
 			starts++
@@ -50,6 +55,8 @@ func TestEveryBridgeProvesItsMarkers(t *testing.T) {
 				served := servedBridges{t: t, roots: map[contract.Language]string{}, askers: map[contract.Language]bridge.Asker{}}
 				defer served.close()
 				found, ok := proveSamples(t, &served, own, &requests)
+				promised, ran := proveScenarios(t, scenarios, language, &requests)
+				found, ok = append(found, promised...), ok && ran
 				mutex.Lock()
 				defer mutex.Unlock()
 				occurrences[language], incomplete[language] = found, !ok
@@ -63,11 +70,11 @@ func TestEveryBridgeProvesItsMarkers(t *testing.T) {
 		for _, line := range score.Report() {
 			t.Log(line)
 		}
-		failed = failed || score.Incomplete || len(score.Faults) > 0 || len(score.Wrong) > 0
+		failed = failed || !score.Holds()
 	}
 	t.Logf("%d bridge starts, %d requests, %s", starts, requests.Load(), time.Since(began).Round(time.Second))
 	if failed {
-		t.Error("a marker is malformed or wrong, a construct's markers differ across languages, or a bridge did not run")
+		t.Error("a bridge does not prove the whole contract by its markers: a marker is wrong or malformed, an owed key has no marker, a construct's markers differ across languages, or a bridge did not run")
 	}
 }
 
@@ -171,4 +178,57 @@ func proveSamples(t *testing.T, served *servedBridges, own []markedSample, reque
 	}
 
 	return found, true
+}
+
+func proveScenarios(t *testing.T, scenarios []samples.Scenario, language contract.Language, requests *atomic.Int64) ([]samples.Occurrence, bool) {
+	var found []samples.Occurrence
+	for _, scenario := range scenarios {
+		run, has := scenario.Languages[language]
+		if !has {
+			continue
+		}
+		root, err := filepath.EvalSymlinks(t.TempDir())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := scenario.Place(root, language); err != nil {
+			t.Fatal(err)
+		}
+		inRoot := func(names []string) []string {
+			var paths []string
+			for _, name := range names {
+				paths = append(paths, filepath.Join(root, name))
+			}
+
+			return paths
+		}
+		answer := samples.ScenarioAnswer{Root: root}
+		for _, mask := range run.Masks {
+			requests.Add(1)
+			stream, err := bridgeOf[language].ReadWriting([]string{root}, inRoot(run.Files), inRoot(mask))
+			if err != nil {
+				t.Errorf("the %s bridge could not read the scenario %s: %v", language, scenario.Name, err)
+
+				return found, false
+			}
+			answer.Streams = append(answer.Streams, inScenario(t, stream, root))
+		}
+		found = append(found, scenario.Check(language, answer)...)
+	}
+
+	return found, true
+}
+
+func inScenario(t *testing.T, stream *contract.Stream, root string) []*contract.File {
+	t.Helper()
+	var written bytes.Buffer
+	if err := contract.Write(&written, stream); err != nil {
+		t.Fatal(err)
+	}
+	read, err := contract.ReadAll(strings.NewReader(strings.ReplaceAll(written.String(), root, "/scenario")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return read.Files
 }

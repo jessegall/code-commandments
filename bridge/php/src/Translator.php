@@ -337,17 +337,29 @@ final class Translator
 
     private function unsupported(Node $node): TreeNode
     {
-        $parts = [];
-        foreach ($node->getSubNodeNames() as $name) {
-            foreach (is_array($node->$name) ? $node->$name : [$node->$name] as $child) {
-                if ($child instanceof Expr) {
-                    $parts[] = $this->expression($child);
-                }
-            }
-        }
+        $parts = array_map(fn (Expr $part) => $this->expression($part), $this->expressionsWithin($node));
         $name = strtolower(str_replace(['Stmt_', 'Expr_', '_'], ['', '', '-'], $node->getType()));
 
         return $this->owning('unsupported', $node, $parts !== [] ? ['parts' => $parts] : [], ['construct' => trim($name, '-')]);
+    }
+
+    /**
+     * @return list<Expr>
+     */
+    private function expressionsWithin(Node $node): array
+    {
+        $found = [];
+        foreach ($node->getSubNodeNames() as $name) {
+            foreach (is_array($node->$name) ? $node->$name : [$node->$name] as $child) {
+                if ($child instanceof Expr) {
+                    $found[] = $child;
+                } elseif ($child instanceof Node && !$child instanceof Stmt) {
+                    array_push($found, ...$this->expressionsWithin($child));
+                }
+            }
+        }
+
+        return $found;
     }
 
     private function thrown(Node $statement, Expr\Throw_ $throw): TreeNode

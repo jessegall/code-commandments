@@ -1,0 +1,59 @@
+{
+  "languages": {
+    "php": {
+      "files": [
+        "one.php",
+        "two.php"
+      ],
+      "masks": [
+        [
+          "two.php"
+        ]
+      ]
+    },
+    "python": {
+      "files": [
+        "one.py",
+        "two.py"
+      ],
+      "masks": [
+        [
+          "two.py"
+        ]
+      ]
+    },
+    "typescript": {
+      "files": [
+        "one.ts",
+        "two.ts"
+      ],
+      "masks": [
+        [
+          "two.ts"
+        ]
+      ]
+    },
+    "vue": {
+      "files": [
+        "one.vue",
+        "two.vue"
+      ],
+      "masks": [
+        [
+          "two.vue"
+        ]
+      ]
+    },
+    "go": {
+      "files": [
+        "money/money.go",
+        "two.go"
+      ],
+      "masks": [
+        [
+          "two.go"
+        ]
+      ]
+    }
+  }
+}

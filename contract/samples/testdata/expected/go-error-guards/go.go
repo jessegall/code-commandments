@@ -1,5 +1,8 @@
 package files
 
+// @contract kind/import
+// @contract fact/import/form = "module"
+// @contract fact/import/source = "os"
 import "os"
 
 func Read(name string) ([]byte, error) {

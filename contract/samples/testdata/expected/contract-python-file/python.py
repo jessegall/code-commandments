@@ -1,0 +1,1 @@
+pass  # @contract kind/file

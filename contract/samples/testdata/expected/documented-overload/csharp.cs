@@ -1,4 +1,4 @@
-namespace Orders;
+namespace Orders; // @contract kind/module
 
 public static class Prices
 {

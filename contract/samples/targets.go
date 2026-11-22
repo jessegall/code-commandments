@@ -31,7 +31,7 @@ func ResolveTarget(scenario map[string]Written, from Written, target marker.Targ
 	if !found {
 		return nil, fmt.Errorf("no label %s in %s", target.Label, holder.Source.Path)
 	}
-	node, err := NodeAt(holder.File, holder.Bytes, label.Line, label.Owner, label.Directive.Column)
+	node, err := NestedNodeAt(holder.File, holder.Bytes, label.Line, label.Owner, label.Directive.Column, label.Inner)
 	if err != nil {
 		return nil, fmt.Errorf("label %s: %v", target.Label, err)
 	}

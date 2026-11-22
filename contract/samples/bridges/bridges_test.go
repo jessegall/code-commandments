@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -37,12 +35,6 @@ func TestEveryBridgeWritesTheExpectedTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	unwritten, err := samples.Unwritten("../testdata/expected")
-	if err != nil {
-		t.Fatal(err)
-	}
-	all = append(all, unwritten...)
-	t.Cleanup(func() { scored.Store(true) })
 	byLanguage := map[contract.Language][]samples.Expected{}
 	for _, expected := range all {
 		byLanguage[expected.Language] = append(byLanguage[expected.Language], expected)
@@ -79,45 +71,16 @@ func sampleWritten(t *testing.T, served *servedBridges, expected samples.Expecte
 		t.Fatalf("the %s bridge wrote no file for %s", expected.Language, placed)
 	}
 	written = sampled(t, stream.Header, written, root)
-	if expected.IsUnwritten() {
-		expected.Header.Contract, expected.Header.Version, expected.Header.Bridge = stream.Header.Contract, stream.Header.Version, stream.Header.Bridge
-		expected.File.Module = written.Module
+	if source, err := os.ReadFile(expected.Source); err == nil {
+		written = samples.WithoutMarkers(expected.Language, source, written)
 	}
-	if *update || expected.IsUnwritten() {
+	if *update {
 		rewrite(t, expected, written)
 
 		return
 	}
-	if source, err := os.ReadFile(expected.Source); err == nil {
-		written = samples.WithoutMarkers(expected.Language, source, written)
-	}
-	differences, observed := samples.Observed(expected.File, written)
-	for _, difference := range differences {
+	for _, difference := range samples.Differences(expected.File, written) {
 		t.Error(difference)
-	}
-	witnessed.add(expected.Language, observed)
-}
-
-var witnessed = observations{byLanguage: map[contract.Language]map[string]bool{}}
-
-var scored atomic.Bool
-
-type observations struct {
-	mutex      sync.Mutex
-	byLanguage map[contract.Language]map[string]bool
-}
-
-func (o *observations) add(language contract.Language, observed map[string]bool) {
-	o.mutex.Lock()
-	defer o.mutex.Unlock()
-	held := o.byLanguage[language]
-	if held == nil {
-		held = map[string]bool{}
-		o.byLanguage[language] = held
-	}
-	for item, written := range observed {
-		previous, seen := held[item]
-		held[item] = written && (!seen || previous)
 	}
 }
 

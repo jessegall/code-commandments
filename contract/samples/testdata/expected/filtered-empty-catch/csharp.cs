@@ -1,4 +1,4 @@
-namespace Orders;
+namespace Orders; // @contract fact/*/name on module = "Orders"
 
 public class Retry
 {

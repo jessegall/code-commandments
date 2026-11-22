@@ -26,6 +26,9 @@ enum Suit: string
 
     public function color(): string
     {
+        // @contract kind/dispatch
+        // @contract fact/dispatch/form = "match"
+        // @contract fact/dispatch/exhaustive = true
         return match ($this) {
             Suit::Hearts => 'red',
             Suit::Spades => 'black',

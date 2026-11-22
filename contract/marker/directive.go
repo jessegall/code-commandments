@@ -20,6 +20,7 @@ type Directive struct {
 	Operator string
 	Targets  []Target
 	Value    json.RawMessage
+	Inner    bool
 }
 
 // Target is the node a role or link marker points at: a label of the same file, a line and kind, or a label in
@@ -51,13 +52,17 @@ func Parse(text string) (Directive, error) {
 
 func label(rest string) (Directive, error) {
 	fields := strings.Fields(rest)
+	inner := len(fields) > 2 && fields[len(fields)-1] == "inner"
+	if inner {
+		fields = fields[:len(fields)-1]
+	}
 	if len(fields) < 2 || len(fields) > 3 {
-		return Directive{}, fmt.Errorf("@label takes a name, a kind and an optional column, not %q", rest)
+		return Directive{}, fmt.Errorf("@label takes a name, a kind, an optional column and an optional inner, not %q", rest)
 	}
 	if !identifier.MatchString(fields[0]) {
 		return Directive{}, fmt.Errorf("@label name %q is not an ASCII identifier", fields[0])
 	}
-	made := Directive{Label: fields[0], Owner: fields[1]}
+	made := Directive{Label: fields[0], Owner: fields[1], Inner: inner}
 	if len(fields) == 3 {
 		column, err := columnOf(fields[2])
 		if err != nil {

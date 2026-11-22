@@ -101,7 +101,7 @@ without making it a second child, so a derived view never inserts an executable 
 | `refers` | the symbol id a reference, a type or an import names, whether or not it is in the scan | compiler |
 | `target` | the declaration a call or construction binds to: `{"symbol", "type"?, "name", "parameters"?}` | compiler |
 | `resolvedType` | the index in the file's `types` of the type the compiler gives the expression | compiler |
-| `constantValue` | the compile-time value of an expression the compiler folds: `{"type", "value"}`, with an explicit `{"type": "null"}` variant for null | compiler |
+| `constantValue` | the compile-time value of an expression the compiler folds: `{"type", "value"}`, with an explicit `{"type": "null"}` variant for null; a literal states its value in `value` instead | compiler |
 | `modifiers` | the modifiers as written, in source order: `public`, `static`, `readonly`, `final`, `abstract`, `override`, `async`, `const`, `partial`, `sealed`, `virtual` | parser |
 | `effective` | what the language makes of them: `{"visibility": "public"\|"protected"\|"private"\|"internal"\|"package", "static", "abstract", "final", "readonly"}`. Go's capitalisation and TypeScript's implicit `public` land here, never in `modifiers` | parser |
 | `obligations` | for a member: every declaration it overrides or implements, `[{"symbol", "origin": "project"\|"external"}]`. `external` means the signature is fixed outside the project (a package, the framework) | compiler |
@@ -322,7 +322,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 
 ### Patterns
 
-- **`pattern`**: a destructuring target or a case pattern. `subpatterns[]`, `bindings[]`, `constrainedType?`,
+- **`pattern`**: a destructuring target or a case pattern. `subpatterns[]` (its elements in order; an element that
+  only names a variable is that `binding`), `bindings[]` (what a rest or binding pattern names), `constrainedType?`,
   `value?`. Fact `form` (`wildcard`, `binding`, `value`, `type`, `sequence`, `mapping`, `record`, `or`, `and`,
   `not`, `relational`, `rest`), and `operator` on a relational pattern, the comparison it makes (`greater`, as in C#'s
   `> 0`).

@@ -18,6 +18,7 @@ func TestADirectiveReadsAsItsKeyOwnerColumnOperatorAndTargets(t *testing.T) {
 		"@contract fact/*/obligations -> one.py#area":           {Key: "fact/*/obligations", Operator: "->", Targets: []Target{{Path: "one.py", Label: "area"}}},
 		"@contract fact/*/constantValue = {\"type\": \"null\"}": {Key: "fact/*/constantValue", Operator: "=", Value: []byte(`{"type": "null"}`)},
 		"@label outer loop":                                     {Label: "outer", Owner: "loop"},
+		"@label first type-expression 17 inner":                 {Label: "first", Owner: "type-expression", Column: 17, Inner: true},
 		"@label first argument 12":                              {Label: "first", Owner: "argument", Column: 12},
 	} {
 		got, err := Parse(text)

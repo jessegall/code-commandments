@@ -1,0 +1,64 @@
+{
+  "languages": {
+    "php": {
+      "files": [
+        "one.php"
+      ],
+      "masks": [
+        [
+          "one.php"
+        ]
+      ]
+    },
+    "typescript": {
+      "files": [
+        "one.ts"
+      ],
+      "masks": [
+        [
+          "one.ts"
+        ]
+      ]
+    },
+    "vue": {
+      "files": [
+        "one.vue"
+      ],
+      "masks": [
+        [
+          "one.vue"
+        ]
+      ]
+    },
+    "python": {
+      "files": [
+        "one.py"
+      ],
+      "masks": [
+        [
+          "one.py"
+        ]
+      ]
+    },
+    "go": {
+      "files": [
+        "one.go"
+      ],
+      "masks": [
+        [
+          "one.go"
+        ]
+      ]
+    },
+    "csharp": {
+      "files": [
+        "one.cs"
+      ],
+      "masks": [
+        [
+          "one.cs"
+        ]
+      ]
+    }
+  }
+}
