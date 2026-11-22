@@ -232,6 +232,14 @@ final class Types
             private ?string $class = null;
 
             /**
+             * The types each variable was given inside the branching statements being walked, innermost last, with the
+             * type it held before each began: on leaving one, a variable keeps a type only when every path agrees.
+             *
+             * @var list<array{before: array<string, ?array>, given: array<string, array<int, ?array>>, scope: int, branch: int, branches: int, exhaustive: bool}>
+             */
+            private array $branchings = [];
+
+            /**
              * @var list<?string>
              */
             private array $enclosingClasses = [];
@@ -243,6 +251,17 @@ final class Types
                 if ($node instanceof Stmt\ClassLike) {
                     $this->enclosingClasses[] = $this->class;
                     $this->class = $node->namespacedName?->toString();
+                }
+                if ($node instanceof Stmt\If_ || $node instanceof Stmt\TryCatch || $node instanceof Stmt\Switch_) {
+                    [$branches, $exhaustive] = match (true) {
+                        $node instanceof Stmt\If_ => [1 + count($node->elseifs) + ($node->else !== null ? 1 : 0), $node->else !== null],
+                        $node instanceof Stmt\TryCatch => [1 + count($node->catches), true],
+                        default => [count($node->cases), array_filter($node->cases, static fn (Stmt\Case_ $case): bool => $case->cond === null) !== []],
+                    };
+                    $this->branchings[] = ['before' => end($this->scopes)['variables'], 'given' => [], 'scope' => array_key_last($this->scopes), 'branch' => $node instanceof Stmt\Switch_ ? -1 : 0, 'branches' => $branches, 'exhaustive' => $exhaustive];
+                }
+                if (($node instanceof Stmt\ElseIf_ || $node instanceof Stmt\Else_ || $node instanceof Stmt\Catch_ || $node instanceof Stmt\Case_) && $this->branchings !== []) {
+                    $this->branchings[array_key_last($this->branchings)]['branch']++;
                 }
                 if ($node instanceof Node\UseItem && ($file = $this->types->fileOf($node->name->toString())) !== null) {
                     $node->setAttribute('resolves', $file);
@@ -301,9 +320,30 @@ final class Types
                     }
                     if ($node instanceof Expr\Assign && $node->var instanceof Expr\Variable && is_string($node->var->name)) {
                         $this->scopes[$scope]['variables'][$node->var->name] = $type;
+                        foreach (array_keys($this->branchings) as $at) {
+                            if ($this->branchings[$at]['scope'] === $scope) {
+                                $this->branchings[$at]['given'][$node->var->name][max(0, $this->branchings[$at]['branch'])] = $type;
+                            }
+                        }
                     }
                     if (($into = $node->getAttribute('iteratedInto')) !== null) {
                         $this->scopes[$scope]['variables'][$into] = $type['element'] ?? null;
+                    }
+                }
+                if ($node instanceof Stmt\If_ || $node instanceof Stmt\TryCatch || $node instanceof Stmt\Switch_) {
+                    $branching = array_pop($this->branchings);
+                    foreach ($branching['given'] as $name => $given) {
+                        $paths = array_values($given);
+                        if (! $branching['exhaustive'] || count($given) < $branching['branches']) {
+                            $paths[] = $branching['before'][$name] ?? null;
+                        }
+                        $agreed = array_unique(array_map(serialize(...), $paths)) === [serialize($paths[0])];
+                        $this->scopes[$branching['scope']]['variables'][$name] = $agreed ? $paths[0] : null;
+                        foreach (array_keys($this->branchings) as $at) {
+                            if ($this->branchings[$at]['scope'] === $branching['scope']) {
+                                $this->branchings[$at]['given'][$name][max(0, $this->branchings[$at]['branch'])] = $agreed ? $paths[0] : null;
+                            }
+                        }
                     }
                 }
                 if ($node instanceof Node\FunctionLike) {

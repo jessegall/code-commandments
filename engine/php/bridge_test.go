@@ -424,6 +424,42 @@ final class Till {
 	}
 }
 
+func TestAVariableKeepsATypeAfterABranchingStatementOnlyWhenEveryPathAgrees(t *testing.T) {
+	folder := written(t, map[string]string{"Shift.php": `<?php
+namespace App;
+final class Clock { public function now(): int { return 0; } }
+final class Calendar { public function now(): int { return 1; } }
+final class Shift {
+    public function start(bool $late): int {
+        try {
+            $source = new Clock();
+        } catch (\Throwable $failure) {
+            $source = new Calendar();
+        }
+        if ($late) {
+            $fallback = new Clock();
+        } else {
+            $fallback = new Clock();
+        }
+        return $source->now() + $fallback->now();
+    }
+}
+`})
+	var targets []string
+	for _, node := range bridged(t, folder).Files[0].Nodes() {
+		if node.Kind == "call" && node.Span.Line == 17 {
+			if node.Target != nil {
+				targets = append(targets, node.Target.Symbol)
+			} else {
+				targets = append(targets, "unresolved")
+			}
+		}
+	}
+	if !slices.Equal(targets, []string{"unresolved", `App\Clock::now`}) {
+		t.Errorf("the calls after the try and the if resolve to %v, not unresolved (two paths disagree) and Clock::now (both agree)", targets)
+	}
+}
+
 func TestACallToAClassTheAutoloaderLoadsByItsWrittenCaseIsResolved(t *testing.T) {
 	folder := written(t, map[string]string{
 		"vendor/autoload.php": `<?php
