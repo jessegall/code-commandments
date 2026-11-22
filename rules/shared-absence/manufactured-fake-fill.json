@@ -181,16 +181,24 @@
         ],
         "x",
         [
-          "=",
+          "and",
           [
-            "fingerprint",
-            "$x",
-            "exact"
+            "!=",
+            "$x.kind",
+            "literal"
           ],
           [
-            "fingerprint",
-            "$f.consequent",
-            "exact"
+            "=",
+            [
+              "fingerprint",
+              "$x",
+              "exact"
+            ],
+            [
+              "fingerprint",
+              "$f.consequent",
+              "exact"
+            ]
           ]
         ]
       ]

@@ -272,18 +272,29 @@
           "$f"
         ],
         [
-          "some",
+          "or",
           [
-            "descendants",
-            "$f.body",
-            "call"
+            "some",
+            [
+              "descendants",
+              "$f.body",
+              "call"
+            ],
+            "c",
+            [
+              "proven",
+              [
+                "assignable",
+                "$c",
+                "eloquent-relation"
+              ]
+            ]
           ],
-          "c",
           [
             "proven",
             [
               "assignable",
-              "$c",
+              "$f.returnType.resolved",
               "eloquent-relation"
             ]
           ]
@@ -344,29 +355,11 @@
             "$f"
           ],
           [
-            "some",
+            "nonempty",
             [
-              "effective",
-              "$f.body"
-            ],
-            "s",
-            [
-              "and",
-              [
-                "=",
-                "$s.kind",
-                "return"
-              ],
-              [
-                "some",
-                "$s.values",
-                "v",
-                [
-                  "=",
-                  "$v.kind",
-                  "collection"
-                ]
-              ]
+              "descendants",
+              "$f.body",
+              "collection"
             ]
           ]
         ]

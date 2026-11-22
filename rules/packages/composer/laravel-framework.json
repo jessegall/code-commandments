@@ -3069,6 +3069,46 @@
     {
       "name": "castable-value",
       "type": "Illuminate\\Contracts\\Database\\Eloquent\\Castable"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasOne"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasMany"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasOneThrough"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\HasManyThrough"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\MorphTo"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\MorphOne"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\MorphMany"
+    },
+    {
+      "name": "eloquent-relation",
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\MorphToMany"
     }
   ],
   "forwards": [

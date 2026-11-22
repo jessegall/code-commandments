@@ -369,6 +369,14 @@
     "where": [
       "and",
       [
+        "not",
+        "$p.file.test"
+      ],
+      [
+        "tree.notOverriding",
+        "$p.parent"
+      ],
+      [
         "=",
         "$p.parent.kind",
         "function"
