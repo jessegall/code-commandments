@@ -1393,11 +1393,11 @@ final class Translator
     private function documentedReturn(Node\FunctionLike $function, TreeNode $written): void
     {
         $doc = $function->getDocComment()?->getText();
-        if (($written->facts['name'] ?? null) !== 'array' || $doc === null
-            || preg_match('/@(?:(?:phpstan|psalm)-)?return\s+(\S.*?)\s*(?:\*\/|\R|$)/', $doc, $found) !== 1) {
+        if ($doc === null || preg_match('/@(?:(?:phpstan|psalm)-)?return\s+(\S.*?)\s*(?:\*\/|\R|$)/', $doc, $found) !== 1) {
             return;
         }
-        $type = self::documentedType(self::docTag('return', $found[1])['type'] ?? '');
+        $said = self::docTag('return', $found[1])['type'] ?? '';
+        $type = ($written->facts['name'] ?? null) === 'array' ? self::documentedType($said) : $this->documentedArguments($said, $written);
         if ($type !== null) {
             $this->types[] = $type;
             $written->facts['resolvedType'] = array_key_last($this->types);
@@ -1422,6 +1422,27 @@ final class Translator
         $said = implode('|', array_map(static fn (array $member): string => $member['text'], $members));
         $this->types[] = count($members) === 1 ? $members[0] : ['text' => $said, 'kind' => 'union', 'origin' => 'docblock', 'members' => $members];
         $written->facts['resolvedType'] = array_key_last($this->types);
+    }
+
+    /**
+     * A docblock's generic of the very class a return type writes (`@return BelongsTo<Game, $this>` on `BelongsTo`):
+     * that class with its type arguments, `$this`, `self` and `static` read as the class they are written in.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function documentedArguments(string $said, TreeNode $written): ?array
+    {
+        $refers = $written->facts['refers'] ?? null;
+        $documented = $this->documentedMember($said);
+        if ($refers === null || ! isset($documented['args']) || strcasecmp($documented['name'] ?? '', $refers) !== 0) {
+            return null;
+        }
+        $self = $this->classes === [] ? null : ($this->classes[array_key_last($this->classes)]['self'] ?? null);
+        $documented['args'] = array_map(static fn (array $arg): array => $self !== null && in_array(strtolower($arg['name'] ?? ''), ['$this', 'self', 'static'], true)
+            ? ['text' => '\\'.$self, 'kind' => 'named', 'name' => $self, 'origin' => 'docblock'] : $arg, $documented['args']);
+        unset($documented['element']);
+
+        return ['name' => $refers] + $documented;
     }
 
     /** @return array<string, mixed> */

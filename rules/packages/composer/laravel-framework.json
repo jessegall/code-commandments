@@ -3186,5 +3186,43 @@
       "type": "Illuminate\\Database\\Eloquent\\Model",
       "to": "Illuminate\\Database\\Eloquent\\Builder"
     }
+  ],
+  "relations": [
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\HasOneThrough"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\HasOne"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\MorphOne"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\BelongsTo"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\HasManyThrough",
+      "collection": "Illuminate\\Database\\Eloquent\\Collection"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\HasMany",
+      "collection": "Illuminate\\Database\\Eloquent\\Collection"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\MorphMany",
+      "collection": "Illuminate\\Database\\Eloquent\\Collection"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "relation": "Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany",
+      "collection": "Illuminate\\Database\\Eloquent\\Collection"
+    }
   ]
 }

@@ -36,8 +36,62 @@ func (m Match) Typed() *contract.Type {
 	if m.Kind() == "call" && m.node.Target == nil {
 		return m.forwardedType()
 	}
+	if m.Kind() == "access" && m.node.Form == "instance" {
+		return m.relationResults()
+	}
 
 	return nil
+}
+
+func (m Match) relationResults() *contract.Type {
+	if m.file == nil {
+		return nil
+	}
+	owner, property := m.Child("subject").Typed(), m.Child("member").Name()
+	if owner == nil || owner.Kind != "named" || property == "" {
+		return nil
+	}
+	var returned *contract.Type
+	for _, facts := range registeredPackageFacts() {
+		for _, relation := range facts.Relations {
+			if !m.declaredBy(owner.Name, relation.Type) {
+				continue
+			}
+			if returned == nil {
+				returned = m.declaredMethod(owner.Name, property).ResultType()
+			}
+			if returned == nil || returned.Kind != "named" || len(returned.Args) == 0 {
+				return nil
+			}
+			if !m.declaredBy(returned.Name, relation.Relation) {
+				continue
+			}
+			if relation.Collection == "" {
+				return returned.Args[0]
+			}
+
+			return &contract.Type{Text: relation.Collection, Kind: "named", Name: relation.Collection, Args: returned.Args[:1], Element: returned.Args[0], Origin: "inferred"}
+		}
+	}
+
+	return nil
+}
+
+func (m Match) declaredMethod(class, name string) Match {
+	for _, holder := range m.line(class) {
+		for _, declaration := range m.file.Codebase().Declarations(holder) {
+			if !declaration.Is(TypeDeclaration) {
+				continue
+			}
+			for _, member := range declaration.ChildrenIn("writtenMembers") {
+				if member.Is(Function) && strings.EqualFold(member.Name(), name) {
+					return member
+				}
+			}
+		}
+	}
+
+	return Match{}
 }
 
 func (m Match) forwardedType() *contract.Type {

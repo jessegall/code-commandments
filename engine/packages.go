@@ -28,6 +28,16 @@ type PackageFacts struct {
 	Exemptions []PackageExemption `json:"exemptions,omitempty"`
 	Identities []PackageIdentity  `json:"identities,omitempty"`
 	Forwards   []PackageForward   `json:"forwards,omitempty"`
+	Relations  []PackageRelation  `json:"relations,omitempty"`
+}
+
+// PackageRelation is a library type that answers a property it does not declare with the results of the relation the
+// method of that name returns, as an Eloquent model reads `$post->comments` through `comments(): HasMany<Comment>`:
+// the related type itself, or the named collection of it.
+type PackageRelation struct {
+	Type       string `json:"type"`
+	Relation   string `json:"relation"`
+	Collection string `json:"collection,omitempty"`
 }
 
 // PackageForward is a library type that answers a method it does not declare by handing the call to another type, as
