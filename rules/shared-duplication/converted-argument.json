@@ -73,15 +73,19 @@
           ]
         ],
         [
-          "!=",
+          "not",
           [
-            "tree.kindOf",
+            "in",
             [
-              "source",
-              "$v"
-            ]
-          ],
-          "literal"
+              "tree.kindOf",
+              [
+                "source",
+                "$v"
+              ]
+            ],
+            "literal",
+            "collection"
+          ]
         ],
         [
           "not",
@@ -255,36 +259,84 @@
         "p"
       ],
       "expr": [
-        "and",
+        "some",
         [
-          "exists",
+          "flatten",
           [
-            "typeDeclaration",
-            "$p.declaredType.refers"
+            "list",
+            [
+              "list",
+              "$p.declaredType"
+            ],
+            [
+              "ownDescendants",
+              "$p.declaredType"
+            ]
           ]
         ],
+        "t",
         [
-          "or",
+          "and",
           [
             "=",
-            [
-              "typeDeclaration",
-              "$p.declaredType.refers"
-            ],
-            [
-              "typeDeclaration",
-              "$v.resolved.name"
-            ]
+            "$t.kind",
+            "type-expression"
           ],
           [
-            "=",
+            "or",
             [
-              "typeDeclaration",
-              "$p.declaredType.refers"
+              "and",
+              [
+                "exists",
+                [
+                  "typeDeclaration",
+                  "$t.refers"
+                ]
+              ],
+              [
+                "or",
+                [
+                  "=",
+                  [
+                    "typeDeclaration",
+                    "$t.refers"
+                  ],
+                  [
+                    "typeDeclaration",
+                    "$v.resolved.name"
+                  ]
+                ],
+                [
+                  "=",
+                  [
+                    "typeDeclaration",
+                    "$t.refers"
+                  ],
+                  [
+                    "typeDeclaration",
+                    "$v.target.type"
+                  ]
+                ]
+              ]
             ],
             [
-              "typeDeclaration",
-              "$v.target.type"
+              "and",
+              [
+                "not",
+                [
+                  "scalar",
+                  "$v.resolved"
+                ]
+              ],
+              [
+                "exists",
+                "$v.resolved.name"
+              ],
+              [
+                "=",
+                "$t.resolved.name",
+                "$v.resolved.name"
+              ]
             ]
           ]
         ]

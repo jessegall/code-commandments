@@ -429,3 +429,15 @@ final class CouponDesk {
 `})
 	expect(t, "php", found, "CouponDesk.php:6")
 }
+
+func TestRepeatedFolderPathReadsTheFolderAnInterpolatedPathSpells(t *testing.T) {
+	writer := func(class, method string) string {
+		return "<?php\nnamespace App;\nfinal class " + class + "\n{\n    public function " + method + "(string $name): string\n    {\n        return storage_path(\"app/private/backups/{$name}.zip\");\n    }\n}\n"
+	}
+	expect(t, "php", judged(t, "shared-duplication/repeated-folder-path.json", map[string]string{
+		"composer.lock":   `{"packages": [{"name": "laravel/framework", "version": "v11.0.0"}]}`,
+		"app/Backup.php":  writer("Backup", "write"),
+		"app/Restore.php": writer("Restore", "read"),
+		"app/Prune.php":   writer("Prune", "drop"),
+	}), "app/Backup.php:7", "app/Prune.php:7", "app/Restore.php:7")
+}

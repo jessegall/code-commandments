@@ -69,9 +69,32 @@
         "x"
       ],
       "expr": [
-        "coalesce",
-        "$x.name",
-        "$x.resolved.text"
+        "case",
+        [
+          "nonempty",
+          "$x.members"
+        ],
+        {
+          "true": [
+            "join",
+            [
+              "map",
+              "$x.members",
+              "m",
+              [
+                "coalesce",
+                "$m.name",
+                "$m.resolved.text"
+              ]
+            ],
+            "|"
+          ]
+        },
+        [
+          "coalesce",
+          "$x.name",
+          "$x.resolved.text"
+        ]
       ]
     },
     "restates": {
@@ -107,32 +130,20 @@
             "$t.name",
             {
               "return": [
-                "=",
+                "same",
                 [
-                  "squash",
-                  [
-                    "declaredText",
-                    "$f.returnType"
-                  ]
+                  "declaredText",
+                  "$f.returnType"
                 ],
-                [
-                  "squash",
-                  "$t.type"
-                ]
+                "$t.type"
               ],
               "returns": [
-                "=",
+                "same",
                 [
-                  "squash",
-                  [
-                    "declaredText",
-                    "$f.returnType"
-                  ]
+                  "declaredText",
+                  "$f.returnType"
                 ],
-                [
-                  "squash",
-                  "$t.type"
-                ]
+                "$t.type"
               ]
             },
             [
@@ -147,18 +158,12 @@
                   "$t.subject"
                 ],
                 [
-                  "=",
+                  "same",
                   [
-                    "squash",
-                    [
-                      "declaredText",
-                      "$p.declaredType"
-                    ]
+                    "declaredText",
+                    "$p.declaredType"
                   ],
-                  [
-                    "squash",
-                    "$t.type"
-                  ]
+                  "$t.type"
                 ]
               ]
             ]
@@ -175,6 +180,41 @@
         "$x",
         " ",
         ""
+      ]
+    },
+    "same": {
+      "args": [
+        "a",
+        "b"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          [
+            "squash",
+            "$a"
+          ],
+          [
+            "squash",
+            "$b"
+          ]
+        ],
+        [
+          "contains",
+          [
+            "squash",
+            "$a"
+          ],
+          [
+            "concat",
+            "\\",
+            [
+              "squash",
+              "$b"
+            ]
+          ]
+        ]
       ]
     }
   }

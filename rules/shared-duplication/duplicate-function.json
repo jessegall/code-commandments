@@ -217,8 +217,20 @@
                   "access"
                 ],
                 [
-                  "tree.selfField",
-                  "$c.callee.subject"
+                  "or",
+                  [
+                    "isSelf",
+                    "$c.callee.subject"
+                  ],
+                  [
+                    "tree.selfField",
+                    "$c.callee.subject"
+                  ],
+                  [
+                    "=",
+                    "$c.callee.subject.name",
+                    "parent"
+                  ]
                 ],
                 [
                   "every",
@@ -248,6 +260,147 @@
           ]
         ]
       ]
+    },
+    "relationDeclaration": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "soleStatement",
+          "$f"
+        ],
+        [
+          "some",
+          [
+            "descendants",
+            "$f.body",
+            "call"
+          ],
+          "c",
+          [
+            "proven",
+            [
+              "assignable",
+              "$c",
+              "eloquent-relation"
+            ]
+          ]
+        ]
+      ]
+    },
+    "inFormRequest": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ],
+        "t",
+        [
+          "and",
+          [
+            "exists",
+            "$t"
+          ],
+          [
+            "assignable",
+            "$t",
+            "form-request"
+          ]
+        ]
+      ]
+    },
+    "declarative": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "soleStatement",
+          "$f"
+        ],
+        [
+          "<",
+          [
+            "syntaxWeight",
+            "$f.body"
+          ],
+          40
+        ],
+        [
+          "or",
+          [
+            "inFormRequest",
+            "$f"
+          ],
+          [
+            "some",
+            [
+              "effective",
+              "$f.body"
+            ],
+            "s",
+            [
+              "and",
+              [
+                "=",
+                "$s.kind",
+                "return"
+              ],
+              [
+                "some",
+                "$s.values",
+                "v",
+                [
+                  "=",
+                  "$v.kind",
+                  "collection"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "assignsFields": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$f.form",
+          "constructor"
+        ],
+        [
+          "some",
+          [
+            "descendants",
+            "$f.body",
+            "assignment"
+          ],
+          "a",
+          [
+            "tree.selfField",
+            [
+              "at",
+              "$a.targets",
+              0
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -264,6 +417,18 @@
           ],
           [
             "delegation",
+            "$f"
+          ],
+          [
+            "relationDeclaration",
+            "$f"
+          ],
+          [
+            "assignsFields",
+            "$f"
+          ],
+          [
+            "declarative",
             "$f"
           ],
           [
@@ -297,6 +462,11 @@
                 "$f.body"
               ],
               24
+            ],
+            [
+              "!=",
+              "$f.form",
+              "constructor"
             ]
           ]
         }
@@ -327,7 +497,7 @@
               "count",
               "$rows"
             ],
-            3
+            5
           ],
           [
             "and",

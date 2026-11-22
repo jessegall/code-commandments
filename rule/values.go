@@ -944,12 +944,20 @@ func pathFits(written, template string) bool {
 	return true
 }
 
-// concatenated is an expression's parts in order when it joins texts with a concatenation, or the expression alone.
+// concatenated is an expression's parts in order when it joins texts with a concatenation or an interpolation, or the expression alone.
 func concatenated(site engine.Match) []engine.Match {
 	site = argumentValue(site)
 	node := site.Node()
 	if node.Kind == "binary" && (node.Operator == "concatenate" || node.Operator == "add") {
 		return append(concatenated(site.Child("left")), concatenated(site.Child("right"))...)
+	}
+	if node.Kind == "interpolation" {
+		var parts []engine.Match
+		for _, part := range site.ChildrenIn("parts") {
+			parts = append(parts, concatenated(part)...)
+		}
+
+		return parts
 	}
 
 	return []engine.Match{site}
