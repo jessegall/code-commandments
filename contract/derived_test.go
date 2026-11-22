@@ -7,8 +7,8 @@ import (
 
 func TestTheReaderLinksEachJumpToWhatItLeaves(t *testing.T) {
 	for _, tree := range []string{
-		"samples/testdata/expected/contract-php-jumps/php.jsonl",
-		"samples/testdata/expected/contract-go-flow/go.jsonl",
+		"samples/testdata/unit/contract-php-jumps/php.jsonl",
+		"samples/testdata/unit/contract-go-flow/go.jsonl",
 	} {
 		handle, err := os.Open(tree)
 		if err != nil {

@@ -51,7 +51,7 @@ func TestARuleReadingForwardKnowsTheSameFilesInAnotherCheckout(t *testing.T) {
 // file's path the way the TypeScript bridge names one.
 func checkoutAt(t *testing.T, root string) *engine.Codebase {
 	t.Helper()
-	stream, err := samples.Merged("../contract/samples/testdata/expected", contract.PHP)
+	stream, err := samples.Pinned("testdata/remembered_php.jsonl")
 	if err != nil {
 		t.Fatal(err)
 	}

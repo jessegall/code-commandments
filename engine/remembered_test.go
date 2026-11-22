@@ -25,7 +25,7 @@ func treeHolding(t *testing.T, contents ...string) (*engine.Codebase, []string) 
 func treeReading(t *testing.T, reads map[int][]int, contents ...string) (*engine.Codebase, []string) {
 	t.Helper()
 
-	stream, err := samples.Merged("../contract/samples/testdata/expected", contract.PHP)
+	stream, err := samples.Pinned("testdata/remembered_php.jsonl")
 	if err != nil {
 		t.Fatal(err)
 	}

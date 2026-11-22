@@ -334,30 +334,6 @@ func PlacedFolder(construct string) string {
 	return strings.ReplaceAll(construct, "-", "_")
 }
 
-// Merged is every expected tree of the language as one stream, its files in path order: a whole small program of the
-// language for a test that needs one.
-func Merged(folder string, language contract.Language) (*contract.Stream, error) {
-	all, err := AllExpected(folder)
-	if err != nil {
-		return nil, err
-	}
-	var header contract.Header
-	var files []*contract.File
-	for _, expected := range all {
-		if expected.Language != language {
-			continue
-		}
-		header = contract.Header{Contract: "tree", Version: 5, Language: language, Bridge: contract.Bridge{Name: "expected", Version: "8.0.0"}, Roots: []string{"/expected"}}
-		files = append(files, expected.File)
-	}
-	slices.SortFunc(files, func(a, b *contract.File) int { return strings.Compare(a.Path, b.Path) })
-	if len(files) == 0 {
-		return nil, fmt.Errorf("no expected tree of %s under %s", language, folder)
-	}
-
-	return contract.Accept(header, files, nil, contract.Trailer{Files: len(files)})
-}
-
 func WithoutMarkers(language contract.Language, source []byte, file *contract.File) *contract.File {
 	markers, _ := marker.Read(language, "", source)
 	if len(markers) == 0 {
@@ -371,4 +347,14 @@ func WithoutMarkers(language contract.Language, source []byte, file *contract.Fi
 	kept.Comments = slices.DeleteFunc(slices.Clone(file.Comments), func(comment contract.Comment) bool { return starts[comment.Span.Start] })
 
 	return &kept
+}
+
+func Pinned(path string) (*contract.Stream, error) {
+	handle, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer handle.Close()
+
+	return contract.ReadAll(handle)
 }

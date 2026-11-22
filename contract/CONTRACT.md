@@ -108,6 +108,10 @@ without making it a second child, so a derived view never inserts an executable 
 | `incomplete` | `true` on a node the parser recovered from an error: its optional roles are unknown, not known-empty | parser |
 | `conversion` | the format conversion of an interpolated expression, on that expression: `!r` in a Python `f"{x!r}"` | parser |
 
+**How each item is proven.** Every kind, role, link, fact and promise a language owes is proven by a marker a person
+wrote on a sample source line (`contract/samples/testdata/expected/README.md`, Markers), checked against what that
+language's bridge writes; an item a language cannot have is a "Not owed" row in `contract/coverage/<language>.md`.
+
 **Unknown, known-empty and inapplicable.** These are three different answers and a rule never confuses them:
 
 - **inapplicable**: the role or fact is not defined on this kind (a `loop` has no `caughtTypes`). The schema

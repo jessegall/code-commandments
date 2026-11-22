@@ -1,12 +1,45 @@
-# Expected trees
+# Contract samples
 
-Each folder is one construct. It holds a small source file per language the construct applies to, and the version 5
-tree that source must translate to (`<name>.jsonl`: header, one file line, trailer). The trees are the specification
-the six bridges are proven against: `contract/samples/compare_test.go` (`TestEveryBridgeWritesTheExpectedTree`) runs
-each bridge on each source and compares what it writes with the tree. `contract/samples_test.go` checks every tree
-validates against `contract/tree.schema.json` and that every span points into its source.
+Each folder is one construct. It holds a small source file per language the construct applies to, and the markers
+on its lines are the specification the six bridges are proven against: `TestEveryBridgeProvesItsMarkers`
+(`contract/samples/bridges/marker_test.go`) reads every marker from the sources, runs each language's bridge once,
+checks every marker against the tree it wrote, and fails unless every contract item a language owes is proven by a
+marker that passes. Scenarios across files live in `../scenarios/<promise>/<language>/`, with a `scenario.json`
+naming the files read and each set of files written.
 
-## How a tree is written
+A folder that is not `contract-*` also keeps a reviewed structural tree (`<name>.jsonl`), compared node by node by
+`TestEveryBridgeWritesTheExpectedTree`; it proves no contract item. `-update` rewrites those trees and is never part
+of a proving run.
+
+## Markers
+
+A marker is one comment in the language's own form (`//`, `#`, `<!-- -->` in a Vue template or outside a Vue script),
+read by `contract/marker`. It sits at the end of the line it speaks about, or on its own line directly above it; a
+stack of such lines all speak about the next line that holds code, and a blank line or the end of the file in between
+is an error.
+
+- `@contract kind/loop`: a node of that kind starts on the line.
+- `@contract role/if/else -> fallback`: the node's role holds exactly that node; `-> [a, b]` lists them in order;
+  `-> []` asserts the role is empty and proves nothing.
+- `@contract link/break/destination -> outer`: the link points exactly at that node.
+- `@contract fact/loop/form = "for-each"`: the fact's value, as compact JSON. `3` is an integer constant, `"3"` a
+  string, `null` the null constant; an object or list is compared on the fields it states. A fact left out that has
+  a default (`passing: value`, `position: either`, `spread: none`) is that default.
+- `@contract fact/*/constantValue on reference = 3`: a fact several kinds share names its kind with `on KIND`.
+- `@contract fact/*/refers on reference -> limit`: a symbol fact points at the labelled declaration it must name.
+- `at COLUMN` (a one-based byte column) picks one of several nodes of the kind starting on the line; nested nodes of
+  one kind at one position mean the outermost.
+- `@label name kind [column] [inner]` names the node of that kind starting on the line, for others to point at; `inner`
+  picks the innermost of nested nodes at one position. A label proves nothing.
+- A target is a label of the same file, `line(N,KIND[,COLUMN])`, or, on a `promise/` key, `path#label` in another file
+  of the scenario.
+
+One marker proves at most its one key. A construct marked in several languages carries the same markers in each,
+apart from the rows of the Exclusions table below. A marker is written from `contract/CONTRACT.md` and the source's own
+meaning, never from a tree a bridge wrote. A language that truly cannot have an item lists it under "Not owed" in
+`contract/coverage/<language>.md`, with the reason.
+
+## How a reviewed tree is written
 
 - **Spans** are byte ranges into the source, with the line the node starts on. A statement's span includes its `;`; an
   expression's does not. A braced block runs from `{` to its `}`. A Python block runs from its first statement to the
@@ -22,17 +55,17 @@ validates against `contract/tree.schema.json` and that every span points into it
   dashes as underscores.
 - **`async`** is the fact, never a modifier. `modifiers` holds only the keywords written for visibility and the like.
 
-## How a bridge's tree is compared
+## How a reviewed tree is compared
 
 `Differences` in `contract/samples/compare.go` walks the two trees side by side and ignores local ids:
 
 - every kind, every role and the number of nodes each role holds, and every span, must match;
 - every parser fact must match both ways, except `symbol`, `effective` and `written`, which name rather than shape;
 - those three, and every compiler, index and package fact (`refers`, `target`, `resolvedType`, `constantValue`,
-  `obligations`, `exhaustive`, `namedResults`, `resolves`), are compared only where the expected tree states them;
+  `obligations`, `exhaustive`, `namedResults`, `resolves`), are compared only where the reviewed tree states them;
 - a fact written with its documented default counts as absent: `passing: value`, `collects: none`, `position: either`,
   `spread: none`, `expansion: none`, `evaluated: call`;
-- links are compared where the expected tree states them, by the nodes the walk pairs;
+- links are compared where the reviewed tree states them, by the nodes the walk pairs;
 - comments are compared by form, text, span, trailing and attachment, and a fragment where the tree states one;
 - the file's error count, test fact, module and whether its resolver ran must match; a type's `origin` wording is ignored.
 
