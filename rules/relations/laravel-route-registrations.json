@@ -294,9 +294,19 @@
             [
               "case",
               [
-                "contains",
-                "$x",
-                "@"
+                "and",
+                [
+                  "contains",
+                  "$x",
+                  "@"
+                ],
+                [
+                  "nonempty",
+                  [
+                    "namespaceOf",
+                    "$c"
+                  ]
+                ]
               ],
               {
                 "true": [
@@ -305,8 +315,13 @@
                     "namespaceOf",
                     "$c"
                   ],
-                  "|",
-                  "$x"
+                  "\\",
+                  [
+                    "replace",
+                    "$x",
+                    "@",
+                    "::"
+                  ]
                 ]
               },
               "$x"

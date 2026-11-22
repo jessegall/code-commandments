@@ -218,6 +218,9 @@ func TestRelationOfLaravelRouteRegistrations(t *testing.T) {
 	routes := "<?php\nuse Illuminate\\Support\\Facades\\Route;\nuse Shop\\OrderController;\nuse Shop\\ExportOrders;\n\n" +
 		"Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');\n" +
 		"Route::post('/exports', ExportOrders::class);\n" +
+		"Route::group(['namespace' => 'Shop\\Admin'], static function (): void {\n" +
+		"    Route::get('/admin', ['uses' => 'ShowController@index']);\n" +
+		"});\n" +
 		"$cache->get('orders');\n"
 	if err := os.WriteFile(filepath.Join(root, "web.php"), []byte(routes), 0o644); err != nil {
 		t.Fatal(err)
@@ -227,7 +230,7 @@ func TestRelationOfLaravelRouteRegistrations(t *testing.T) {
 		t.Fatal(err)
 	}
 	probe := []byte(`{"$schema":"commandments:neutral-rule/v2","engine":"php","sin":{"name":"route-probe","skill":"x"},
-		"find":{"from":"laravel-route-registrations","as":"r","pipeline":[{"where":["some","$r.actions","a",["in","$a","Shop\\OrderController::index","Shop\\ExportOrders::__invoke"]]},{"emit":"$r.anchor"}]}}`)
+		"find":{"from":"laravel-route-registrations","as":"r","pipeline":[{"where":["some","$r.actions","a",["in","$a","Shop\\OrderController::index","Shop\\ExportOrders::__invoke","Shop\\Admin\\ShowController::index"]]},{"emit":"$r.anchor"}]}}`)
 	sources := []rule.Source{
 		{Origin: rule.Installed, Path: "rules/relations/laravel-route-registrations.json", Text: relationText},
 		{Origin: rule.Project, Path: ".commandments/custom/route-probe.json", Text: probe},
@@ -251,8 +254,8 @@ func TestRelationOfLaravelRouteRegistrations(t *testing.T) {
 	for _, match := range library.Rules[0].Find(codebase) {
 		lines = append(lines, match.Line())
 	}
-	if !slices.Equal(lines, []int{6, 7}) {
-		t.Errorf("the route table holds the registrations on lines %v, and 6 and 7 are right", lines)
+	if !slices.Equal(lines, []int{6, 7, 9}) {
+		t.Errorf("the route table holds the registrations on lines %v, and 6, 7 and 9 are right", lines)
 	}
 }
 
