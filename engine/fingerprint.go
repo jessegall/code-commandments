@@ -475,6 +475,13 @@ func namesOnlyAssociations(file *File, imported Match) bool {
 	for _, binding := range bindings {
 		symbols[binding.Refers] = binding.Refers != ""
 	}
+	for symbol, named := range symbols {
+		for _, declared := range file.Codebase().Declarations(symbol) {
+			if named && declared.ExemptedBy("association") == True {
+				return true
+			}
+		}
+	}
 	uses := 0
 	for _, kind := range []string{"reference", "type-expression"} {
 		for _, node := range file.OfKind(kind) {
