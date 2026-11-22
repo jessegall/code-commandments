@@ -70,6 +70,24 @@
           ]
         ]
       ]
+    },
+    "testedAtRunTime": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "some",
+        [
+          "ancestors",
+          "$r"
+        ],
+        "a",
+        [
+          "=",
+          "$a.kind",
+          "type-test"
+        ]
+      ]
     }
   },
   "find": {
@@ -118,6 +136,21 @@
           "proven",
           [
             "registered",
+            "$r"
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "referrers",
+          "$t"
+        ],
+        "r",
+        [
+          "proven",
+          [
+            "testedAtRunTime",
             "$r"
           ]
         ]
