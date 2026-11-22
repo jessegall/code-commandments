@@ -58,46 +58,17 @@
         "$x.kind",
         {
           "reference": [
-            "first",
+            "tree.heldValue",
             [
-              "map",
-              [
-                "list",
-                [
-                  "declarationOf",
-                  "$x"
-                ]
-              ],
-              "d",
-              [
-                "at",
-                "$d.parent.values",
-                0
-              ]
+              "declarationOf",
+              "$x"
             ]
           ],
           "access": [
-            "first",
+            "tree.heldValue",
             [
-              "map",
-              [
-                "list",
-                [
-                  "declarationOf",
-                  "$x"
-                ]
-              ],
-              "d",
-              [
-                "at",
-                [
-                  "map",
-                  "$d.declarators",
-                  "k",
-                  "$k.initializer"
-                ],
-                0
-              ]
+              "declarationOf",
+              "$x"
             ]
           ]
         },
@@ -167,9 +138,8 @@
         [
           "and",
           [
-            "=",
-            "$s.kind",
-            "collection"
+            "fixedList",
+            "$s"
           ],
           [
             "not",
@@ -240,6 +210,17 @@
               ]
             ],
             2
+          ]
+        ],
+        [
+          "takesFew",
+          "$s"
+        ],
+        [
+          "proven",
+          [
+            "fixedReturn",
+            "$s"
           ]
         ]
       ]
@@ -526,6 +507,437 @@
             "keyed",
             "$l",
             "$c"
+          ]
+        ],
+        [
+          "proven",
+          [
+            "countedTo",
+            "$l"
+          ]
+        ]
+      ]
+    },
+    "fixedList": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$s.kind",
+          "collection"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "conditional"
+          ],
+          [
+            "=",
+            "$s.consequent.kind",
+            "collection"
+          ],
+          [
+            "=",
+            "$s.alternative.kind",
+            "collection"
+          ]
+        ]
+      ]
+    },
+    "onSpine": {
+      "args": [
+        "n",
+        "s"
+      ],
+      "expr": [
+        "every",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$n"
+              ],
+              [
+                "ownAncestors",
+                "$n"
+              ]
+            ]
+          ],
+          "a",
+          [
+            "and",
+            [
+              "within",
+              "$a",
+              "$s"
+            ],
+            [
+              "not",
+              [
+                "within",
+                "$s",
+                "$a"
+              ]
+            ]
+          ]
+        ],
+        "a",
+        [
+          "in",
+          "$a.role",
+          "subject",
+          "callee"
+        ]
+      ]
+    },
+    "takesFew": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "some",
+        [
+          "tree.insideOf",
+          "$s"
+        ],
+        "n",
+        [
+          "and",
+          [
+            "=",
+            "$n.kind",
+            "call"
+          ],
+          [
+            "onSpine",
+            "$n",
+            "$s"
+          ],
+          [
+            "proven",
+            [
+              "hasEffect",
+              "$n",
+              "takes-count"
+            ]
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$n.arguments"
+            ],
+            0
+          ],
+          [
+            "every",
+            "$n.arguments",
+            "g",
+            [
+              "and",
+              [
+                "=",
+                "$g.value.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$g.value.literalKind",
+                "integer"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "countedTo": {
+      "args": [
+        "l"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$l.form",
+          "for",
+          "while",
+          "do-while"
+        ],
+        [
+          "=",
+          "$l.condition.kind",
+          "comparison"
+        ],
+        [
+          "in",
+          "$l.condition.operator",
+          "less",
+          "less-or-equal",
+          "greater",
+          "greater-or-equal"
+        ],
+        [
+          "some",
+          "$l.condition.operands",
+          "k",
+          [
+            "and",
+            [
+              "=",
+              "$k.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$k.literalKind",
+              "integer"
+            ]
+          ]
+        ],
+        [
+          "some",
+          "$l.condition.operands",
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.kind",
+              "reference"
+            ],
+            [
+              "some",
+              [
+                "flatten",
+                [
+                  "list",
+                  [
+                    "descendants",
+                    "$l.body"
+                  ],
+                  [
+                    "flatten",
+                    [
+                      "map",
+                      "$l.steps",
+                      "p",
+                      [
+                        "tree.insideOf",
+                        "$p"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "n",
+              [
+                "and",
+                [
+                  "=",
+                  "$n.kind",
+                  "assignment"
+                ],
+                [
+                  "in",
+                  "$n.mode",
+                  "increment",
+                  "decrement",
+                  "compound"
+                ],
+                [
+                  "some",
+                  "$n.targets",
+                  "g",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$g.kind",
+                      "reference"
+                    ],
+                    [
+                      "=",
+                      "$g.name",
+                      "$r.name"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "writtenValues": {
+      "args": [
+        "p"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "filter",
+            [
+              "list",
+              [
+                "tree.heldValue",
+                "$p"
+              ]
+            ],
+            "v",
+            [
+              "exists",
+              "$v"
+            ]
+          ],
+          [
+            "map",
+            [
+              "filter",
+              [
+                "referrers",
+                "$p"
+              ],
+              "w",
+              [
+                "=",
+                "$w.parent.role",
+                "targets"
+              ]
+            ],
+            "w",
+            [
+              "at",
+              "$w.parent.parent.values",
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    "fixedField": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$v.kind",
+          "access"
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "declarationOf",
+              "$v"
+            ]
+          ],
+          "p",
+          [
+            "and",
+            [
+              "exists",
+              "$p"
+            ],
+            [
+              ">",
+              [
+                "count",
+                [
+                  "writtenValues",
+                  "$p"
+                ]
+              ],
+              0
+            ],
+            [
+              "every",
+              [
+                "writtenValues",
+                "$p"
+              ],
+              "w",
+              [
+                "fixedList",
+                "$w"
+              ]
+            ],
+            [
+              "none",
+              [
+                "referrers",
+                "$p"
+              ],
+              "w",
+              [
+                "=",
+                "$w.parent.parent.role",
+                "targets"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "fixedReturn": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$s.kind",
+          "call"
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "declarationOf",
+              "$s"
+            ]
+          ],
+          "m",
+          [
+            "and",
+            [
+              "exists",
+              "$m"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$m.body.statements"
+              ],
+              1
+            ],
+            [
+              "fixedField",
+              [
+                "tree.valueOf",
+                [
+                  "at",
+                  "$m.body.statements",
+                  0
+                ]
+              ]
+            ]
           ]
         ]
       ]

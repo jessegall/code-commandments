@@ -695,6 +695,24 @@
           "external"
         ]
       ]
+    },
+    "heldValue": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "case",
+        "$b.parent.kind",
+        {
+          "declarator": "$b.parent.initializer",
+          "assignment": [
+            "at",
+            "$b.parent.values",
+            0
+          ]
+        },
+        null
+      ]
     }
   }
 }

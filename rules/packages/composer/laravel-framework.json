@@ -2319,6 +2319,48 @@
       "name": "forgetScopedInstances",
       "effect": "resets-scope",
       "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Support\\Collection",
+      "name": "take",
+      "effect": "takes-count",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "take",
+      "effect": "takes-count",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Builder",
+      "name": "limit",
+      "effect": "takes-count",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "take",
+      "effect": "takes-count",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Query\\Builder",
+      "name": "limit",
+      "effect": "takes-count",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "take",
+      "effect": "takes-count",
+      "execution": "call"
+    },
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Relations\\Relation",
+      "name": "limit",
+      "effect": "takes-count",
+      "execution": "call"
     }
   ],
   "exemptions": [
