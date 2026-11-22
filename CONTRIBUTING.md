@@ -8,7 +8,7 @@ host. It runs the command in a dev container the machine caps at 3 GB (no swap) 
 machine down. `GOMEMLIMIT` alone is only a target.
 
 ```
-scripts/tested ./cli/... ./engine/csharp/   # the tests of the packages you touched
+scripts/tested ./cli/... ./rule/   # the tests of the packages you touched
 scripts/dev go test ./cli/...               # the same, without the progress count
 scripts/dev go vet ./bridge/
 scripts/dev go generate ./registry

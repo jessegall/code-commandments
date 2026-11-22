@@ -2,7 +2,6 @@ package csharp_test
 
 import (
 	"path/filepath"
-	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -10,7 +9,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/rule"
@@ -24,7 +22,7 @@ func shop(t *testing.T) *engine.Codebase {
 
 func parsed(t *testing.T) *contract.Stream {
 	t.Helper()
-	root, err := filepath.Abs("../../tests/Fixtures/csharp")
+	root, err := filepath.Abs("../../Fixtures/csharp")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,5 +41,5 @@ func TestNoCSharpRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 }
 
 func configured(t testing.TB) []rule.Detector {
-	return fixturetest.Configured(t, "../../tests/Fixtures/csharp", rule.Of(catalog.CSharp))
+	return fixturetest.Configured(t, "../../Fixtures/csharp", rule.Of(catalog.CSharp))
 }

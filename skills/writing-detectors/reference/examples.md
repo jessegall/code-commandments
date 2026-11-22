@@ -1,6 +1,6 @@
 # Rules that work, one per kind of question
 
-Every rule here is real: a test parses each one and refuses this file if any of them stops being a rule the
+Every rule here is real: a test reads each one and refuses this file if any of them stops being a rule the
 tool can run. Copy one and change what it asks, rather than starting from an empty file — `commandments make
 <Name>` scaffolds the plumbing and `commandments rule schema` is what your editor completes from.
 
@@ -8,23 +8,26 @@ The `skill` each one names is a shipped slug so the examples stand alone. Point 
 
 ## By what a node IS
 
-The first question to reach for, because it survives a rename.
+The first question to reach for, because it survives a rename: a call that runs inside a loop of its own
+function.
 
 ```json
 {
+    "$schema": "commandments:neutral-rule/v2",
     "engine": "php",
     "sin": {
-        "name": "query-in-a-loop",
-        "description": "A query runs once per item, so a list of ten costs ten round trips.",
+        "name": "repository-call-in-a-loop",
+        "description": "A repository is asked once per item, so a list of ten costs ten round trips.",
         "rule": "Load what the loop needs before it, in one query.",
         "skill": "php/absence"
     },
     "find": {
         "select": "call",
-        "where": [
-            { "withinLoop": true },
-            { "of": "receiver", "resolvesLike": "*Repository" }
-        ]
+        "as": "c",
+        "where": ["and",
+            ["exists", ["enclosing", "$c", "loop", "function"]],
+            ["proven", ["isSubtype", ["typeOf", "$c.callee.subject"], "App\\Repositories\\Repository"]]],
+        "emit": "$c"
     }
 }
 ```
@@ -35,6 +38,7 @@ What a name cannot see: the value copied into a variable first.
 
 ```json
 {
+    "$schema": "commandments:neutral-rule/v2",
     "engine": "python",
     "sin": {
         "name": "whole-line-read",
@@ -43,113 +47,145 @@ What a name cannot see: the value copied into a variable first.
         "skill": "python/absence"
     },
     "find": {
-        "select": "member-access",
-        "where": [
-            { "nameMatches": "^_" },
-            { "of": "receiver", "typeLike": "*ShellLine" }
-        ],
-        "reject": [{ "of": "receiver", "is": "self-reference" }]
+        "select": "access",
+        "as": "a",
+        "where": ["and",
+            ["matchesText", "$a.member.name", "^_"],
+            ["proven", ["isSubtype", ["typeOf", "$a.subject"], "shell.ShellLine"]],
+            ["not", ["proven", ["=", "$a.subject.form", "self"]]]],
+        "emit": "$a"
     }
 }
 ```
 
 ## One rule for several languages
 
-Neutral words only, and `body` rather than `child`, so the shape of a body does not decide the answer.
+Every language writes the same tree, so a loop's body is a block of statements whatever the syntax.
 
 ```json
 {
-    "engine": ["python", "go", "csharp"],
+    "$schema": "commandments:neutral-rule/v2",
+    "engine": ["python", "go", "csharp", "php", "typescript"],
     "sin": {
         "name": "loop-wrapped-in-if",
-        "description": "A loop whose whole body sits under one condition.",
-        "rule": "Flip the condition and continue, so the work sits at the loop's own level.",
-        "skill": "python/flow"
+        "description": "A loop's whole body is one if.",
+        "rule": "Skip the items that do not qualify with a guard that continues, or filter them first.",
+        "skill": "shared/flow"
     },
     "find": {
         "select": "loop",
-        "where": [{ "body": { "is": "branch" } }]
+        "as": "l",
+        "where": ["=", ["count", "$l.body.statements"], 1],
+        "let": [["only", ["at", "$l.body.statements", 0]]],
+        "having": ["and", ["=", "$only.kind", "if"], ["not", ["exists", "$only.else"]]],
+        "emit": "$l"
     }
 }
 ```
 
 ## By where the code SITS
 
-A path is the honest way to say "this layer may not do that".
+A fact about the place: the class around a string, and what that class extends.
 
 ```json
 {
+    "$schema": "commandments:neutral-rule/v2",
     "engine": "php",
     "sin": {
-        "name": "sql-outside-a-repository",
-        "description": "SQL written outside the folder that owns the tables.",
-        "rule": "Queries go through the repository that owns the table.",
-        "skill": "php/absence"
+        "name": "sql-in-a-controller",
+        "description": "A controller writes an SQL statement itself.",
+        "rule": "Query through the model or a repository, and keep the controller to the request and the response.",
+        "skill": "php/dependency-direction"
     },
     "find": {
-        "select": "call",
-        "where": [{ "name": "select" }],
-        "reject": [{ "fileMatches": "(^|/)app/Repositories/" }]
+        "select": "literal",
+        "as": "s",
+        "where": ["and",
+            ["=", "$s.literalKind", "string"],
+            ["matchesText", "$s.value", "(?i)^\\s*(select|insert|update|delete)\\s"],
+            ["some", ["knownSupertypes", ["enclosing", "$s", "type"]], "t", ["=", "$t", "Illuminate\\Routing\\Controller"]]],
+        "emit": "$s"
     }
 }
 ```
 
 ## By how much there is of it
 
-A count says what a reader feels: too much in one place.
+A count, with its limit a parameter the project's config can change.
 
 ```json
 {
-    "engine": "typescript",
+    "$schema": "commandments:neutral-rule/v2",
+    "engine": ["php", "python", "go", "csharp", "typescript"],
     "sin": {
         "name": "too-many-parameters",
-        "description": "A function taking more arguments than a caller can keep in mind.",
-        "rule": "Pass the object the arguments came from.",
-        "skill": "typescript/absence"
+        "description": "A function declares more parameters than the project allows.",
+        "rule": "Give the values that travel together a type of their own, and pass that.",
+        "skill": "shared/arguments"
+    },
+    "parameters": {
+        "limit": {"type": "number", "default": 5, "description": "How many parameters are too many."}
     },
     "find": {
         "select": "function",
-        "where": [{ "parameters": { "atLeast": 5 } }]
+        "as": "f",
+        "where": [">=", ["count", "$f.parameters"], "$param.limit"],
+        "emit": "$f"
     }
 }
 ```
 
 ## By what the compiler knows and a reader cannot see
 
-Here the tree alone is not enough, and the resolver earns its keep.
+The declaration a call reaches, found by the resolver, not by the name written at the call.
 
 ```json
 {
-    "engine": "csharp",
+    "$schema": "commandments:neutral-rule/v2",
+    "engine": ["php", "python", "go", "csharp", "typescript"],
     "sin": {
-        "name": "awaited-in-a-loop",
-        "description": "Work awaited once per item, so a list of ten waits ten times in turn.",
-        "rule": "Start the work for every item, then await them together.",
-        "skill": "csharp/absence"
+        "name": "production-calls-test-code",
+        "description": "Production code calls a function declared in a test file.",
+        "rule": "Move what both need into production code, and let the test call it there.",
+        "skill": "shared/dependencies"
     },
     "find": {
-        "select": "kind:AwaitExpression",
-        "where": [{ "withinLoop": true }]
+        "select": "call",
+        "as": "c",
+        "where": ["not", "$c.file.test"],
+        "let": [["target", ["declarationOf", "$c"]]],
+        "having": ["proven", "$target.file.test"],
+        "emit": "$c"
     }
 }
 ```
 
-## One rule built on another
+## One check named once, and called by name
 
-`from` narrows what another rule found, so the shared half is written once.
+A check two rules need is a definition: written once in one rule, and called by another as
+`<Rule>.<definition>`.
 
 ```json
 {
-    "engine": "php",
+    "$schema": "commandments:neutral-rule/v2",
+    "engine": ["php", "python", "go", "csharp", "typescript"],
     "sin": {
-        "name": "sql-in-a-controller",
-        "description": "SQL written in a controller.",
-        "rule": "Queries go through the repository that owns the table.",
-        "skill": "php/absence"
+        "name": "todo-in-a-function",
+        "description": "A function carries a TODO or FIXME left for later.",
+        "rule": "Do the work now, or file it where work is tracked and delete the comment.",
+        "skill": "shared/documentation"
+    },
+    "definitions": {
+        "isTodo": {"args": ["k"], "expr": ["matchesText", "$k.text", "(?i)\\b(TODO|FIXME)\\b"]}
     },
     "find": {
-        "from": "SqlOutsideARepository",
-        "where": [{ "fileMatches": "(^|/)app/Http/Controllers/" }]
+        "select": "function",
+        "as": "f",
+        "where": ["some", ["commentsOf", "$f"], "k", ["isTodo", "$k"]],
+        "emit": "$f"
     }
 }
 ```
+
+A rule in a file named `TodoInAType.json` then asks the same of a type: `["some", ["commentsOf", "$t"], "k",
+["TodoInAFunction.isTodo", "$k"]]`.

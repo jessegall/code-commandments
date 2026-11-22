@@ -14,7 +14,7 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
+func TestTheLibraryPublishesTheRecordedSkills(t *testing.T) {
 	for name, disabled := range map[string][]source.Language{
 		"every-language":      nil,
 		"no-csharp":           {source.CSharp},
@@ -36,7 +36,7 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 			record(t, name+".ids", ids)
 
 			if want := recorded(t, name+".ids"); !reflect.DeepEqual(ids, want) {
-				t.Errorf("published\n%v\nthe PHP tool published\n%v", ids, want)
+				t.Errorf("published\n%v\nthe recording published\n%v", ids, want)
 			}
 
 			var paths []string
@@ -50,7 +50,7 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 			record(t, name+".paths", paths)
 
 			if want := recorded(t, name+".paths"); !reflect.DeepEqual(paths, want) {
-				t.Errorf("wrote\n%v\nthe PHP tool wrote\n%v", paths, want)
+				t.Errorf("wrote\n%v\nthe recording wrote\n%v", paths, want)
 			}
 		})
 	}

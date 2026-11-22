@@ -2,7 +2,6 @@ package python_test
 
 import (
 	"path/filepath"
-	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -24,7 +23,7 @@ func shop(t *testing.T) *engine.Codebase {
 
 func parsed(t *testing.T) *contract.Stream {
 	t.Helper()
-	root, err := filepath.Abs("../../tests/Fixtures/python")
+	root, err := filepath.Abs("../../Fixtures/python")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +42,7 @@ func TestNoPythonRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 }
 
 func configured(t testing.TB) []rule.Detector {
-	return fixturetest.Configured(t, "../../tests/Fixtures/python", rule.Of(catalog.Python))
+	return fixturetest.Configured(t, "../../Fixtures/python", rule.Of(catalog.Python))
 }
 
 func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {

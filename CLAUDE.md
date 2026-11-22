@@ -1,59 +1,55 @@
 # code-commandments — guide for AI agents
 
 **code-commandments is a compiler for architecture.** It judges a PHP, Vue, TypeScript,
-Python and C# codebase against a set of architectural disciplines and reports each
+Python, C# and Go codebase against a set of architectural disciplines and reports each
 violation ("sin") as a `file:line` that points at the skill which teaches the fix. It is
 one static Go binary; each language brings only a small bridge that parses it.
 
-Three layers:
+Two layers:
 
 - **Skills** (`skill/<engine>/`, rendered into `skills/commandments/<engine>/<slug>/`) —
-  the teaching layer, one per architectural subject, split by engine: `backend/absence`,
-  `backend/value-objects`, `frontend/vue-components`, `python/absence`, `csharp/flow`, …
-  The engine-prefixed slug is what a sin points at. The source of truth for what good
-  looks like.
-- **Sins** (`sins/<engine>/`) — each its own type: the name, the skill slug that fixes it,
-  and the one-line description the docs project from.
-- **Sin Detectors** (`detectors/<engine>/`) — thin finders over the engine
-  (`engine/`). Each detector finds ONE sin and names it; it has no fix logic. Each
-  registers itself in its `init()` (`detectors.Register`), and `registry` imports them all.
+  the teaching layer, one per architectural subject, split by engine: `php/absence`,
+  `shared/flow`, `vue/vue-components`, `python/absence`, `csharp/flow`, … The
+  engine-prefixed slug is what a sin points at. The source of truth for what good looks like.
+- **Rules** (`rules/<engine>-<subject>/<name>.json`) — one JSON file per sin, in the format
+  `commandments:neutral-rule/v2`: the sin's name and aliases, the skill slug that fixes it, the
+  one-line description the docs project from, and the `find` that locates it over the generic
+  tree. A rule has no fix logic. Every file under `rules/` is embedded in the binary and enrols
+  itself; `rule/` loads (`library.go`), evaluates (`evaluate.go`) and registers (`detector.go`)
+  them, and a project's own rules in `.commandments/custom/` go through the same loader.
 
-Detectors are proven against a self-checking fixture per engine (`tests/Fixtures/backend`,
-`frontend`, `python`, `csharp`) where the markers — `#[Sinful(Sin::class)]` in PHP, a
-`<!-- @sin Name -->` comment in Vue, a `# @sin Name` or `// @sin Name` comment in Python and C# — ARE the test spec.
+Rules are proven against a self-checking fixture per language (`tests/Fixtures/backend`,
+`frontend`, `python`, `csharp`, `go`) where the markers — `#[Sinful(Sin::class)]` in PHP, a
+`<!-- @sin Name -->` comment in Vue, a `# @sin Name` or `// @sin Name` comment in Python, C#, Go
+and TypeScript — ARE the test spec; `fixture/rules_test.go` proves every rule on every one.
 
 ### One engine, a bridge per language — non-negotiable
 
 Every language reaches the engine the same way: its **bridge** parses it with the
 language's own parser (php-parser for PHP, TypeScript's compiler for Vue and TypeScript,
-mypy for Python, Roslyn for C#) and writes the **generic tree** (`contract/CONTRACT.md`):
-one node shape, one set of type, symbol and comment facts. The engine loads every stream
-into one `engine.Codebase`, and a detector reads it through the **same fluent query**
-whatever the language — a selector opens a `Query`, `Where`/`Reject` narrow it (one check
-per line), `Get` returns `engine.Match`es that know their `file:line`. A language's own
-knowledge lives on its decorator (`php.Node`, `typescript`, `vue`, `python`, `csharp`),
-reached with `engine.As(php.Node.IsDeeplyNestedIf)`. If one engine's detector doesn't read
-like another's, the engine is wrong — fix the engine, not the detector.
+mypy for Python, Roslyn for C#, go/types for Go) and writes the **generic tree**
+(`contract/CONTRACT.md`): one node shape, named roles, one set of type, symbol and comment
+facts. The engine loads every stream into one `engine.Codebase`, and a rule reads it the
+**same way whatever the language**: its `find` selects neutral kinds and reads their roles and
+facts. A language supplies plain facts only, in its bridge; it never decides a rule. If a rule
+needs to ask one language differently from another, the tree is wrong — fix the bridge and the
+contract, not the rule.
 
 **The engines are the SAME system; ONLY the parse differs.** Everything that is not "how do
-I parse / how do I detect / how do I fix" is engine-agnostic: the CLI (`cli/`), the report
-and checklist, the fixture harness (`fixture/`), the recurrence and twin analyses
+I parse" is engine-agnostic: the CLI (`cli/`), the report and checklist, the rule evaluator
+(`rule/`), the fixture harness (`fixture/`), the recurrence and twin analyses
 (`engine/recurrence.go`, `engine/twins.go`), the syntax hash (`engine/hash.go`, with each
-language's `HashRules`). **NEVER write the same machinery
-twice for two engines** — lift it into `engine/` or a shared package, parameterised by the
-one hook that genuinely differs. A thing belongs in the engine folder of its concern:
-`engine/<lang>`, `detectors/<lang>`, `sins/<lang>`, `skill/<lang>`.
+language's `HashRules`). **NEVER write the same machinery twice for two engines** — lift it
+into `engine/` or a shared package, parameterised by the one fact that genuinely differs.
 
-### 🌐 Every rule that can be shared is written ONCE, over the generic tree — non-negotiable
+### 🌐 Every rule is written ONCE, over the generic tree — non-negotiable
 
-A rule is a concept, not a language. Its predicate is written once in `engine/` over the
-generic tree (the neutral kinds `engine.Branch`, `engine.Loop`, `engine.Throw`, … and the
-grammar hooks), and every language it applies to judges it through that one predicate. A
-language keeps ONLY its own facts in its own package (`engine/<lang>`): how it spells a node
-kind, a comment, a module, a test file. "Build this rule for PHP" means focus on PHP, never
-write the concept only for PHP. A rule a second language reimplemented on its own decorator
-is a copy to merge into the shared predicate, never a third copy to add. Sir Jesse, messages
-19187, 19394, 19404, 19408.
+A rule is a concept, not a language. It is written once as a JSON file over the generic tree,
+and every language it applies to judges it through that one `find` (its `engine` list). A
+language keeps ONLY its own facts in its bridge: how it spells a node kind, a comment, a
+module, a test file. "Build this rule for PHP" means focus on PHP, never write the concept only
+for PHP. A check two rules share goes into a definition (`rules/definitions/`), never a second
+copy. Sir Jesse, messages 19187, 19394, 19404, 19408.
 
 ### 🔒 One cache for every checkout, keyed on contents — locked by a test
 
@@ -66,47 +62,44 @@ bridge's own code, never the whole binary, so a release that changes no bridge k
 (`TestEveryCheckoutReadsThroughOneCacheKeyedOnContents`). Each checkout takes its own reading turn, so a
 worktree never waits on the main checkout's read. Judging is keyed the same way: a rule's answer for a file stands on the file's contents and the
 contents of the files its bridge read, so an edit re-judges only that file and the files that import it
-(`engine/remembered.go`, locked by `TestARuleReadingAcrossFilesIsAskedAgainOnlyForTheChangedFileAndItsReaders`).
+(`engine/remembered.go` and `rule/remembered.go`, locked by `TestARuleReadingAcrossFilesIsAskedAgainOnlyForTheChangedFileAndItsReaders`).
 A test that fails when a worktree run re-reads a file the main checkout already read
 must exist and pass before ANY change to the reading path ships. Breaking this has made single-file
 edits take 40-60 s instead of seconds, more than once.
 
-### 🚫 NO regex for structure — build an engine tool instead
+### 🚫 NO regex for structure — read the tree instead
 
 Reaching for a regex to read code structure (a member chain, a method call, a binding, an
 equality, nesting depth) is the wrong choice: every language arrives parsed by its own
-compiler. **Query the tree.** If the predicate you need isn't there, add it to the engine —
-a method on the language's decorator, a selector on `engine.Codebase` — so detectors
-compose it fluently. If the bridge doesn't carry a fact the detector needs, add it to the
-bridge and the contract. Regex is for genuine text scanning only (splitting delimiters,
-reading a comment's words) — not for understanding the code.
+compiler. **Read the tree.** If the fact you need isn't there, the bridge writes it and the
+contract documents it. Regex (`matchesText`) is for genuine text scanning only (a comment's
+words, a string literal's contents) — not for understanding the code.
 
-## ⚠️ Building or changing a detector? LOAD THESE SKILLS FIRST — mandatory
+## ⚠️ Building or changing a rule? LOAD THESE SKILLS FIRST — mandatory
 
-Before you write or touch any detector, load these via the **Skill tool**:
+Before you write or touch any rule, load these via the **Skill tool**:
 
-1. **`writing-detectors`** — author a `Detector` end-to-end (start here).
-2. **`detector-engine`** — the fluent query (`engine.Codebase` → `engine.Query` →
-   `engine.Match`, a language's decorator), the call graph, the variable trace, and where
-   a new helper belongs (the layering rule).
+1. **`writing-detectors`** — author a rule file end-to-end (start here).
+2. **`detector-engine`** — what a `find` reads: the generic tree's kinds, roles and facts,
+   the evaluator's operators, pipelines over program relations, shared definitions, and
+   where a missing fact belongs (the bridge).
 3. **`detector-fixtures`** — the self-checking fixture: `#[Sinful]` = spec, `#[Fixed]` =
    the RESOLUTION the docs publish as "Good" — **and every declaration it moved behaviour
    into**, since a fix showing only the call site that got thinner teaches a reader to call
    a method nothing declares (distinct from `#[Righteous]`, which is a look-alike the
-   detector must not flag — usually an exemption, not a fix), the ≥3-diverse-scenarios
+   rule must not flag — usually an exemption, not a fix), the ≥3-diverse-scenarios
    rule, righteous twins.
 
-They encode the cardinal rules: **AST/semantic signals over name/suffix matching**
-(a name check is a smell to justify); **one check per `where()`/`reject()` line**;
-TDD (red → green through the language's test builder, e.g. `frontendtest.FromSource`);
-≥3 genuinely-different fixtures plus
-a righteous twin it must NOT flag; and **validate on a real codebase for false
-positives** before shipping. Curate the best detectors — don't pad.
+They encode the cardinal rules: **tree and type signals over name/suffix matching**
+(a name check is a smell to justify); **one check per line of a `where`**; try it first
+(`commandments rule try`, `commandments rule explain`); ≥3 genuinely-different fixtures plus
+a righteous twin it must NOT flag, in every language it judges; and **validate on a real
+codebase for false positives** before shipping. Curate the best rules — don't pad.
 
-### ⛔ Calibrate against a real codebase — MANDATORY before any detector ships
+### ⛔ Calibrate against a real codebase — MANDATORY before any rule ships
 
-A green fixture proves the detector *can* fire; it does **not** prove it's right. A
-detector is not done until it has been run against a real-world codebase and its
+A green fixture proves the rule *can* fire; it does **not** prove it's right. A
+rule is not done until it has been run against a real-world codebase and its
 hits read by eye:
 
 ```
@@ -118,74 +111,68 @@ NEVER against what the target project happens to do.** A real codebase is not gr
 truth: it contains real sins, code done wrong, and old style. So a widespread
 pattern there is **not "convention" that excuses a finding** — and **volume alone
 proves nothing**: 400 hits can be 400 genuine sins (e.g. an app that never marks its
-DTOs `final`). Do not soften or drop a detector because it fires a lot.
+DTOs `final`). Do not soften or drop a rule because it fires a lot.
 
-The ONLY thing that invalidates a detector is a genuine **false positive** — a
+The ONLY thing that invalidates a rule is a genuine **false positive** — a
 pattern that is *correct under the architecture* yet gets flagged. When those
-appear, **tighten with a principled `reject` (never a name list), or drop the
-detector entirely.** Some ideas die here: if no AST signal separates the sin from a
-*legitimately valid* look-alike (the difference is only author *intent*), the
-detector is not viable — cut it. For example, a named constructor like
-`Money::zero()` is indistinguishable from a mis-prefixed factory, so a rule that
-would flag it can't tell the two apart and isn't viable. Calibrate every time, not
-"later".
+appear, **tighten the `find` with a principled check (never a name list), drop the
+language from its `engine` list, or drop the rule entirely.** Some ideas die here: if
+no tree signal separates the sin from a *legitimately valid* look-alike (the difference
+is only author *intent*), the rule is not viable — cut it. For example, a named
+constructor like `Money::zero()` is indistinguishable from a mis-prefixed factory, so a
+rule that would flag it can't tell the two apart and isn't viable. Calibrate every
+time, not "later".
 
-**Calibrating a detector that isn't ready to ship? Mark it unpublished.** A new detector
-often needs several calibrate→tighten rounds before it's clean. Give its detector (and
-its sin) the method `Unpublished()` — `catalog.Unpublished` — and every catalog skips it,
-so it stays out of `judge`, the fixture verifier, the generated docs (`SKILL.md`/README)
-and every release while you iterate. Unit-test it by calling the detector **directly**,
-and calibrate by running it directly over a scanned consumer codebase (a throwaway probe
-under the scratchpad — `scan.Walk([]string{root}, source.Excluded{}).Load()` →
-`YourDetector{}.Find(codebase)`). When its hits read clean on real code, delete the
-method, add the ≥3-diverse fixtures + righteous twin, and it enrols itself. The marker
-lives ON the type — there is no second list, and a half-built rule can never leak into a
-tagged release.
+**Calibrating a rule that isn't ready to ship? Mark it unpublished.** A new rule often
+needs several calibrate→tighten rounds before it's clean. Put `"unpublished": true` in its
+`sin` block and every catalogue skips it, so it stays out of `judge`, the fixture verifier,
+the generated docs (`SKILL.md`/README) and every release while you iterate. Try it directly
+with `commandments rule try <file> <path>` over a scratchpad copy of a consumer codebase.
+When its hits read clean on real code, delete the flag, add the ≥3-diverse fixtures +
+righteous twin, and it ships. The flag lives IN the file — there is no second list, and a
+half-built rule can never leak into a tagged release.
 
-📍 **Sins are first-class.** Each sin is its OWN type under `sins/<engine>/` (name + skill
-slug + description), registered like a detector. A detector *references* its sin
-(`func (ArrayBagDetector) Sin() sins.Sin { return backendsins.ArrayBag{} }`), never declares
-one inline. `judge --sin=<name>` filters to it. The generated `SKILL.md` "when it fires"
-rows project from the registered sins.
+📍 **Sins are first-class.** A sin is the `sin` block of its rule file (name, aliases, skill
+slug, description, rule, suggestion). `aliases` keep every former name a config, a filed report
+or a fixture marker may still use. `judge --sin=<name>` filters to it, and the generated
+`SKILL.md` "when it fires" rows project from the rule files.
 
-## The engine arsenal — CHECK THIS BEFORE YOU IMPLEMENT ANYTHING
+## The arsenal — CHECK THIS BEFORE YOU IMPLEMENT ANYTHING
 
 The single most-repeated mistake is hand-rolling logic that already exists. **Before you
-implement ANY feature — a detector, a predicate, a helper, a type read, a "does
-X reference Y" walk — find it here first.** Reuse it; if it's genuinely missing, ADD it to
-the right layer (never inline in the detector). This applies every time you start building.
+implement ANY feature — a rule, a check, a type read, a "does X reference Y" walk — find it
+here first.** Reuse it; if it's genuinely missing, ADD it in the right place. This applies
+every time you start building.
 
-**`engine.Codebase` (`engine/codebase.go`) — whole-program, every language.** Selectors open a
-query: `Where`, `WhereKind`, `WhereIs` (a neutral kind: a construction, a block, a null-safe
-access …), `WhereNew`, `WhereCall`, `WhereFunction`, `WhereTypeDeclaration`, `WhereAssign`.
-`Declarations`, `Program` (the facts the bridge read outside the scan), `Files`, `Of` (one
-language). A language narrows it first: `php.In(codebase)`, `csharp.In(codebase)`, …
+**The generic tree (`contract/CONTRACT.md`).** Every kind (`if`, `loop`, `call`, `access`,
+`handler`, `function`, `type`, …), its named roles (`then`, `else`, `callee`, `subject`,
+`member`, `body`, `parameters`), its facts (name, text, form, type, the symbol it resolves to,
+its module and file) and the categories a rule may ask for (`exit`, `choice`, `statement`,
+`declaration`, `function-like`). `commandments rule explain <file> --line=N` prints it.
 
-**`engine.Query` (`engine/query.go`).** `Where`/`Reject` (one check per line), and the terminals
-`Get`/`Locations`/`Count`/`First`. A language's predicate joins in as `engine.As(php.Node.IsField)`.
+**The evaluator's operators (`rule/operators.go`, `commandments rule schema`).** Logic,
+lists, navigation (`ownAncestors`, `ownDescendants`, `enclosing`, `siblings`), resolution
+(`declarationOf`, `referrers`, `typeOf`, `isSubtype`, `knownSupertypes`), text, and `proven`
+for a check that must not hide what it cannot prove.
 
-**`engine.Match` (`engine/match.go`) — one node, whatever the language.** Navigation `Parent`,
-`Children`, `Child`, `ChildrenIn`, `Descendants`, `Closest`, `Root`, `EnclosingType`,
-`EnclosingFunction`; reads `Kind`, `Name`, `Text`, `Written`, `Is`, `Refers`, `Resolves`,
-`HasFlag`, `HasModifier`, `CalleeName`, `Comments`, `CommentsAbove`, `IsDocumented`,
-`IsWithinLoop`, `SameSyntax`; location `Line`, `Location`, `Scope`, `Span`, `Source`.
+**Program relations (`rule/program.go`)** — whole-program rows built once per codebase, read
+by a pipeline (`"from": "imports"`): `imports`, `declarations`, `references`, `calls`,
+`inherits`, `overrides`, `files`, `divergentTwins`.
 
-**A language's decorator — its own knowledge, stated once.** `php.Node` (~200 predicates:
-`IsField`, `IsDeeplyNestedIf`, `IsNamedConstructor`, `BreaksClassLayoutOrder`, …; skim before
-adding one), `typescript`, `vue` (an element's tag, directives, props), `python`, `csharp`. A
-package's own knowledge — Laravel, Spatie Data, jessegall/concurrent, php-types — lives in its
-own package under the engine (`engine/php/laravel`, `engine/php/spatie`, …), never in a general
-detector.
+**Shared definitions (`rules/definitions/`).** `tree.json` holds the `tree.*` reads every rule
+calls (`tree.effective`, `tree.nullish`, `tree.kindOf`, …); a package's own checks live beside
+it (`laravel.json`, `spatie.json`, `vue.json`), never in a general rule.
 
-**Cross-cutting analyses — each the SINGLE home of its concept, memoised per codebase.** PHP:
-`php.IndexOf` (the call graph → callers), `php.TypesOf`/`ExpressionType`/`ReceiverTypeOf` (an
-expression's real type through the receiver chain and local assignments), `php.ValueFlowOf`
-(field null-flow), `php.Trace` (a variable's whole journey), `php.EnvyOf`/`LookupEnvyOf`,
-`php.NullObjectFor`, `php.Negation` (a condition flipped), the `php.Docblock*` family (the SHAPE
-of a docblock), `php.Printed`. Every engine: `engine.Recurring`/`NearCopies` (a recurrence across
-sites), `engine.DivergentTwins`, the syntax hash (`engine.SyntaxHash`, with each language's
-`HashRules`), `engine.Layers` (a declared layer stack). `published` carries the facts one engine
-publishes for another's detectors (a server type the frontend mirrors).
+**A package's facts (`rules/packages/<ecosystem>/<package>.json`).** The effects of its calls
+(`executes-query`, `mutates-receiver`, `blocks-thread`, …) and the exemptions it registers under
+a tag (`boundary`, `contract-method`, …), read by a rule through `exemptedBy` and applied only
+when the judged project holds the package.
+
+**Cross-cutting analyses in `engine/`** — each the SINGLE home of its concept, memoised per
+codebase: `engine.Recurring`/`NearCopies` (a recurrence across sites), `engine.DivergentTwins`,
+the syntax hash (`engine.SyntaxHash`, with each language's `HashRules`), `engine.Layers` (a
+declared layer stack). `published` carries the facts one engine publishes for another's rules
+(a server type the frontend mirrors).
 
 **No automatic fixes in version 8.** The scribes and `repent` are gone: an agent writes the fix
 from the finding and its skill. Automatic fixes may come back later, over the generic tree.
@@ -285,36 +272,32 @@ deletes the file).
 
 ## Conventions
 
-- **AST/semantic detection over name matching** — always; derive the answer from
-  the AST / resolved type, never a class/method/variable name or a hardcoded list.
-- **Use the whole arsenal.** Before hand-rolling a scan, reach for the
-  engine tools you already have: the call graph (`php.IndexOf`), the type engine
-  (`php.ExpressionType`/`ReceiverTypeOf` — a value's real type through the receiver chain and local
-  assignments), the field-nil value flow (`php.ValueFlowOf`), the variable trace (`php.Trace`), the
-  field reader (`php.Fields`). Compose the engine to gather what a rule needs, never scrape
-  source with a regex. A missing predicate is a signal to extend the
-  right engine layer.
-- **🔧 FIX THE TOOL, NEVER WORK AROUND IT.** When an engine tool gives the wrong answer, the
-  bug is in the TOOL — fix it at the source (with a regression test) so every detector that
-  uses it benefits. A bespoke workaround inside one detector is a defect, not a solution: it
-  hides the real bug, leaves every other caller broken, and rots the engine. If a tool in the
-  arsenal is broken, we repair the arsenal. (E.g. the PHP bridge listing no outside symbols for a
-  project with no autoloader, so `Stringable` was unknown, was fixed IN the bridge, not skirted in a
-  detector.)
-- **A package's knowledge lives in its OWN engine package.** Everything specific to a third-party
-  package (Spatie Data, Laravel/Eloquent, jessegall/concurrent, php-types `Option`) is stated ONCE in
-  its package under the engine (`engine/php/spatie`, `engine/php/laravel`, …), and a detector reaches
-  it the same way it reaches the language — `engine.As(spatienode.Node.IsDataClass)`. That package's
-  sins, detectors and skill live in a per-package folder (`detectors/backend/laravel/`, …). A general
-  detector must NOT reference a package's knowledge — if it needs a package concept only as an
-  *exemption*, take it from that package's single source, never redeclare the literal.
-- **Overlap is allowed — do NOT strip a detector to avoid it.** One piece of code
+- **Tree and type signals over name matching** — always; derive the answer from the tree's
+  kinds, roles and resolved types, never a class/method/variable name or a hardcoded list.
+- **Use the whole arsenal.** Before hand-rolling a check, reach for what is already there: the
+  resolution operators (`declarationOf`, `referrers`, `typeOf`, `isSubtype`), the program
+  relations (`calls`, `imports`, `references`, …), the shared definitions in `rules/definitions/`.
+  Compose them to gather what a rule needs, never scrape source with a regex. A missing fact is a
+  signal to extend the bridge and the contract.
+- **🔧 FIX THE TOOL, NEVER WORK AROUND IT.** When the engine, a bridge or an operator gives the
+  wrong answer, the bug is in the TOOL — fix it at the source (with a regression test) so every
+  rule that uses it benefits. A bespoke workaround inside one rule is a defect, not a solution: it
+  hides the real bug, leaves every other rule broken, and rots the engine. (E.g. the PHP bridge
+  listing no outside symbols for a project with no autoloader, so `Stringable` was unknown, was
+  fixed IN the bridge, not skirted in a rule.)
+- **A package's knowledge lives in its OWN files.** Everything specific to a third-party package
+  (Spatie Data, Laravel/Eloquent, jessegall/concurrent, php-types `Option`) is stated ONCE as data:
+  its facts and exemptions in `rules/packages/<ecosystem>/<package>.json`, its shared checks in
+  `rules/definitions/<package>.json`, its own rules in their own folder (`rules/php-spatie-data/`,
+  `rules/php-laravel-idioms/`). A general rule must NOT name a package's types — if it needs a
+  package concept only as an *exemption*, it asks for the tag with `exemptedBy`.
+- **Overlap is allowed — do NOT strip a rule to avoid it.** One piece of code
   can genuinely be several sins (e.g. set-property-then-`save()` is BOTH
-  `ModelMutationAtCallSite` AND read-then-mutate `FeatureEnvy`). Two detectors
+  `ModelMutationAtCallSite` AND read-then-mutate `FeatureEnvy`). Two rules
   firing on the same `file:line` is correct when both sins are real — each points
-  at a different skill/fix. A fixture site may carry several markers (and a detector may have more than 3 marked locations —
-  ≥3 *diverse* is the floor, not a cap). Never weaken or delete a valid detection
-  just because another detector also flags it; double-mark the fixture instead.
+  at a different skill/fix. A fixture site may carry several markers (and a rule may have more than 3 marked locations —
+  ≥3 *diverse* is the floor, not a cap). Never weaken or delete a valid finding
+  just because another rule also flags it; double-mark the fixture instead.
 
 ## Go runs ONLY in the capped dev container — `scripts/dev`
 

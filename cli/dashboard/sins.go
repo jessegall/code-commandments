@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -295,7 +296,7 @@ func explanation(name, tool string) []any {
 	for _, sin := range rules.Sins() {
 		rule := sin.Definition()
 
-		if rule.Name != name {
+		if !slices.Contains(rule.Names(), name) {
 			continue
 		}
 

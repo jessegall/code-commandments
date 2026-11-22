@@ -1,5 +1,12 @@
 commandments
 commandments-shared-flow
+commandments-shared-absence
+commandments-shared-exceptions
+commandments-shared-duplication
+commandments-shared-documentation
+commandments-shared-enums
+commandments-shared-arguments
+commandments-shared-dependencies
 commandments-vue-vue-components
 commandments-vue-vue-control-flow
 commandments-vue-mirrored-server-type

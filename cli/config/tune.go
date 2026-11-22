@@ -11,11 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/sins"
 )
 
-type publicContractDetector interface {
-	rule.Detector
-	WithPublicContracts([]string, []string) rule.Detector
-}
-
 type layeredDetector interface {
 	WithLayers(map[string][]string) rule.Detector
 }
@@ -41,16 +36,13 @@ func (c Config) Applied(list []rule.Detector) ([]rule.Detector, error) {
 			detector = marks.WithLayers(c.Layers(engine))
 		}
 		if file, ok := detector.(rule.Rule); ok {
-			engine := file.Engine()
-			contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))
-			detector = file.WithLayers(c.Layers(engine)).WithPublicContracts(contracts)
-		}
-		if accepts, ok := detector.(publicContractDetector); ok {
-			engine, _ := rule.EngineOf(detector)
-			contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))
-			if registrars := c.ContractRegistrars[engine]; len(contracts) > 0 || len(registrars) > 0 {
-				detector = accepts.WithPublicContracts(contracts, registrars)
+			var contracts []string
+			layers := map[string][]string{}
+			for _, engine := range file.Engines() {
+				contracts = slices.AppendSeq(append(contracts, c.PublicContracts[engine]...), maps.Keys(c.ContractReasons[engine]))
+				maps.Copy(layers, c.Layers(engine))
 			}
+			detector = file.WithLayers(layers).WithPublicContracts(contracts)
 		}
 		kept = append(kept, detector)
 	}

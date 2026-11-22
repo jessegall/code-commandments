@@ -34,17 +34,8 @@ func (WrappingWithoutCauseDetector) Find(codebase *engine.Codebase) []engine.Mat
 }
 
 func init() {
-	skill.Register(catalog.PHP, Exceptions{})
 	sins.Register(catalog.PHP, WrappingWithoutCause{})
 	rule.Register(catalog.PHP, WrappingWithoutCauseDetector{})
-}
-
-func TestADetectorIsFoundByItsNameLeniently(t *testing.T) {
-	for _, name := range []string{"WrappingWithoutCauseDetector", "WrappingWithoutCause", "wrappingwithoutcause"} {
-		if _, ok := rule.Named(name); !ok {
-			t.Fatalf("%s names no detector", name)
-		}
-	}
 }
 
 func TestASinPointsAtTheSkillThatFixesIt(t *testing.T) {
@@ -55,20 +46,5 @@ func TestASinPointsAtTheSkillThatFixesIt(t *testing.T) {
 	}
 	if len(sins.All()) != 1 {
 		t.Fatalf("got %d sins", len(sins.All()))
-	}
-}
-
-func TestASkillIsLoadedByItsID(t *testing.T) {
-	found, ok := skill.Slugged("php/exceptions")
-	if !ok {
-		t.Fatal("no skill slugged backend/exceptions")
-	}
-	definition := found.Definition()
-
-	if definition.ID() != "commandments-php-exceptions" || definition.Bullet() != "- **`commandments-php-exceptions`** — fail named" || !definition.Matches("Exceptions") {
-		t.Fatalf("got %s / %s", definition.ID(), definition.Bullet())
-	}
-	if len(skill.InTier(skill.KeepInMind)) != 1 || len(skill.InTier(skill.Mandatory)) != 0 {
-		t.Fatal("the skill sits in its own tier only")
 	}
 }

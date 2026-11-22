@@ -552,10 +552,16 @@ func folders(named []string) []string {
 	return kept
 }
 
+func (r Rule) TakesPublicContracts() bool {
+	_, takes := r.read.Parameters["publicContracts"]
+
+	return takes
+}
+
 // WithPublicContracts is the rule with the types a project publishes as contracts, set into its publicContracts
 // parameter when it declares one.
 func (r Rule) WithPublicContracts(symbols []string) Rule {
-	if _, takes := r.read.Parameters["publicContracts"]; takes && len(symbols) > 0 {
+	if r.TakesPublicContracts() && len(symbols) > 0 {
 		listed := make([]any, len(symbols))
 		for at, each := range symbols {
 			listed[at] = each

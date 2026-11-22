@@ -24,12 +24,11 @@ Read the issue body AND every comment.
 ## The flow
 
 1. `gh issue list --state open` → `gh issue view <n> --comments` → pick one, read the comments.
-2. Reproduce: a minimal test exercising the detector — the language's source builder
-   (`frontendtest.FromSource`, `pythontest.FromSource`, `csharptest.FromSource`) through the detector, or a
-   sin marker on the reported shape in the engine's fixture.
-3. Fix in `detectors/<engine>/` — or the shared engine helper it composes (the language's decorator in
-   `engine/<lang>`, an analysis, a package's own `engine/php/<pkg>`), never a name list. If the sin's wording
-   was the problem, sharpen its description in `sins/<engine>/`.
+2. Reproduce: a sample of the reported shape run through the rule (`commandments rule try`), or a sin
+   marker on it in the language's fixture.
+3. Fix in the rule file under `rules/` — or what it reads (a shared definition in `rules/definitions/`, a
+   package's facts in `rules/packages/`, a fact the bridge must write), never a name list. If the sin's
+   wording was the problem, sharpen the `sin` block's description.
 4. Add/extend the fixture + test; `scripts/dev go test` the packages you touched.
 5. The pre-commit hook regenerates the generated documents (`composer sins` by hand).
 6. Commit on your branch (no attribution trailer) with `Closes #N` → [[releasing]]. Merging and tagging are

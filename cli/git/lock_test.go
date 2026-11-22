@@ -84,8 +84,8 @@ func TestNothingElseRunsGitItself(t *testing.T) {
 	written := func(path string) bool {
 		return strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go") && path != funnel
 	}
-	// the story harness builds throwaway projects of its own, and bin holds built copies
-	for _, path := range walk.Files(module, walk.Under(module, []string{"bin", "story"}), written) {
+	copiesOfOtherCheckouts := walk.Under(module, []string{"bin", "scratchpad"})
+	for _, path := range walk.Files(module, copiesOfOtherCheckouts, written) {
 		source, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)

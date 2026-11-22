@@ -30,8 +30,16 @@ func TestANameOneRuleOfSeveralEnginesAnswersToIsThatRule(t *testing.T) {
 	if len(named) != 1 || len(rule.EnginesOf(named[0])) < 2 {
 		t.Fatalf("want the one deep-nesting rule of several engines, got %d rules", len(named))
 	}
-	if named, found := rule.Named("DeepNestingDetector"); !found || rule.Sin().Definition().Name != "deep-nesting" {
+	if named, found := rule.Named("DeepNestingDetector"); !found || named.Sin().Definition().Name != "deep-nesting" {
 		t.Fatalf("DeepNestingDetector names no single rule")
+	}
+}
+
+func TestARuleIsFoundByItsNameLeniently(t *testing.T) {
+	for _, name := range []string{"deep-nesting", "DeepNestingDetector", "DeepNesting", "deepnesting"} {
+		if found, named := rule.Named(name); !named || found.Sin().Definition().Name != "deep-nesting" {
+			t.Errorf("%s names no single deep-nesting rule", name)
+		}
 	}
 }
 

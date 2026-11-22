@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -48,11 +49,15 @@ func (command Allow) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 	language, _ := source.Of(declared.Source().Language())
 	for _, detector := range rule.All() {
-		engine, _ := rule.EngineOf(detector)
-		if _, accepts := detector.(publicContractDetector); !accepts || !slices.Contains(language.Engines(), engine) {
+		file, isRule := detector.(rule.Rule)
+		if !isRule || !file.TakesPublicContracts() {
 			continue
 		}
-		changed, err := EditorIn(root).AllowContract(engine, declared.Identity())
+		at := slices.IndexFunc(language.Engines(), func(engine catalog.Engine) bool { return slices.Contains(file.Engines(), engine) })
+		if at < 0 {
+			continue
+		}
+		changed, err := EditorIn(root).AllowContract(language.Engines()[at], declared.Identity())
 		if err != nil {
 			return 0, err
 		}

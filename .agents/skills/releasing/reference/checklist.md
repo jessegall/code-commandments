@@ -1,8 +1,8 @@
 # Release checklist
 
 1. The tests of every package you touched are green in the dev container (`scripts/dev go test …`).
-2. New or changed detector or sin? Each registers itself in `init()`; nothing to add to a list. A draft marked
-   `Unpublished()` stays out of every catalog until you remove the method.
+2. New or changed rule? A file under `rules/` enrols itself; nothing to add to a list. A draft whose `sin` block
+   says `"unpublished": true` stays out of every catalogue until you remove it.
 3. The generated documents are current: the pre-commit hook regenerates them; `composer sins` by hand.
 4. Fix every finding on the files you touched.
 5. Commit on main — no attribution trailer.

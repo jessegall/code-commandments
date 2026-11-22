@@ -1,15 +1,16 @@
 ---
 name: detector-fixtures
-description: The self-checking fixture that proves every detector — the sin markers ARE the test spec, fixture.Fixture.Prove checks missed/unexpected/righteous/fixed, and every detector must fire on ≥3 DIVERSE scenarios (different files, <60% class overlap, max-clique) plus have a righteous twin it must NOT flag. Read this when adding/adjusting a detector's fixtures or debugging a fixture test failure.
+description: The self-checking fixtures that prove every rule — the sin markers ARE the test spec, fixture.Fixture.Prove checks missed/unexpected/righteous/fixed in every language a rule judges, and every rule must fire on ≥3 DIVERSE scenarios (different files, <60% class overlap, max-clique) plus have a righteous twin it must NOT flag. Read this when adding/adjusting a rule's fixtures or debugging a fixture test failure.
 ---
 
 # The self-checking fixture — markers ARE the spec
 
-`tests/Fixtures/backend/app` is a coherent Laravel-style "Shop" app that is
-**never run** — only parsed (its frontend twin is `tests/Fixtures/frontend`). A
-`#[Sinful(Sin::class)]` attribute on a class or method declares "the detector for
-this sin MUST flag here." Absence of a marker means the spot is righteous.
-**Adding a test = adding an attribute.**
+Each language has one fixture project under `tests/Fixtures/` (`backend` for PHP, `frontend` for Vue and
+TypeScript, `python`, `csharp`, `go`): a coherent "Shop" app that is **never run**, only parsed. A marker
+declares "the rule for this sin MUST flag here": `#[Sinful(Name::class)]` on a PHP class or method, a
+`# @sin Name` or `// @sin Name` comment above the code in Python, C#, Go and TypeScript, `<!-- @sin Name -->`
+in a Vue template. `Name` is the sin's name or any of its aliases. Absence of a marker means the spot is
+righteous. **Adding a test = adding a marker.**
 
 ```php
 #[Sinful(EnumValueMatch::class)]   // name the SIN class; method- or class-scope; repeatable
@@ -21,9 +22,8 @@ public function badge(Order $order): string
 
 ## What the harness enforces (`fixture.Fixture.Prove`)
 
-Each engine's fixture test runs every registered detector of that engine over its fixture —
-`engine/php/shop` over `tests/Fixtures/backend`, `detectors/frontend` over `tests/Fixtures/frontend`,
-`detectors/python` and `detectors/csharp` over theirs — and, per detector, reports:
+`fixture/rules_test.go` runs every rule over every fixture project of a language it judges
+(`commandments rule prove --all` does the same from the command line) and, per rule, reports:
 - **missed** — a sin marker it did NOT flag (a hole),
 - **unexpected** — code it flagged that is NOT marked (a false positive, OR an unmarked sin you forgot to
   mark),
@@ -31,11 +31,11 @@ Each engine's fixture test runs every registered detector of that engine over it
 
 All must be empty. So the whole *unmarked* fixture is the false-positive guard. The backend fixture is read
 from its committed stream, so a change to it needs `scripts/dev go run ./engine/php/shop/generate` before
-`scripts/dev go test ./engine/php/shop`.
+`scripts/dev go test ./fixture/`.
 
 ## The ≥3-diverse-scenarios floor
 
-Every detector must fire on at least **three mutually-DIVERSE** findings:
+Every rule must fire, in each language it judges, on at least **three mutually-DIVERSE** findings:
 different files **and** <60% class-source overlap (a **max-clique** over the
 diversity graph — order-independent, so a look-alike "hub" finding can't mask a
 real trio, and copy-paste/renames don't count). The 60% threshold is calibrated
@@ -51,15 +51,15 @@ behaviour methods so the shared shell is a small fraction.
 
 ## Righteous twins — non-negotiable
 
-Every detector needs a deliberate **look-alike that it must NOT flag**, so the
+Every rule needs a deliberate **look-alike that it must NOT flag**, so the
 "no unexpected" path is meaningfully exercised: e.g. `OrderData::from()` next to
 `new OrderData()`, a `findOrFail()` next to a de-nulled `?T` finder, `::collect()`
-next to `::from()`-in-a-loop. A file can be righteous for one detector and sinful
+next to `::from()`-in-a-loop. A file can be righteous for one rule and sinful
 for another.
 
 ## `#[Fixed]` — the RESOLUTION, and not the same thing as righteous
 
-`#[Righteous]` is a claim about the **detector**: a look-alike it must not flag,
+`#[Righteous]` is a claim about the **rule**: a look-alike it must not flag,
 which in practice is usually a documented *exemption* — code that legitimately
 dodges the rule. `#[Fixed]` is a claim about the **fix**: the `#[Sinful]` code
 repaired the way that sin's rule says to repair it.
@@ -117,7 +117,7 @@ Rules of thumb:
 - Never let a resolution name something the fixture does not declare. A published
   fix calling a method nothing defines teaches a repair a reader cannot follow.
 - A resolution must also go unflagged, so `#[Fixed]` implies `#[Righteous]`, never
-  the reverse. The harness fails a detector that flags its own fix.
+  the reverse. The harness fails a rule that flags its own fix.
 
 ## `@example Name bad|good` — when the sin is not inside one declaration
 
@@ -144,9 +144,10 @@ does, and some Good file holds its `@fixed` or `@righteous`.
 
 ## Diagnostics
 
-A quick per-detector probe: in a throwaway test, run `YourDetector{}.Find(shop.Project(t))` (or the engine's
-own fixture codebase), print each finding's `Location()` + `Scope()`, and read them.
-`bin/commandments judge tests/Fixtures/backend --sin=X --no-checklist` also works.
+`commandments rule try rules/<folder>/<name>.json tests/Fixtures/<project>` prints every match of one rule
+with its line; `bin/commandments judge tests/Fixtures/backend --sin=X --no-checklist` shows them as findings.
+`scripts/dev go test -run 'TestEveryRuleFlagsExactlyWhatTheFixtureMarks/backend' ./fixture/` proves one
+project.
 
 ## Related
 

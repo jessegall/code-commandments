@@ -7,13 +7,12 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 	bridge "github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/rule"
 )
 
-const shop = "../../tests/Fixtures/frontend"
+const shop = "../../Fixtures/frontend"
 
 func TestNoFrontendRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	frontend, err := bridge.Here().Stream(shop)

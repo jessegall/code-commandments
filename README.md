@@ -37,11 +37,11 @@ should be a value object, and here's the discipline that explains why*.
 - [Freezing a file](#freezing-a-file)
 - [Agents](#agents)
 - [Hooks](#hooks)
-- [How detectors are tested](#how-detectors-are-tested)
+- [How rules are tested](#how-rules-are-tested)
 - [Skills](#skills)
-- [Sins & detectors](#sins--detectors)
+- [Sins & rules](#sins--rules)
 - [Scaffolding](#scaffolding)
-- [Developing detectors](#developing-detectors)
+- [Writing your own rules](#writing-your-own-rules)
 - [License](#license)
 
 ## How it works
@@ -66,10 +66,10 @@ Under the hood there are three layers:
 - **Sins**: the vocabulary. Each sin is one named fault — what it flags, and the
   skill that teaches the fix. It is what `--sin=` selects and what a finding is
   reported as.
-- **Sin detectors**: small finders that read the syntax tree. Each finds one sin
-  and names it. Detectors *find*, skills *teach*.
+- **Rules**: one JSON file per sin that finds it in the generic tree, the one tree
+  every language is translated into. Rules *find*, skills *teach*.
 
-**You don't need the packages a rule is about.** Detectors match on real *types*,
+**You don't need the packages a rule is about.** Rules match on real *types*,
 so a rule for a package your project doesn't use never fires. Nothing to install
 or configure to keep it quiet.
 
@@ -215,7 +215,7 @@ A `.commandments/config.json` is scaffolded on install, with a schema beside it
   languages, agents or hooks.
 - `configure`: a shipped detector tuned, each step one of its methods with its arguments in order.
 - `detectors` / `packages`: your own rules and exemption packages from `.commandments/custom/`
-  (see [Developing detectors](#developing-detectors)), turned on.
+  (see [Writing your own rules](#writing-your-own-rules)), turned on.
 
 `commandments disable <sin>` and `enable <sin>` edit the file for you, leaving the rest as you wrote
 it. Run `commandments config` for a summary of what's in effect. A `config.php` from an earlier
@@ -426,18 +426,18 @@ The hooks are the tool's own. Every project runs the default set; one that is of
 name under `"hooks"` in `.commandments/config.json`, and any is turned off under `"disable": {"hooks": […]}` —
 the schema beside the config lists every one by name.
 
-## How detectors are tested
+## How rules are tested
 
-Every detector is proven against a **self-checking fixture**: one small, deliberately
+Every rule is proven against a **self-checking fixture**: one small, deliberately
 imperfect example app per language, never run, only scanned.
 
-You mark the exact spots where a detector should fire by naming the **sin**
-(naming the detector class works too) — an attribute in PHP, and elsewhere a comment
+You mark the exact spots where a rule should fire by naming the **sin**
+(any of its former names works too) — an attribute in PHP, and elsewhere a comment
 in the language's own syntax:
 
 - in PHP, a `#[Sinful(...)]` attribute;
 - in Vue, a `<!-- @sin ... -->` comment;
-- in TypeScript and C#, a `// @sin ...` comment;
+- in TypeScript, C# and Go, a `// @sin ...` comment;
 - in Python, a `# @sin ...` comment.
 
 ```php
@@ -447,7 +447,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class RefundService
 {
-    // the marker IS the assertion: the SwallowCatch detector must flag this method.
+    // the marker IS the assertion: the swallow-catch rule must flag this method.
     // if it doesn't fire here, the fixture test fails.
     #[Sinful(SwallowCatch::class)]
     public function refund(Order $order): void
@@ -476,18 +476,18 @@ final class RefundService
 </template>
 ```
 
-Those markers are the test spec. The harness runs every detector over the whole
-fixture and fails if either:
+Those markers are the test spec. The harness runs every rule over the fixture of
+every language it judges and fails if either:
 
-- a marked spot is **missed** (the detector has a hole), or
+- a marked spot is **missed** (the rule has a hole), or
 - an **unmarked** spot is flagged (a false positive).
 
-Each detector must also fire on **≥3 genuinely different** examples.
+Each rule must also fire on **≥3 genuinely different** examples.
 
 Any unmarked code is already "righteous", so the whole rest of the fixture guards
 against false positives; you don't mark good code. One `#[Righteous]` /
-`<!-- @righteous -->` per detector is required: a deliberate look-alike the
-detector must NOT flag.
+`<!-- @righteous -->` per rule is required: a deliberate look-alike the
+rule must NOT flag.
 
 Where the sin is not inside one declaration — an import that crosses a layer, a cycle
 two files tell between them — a `@example <Sin> bad` or `@example <Sin> good` comment
@@ -500,11 +500,11 @@ legitimately dodges the rule, whereas a fixed twin is what the bad code should
 become. The generated `## Bad → good` prefers `#[Fixed]` and falls back to
 `#[Righteous]` only where none exists.
 
-### Testing your own detectors
+### Testing your own rules
 
-A rule of your own is proven the same way the shipped ones are calibrated: a probe file holding one example of
-every form it must catch and the near-misses it must not, judged with `--sin=<your-sin>`, then a scoped run
-over your real code read by eye. The `commandments-writing-detectors` skill walks through it.
+A rule of your own is proven the same way the shipped ones are: samples in `.commandments/custom/samples/`
+marking every form it must catch and the near-misses it must not, checked by `commandments rule prove`, then a
+scoped run over your real code read by eye. The `commandments-writing-detectors` skill walks through it.
 
 ## Skills
 
@@ -515,10 +515,10 @@ Every `SKILL.md` is generated from its class (`composer sins`).
 _75 skills. Full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
 
-## Sins & detectors
+## Sins & rules
 
-Every sin (the `--sin=` key) and what it flags. Each sin has one detector that
-finds it, named `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
+Every sin (the `--sin=` key) and what it flags. Each sin has one rule file under `rules/`
+that finds it, named after the sin (e.g. `rules/shared-exceptions/swallow-catch.json`).
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
 _178 sins across 40 skills. Full tables in [README.sins.md](README.sins.md)._
@@ -543,37 +543,35 @@ A scaffold lands in the right root for its kind (a PHP helper under your PSR-4
 source root with your namespace injected, a Vue component under `resources/js`)
 and is never overwritten, so it's safe to re-run and safe to edit.
 
-## Developing detectors
+## Writing your own rules
 
-A rule of your own is data the binary runs: a `.json` file in `.commandments/custom/` naming the engine it
-judges, the sin it finds, and a query composed from the same selectors and checks every shipped detector
-composes — a **selector** opens it, **`where`** steps keep a node and **`reject`** steps drop one, one check
-each. Beside it, a skill of your own (a folder holding a `SKILL.md`) teaches the fix.
+A rule of your own is data the binary runs: a `.json` file in `.commandments/custom/`, in the same format as
+every rule the package ships (`commandments:neutral-rule/v2`), naming the engines it judges, the sin it finds,
+and the `find` that locates it over the generic tree — a kind to **select**, a **`where`** check it must pass,
+and the node to **emit**. Beside it, a skill of your own (a folder holding a `SKILL.md`) teaches the fix. A file
+in an older format is refused, naming the file.
 
 ```json
 {
-    "engine": "php",
+    "$schema": "commandments:neutral-rule/v2",
+    "engine": ["php", "python", "go"],
     "sin": {
-        "name": "raw-sql",
-        "description": "SQL written inline at a call site.",
-        "rule": "Queries go through the repository that owns the table.",
-        "skill": "no-raw-sql"
+        "name": "too-many-parameters",
+        "description": "A function declares five parameters or more.",
+        "rule": "Give the values that travel together a type of their own, and pass that.",
+        "skill": "small-signatures"
     },
     "find": {
-        "select": "call",
-        "where": [
-            {"resolves": "Illuminate\\Support\\Facades\\DB", "of": "child:class"},
-            {"nameIn": ["select", "statement", "unprepared"]}
-        ],
-        "reject": [
-            {"file": "*Repository.php"}
-        ]
+        "select": "function",
+        "as": "f",
+        "where": [">=", ["count", "$f.parameters"], 5],
+        "emit": "$f"
     }
 }
 ```
 
 `commandments make <Name>` scaffolds both and turns the rule on in your config; the published
-**`commandments-writing-detectors`** skill teaches every selector and check, and the probe-then-calibrate
+**`commandments-writing-detectors`** skill teaches every kind, role and check, and the prove-then-calibrate
 discipline that proves a rule fires on what you meant — classify by what the code **is**, never by a name
 or a hardcoded list.
 

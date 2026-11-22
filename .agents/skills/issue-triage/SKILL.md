@@ -21,12 +21,12 @@ how to watch for and resolve them.
 
 ## Resolve a `[detector-report]`
 
-1. **Reproduce** — write the flagged shape as a quick test (the language's source builder, e.g.
-   `frontendtest.FromSource`, through the detector, or a sin marker in the fixture) and confirm the detector
-   (mis)fires.
-2. Decide: false positive (tighten/guard the detector — AST/semantics, see [[writing-detectors]]),
+1. **Reproduce** — write the flagged shape into a sample file and run the rule over it
+   (`commandments rule try rules/<folder>/<name>.json <sample>`), or put a sin marker on it in the
+   language's fixture, and confirm the rule (mis)fires.
+2. Decide: false positive (tighten the rule's `find` — tree and types, see [[writing-detectors]]),
    wrong rule (adjust the rule/config), or correct-but-unclear (sharpen the sin's description).
-3. **Fix the detector + add a fixture** from the reported code (≥3 diverse + a righteous twin).
+3. **Fix the rule + add a fixture** from the reported code (≥3 diverse + a righteous twin).
 4. **Commit** on your branch with `Closes #N` and a resolution comment on the issue — or, if the finding is
    actually correct, **close it with a reason** explaining why. The fix reaches consumers in the next release
    Sir Jesse tags.
@@ -38,12 +38,12 @@ value.** Reports are frequently mistaken — filed to move past a finding the au
 argued persuasively from a premise that does not hold, or aimed at the wrong repo entirely. The
 report tells you WHERE to look. It does not tell you what is true.
 
-So before you change a single line of a detector:
+So before you change a single line of a rule:
 
-- **Reproduce it yourself** (the language's source builder, through the detector). If it does not
+- **Reproduce it yourself** (`commandments rule try` over a sample of the shape). If it does not
   fire on the shape as described, the report is wrong about its own code — say so and close it.
-- **Read the detector's actual predicate**, not the reporter's account of it. "The detector
-  appears to fire on any class of 2+ consts" is a claim to CHECK, and the check is the source.
+- **Read the rule's actual `find`**, not the reporter's account of it. "The rule appears to fire
+  on any class of 2+ consts" is a claim to CHECK, and the check is the rule file.
 - **Judge the flagged code against the SKILL, never against what the reporting project does.**
   A pattern repeated across ten sibling classes is not "convention" that excuses a finding, and
   volume proves nothing — a widespread shape is often a widespread sin.

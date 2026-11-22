@@ -1,72 +1,63 @@
 ---
 name: detector-engine
-description: The Go engine a Sin Detector queries — engine.Codebase selectors, engine.Query filters, engine.Match, a language's decorator reached with engine.As, the call graph (php.IndexOf → CallersOf), the variable trace (php.Trace), and WHERE a new helper belongs (the layering rule). Read this when writing or changing a detector, or when you reach for a predicate the engine doesn't have yet.
+description: What a version 8 rule reads and how — the generic tree's kinds, roles and facts (contract/CONTRACT.md), the rule evaluator's find (select, where, let, having, emit), pipelines over program relations, shared definitions, and WHERE a missing fact belongs (the bridge, never the rule). Read this when writing or changing a rule, or when you reach for a fact the tree doesn't have yet.
 ---
 
-# The detector engine — query the tree fluently
+# The engine a rule reads
 
 Every language reaches the engine the same way: its bridge parses it with the language's own parser and writes
-the generic tree (`contract/CONTRACT.md`), and `engine.Load` holds every stream as one `engine.Codebase`. A
-detector never touches a parser; it composes a query and reads the result.
+the generic tree (`contract/CONTRACT.md`), and `engine.Load` holds every stream as one `engine.Codebase`. A rule
+never touches a parser: its `find` is evaluated over that tree by `rule/evaluate.go`.
 
-```go
-php.In(codebase).                               // a language narrows the codebase
-	WhereKind("Expr_MethodCall").               // a SELECTOR opens a Query
-	Where(engine.As(laravel.Node.IsFacadeCall)). // FILTERS narrow it, one check per line
-	Reject(engine.As(php.Node.IsInEnum)).
-	Get()                                       // a TERMINAL returns []engine.Match
+```jsonc
+"find": {
+  "select": ["if", "loop"],          // the neutral kinds a match starts from
+  "as": "s",                         // the name the node is bound to
+  "where": ["choice", "$s"],         // checks on the node, one per line of an "and"
+  "let": [["depth", ["count", ["ownAncestors", "$s"]]]],
+  "having": [">=", "$depth", "$param.limit"],
+  "emit": "$s"                       // the node the finding points at
+}
 ```
 
-## The layers (and where a new helper goes)
+## What a node answers
 
-When a detector needs a predicate the engine lacks, **add it at the right layer** — never inline tree poking in
-the detector, never a name or suffix list.
+A node has a **kind** (`if`, `loop`, `call`, `access`, `catch`, `function`, `class`, …), **named roles**
+(`$b.then`, `$b.else`, `$c.callee`, `$c.callee.member`, `$f.body`) and **facts**: its name, text, type,
+the symbol it resolves to, its module, its file (`$s.file.language`, `$s.file.test`). `contract/CONTRACT.md`
+lists every kind and role, with worked examples. A missing role reads as absent, never as an error, so
+`$b.else.kind` needs no check before it.
 
-1. **`engine.Match`** (`engine/match.go`) — what every language's node answers: navigation (`Parent`,
-   `Children`, `Child`, `ChildrenIn`, `Descendants`, `Closest`, `Root`, `EnclosingType`, `EnclosingFunction`),
-   reads (`Kind`, `Name`, `Text`, `Written`, `Is`, `Refers`, `Resolves`, `HasFlag`, `HasModifier`,
-   `Comments`, `IsDocumented`, `IsWithinLoop`, `SameSyntax`) and location (`Line`, `Location`, `Scope`,
-   `Span`). A navigator never answers nil: a missing parent is a match whose predicates are all false, so a
-   chain reads with no checks between.
-2. **A language's decorator** — `php.Node`, `typescript`, `vue`, `python`, `csharp`: the language's own
-   knowledge about ONE node, stated once (`php.Node` has ~200 predicates — skim before adding one). A
-   detector reaches one with `engine.As(php.Node.IsField)`, which the query hands the decorated node.
-3. **An analysis** — a whole-program concept used by **≥2** detectors, memoised per codebase and the single
-   home of its concept: `php.IndexOf` (call graph), `php.ExpressionType`/`ReceiverTypeOf` (types),
-   `php.ValueFlowOf`, `php.Trace`, `engine.Recurring`/`NearCopies`, `engine.DivergentTwins`, `engine.Layers`.
-   A third-party package's knowledge has its own package under the engine (`engine/php/laravel`,
-   `engine/php/spatie`, …). Rule-specific composition and constants stay **in the detector**.
-4. **The bridge** — when the tree does not carry a fact the detector needs (a resolved type, an outside
-   symbol), the bridge writes it and the contract documents it; the engine never guesses it back from text.
+`commandments rule explain <file> --line=N` prints the tree a rule reads at that line; `commandments rule
+schema` prints every operator: logic (`and`, `or`, `not`, `case`), lists (`some`, `every`, `none`, `filter`,
+`map`, `count`, `first`, `last`), navigation (`ownAncestors`, `siblings`, `before`, `encloses`), resolution
+(`declarationOf`, `referrers`, `typeDeclaration`, `assignable`) and text (`startsWith`, `snakeCase`,
+`baseName`).
 
-> Smell test: if you're about to write a list of base-class names or `strings.HasSuffix(name, "Data")`, stop
-> — the tree or the resolved type already answers it. A name check is a smell to justify, not a default.
+## Where a missing piece goes
 
-## Query — `Where` / `Reject`, one check per line
+1. **A check several rules share** goes into `definitions` of a shared file under `rules/definitions/`
+   (`tree.json` holds the `tree.*` reads every rule calls: `tree.effective`, `tree.nullish`, `tree.kindOf`).
+2. **A package's knowledge** (Laravel, Spatie Data, …) is data in its own file there (`laravel.json`,
+   `spatie.json`), never written into a general rule.
+3. **A whole-program question** reads a program relation through a pipeline: `"from": "imports"` with
+   `"pipeline": [{ "where": … }, { "groupBy": … }, { "join": … }]`. The relations are built once per codebase
+   in `rule/program.go`: `imports`, `declarations`, `references`, `calls`, `inherits`, `overrides`, `files`,
+   `divergentTwins`.
+4. **A fact the tree does not carry** (a resolved type, an outside symbol, a doc comment's tags) is added to
+   the bridge that parses the language and to the contract. A language supplies plain facts only; it never
+   decides a rule, and a rule never guesses a fact back from text.
 
-`Where(check)` keeps matches that pass; `Reject(check)` drops them. **One check per line** — split a compound
-predicate into several. Terminals: `Get() []engine.Match`, `Locations()`, `Count()`, `First()`.
+> Smell test: if you are about to compare a name with a list, or `startsWith` a class name, stop: the tree's
+> kind, role or resolved type already answers it. A name check is a smell to justify, not a default.
 
-## The call graph — `php.IndexOf`
+## Testing
 
-`php.IndexOf(codebase).CallersOf(fqcn, method)` answers every resolved call site of a method (the receiver
-typed through `$this`, a typed parameter, a typed property). Used for measure-and-suppress detectors — e.g.
-flag a `?T` finder only when ≥2 callers de-null its result.
-
-## The variable trace — follow a value's journey
-
-`php.Trace(variable)` answers one `Interaction` per occurrence of the variable in its function, each of a kind
-(assigned, an argument, a method call on it, a property read or write, null-checked, coalesced, null-safe,
-returned, read). `Interaction.IsWrite()` and friends read the journey. Reach for it before hand-rolling a walk
-over a function's nodes.
-
-## Testing a helper
-
-Each language has a source builder that parses through the real bridge — `frontendtest.FromSource`,
-`pythontest.FromSource`, `csharptest.FromSource` — and PHP answers are held to the frozen shop
-(`engine/php/shop`). Run Go only through `scripts/dev`, scoped to the package you touched.
+`commandments rule try <file> <path> --work` runs one rule and counts its cost; `fixture/rules_test.go`
+proves every rule on every fixture project; a rule's own edge cases go in `tests/rules/<language>`. Run Go
+only through `scripts/dev`, scoped to the package you touched.
 
 ## Related
 
-- [[writing-detectors]] — how to author a detector using this engine.
-- [[detector-fixtures]] — the self-checking fixture that proves it.
+- [[writing-detectors]]: how to author a rule over this engine.
+- [[detector-fixtures]]: the self-checking fixture that proves it.

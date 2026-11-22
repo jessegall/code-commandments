@@ -7,57 +7,57 @@ exit: 0
 
 --- files
 === created .agents/skills/commandments-shared-absence/SKILL.md
-sha256 0adf6aa3abe8f33ddaa398cabbae523c0fac94bbb6858dfc905acfe20f95731c
+sha256 8f011acf687abe9212f814b1ac78eff23e2bd92232d028e69a49a5fa86ba3d53
 === created .agents/skills/commandments-shared-absence/reference/detectors.md
 sha256 7cfd679c50d1a4acd0f1730d0250756514c854332238c5ad14e6c6e5fb8d546a
 === created .agents/skills/commandments-shared-absence/reference/examples.md
 sha256 07e5d22328d88c1f7db4048a73b1c1b293c5b3e242fe8257b48400deb40ac300
 === created .agents/skills/commandments-shared-arguments/SKILL.md
-sha256 355c6b22284a2b36724e23c085dde9b2b453a5d1c4e7565f8b04f60074e18678
+sha256 1414630477aa3fcff8a792bdb6d6304679de7484b45e30a02a6265b47ec1d4b4
 === created .agents/skills/commandments-shared-arguments/reference/detectors.md
 sha256 0e982d399b39f63776f979974bf473f92b2d3d5bb70649e2f65e176ad9b732cd
 === created .agents/skills/commandments-shared-arguments/reference/examples.md
 sha256 7b79cd19f20487d0a12d8c7efa9be4a7d0fc00910ae15fb8c0ebb730a13136a8
 === created .agents/skills/commandments-shared-dependencies/SKILL.md
-sha256 0d71374a07fd723641a042f3fdb44352dd8bc67ef5a1459723eb1201415a5c5a
+sha256 bed8612188166a770d884f96d680f4d7e0b398044e39795a5fc83ddb84ae498b
 === created .agents/skills/commandments-shared-dependencies/reference/detectors.md
 sha256 f064e9f7e6267fe3a8894492742e48084e863b5ab058fcd3a43a4bcc4d30c250
 === created .agents/skills/commandments-shared-dependencies/reference/examples.md
 sha256 e413e7b3eb3b38c50384594c1fa36f7917080f3250fd194fc50b7d1e761cf386
 === created .agents/skills/commandments-shared-documentation/SKILL.md
-sha256 7542eccd64afb2d6890350c9a6652710d6fdba9c9dbbe050712faa0c971c2828
+sha256 57bcaa965f27fdb2be09701f1c9431dd0134aa057483195ea6321c2da98612ef
 === created .agents/skills/commandments-shared-documentation/reference/detectors.md
 sha256 fabe87464e32b017e451de6b0e5c9d31bcd868dbbb583c0f6e83c9ac22e4d2a6
 === created .agents/skills/commandments-shared-documentation/reference/examples.md
 sha256 55901189738e26f337fdfb9d99f080c8d551a8963a2d1a3476848aa3502dd7fb
 === created .agents/skills/commandments-shared-duplication/SKILL.md
-sha256 addbb0a12a66eb3a61a01411cc85296f68a02253094c5abab733076832dfc08f
+sha256 bf1632a0a16483dbbac5d89d6add84ce9b536ac74057a1193f55907a5f81b009
 === created .agents/skills/commandments-shared-duplication/reference/detectors.md
 sha256 c00cc8ff85d187ab2ec859c901d589c9b6acfc0a00bd3a9e3d6275a9fe28b106
 === created .agents/skills/commandments-shared-duplication/reference/examples.md
 sha256 78c648796c9f2c43a9e26890aa6450413a7769c40744cfc52e1680520b47d0e8
 === created .agents/skills/commandments-shared-enums/SKILL.md
-sha256 1bff52a4ef9f2f0f9b549b889073e11c09e9536a240976f5bb985fc174bd1bf6
+sha256 1e0ed709d1a54a7e5c6e4cd7f25c0d4beae0b9cb777c3153f6594762857b201f
 === created .agents/skills/commandments-shared-enums/reference/detectors.md
 sha256 6bf4860d74fad294905883a8134472c4dca8e59b6073e18ba912b1cd25a67a91
 === created .agents/skills/commandments-shared-enums/reference/examples.md
 sha256 0eb131301962b9a2d5b9694fef5d3afe2d1a5d5d4265dcc3359c1b3bed08f3fe
 === created .agents/skills/commandments-shared-exceptions/SKILL.md
-sha256 e23cf113a264ec7f4170ad49b251e3c3913aa420c9fabeb5579afc8ff7b2b6b1
+sha256 7c51d7561f4eae4a7bbcc2f4c0b1fd258d2b7a64ec98b672f9c259433d7a03f0
 === created .agents/skills/commandments-shared-exceptions/reference/detectors.md
 sha256 f497e79e5727056fe7438a3ec9ab5a5e5dbd3944c46fda6ba3192b465d355ffb
 === created .agents/skills/commandments-shared-exceptions/reference/examples.md
 sha256 3fbf97aec1691f4602fde6b6cadace4526c22704f9286094fda1e260b40ed74a
 === created .agents/skills/commandments-shared-flow/SKILL.md
-sha256 206f77bac51e9458807e4a293b1db59e171ed1128d4a27f02ad4722a74214b90
+sha256 1f6a667f741a84629feded2cc1dc994768fdb58060e4b7a3663a5028f348cd38
 === created .agents/skills/commandments-shared-flow/reference/detectors.md
 sha256 33d1c5c261d37af6a5ed480c73c3d98c3bc84f2cfbb61f7a556a599149ad783b
 === created .agents/skills/commandments-shared-flow/reference/examples.md
 sha256 3b9b0878085dbcf3516b3e80ac2463367a8106c9139317b36e45170683b13ed4
 === created .agents/skills/commandments-writing-detectors/SKILL.md
-sha256 854fad2f21a601a4c05e5452fee56e8d259bba53f560640914b919cae5a53fdc
+sha256 6b99d487737244fcd34d61e1a9bfc63b41cc1f9e5b5b0fa7fd82e28113033bf6
 === created .agents/skills/commandments-writing-detectors/reference/examples.md
-sha256 7ad4892a4d2564f8c19c4efb6062ed62a10b0b3321d619d0382fb6881cef4596
+sha256 14844f8a9dd8b14be050a5e64c6cba491c210a91f7e994c738368edc8e7a1563
 === created .agents/skills/commandments/SKILL.md
 sha256 9a447fde5b9e89fc7914b4df71e9a47c406b74c115aea24ff291d0129fad752d
 === created .claude/settings.json
