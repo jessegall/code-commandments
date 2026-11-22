@@ -108,6 +108,7 @@ judged.
 | `annotated` | node, text | list | the attributes, annotations or decorators on a declaration that name the symbol given, by what they resolve to |
 | `append` | list, list, … | list | the lists one after another |
 | `assignable` | value, text | truth | whether a resolved type, a node's type or a type named by its symbol is assignable to the type named; unknown when it is unresolved |
+| `assignedOnce` | node | node | the value the local a reference names is given, when its function gives it exactly one; none when it gives it none or several |
 | `at` | list, number | value | the item of a list at a position, counted from 0; no value past its end |
 | `average` | list | number | the mean of a list of numbers; unknown for an empty one |
 | `baseName` | text | text | a path's last segment without its extension: config/app.php reads app |

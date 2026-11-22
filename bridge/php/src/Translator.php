@@ -932,8 +932,8 @@ final class Translator
             )]),
             $expression instanceof Node\Scalar\MagicConst => $this->of('reference', $expression, ['name' => $expression->getName(), 'form' => 'name']),
             $expression instanceof Expr\ConstFetch => $this->constant($expression),
-            $expression instanceof Expr\Assign => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var)], 'values' => [$this->expression($expression->expr)]], ['mode' => 'assign']),
-            $expression instanceof Expr\AssignRef => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var)], 'values' => [$this->expression($expression->expr)]], ['mode' => 'assign']),
+            $expression instanceof Expr\Assign => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var, true)], 'values' => [$this->expression($expression->expr)]], ['mode' => 'assign']),
+            $expression instanceof Expr\AssignRef => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var, true)], 'values' => [$this->expression($expression->expr)]], ['mode' => 'assign']),
             $expression instanceof Expr\AssignOp\Coalesce => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var)], 'values' => [$this->expression($expression->expr)]], ['mode' => 'fallback']),
             $expression instanceof Expr\AssignOp => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var)], 'values' => [$this->expression($expression->expr)]],
                 ['mode' => 'compound', 'operator' => self::BINARIES[substr($expression->getType(), strlen('Expr_AssignOp_'))] ?? null]),
@@ -1062,9 +1062,17 @@ final class Translator
         return (string) (float) $text === (string) $value ? $text : var_export($value, true);
     }
 
-    private function target(Expr $target): TreeNode
+    private function target(Expr $target, bool $declares = false): TreeNode
     {
-        return $this->expression($target);
+        $scope = array_key_last($this->scopes);
+        if (! $declares || $scope === null || ! $target instanceof Expr\Variable || ! is_string($target->name) || $target->name === 'this'
+            || isset($this->scopes[$scope][$target->name])) {
+            return $this->expression($target);
+        }
+        $made = $this->binding($target);
+        $this->scopes[$scope][$target->name] = $made;
+
+        return $made;
     }
 
     private function binding(Node $variable): TreeNode

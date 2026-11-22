@@ -122,9 +122,10 @@
               [
                 "and",
                 [
-                  "=",
+                  "in",
                   "$g.kind",
-                  "reference"
+                  "reference",
+                  "binding"
                 ],
                 [
                   "=",

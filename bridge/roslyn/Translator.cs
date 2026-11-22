@@ -105,13 +105,12 @@ public sealed partial class ContractWriter
                     described["kind"] = "keyword";
                     described["name"] = "dynamic";
                     break;
-                case INamedTypeSymbol { IsTupleType: true } tuple:
+                case INamedTypeSymbol { IsTupleType: true } tuple when depth > 0:
                     described["kind"] = "tuple";
-                    if (depth > 0)
-                    {
-                        described["members"] = tuple.TupleElements.Select(element => Described(element.Type, depth - 1)).ToList();
-                    }
-
+                    described["members"] = tuple.TupleElements.Select(element => Described(element.Type, depth - 1)).ToList();
+                    break;
+                case INamedTypeSymbol { IsTupleType: true }:
+                    described["kind"] = "opaque";
                     break;
                 case INamedTypeSymbol { SpecialType: not SpecialType.None } special when type.ToDisplayString() is { } keyword && SyntaxFacts.GetKeywordKind(keyword.TrimEnd('?')) != SyntaxKind.None:
                     described["kind"] = "keyword";
@@ -668,7 +667,9 @@ public sealed partial class ContractWriter
         {
             var node = model.GetSymbolInfo(expression).Symbol is INamespaceOrTypeSymbol
                 ? Translated(expression)
-                : Typed(Translated(expression), FlowTyped(model.GetTypeInfo(expression)));
+                : Typed(Translated(expression), expression is AnonymousFunctionExpressionSyntax
+                    ? model.GetTypeInfo(expression).ConvertedType
+                    : FlowTyped(model.GetTypeInfo(expression)));
 
             if (expression is IdentifierNameSyntax or MemberAccessExpressionSyntax && model.GetConstantValue(expression) is { HasValue: true } constant)
             {
@@ -1066,9 +1067,14 @@ public sealed partial class ContractWriter
                 IFieldSymbol field => field.Type,
                 IPropertySymbol property => property.Type,
                 IParameterSymbol parameter => parameter.Type,
-                ILocalSymbol local => model.GetTypeInfo(written) is { Type: { TypeKind: not TypeKind.Error } held, Nullability.FlowState: var state }
-                    ? held.WithNullableAnnotation(state == NullableFlowState.MaybeNull ? NullableAnnotation.Annotated : NullableAnnotation.NotAnnotated)
-                    : local.Type,
+                ILocalSymbol local => local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() switch
+                {
+                    VariableDeclaratorSyntax { Initializer: { } initializer, Parent: VariableDeclarationSyntax { Type.IsVar: true } } => DeclaredType(initializer.Value),
+                    VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax { Type.IsVar: false } } => local.Type,
+                    _ => model.GetTypeInfo(written) is { Type: { TypeKind: not TypeKind.Error } held, Nullability.FlowState: var state }
+                        ? held.WithNullableAnnotation(state == NullableFlowState.MaybeNull ? NullableAnnotation.Annotated : NullableAnnotation.NotAnnotated)
+                        : local.Type,
+                },
                 IMethodSymbol method => method.ReturnType,
                 _ => null,
             }) ?? model.GetTypeInfo(written).Type;

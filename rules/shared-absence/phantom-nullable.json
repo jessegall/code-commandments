@@ -55,12 +55,312 @@
           ]
         ]
       ]
+    },
+    "guard": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$x.nullConditional",
+          true
+        ],
+        [
+          "handles",
+          "$x"
+        ],
+        [
+          "=",
+          "$x.parent.kind",
+          "type-test"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "assignment"
+          ],
+          [
+            "tree.nullish",
+            [
+              "at",
+              "$x.parent.values",
+              0
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "in",
+            "$x.parent.kind",
+            "if",
+            "loop",
+            "conditional"
+          ],
+          [
+            "=",
+            "$x.role",
+            "condition"
+          ]
+        ]
+      ]
+    },
+    "carrierOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "access": [
+            "declarationOf",
+            "$x"
+          ],
+          "call": [
+            "declarationOf",
+            "$x"
+          ],
+          "reference": [
+            "declarationOf",
+            "$x"
+          ]
+        },
+        null
+      ]
     }
   },
   "find": {
+    "relations": {
+      "copies": {
+        "from": "assignment",
+        "as": "a",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "=",
+                "$a.mode",
+                "assign"
+              ],
+              [
+                "=",
+                [
+                  "count",
+                  "$a.targets"
+                ],
+                1
+              ],
+              [
+                "=",
+                [
+                  "count",
+                  "$a.values"
+                ],
+                1
+              ]
+            ]
+          },
+          {
+            "project": {
+              "from": [
+                "carrierOf",
+                [
+                  "at",
+                  "$a.values",
+                  0
+                ]
+              ],
+              "to": [
+                "declarationOf",
+                [
+                  "at",
+                  "$a.targets",
+                  0
+                ]
+              ]
+            }
+          },
+          {
+            "where": [
+              "and",
+              [
+                "exists",
+                "$from"
+              ],
+              [
+                "exists",
+                "$to"
+              ]
+            ]
+          }
+        ]
+      },
+      "returns": {
+        "from": "return",
+        "as": "r",
+        "pipeline": [
+          {
+            "where": [
+              "=",
+              [
+                "count",
+                "$r.values"
+              ],
+              1
+            ]
+          },
+          {
+            "project": {
+              "from": [
+                "carrierOf",
+                [
+                  "at",
+                  "$r.values",
+                  0
+                ]
+              ],
+              "to": [
+                "enclosing",
+                "$r",
+                "function"
+              ]
+            }
+          },
+          {
+            "where": [
+              "and",
+              [
+                "exists",
+                "$from"
+              ],
+              [
+                "exists",
+                "$to"
+              ]
+            ]
+          }
+        ]
+      },
+      "passes": {
+        "from": "argument",
+        "as": "g",
+        "pipeline": [
+          {
+            "project": {
+              "from": [
+                "carrierOf",
+                "$g.value"
+              ],
+              "param": [
+                "parameterOf",
+                "$g"
+              ]
+            }
+          },
+          {
+            "where": [
+              "and",
+              [
+                "exists",
+                "$from"
+              ],
+              [
+                "exists",
+                "$param"
+              ]
+            ]
+          },
+          {
+            "project": {
+              "to": "$param.binding"
+            }
+          },
+          {
+            "where": [
+              "exists",
+              "$to"
+            ]
+          }
+        ]
+      },
+      "carries": {
+        "from": [
+          "unionAll",
+          "copies",
+          "returns",
+          "passes"
+        ],
+        "as": "c"
+      },
+      "derefs": {
+        "from": "access",
+        "as": "a",
+        "pipeline": [
+          {
+            "where": [
+              "!=",
+              "$a.nullConditional",
+              true
+            ]
+          },
+          {
+            "project": {
+              "at": [
+                "carrierOf",
+                "$a.subject"
+              ]
+            }
+          },
+          {
+            "where": [
+              "exists",
+              "$at"
+            ]
+          }
+        ]
+      },
+      "guards": {
+        "from": [
+          "unionAll",
+          "access",
+          "call",
+          "reference"
+        ],
+        "as": "x",
+        "pipeline": [
+          {
+            "where": [
+              "guard",
+              "$x"
+            ]
+          },
+          {
+            "project": {
+              "at": [
+                "carrierOf",
+                "$x"
+              ]
+            }
+          },
+          {
+            "where": [
+              "exists",
+              "$at"
+            ]
+          }
+        ]
+      }
+    },
     "select": [
       "declarator",
-      "parameter"
+      "parameter",
+      "reference"
     ],
     "as": "d",
     "where": [
@@ -109,12 +409,92 @@
             "$d"
           ]
         ]
+      ],
+      [
+        "and",
+        [
+          "=",
+          "$d.kind",
+          "reference"
+        ],
+        [
+          "=",
+          "$d.role",
+          "member"
+        ],
+        [
+          "=",
+          "$d.parent.kind",
+          "access"
+        ],
+        [
+          "isSelf",
+          "$d.parent.subject"
+        ],
+        [
+          "nonempty",
+          "$d.symbol"
+        ],
+        [
+          "=",
+          "$d.parent.role",
+          "targets"
+        ],
+        [
+          "=",
+          "$d.parent.parent.kind",
+          "assignment"
+        ],
+        [
+          "isNullable",
+          [
+            "typeOf",
+            [
+              "at",
+              "$d.parent.parent.values",
+              0
+            ]
+          ]
+        ]
       ]
     ],
     "let": [
       [
+        "owner",
+        [
+          "case",
+          "$d.kind",
+          {
+            "reference": [
+              "enclosing",
+              "$d",
+              "type"
+            ]
+          },
+          "$d.parent.parent"
+        ]
+      ],
+      [
         "named",
-        "$d.binding.name"
+        [
+          "case",
+          "$d.kind",
+          {
+            "reference": "$d.name"
+          },
+          "$d.binding.name"
+        ]
+      ],
+      [
+        "own",
+        [
+          "case",
+          "$d.kind",
+          {
+            "reference": "$d"
+          },
+          "$d.binding"
+        ]
       ],
       [
         "reads",
@@ -128,8 +508,8 @@
                 "flatten",
                 [
                   "list",
-                  "$d.parent.parent.writtenMembers",
-                  "$d.parent.parent.implicitMembers"
+                  "$owner.writtenMembers",
+                  "$owner.implicitMembers"
                 ]
               ],
               "m",
@@ -147,9 +527,25 @@
               "$x"
             ],
             [
-              "=",
-              "$x.member.name",
-              "$named"
+              "or",
+              [
+                "=",
+                "$x.member.name",
+                "$named"
+              ],
+              [
+                "and",
+                [
+                  "=",
+                  "$x.kind",
+                  "reference"
+                ],
+                [
+                  "=",
+                  "$x.name",
+                  "$named"
+                ]
+              ]
             ]
           ]
         ]
@@ -187,46 +583,29 @@
           "$reads",
           "x",
           [
-            "or",
+            "guard",
+            "$x"
+          ]
+        ]
+      ],
+      [
+        "reach",
+        [
+          "flatten",
+          [
+            "list",
             [
-              "=",
-              "$x.nullConditional",
-              true
+              "list",
+              "$own"
             ],
             [
-              "handles",
-              "$x"
-            ],
-            [
-              "and",
+              "reachableFrom",
               [
-                "=",
-                "$x.parent.kind",
-                "assignment"
+                "rowsOf",
+                "carries"
               ],
-              [
-                "tree.nullish",
-                [
-                  "at",
-                  "$x.parent.values",
-                  0
-                ]
-              ]
-            ],
-            [
-              "and",
-              [
-                "in",
-                "$x.parent.kind",
-                "if",
-                "loop",
-                "conditional"
-              ],
-              [
-                "=",
-                "$x.role",
-                "condition"
-              ]
+              "$own",
+              0
             ]
           ]
         ]
@@ -235,20 +614,54 @@
     "having": [
       "and",
       [
-        ">",
-        [
-          "count",
-          "$assumed"
-        ],
-        0
-      ],
-      [
         "=",
         [
           "count",
           "$guarded"
         ],
         0
+      ],
+      [
+        "or",
+        [
+          ">",
+          [
+            "count",
+            "$assumed"
+          ],
+          0
+        ],
+        [
+          "and",
+          [
+            "some",
+            "$reach",
+            "s",
+            [
+              "hasRow",
+              "derefs",
+              [
+                "record",
+                "at",
+                "$s"
+              ]
+            ]
+          ],
+          [
+            "none",
+            "$reach",
+            "s",
+            [
+              "hasRow",
+              "guards",
+              [
+                "record",
+                "at",
+                "$s"
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": [

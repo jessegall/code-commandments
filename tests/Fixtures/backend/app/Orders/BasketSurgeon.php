@@ -9,7 +9,7 @@ namespace Shop\Orders;
  */
 final class BasketSurgeon
 {
-    public function removeLine(Basket $basket, string $lineId): Basket
+    public function removeLine(SurgeryBasket $basket, string $lineId): SurgeryBasket
     {
         $line = $basket->lineById($lineId);
 
@@ -17,7 +17,7 @@ final class BasketSurgeon
     }
 }
 
-final class Basket
+final class SurgeryBasket
 {
     /**
      * @var array<string, BasketLine>
@@ -29,7 +29,7 @@ final class Basket
         return $this->lines[$id];
     }
 
-    public function without(BasketLine $line): Basket
+    public function without(BasketLine $line): SurgeryBasket
     {
         return $this;
     }

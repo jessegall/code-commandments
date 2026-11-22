@@ -8,7 +8,7 @@ def label(count, parts, extra, items):
     # @contract fact/assignment/mode = "assign"
     # @label cnt_l reference 13
     # @label one_l literal 21
-    # @label tot_ref reference 5
+    # @label tot_ref binding 5
     # @label add_bin binary 13
     total = count + 1
     # @contract kind/unary

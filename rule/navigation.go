@@ -30,6 +30,7 @@ func init() {
 		"isElseIf":       {operands: []valueType{node}, gives: truth, says: "whether an if continues another as its else-if: else if, elif, elseif"},
 		"isSelf":         {operands: []valueType{node}, gives: truth, says: "whether a node is the instance the method runs on: this, self, $this, or a Go method's receiver"},
 		"selfMember":     {operands: []valueType{node}, gives: node, says: "the member declaration a node reads or writes through the instance the method runs on; none when it reads none, unknown when the member is not resolved"},
+		"assignedOnce":   {operands: []valueType{node}, gives: node, says: "the value the local a reference names is given, when its function gives it exactly one; none when it gives it none or several"},
 		"receiverChain":  {operands: []valueType{node}, gives: list, says: "the links of a chain a.b().c, the root first, each a record of node, member, owner (the type declaring the member) and nullConditional"},
 		"consumer":       {operands: []valueType{node}, gives: anyValue, says: "how an expression's value is used, as a record of use and node: discarded, returned, assigned, argument, receiver, null-safe-receiver, called, condition, compared-to-nothing, coalesced, asserted-present, thrown, yielded or operand"},
 		"accessMode":     {operands: []valueType{node}, gives: text, says: "whether a reference reads, writes, or reads and writes the name: read, write or readwrite"},
@@ -173,6 +174,15 @@ func init() {
 		}),
 		"isSelf":     nodeTruth(isSelf),
 		"selfMember": func(_ evaluation, operands []value) value { return onNode(operands, selfMember) },
+		"assignedOnce": func(_ evaluation, operands []value) value {
+			return onNode(operands, func(site engine.Match) value {
+				if given, once := site.AssignedValue(); once {
+					return known(given)
+				}
+
+				return known(nil)
+			})
+		},
 		"receiverChain": func(_ evaluation, operands []value) value {
 			return onNode(operands, receiverChain)
 		},

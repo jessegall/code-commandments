@@ -27,30 +27,58 @@
       "expr": [
         "at",
         [
-          "filter",
+          "flatten",
           [
-            "flatten",
+            "list",
             [
-              "map",
+              "filter",
               [
-                "filter",
-                "$t.writtenMembers",
-                "m",
+                "flatten",
                 [
-                  "=",
-                  "$m.kind",
-                  "field"
+                  "map",
+                  [
+                    "filter",
+                    "$t.writtenMembers",
+                    "m",
+                    [
+                      "=",
+                      "$m.kind",
+                      "field"
+                    ]
+                  ],
+                  "m",
+                  "$m.declarators"
                 ]
               ],
+              "d",
+              [
+                "=",
+                "$d.binding.name",
+                "$n"
+              ]
+            ],
+            [
+              "filter",
+              "$t.implicitMembers",
               "m",
-              "$m.declarators"
+              [
+                "case",
+                "$m.kind",
+                {
+                  "reference": [
+                    "=",
+                    "$m.name",
+                    "$n"
+                  ],
+                  "parameter": [
+                    "=",
+                    "$m.binding.name",
+                    "$n"
+                  ]
+                },
+                false
+              ]
             ]
-          ],
-          "d",
-          [
-            "=",
-            "$d.binding.name",
-            "$n"
           ]
         ],
         0
@@ -108,36 +136,248 @@
           ]
         ]
       ]
+    },
+    "ownReadName": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "tree.insideOf",
+              "$e"
+            ],
+            "x",
+            [
+              "tree.selfField",
+              "$x"
+            ]
+          ],
+          "x",
+          "$x.member.name"
+        ],
+        0
+      ]
+    },
+    "presence": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "tree.selfField",
+          "$c"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "comparison"
+          ],
+          [
+            "in",
+            "$c.operator",
+            "not-identical",
+            "not-equal"
+          ],
+          [
+            "some",
+            "$c.operands",
+            "o",
+            [
+              "and",
+              [
+                "=",
+                "$o.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$o.literalKind",
+                "null"
+              ]
+            ]
+          ],
+          [
+            "some",
+            "$c.operands",
+            "o",
+            [
+              "tree.selfField",
+              "$o"
+            ]
+          ]
+        ]
+      ]
+    },
+    "readFrom": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.kind",
+        {
+          "fallback": "$f.subject",
+          "conditional": "$f.condition",
+          "call": [
+            "at",
+            [
+              "map",
+              "$f.arguments",
+              "a",
+              "$a.value"
+            ],
+            0
+          ]
+        },
+        null
+      ]
+    },
+    "replacementOf": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.kind",
+        {
+          "fallback": "$f.replacement",
+          "conditional": "$f.alternative",
+          "call": [
+            "at",
+            [
+              "map",
+              "$f.arguments",
+              "a",
+              "$a.value"
+            ],
+            2
+          ]
+        },
+        null
+      ]
+    },
+    "guarded": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.kind",
+        {
+          "fallback": [
+            "some",
+            [
+              "tree.insideOf",
+              "$f.subject"
+            ],
+            "x",
+            [
+              "=",
+              "$x.nullConditional",
+              true
+            ]
+          ],
+          "conditional": [
+            "and",
+            [
+              "presence",
+              "$f.condition"
+            ],
+            [
+              "=",
+              [
+                "ownReadName",
+                "$f.condition"
+              ],
+              [
+                "ownReadName",
+                "$f.consequent"
+              ]
+            ]
+          ],
+          "call": [
+            "and",
+            [
+              "=",
+              [
+                "count",
+                "$f.arguments"
+              ],
+              3
+            ],
+            [
+              "some",
+              [
+                "identities",
+                "defaulted-attribute-read"
+              ],
+              "i",
+              [
+                "=",
+                "$i",
+                [
+                  "concat",
+                  "$f.target.type",
+                  ".",
+                  "$f.target.name"
+                ]
+              ]
+            ]
+          ]
+        },
+        false
+      ]
     }
   },
   "find": {
-    "select": "fallback",
+    "select": [
+      "fallback",
+      "conditional",
+      "call"
+    ],
     "as": "f",
     "where": [
       "and",
       [
-        "=",
-        "$f.replacement.kind",
-        "literal"
+        "not",
+        "$f.file.test"
       ],
       [
-        "not",
-        [
-          "tree.nullish",
-          "$f.replacement"
-        ]
+        "guarded",
+        "$f"
       ],
       [
         "some",
         [
-          "tree.insideOf",
-          "$f.subject"
+          "list",
+          [
+            "replacementOf",
+            "$f"
+          ]
         ],
-        "x",
+        "r",
         [
-          "=",
-          "$x.nullConditional",
-          true
+          "and",
+          [
+            "=",
+            "$r.kind",
+            "literal"
+          ],
+          [
+            "not",
+            [
+              "tree.nullish",
+              "$r"
+            ]
+          ]
         ]
       ]
     ],
@@ -150,7 +390,10 @@
             "filter",
             [
               "tree.insideOf",
-              "$f.subject"
+              [
+                "readFrom",
+                "$f"
+              ]
             ],
             "x",
             [
@@ -200,6 +443,13 @@
           [
             "typeOf",
             "$field.parent"
+          ]
+        ],
+        [
+          "isNullable",
+          [
+            "typeOf",
+            "$read"
           ]
         ],
         [

@@ -199,7 +199,10 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   `x: T = v` outside a class, form `annotated`). A
   `using` declaration (C# `using var`, TypeScript `using` and `await using`) is form `using`: its value is released
   where the enclosing block ends; the statement that holds a body is a `resource-scope`.
-  `declarators[]`, `declaredType?`. Fact `form`. Go's `:=` is an `assignment` with mode `define`.
+  `declarators[]`, `declaredType?`. Fact `form`. Go's `:=` is an `assignment` with mode `define`. A language that
+  declares a local by assigning it (PHP, Python) writes the target of a function's first plain assignment to that
+  name as the local's `binding`, in the `assignment`'s `targets`, as Go's `:=` writes its new names; every later
+  read or assignment of the name links to that binding.
 - **`binding`**: a name a declaration introduces. Facts `name`, `symbol?`.
 - **`annotation`**: an attribute, annotation or decorator applied to a declaration. `callee` (a reference or
   access naming it), `arguments[]`. Facts `name`, `refers`.

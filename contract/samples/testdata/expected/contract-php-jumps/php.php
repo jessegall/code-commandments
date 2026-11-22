@@ -7,7 +7,7 @@ function scan(array $rows): int
     // @contract role/assignment/values -> [zeroLit]
     // @contract fact/assignment/mode = "assign"
     // @contract fact/literal/literalKind = "integer"
-    // @label seenRef reference
+    // @label seenRef binding
     // @label zeroLit literal
     $seen = 0;
     // @contract kind/reference

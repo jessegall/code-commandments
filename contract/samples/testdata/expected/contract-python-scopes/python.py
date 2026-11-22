@@ -107,3 +107,11 @@ async def guarded(lock): # @label guarded_fn function
     # @contract fact/resource-scope/async = true
     async with lock:
         pass
+
+
+def doubled(amount: int) -> int:
+    # @contract role/assignment/targets -> [twice_b]
+    # @label twice_b binding 5
+    twice = amount * 2
+    # @contract link/reference/binding at 12 -> twice_b
+    return twice

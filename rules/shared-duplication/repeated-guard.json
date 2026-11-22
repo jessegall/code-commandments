@@ -83,6 +83,56 @@
                       [
                         "ownDescendants",
                         "$p"
+                      ],
+                      [
+                        "flatten",
+                        [
+                          "map",
+                          [
+                            "filter",
+                            [
+                              "flatten",
+                              [
+                                "list",
+                                [
+                                  "list",
+                                  "$p"
+                                ],
+                                [
+                                  "ownDescendants",
+                                  "$p"
+                                ]
+                              ]
+                            ],
+                            "r",
+                            [
+                              "=",
+                              "$r.kind",
+                              "reference"
+                            ]
+                          ],
+                          "r",
+                          [
+                            "flatten",
+                            [
+                              "list",
+                              [
+                                "list",
+                                [
+                                  "assignedOnce",
+                                  "$r"
+                                ]
+                              ],
+                              [
+                                "ownDescendants",
+                                [
+                                  "assignedOnce",
+                                  "$r"
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
                       ]
                     ]
                   ]

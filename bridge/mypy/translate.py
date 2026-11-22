@@ -25,6 +25,14 @@ BINARIES = {
     ast.BitAnd: "bit-and", ast.BitXor: "bit-xor", ast.MatMult: "multiply",
 }
 UNARIES = {ast.Not: "not", ast.USub: "negate", ast.UAdd: "plus", ast.Invert: "bit-not"}
+
+def forward_reference(written: str) -> ast.expr | None:
+    try:
+        return ast.parse(written.strip(), mode="eval").body
+    except SyntaxError:
+        return None
+
+
 @dataclass
 class Scope:
     """The names a function, lambda or comprehension binds while its body is written: the binding of each parameter
@@ -203,8 +211,9 @@ class Translator:
     def stmt_Assign(self, statement: ast.Assign, scope, owner) -> Node:
         if owner == "class":
             return shared(self.field(statement, statement.targets, None, statement.value, scope, self.attribute(statement, statement.targets, None)), True)
+        values = [self.expression(statement.value)]
         return self.assigned(statement, self.new("assignment", *self.span(statement), mode="assign"),
-                             [self.expression(target) for target in statement.targets], [self.expression(statement.value)])
+                             [self.assignment_target(target) for target in statement.targets], values)
 
     def attribute(self, statement: ast.stmt, targets: list[ast.expr], annotation: ast.expr | None) -> Node:
         written = annotation.value if isinstance(annotation, ast.Subscript) else annotation
@@ -588,7 +597,7 @@ class Translator:
         if isinstance(annotation, (ast.Name, ast.Attribute)):
             return self.named_type(annotation, self.refers(annotation))
         if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
-            return self.named_type(annotation, None)
+            return self.named_type(annotation, self.refers(forward_reference(annotation.value)))
         return self.of("type-expression", annotation, form="opaque")
 
     def named_type(self, annotation: ast.expr, refers: str | None) -> Node:
@@ -664,6 +673,17 @@ class Translator:
         if self.scopes and name not in self.scopes[-1].bindings:
             self.scopes[-1].bindings[name] = binding
         return binding
+
+    def assignment_target(self, target: ast.expr) -> Node:
+        scope = self.scopes[-1] if self.scopes else None
+        if not isinstance(target, ast.Name) or scope is None or target.id in scope.bindings or target.id in scope.globals:
+            return self.expression(target)
+        binding = self.of("binding", target, name=target.id)
+        span = self.span(target)
+        if span in self.types:
+            self.joined.add(span)
+            binding.facts["resolvedType"] = self.typed(self.types[span].to_json())
+        return self.declared(target.id, binding)
 
     def bound(self, name: str) -> Node | None:
         """The binding a name read in a function names: the nearest scope's, unless a scope between assigns it

@@ -38,3 +38,12 @@ function counter(int $step): callable
         return $by + $step;
     };
 }
+
+function doubled(int $amount): int
+{
+    // @contract role/assignment/targets -> [twiceB]
+    // @label twiceB binding 5
+    $twice = $amount * 2;
+    // @contract link/reference/binding at 12 -> twiceB
+    return $twice;
+}

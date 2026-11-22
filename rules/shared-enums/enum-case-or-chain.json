@@ -240,6 +240,46 @@
           "$subjects"
         ],
         1
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "some",
+            [
+              "ancestors",
+              "$l"
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "function"
+              ],
+              [
+                "=",
+                "$a.form",
+                "lambda"
+              ],
+              [
+                "some",
+                [
+                  "identities",
+                  "expression-tree"
+                ],
+                "x",
+                [
+                  "startsWith",
+                  "$a.resolved.name",
+                  "$x"
+                ]
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$l"

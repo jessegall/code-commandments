@@ -5,9 +5,25 @@
   "provenance": "Python's own data model: the method that answers an attribute read no attribute declares",
   "entries": [],
   "identities": [
-    {"name": "dynamic-member-reader", "type": "__getattr__"},
-    {"name": "serialization-hook", "type": "__getstate__"},
-    {"name": "serialization-hook", "type": "__setstate__"},
-    {"name": "serialization-hook", "type": "__reduce__"}
+    {
+      "name": "dynamic-member-reader",
+      "type": "__getattr__"
+    },
+    {
+      "name": "serialization-hook",
+      "type": "__getstate__"
+    },
+    {
+      "name": "serialization-hook",
+      "type": "__setstate__"
+    },
+    {
+      "name": "serialization-hook",
+      "type": "__reduce__"
+    },
+    {
+      "name": "defaulted-attribute-read",
+      "type": "builtins.getattr"
+    }
   ]
 }

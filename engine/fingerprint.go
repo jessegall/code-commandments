@@ -124,6 +124,10 @@ func (w *fingerprintWalk) role(node *contract.Node) string {
 // orderFree are the operators whose operands may be swapped without changing what they mean.
 var orderFree = []string{"add", "multiply", "bit-and", "bit-or", "bit-xor", "equal", "not-equal", "identical", "not-identical", "and", "or"}
 
+func assignedAsWritten(m Match) bool {
+	return m.node.Kind == "binding" && m.node.InRole() == "targets" && m.Parent().Node().Kind == "assignment"
+}
+
 func (w *fingerprintWalk) structure(m Match) string {
 	var out strings.Builder
 	w.write(&out, m)
@@ -138,9 +142,13 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 	}
 	normalize := w.how.Mode == "normalized"
 	role := w.role(node)
+	kind, declares, form := node.Kind, node.Is("declaration"), node.Form
+	if assignedAsWritten(m) {
+		kind, declares, form = "reference", false, "name"
+	}
 	switch {
 	case w.how.Mode == "shape":
-		out.WriteString("(" + node.Kind + "|" + role)
+		out.WriteString("(" + kind + "|" + role)
 		for _, child := range m.statedChildren() {
 			out.WriteByte('|')
 			w.write(out, child)
@@ -157,7 +165,7 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 		out.WriteString("(" + node.Kind + "|" + node.LiteralKind + "|" + string(written) + ")")
 
 		return
-	case node.Kind == "reference" && normalize && !namesTheCalled(m, role):
+	case kind == "reference" && normalize && !namesTheCalled(m, role):
 		out.WriteString("(reference)")
 
 		return
@@ -169,7 +177,7 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 			return
 		}
 	case w.how.Mode == "renamed" && node.Kind == "binding":
-		out.WriteString("(binding|" + role + "|v" + w.number(node.ID) + ")")
+		out.WriteString("(" + kind + "|" + role + "|v" + w.number(node.ID) + ")")
 
 		return
 	case w.how.Mode == "renamed" && node.Kind == "reference" && len(node.Linked("binding")) == 1:
@@ -177,11 +185,11 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 
 		return
 	}
-	out.WriteString("(" + node.Kind + "|" + role)
-	if !normalize || !node.Is("declaration") {
+	out.WriteString("(" + kind + "|" + role)
+	if !normalize || !declares {
 		out.WriteString("|" + node.Name)
 	}
-	out.WriteString("|" + node.Operator + "|" + node.Form + "|" + strings.Join(node.Modifiers, " ") + "|" + flagsOf(node))
+	out.WriteString("|" + node.Operator + "|" + form + "|" + strings.Join(node.Modifiers, " ") + "|" + flagsOf(node))
 	if w.how.Commutative && slices.Contains(orderFree, node.Operator) {
 		var children []string
 		for _, child := range m.statedChildren() {
@@ -202,6 +210,14 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 
 // assignedOnce is the value a local is given when its function gives it exactly one, so a guard written through it
 // reads as the guard written out.
+func (m Match) AssignedValue() (Match, bool) {
+	if m.node == nil || m.node.Kind != "reference" || len(m.node.Linked("binding")) != 1 {
+		return Match{}, false
+	}
+
+	return m.assignedOnce(m.node.Linked("binding")[0])
+}
+
 func (m Match) assignedOnce(binding int) (Match, bool) {
 	var given []Match
 	for _, held := range m.EnclosingFunction().Descendants() {

@@ -217,9 +217,10 @@
               [
                 "and",
                 [
-                  "=",
+                  "in",
                   "$t.kind",
-                  "reference"
+                  "reference",
+                  "binding"
                 ],
                 [
                   "=",

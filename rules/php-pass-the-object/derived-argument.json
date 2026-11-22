@@ -312,6 +312,63 @@
           ]
         ]
       ]
+    },
+    "independent": {
+      "args": [
+        "callee",
+        "root"
+      ],
+      "expr": [
+        "proven",
+        [
+          "some",
+          [
+            "list",
+            [
+              "typeDeclaration",
+              [
+                "textOf",
+                [
+                  "typeOf",
+                  "$root"
+                ]
+              ]
+            ]
+          ],
+          "s",
+          [
+            "and",
+            [
+              "exists",
+              "$s"
+            ],
+            [
+              "!=",
+              [
+                "dirName",
+                "$callee.file.path"
+              ],
+              [
+                "dirName",
+                "$s.file.path"
+              ]
+            ],
+            [
+              "none",
+              [
+                "referrers",
+                "$s"
+              ],
+              "r",
+              [
+                "=",
+                "$r.file.path",
+                "$callee.file.path"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -364,10 +421,27 @@
       [
         "calls",
         [
-          "tree.callsOf",
+          "filter",
           [
-            "declarationOf",
-            "$c"
+            "referrers",
+            [
+              "declarationOf",
+              "$c"
+            ]
+          ],
+          "o",
+          [
+            "and",
+            [
+              "in",
+              "$o.kind",
+              "call",
+              "construction"
+            ],
+            [
+              "not",
+              "$o.file.test"
+            ]
           ]
         ]
       ],
@@ -467,6 +541,41 @@
               ]
             ],
             1
+          ],
+          [
+            "not",
+            [
+              "isSelf",
+              [
+                "pieceRoot",
+                [
+                  "values",
+                  "$c"
+                ],
+                [
+                  "position",
+                  "$g"
+                ]
+              ]
+            ]
+          ],
+          [
+            "not",
+            [
+              "independent",
+              "$callee",
+              [
+                "pieceRoot",
+                [
+                  "values",
+                  "$c"
+                ],
+                [
+                  "position",
+                  "$g"
+                ]
+              ]
+            ]
           ]
         ]
       ],
