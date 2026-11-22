@@ -381,6 +381,14 @@ final class Translator
     private function foreachLoop(Stmt\Foreach_ $loop, ?string $class): TreeNode
     {
         $bindings = array_map($this->binding(...), array_values(array_filter([$loop->keyVar, $loop->valueVar])));
+        // A foreach binds its key and value in the function around it, so a read of either in the body is a read of it.
+        if ($this->scopes !== []) {
+            foreach ($bindings as $binding) {
+                if (isset($binding->facts['name'])) {
+                    $this->scopes[array_key_last($this->scopes)][$binding->facts['name']] ??= $binding;
+                }
+            }
+        }
 
         return $this->owning('loop', $loop, [
             'iterable' => $this->expression($loop->expr),
@@ -560,7 +568,7 @@ final class Translator
         }
         if ($member instanceof Stmt\ClassConst) {
             $made = $this->of('constant', $member, ['modifiers' => $this->modifiers($member)]);
-            $made->parts = ['declarators' => array_map($this->constantDeclarator(...), $member->consts)];
+            $made->parts = ['declarators' => array_map($this->constantDeclarator(...), $member->consts), 'attributes' => $this->attributes($member->attrGroups)];
             foreach ($made->parts['declarators'] as $declarator) {
                 if ($class !== null) {
                     $declarator->parts['binding']->facts['symbol'] = "{$class}::{$declarator->parts['binding']->facts['name']}";
@@ -574,6 +582,7 @@ final class Translator
         }
         if ($member instanceof Stmt\EnumCase) {
             $made = $this->of('enum-case', $member, ['name' => $member->name->toString(), 'symbol' => $class !== null ? "{$class}::{$member->name}" : null]);
+            $made->parts['attributes'] = $this->attributes($member->attrGroups);
             if ($member->expr !== null) {
                 $made->parts['value'] = $this->expression($member->expr);
             }
@@ -629,6 +638,7 @@ final class Translator
         $made = $this->of('function', $function, [
             'name' => $named, 'symbol' => $symbol, 'form' => $form,
             'modifiers' => $this->modifiers($function), 'generator' => $this->yields($function),
+            'obligations' => $function->getAttribute('obligations'),
         ]);
         $parameters = array_map($this->parameter(...), $function->getParams());
         $parts = ['attributes' => $this->attributes($function->getAttrGroups()), 'parameters' => $parameters];
@@ -741,6 +751,9 @@ final class Translator
         }
         if (! $use instanceof Stmt\GroupUse && count($bindings) === 1) {
             $made->facts['source'] = $bindings[0]->facts['name'];
+            if (is_string($file = $use->uses[0]->getAttribute('resolves'))) {
+                $made->facts['resolves'] = $file;
+            }
         }
         $made->parts = ['bindings' => $bindings];
 
@@ -850,6 +863,9 @@ final class Translator
         $type = $expression->getAttribute('type');
         if (is_array($type)) {
             $node->facts['resolvedType'] = $this->typeIndex($type);
+        }
+        if (is_array($folded = $expression->getAttribute('constantValue'))) {
+            $node->facts['constantValue'] = $folded;
         }
         $target = $expression->getAttribute('target');
         if (is_array($target) && in_array($node->kind, ['call', 'construction'], true)) {
@@ -1169,7 +1185,7 @@ final class Translator
             'body' => $this->expression($arm->body),
         ], ['default' => $arm->conds === null]), $match->arms);
 
-        return $this->owning('dispatch', $match, ['subject' => $this->expression($match->cond), 'arms' => $arms], ['form' => 'match']);
+        return $this->owning('dispatch', $match, ['subject' => $this->expression($match->cond), 'arms' => $arms], ['form' => 'match', 'exhaustive' => $match->getAttribute('exhaustive')]);
     }
 
     // Comments -------------------------------------------------------------------------------------------------------

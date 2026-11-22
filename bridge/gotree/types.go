@@ -195,6 +195,9 @@ func typeOf(held types.Type, origin string) *contract.Type {
 
 	line := &contract.Type{Text: types.TypeString(held, qualify), Origin: origin,
 		Nullable: contract.Stated(admitsNil(held.Underlying())), ValueType: contract.Stated(isValueType(held.Underlying()))}
+	if _, parameter := held.(*types.TypeParam); parameter {
+		line.Nullable, line.ValueType = nil, nil
+	}
 	switch shape := held.(type) {
 	case *types.Basic:
 		line.Kind, line.Name = "keyword", shape.Name()
@@ -283,9 +286,11 @@ func isValueType(under types.Type) bool {
 	return false
 }
 
+// admitsNil says whether nil is a value of the type that stands for nothing: a pointer, an interface, a func and a
+// channel. A nil slice or map is an empty one (its length is 0, ranging over it does nothing), so neither is nullable.
 func admitsNil(under types.Type) bool {
 	switch under.(type) {
-	case *types.Pointer, *types.Interface:
+	case *types.Pointer, *types.Interface, *types.Signature, *types.Chan:
 		return true
 	}
 

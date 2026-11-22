@@ -10,6 +10,7 @@ import inspect
 import io
 import re
 import tokenize
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 from session import Named, ResolvedType
@@ -24,6 +25,16 @@ BINARIES = {
     ast.BitAnd: "bit-and", ast.BitXor: "bit-xor", ast.MatMult: "multiply",
 }
 UNARIES = {ast.Not: "not", ast.USub: "negate", ast.UAdd: "plus", ast.Invert: "bit-not"}
+@dataclass
+class Scope:
+    """The names a function, lambda or comprehension binds while its body is written: the binding of each parameter
+    or loop target by name, the names its body assigns, and the names it declares global."""
+
+    bindings: dict[str, "Node"]
+    assigned: set[str]
+    globals: set[str]
+
+
 COMPREHENSIONS = {ast.ListComp: "list", ast.SetComp: "set", ast.GeneratorExp: "generator", ast.DictComp: "map"}
 FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef)
 SCOPES = (*FUNCTIONS, ast.Lambda, ast.ClassDef)
@@ -51,13 +62,20 @@ class Translator:
     `types` is mypy's type of each expression by its byte span, and `targets` the declaration each call binds to."""
 
     def __init__(self, source: bytes, module: str, resolve, types: dict[tuple[int, int], ResolvedType],
-                 targets: dict[tuple[int, int], dict[str, str]] | None = None, names: dict[tuple[int, int], str] | None = None) -> None:
+                 targets: dict[tuple[int, int], dict[str, str]] | None = None, names: dict[tuple[int, int], str] | None = None,
+                 obligations: dict[str, list[dict[str, str]]] | None = None, enum_members: dict[str, list[str]] | None = None,
+                 module_paths: dict[str, str] | None = None, constants: dict[tuple[int, int], dict[str, object]] | None = None) -> None:
         self.source = source
+        self.obligations = obligations or {}
+        self.enum_members = enum_members or {}
+        self.module_paths = module_paths or {}
+        self.constants = constants or {}
         self.targets = targets or {}
         self.names = names or {}
         self.module = module
         self.resolve = resolve
         self.types = types
+        self.scopes: list[Scope] = []
         self.joined: set[tuple[int, int]] = set()
         self.table: list[dict[str, object]] = []
         self.starts = [0, *(at + 1 for at, byte in enumerate(source) if byte == 0x0A)]
@@ -100,7 +118,7 @@ class Translator:
         for statement in tree.body:
             if isinstance(statement, (ast.Import, ast.ImportFrom)):
                 imports.extend(self.imports(statement))
-            elif isinstance(statement, (*FUNCTIONS, ast.ClassDef)):
+            elif isinstance(statement, (*FUNCTIONS, ast.ClassDef, ast.TypeAlias)):
                 declarations.append(self.statement(statement, [], None))
             else:
                 statements.append(self.statement(statement, [], None))
@@ -179,13 +197,13 @@ class Translator:
 
     def stmt_Assign(self, statement: ast.Assign, scope, owner) -> Node:
         if owner == "class":
-            return self.field(statement, statement.targets, None, statement.value)
+            return self.field(statement, statement.targets, None, statement.value, scope)
         return self.assigned(statement, self.new("assignment", *self.span(statement), mode="assign"),
                              [self.expression(target) for target in statement.targets], [self.expression(statement.value)])
 
     def stmt_AnnAssign(self, statement: ast.AnnAssign, scope, owner) -> Node:
         if owner == "class":
-            return self.field(statement, [statement.target], statement.annotation, statement.value)
+            return self.field(statement, [statement.target], statement.annotation, statement.value, scope)
         values = [self.expression(statement.value)] if statement.value is not None else []
         return self.assigned(statement, self.new("assignment", *self.span(statement), mode="assign"), [self.expression(statement.target)], values)
 
@@ -199,13 +217,17 @@ class Translator:
         node.parts = {"expression": assignment}
         return node
 
-    def field(self, statement: ast.stmt, targets: list[ast.expr], annotation: ast.expr | None, value: ast.expr | None) -> Node:
+    def field(self, statement: ast.stmt, targets: list[ast.expr], annotation: ast.expr | None, value: ast.expr | None,
+              scope: list[str]) -> Node:
         node = self.of("field", statement)
         declarators = []
         for target in targets:
             start, end = self.span(target)
             declarator = self.new("declarator", start, self.span(value)[1] if value is not None else end)
-            declarator.parts = {"binding": self.written_binding(target)}
+            binding = self.written_binding(target)
+            if isinstance(target, ast.Name):
+                binding.facts["symbol"] = ".".join([self.module, *scope, target.id])
+            declarator.parts = {"binding": binding}
             if value is not None:
                 declarator.parts["initializer"] = self.expression(value)
             declarators.append(declarator)
@@ -314,16 +336,34 @@ class Translator:
 
     def stmt_ClassDef(self, statement: ast.ClassDef, scope, owner) -> Node:
         start = self.decorated(statement)
-        node = self.new("type", start, self.span(statement)[1], name=statement.name,
-                        symbol=".".join([self.module, *scope, statement.name]), form="class")
+        symbol = ".".join([self.module, *scope, statement.name])
+        members = self.enum_members.get(symbol)
+        node = self.new("type", start, self.span(statement)[1], name=statement.name, symbol=symbol,
+                        form="enum" if members is not None else "class")
         inner = [*scope, statement.name]
         node.parts = {}
         if statement.bases:
             node.parts["bases"] = [self.type(base) for base in statement.bases]
         if statement.decorator_list:
             node.parts["attributes"] = [self.annotation(each) for each in statement.decorator_list]
-        node.parts["writtenMembers"] = [self.statement(each, inner, "class") for each in statement.body]
+        if statement.type_params:
+            node.parts["typeParameters"] = self.type_parameters(statement.type_params)
+        node.parts["writtenMembers"] = [self.enum_case(each, symbol) if self.declares_case(each, members) else self.statement(each, inner, "class")
+                                        for each in statement.body]
         self.document(statement, node)
+        return node
+
+    @staticmethod
+    def declares_case(statement: ast.stmt, members: list[str] | None) -> bool:
+        """Whether a statement of an enum's body declares one of its members: `NAME = value`, as mypy counts them."""
+        return (members is not None and isinstance(statement, (ast.Assign, ast.AnnAssign))
+                and len(targets := statement.targets if isinstance(statement, ast.Assign) else [statement.target]) == 1
+                and isinstance(targets[0], ast.Name) and targets[0].id in members)
+
+    def enum_case(self, statement: ast.Assign | ast.AnnAssign, owner: str) -> Node:
+        name = (statement.targets[0] if isinstance(statement, ast.Assign) else statement.target).id
+        node = self.of("enum-case", statement, name=name, symbol=f"{owner}.{name}")
+        node.parts = {"value": self.expression(statement.value)} if statement.value is not None else {}
         return node
 
     def stmt_Match(self, statement: ast.Match, scope, owner) -> Node:
@@ -339,7 +379,25 @@ class Translator:
                 arm.parts["guard"] = self.expression(case.guard)
             arms.append(arm)
         node.parts = {"subject": self.expression(statement.subject), "arms": arms}
+        if self.covers_every_member(statement):
+            node.facts["exhaustive"] = True
         return node
+
+    def covers_every_member(self, statement: ast.Match) -> bool:
+        """Whether a match with no wildcard or guard names every member of the enum its subject is, as `Suit.HEARTS`.
+        shortcut: only an enum the module itself declares is known by its members; read other modules' when needed."""
+        typed = self.types.get(self.span(statement.subject))
+        members = self.enum_members.get(typed.instance_of) if typed is not None and typed.instance_of else None
+        if members is None:
+            return False
+        named = set()
+        for case in statement.cases:
+            patterns = case.pattern.patterns if isinstance(case.pattern, ast.MatchOr) else [case.pattern]
+            for pattern in patterns:
+                if case.guard is not None or not isinstance(pattern, ast.MatchValue) or not isinstance(pattern.value, ast.Attribute):
+                    return False
+                named.add(pattern.value.attr)
+        return set(members) <= named
 
     def is_wildcard(self, pattern: ast.pattern) -> bool:
         return isinstance(pattern, ast.MatchAs) and pattern.pattern is None and pattern.name is None
@@ -360,15 +418,23 @@ class Translator:
         node = self.new("function", self.decorated(statement), self.span(statement)[1], name=statement.name,
                         symbol=".".join([self.module, *scope, statement.name]), form=form,
                         generator=self.yields(statement), **{"async": isinstance(statement, ast.AsyncFunctionDef)})
+        obligations = self.obligations.get(".".join([self.module, *scope, statement.name]))
+        if obligations and owner == "class":
+            node.facts["obligations"] = obligations
         node.parts = {}
         if statement.decorator_list:
             node.parts["attributes"] = [self.annotation(each) for each in statement.decorator_list]
+        if statement.type_params:
+            node.parts["typeParameters"] = self.type_parameters(statement.type_params)
         parameters = self.parameters(statement.args)
+        if owner == "class" and parameters and not self.is_static(statement) and parameters[0].facts.get("collects") is None:
+            node.parts["receiver"], parameters = parameters[0], parameters[1:]
         if parameters:
             node.parts["parameters"] = parameters
         if statement.returns is not None:
             node.parts["returnType"] = self.type(statement.returns)
-        node.parts["body"] = self.block(statement.body, [*scope, statement.name], "function")
+        with self.scoped([each for each in (node.parts.get("receiver"), *parameters) if each is not None], statement):
+            node.parts["body"] = self.block(statement.body, [*scope, statement.name], "function")
         self.document(statement, node)
         return node
 
@@ -429,7 +495,8 @@ class Translator:
             found = []
             for alias in statement.names:
                 start, end = self.span(statement) if len(statement.names) == 1 else self.span(alias)
-                node = self.new("import", start, end, source=alias.name, form="module", refers=self.known(alias.name))
+                node = self.new("import", start, end, source=alias.name, form="module", refers=self.known(alias.name),
+                                resolves=self.module_paths.get(alias.name))
                 if alias.asname is not None:
                     low, high = self.named_at(alias.asname, self.span(alias)[0] + len(alias.name), self.span(alias)[1])
                     node.parts = {"alias": self.new("binding", low, high, name=alias.asname)}
@@ -440,7 +507,7 @@ class Translator:
         absolute = self.absolute(statement)
         wildcard = any(alias.name == "*" for alias in statement.names)
         node = self.of("import", statement, source=source, form="wildcard" if wildcard else "names",
-                       relativeLevel=statement.level or None, refers=self.known(absolute))
+                       relativeLevel=statement.level or None, refers=self.known(absolute), resolves=self.module_paths.get(absolute))
         bindings = []
         for alias in statement.names:
             if alias.name == "*":
@@ -528,14 +595,54 @@ class Translator:
         else:
             node = handler(expression)
         span = self.span(expression)
+        if span in self.constants and node.kind in ("reference", "access"):
+            node.facts["constantValue"] = self.constants[span]
         if span in self.types and node.kind != "unsupported":
             self.joined.add(span)
             node.facts["resolvedType"] = self.typed(self.types[span].to_json())
         return node
 
     def expr_Name(self, expression: ast.Name) -> Node:
-        return self.of("reference", expression, name=expression.id, form="self" if expression.id in ("self", "cls") else "name",
+        node = self.of("reference", expression, name=expression.id, form="self" if expression.id in ("self", "cls") else "name",
                        refers=self.names.get(self.span(expression)))
+        bound = self.bound(expression.id)
+        if bound is not None:
+            node.links["binding"] = bound
+        return node
+
+    # Scopes -------------------------------------------------------------------------------------------------------
+
+    @contextmanager
+    def scoped(self, parameters: list[Node], function: ast.AST | None):
+        """A function's, lambda's or comprehension's scope while its body is written: its parameters' bindings, and
+        the names its body assigns, which hide the same names of the scopes around it."""
+        scope = Scope({}, assigned_names(function) if function is not None else set(), global_names(function) if function is not None else set())
+        for parameter in parameters:
+            binding = parameter.parts.get("binding")
+            if isinstance(binding, Node):
+                scope.bindings[binding.facts["name"]] = binding
+        self.scopes.append(scope)
+        try:
+            yield scope
+        finally:
+            self.scopes.pop()
+
+    def declared(self, name: str, binding: Node) -> Node:
+        if self.scopes and name not in self.scopes[-1].bindings:
+            self.scopes[-1].bindings[name] = binding
+        return binding
+
+    def bound(self, name: str) -> Node | None:
+        """The binding a name read in a function names: the nearest scope's, unless a scope between assigns it
+        without a binding or declares it global."""
+        for scope in reversed(self.scopes):
+            if name in scope.globals:
+                return None
+            if name in scope.bindings:
+                return scope.bindings[name]
+            if name in scope.assigned:
+                return None
+        return None
 
     def expr_Constant(self, expression: ast.Constant) -> Node:
         value = expression.value
@@ -574,10 +681,12 @@ class Translator:
         return node
 
     def expr_Attribute(self, expression: ast.Attribute) -> Node:
-        static = isinstance(expression.value, ast.Name) and expression.value.id in self.modules
+        named = self.named(expression.value) if isinstance(expression.value, ast.Name) else None
+        static = isinstance(expression.value, ast.Name) and (expression.value.id in self.modules or (named is not None and named.is_class))
         node = self.of("access", expression, form="static" if static else "instance")
         end = node.end
-        member = self.new("reference", end - len(expression.attr.encode()), end, name=expression.attr, form="name")
+        member = self.new("reference", end - len(expression.attr.encode()), end, name=expression.attr, form="name",
+                          refers=self.names.get((end - len(expression.attr.encode()), end)))
         node.parts = {"subject": self.expression(expression.value), "member": member}
         return node
 
@@ -588,12 +697,62 @@ class Translator:
 
     def expr_Call(self, expression: ast.Call) -> Node:
         named = self.named(expression.func)
+        if self.is_type_test(expression):
+            return self.type_test(expression)
+        if named is not None and named.fullname == "typing.cast" and len(expression.args) == 2 and not expression.keywords:
+            node = self.of("cast", expression, form="assertion")
+            node.parts = {"operand": self.expression(expression.args[1]), "targetType": self.type(expression.args[0])}
+            return node
         construction = named is not None and named.is_class
         node = self.of("construction" if construction else "call", expression)
         node.parts = {"callee": self.expression(expression.func), "arguments": self.arguments(expression)}
         target = self.targets.get(self.span(expression))
         if target is not None:
             node.facts["target"] = target
+        return node
+
+    def is_static(self, statement: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        """Whether a method is a `staticmethod`, so it takes no `self` or `cls`."""
+        return any(self.refers(each) == "builtins.staticmethod" or (isinstance(each, ast.Name) and each.id == "staticmethod")
+                   for each in statement.decorator_list)
+
+    def is_type_test(self, call: ast.Call) -> bool:
+        """Whether a call is the builtin `isinstance(x, A)`, as the compiler resolves it."""
+        named = self.named(call.func)
+        return named is not None and named.fullname == "builtins.isinstance" and len(call.args) == 2 and not call.keywords
+
+    def type_parameters(self, written: list[ast.type_param]) -> list[Node]:
+        """PEP 695 type parameters, `[T: int = str]`: each its name, its bound as the constraint, and its default."""
+        found = []
+        for parameter in written:
+            node = self.of("type-parameter", parameter, name=parameter.name)
+            node.parts = {}
+            if getattr(parameter, "bound", None) is not None:
+                node.parts["constraint"] = self.type(parameter.bound)
+            if getattr(parameter, "default_value", None) is not None:
+                node.parts["default"] = self.type(parameter.default_value)
+            found.append(node)
+        return found
+
+    def stmt_TypeAlias(self, statement: ast.TypeAlias, scope, owner) -> Node:
+        node = self.of("alias", statement, name=statement.name.id, symbol=".".join([self.module, *scope, statement.name.id]))
+        node.parts = {"underlyingType": self.type(statement.value)}
+        if statement.type_params:
+            node.parts["typeParameters"] = self.type_parameters(statement.type_params)
+        return node
+
+    def type_test(self, call: ast.Call) -> Node:
+        """`isinstance(x, A)`, the builtin as the compiler resolves it: a type test of x against A, or against the
+        union of a tuple's types."""
+        subject, tested = call.args
+        node = self.of("type-test", call, form="isinstance")
+        if isinstance(tested, ast.Tuple):
+            union = self.of("type-expression", tested, form="union")
+            union.parts = {"members": [self.type(each) for each in tested.elts]}
+            tested_type = union
+        else:
+            tested_type = self.type(tested)
+        node.parts = {"subject": self.expression(subject), "testedType": tested_type}
         return node
 
     def arguments(self, call: ast.Call) -> list[Node]:
@@ -640,6 +799,11 @@ class Translator:
         return node
 
     def expr_UnaryOp(self, expression: ast.UnaryOp) -> Node:
+        if isinstance(expression.op, ast.Not) and isinstance(expression.operand, ast.Call) and self.is_type_test(expression.operand):
+            node = self.type_test(expression.operand)
+            node.start, node.end = self.span(expression)
+            node.facts["negated"] = True
+            return node
         node = self.of("unary", expression, operator=UNARIES[type(expression.op)])
         node.parts = {"operand": self.expression(expression.operand)}
         return node
@@ -654,7 +818,8 @@ class Translator:
         node = self.of("function", expression, form="lambda")
         parameters = self.parameters(expression.args)
         node.parts = {"parameters": parameters} if parameters else {}
-        node.parts["body"] = self.expression(expression.body)
+        with self.scoped(parameters, None):
+            node.parts["body"] = self.expression(expression.body)
         return node
 
     def expr_Await(self, expression: ast.Await) -> Node:
@@ -718,10 +883,16 @@ class Translator:
 
     def comprehension(self, expression: ast.AST) -> Node:
         node = self.of("comprehension", expression, form=COMPREHENSIONS[type(expression)])
-        if isinstance(expression, ast.DictComp):
-            node.parts = {"key": self.expression(expression.key), "value": self.expression(expression.value)}
-        else:
-            node.parts = {"element": self.expression(expression.elt)}
+        with self.scoped([], None):
+            clauses = self.clauses(expression)
+            if isinstance(expression, ast.DictComp):
+                node.parts = {"key": self.expression(expression.key), "value": self.expression(expression.value)}
+            else:
+                node.parts = {"element": self.expression(expression.elt)}
+        node.parts["clauses"] = clauses
+        return node
+
+    def clauses(self, expression: ast.AST) -> list[Node]:
         clauses = []
         for generator in expression.generators:
             iterable = self.expression(generator.iter)
@@ -736,8 +907,7 @@ class Translator:
                 guard = self.new("comprehension-clause", self.source.rindex(b"if", 0, tested.start), tested.end, form="if")
                 guard.parts = {"condition": tested}
                 clauses.append(guard)
-        node.parts["clauses"] = clauses
-        return node
+        return clauses
 
     expr_ListComp = expr_SetComp = expr_GeneratorExp = expr_DictComp = comprehension
 
@@ -748,7 +918,7 @@ class Translator:
 
     def bindings(self, target: ast.expr) -> list[Node]:
         if isinstance(target, ast.Name):
-            return [self.of("binding", target, name=target.id)]
+            return [self.declared(target.id, self.of("binding", target, name=target.id))]
         if isinstance(target, (ast.Tuple, ast.List)):
             return [binding for element in target.elts for binding in self.bindings(element)]
         if isinstance(target, ast.Starred):
@@ -770,11 +940,11 @@ class Translator:
             if pattern.pattern is not None:
                 node.parts["subpatterns"] = [self.pattern(pattern.pattern)]
             if pattern.name is not None:
-                node.parts["bindings"] = [self.new("binding", node.end - len(pattern.name.encode()), node.end, name=pattern.name)]
+                node.parts["bindings"] = [self.declared(pattern.name, self.new("binding", node.end - len(pattern.name.encode()), node.end, name=pattern.name))]
         elif isinstance(pattern, ast.MatchStar):
             node = self.of("pattern", pattern, form="rest")
             if pattern.name is not None:
-                node.parts = {"bindings": [self.new("binding", node.end - len(pattern.name.encode()), node.end, name=pattern.name)]}
+                node.parts = {"bindings": [self.declared(pattern.name, self.new("binding", node.end - len(pattern.name.encode()), node.end, name=pattern.name))]}
         elif isinstance(pattern, ast.MatchOr):
             node = self.of("pattern", pattern, form="or")
             node.parts = {"subpatterns": [self.pattern(each) for each in pattern.patterns]}
@@ -786,7 +956,7 @@ class Translator:
             node.parts = {"subpatterns": [self.pattern(each) for each in pattern.patterns]}
             if pattern.rest is not None:
                 low, high = self.named_at(pattern.rest, node.start, node.end)
-                node.parts["bindings"] = [self.new("binding", low, high, name=pattern.rest)]
+                node.parts["bindings"] = [self.declared(pattern.rest, self.new("binding", low, high, name=pattern.rest))]
         else:
             node = self.of("pattern", pattern, form="record")
             node.parts = {"constrainedType": self.type(pattern.cls),
@@ -928,3 +1098,22 @@ def docstring_description(text: str) -> list[str]:
     while kept and kept[-1] == "":
         kept.pop()
     return kept
+
+
+def assigned_names(function: ast.AST) -> set[str]:
+    """The bare names a function's own body assigns, not those of a function or class nested in it."""
+    names: set[str] = set()
+    pending = list(ast.iter_child_nodes(function))
+    while pending:
+        node = pending.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+        pending.extend(ast.iter_child_nodes(node))
+    return names - {name for node in ast.walk(function) if isinstance(node, (ast.Global, ast.Nonlocal)) for name in node.names}
+
+
+def global_names(function: ast.AST) -> set[str]:
+    """The names a function declares global: read there, they name the module's, never a scope around it."""
+    return {name for node in ast.walk(function) if isinstance(node, ast.Global) for name in node.names}

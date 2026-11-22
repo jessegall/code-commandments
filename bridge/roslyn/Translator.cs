@@ -53,7 +53,121 @@ public sealed partial class ContractWriter
 
         private TreeNode New(string kind, SyntaxToken token) => New(kind, token.Span);
 
-        private TreeNode Binding(SyntaxToken identifier) => New("binding", identifier).Fact("name", identifier.ValueText);
+        /// <summary>The local, parameter and range variable each binding written so far declares, for its reads to link to.</summary>
+        private readonly Dictionary<ISymbol, TreeNode> bound = new(SymbolEqualityComparer.Default);
+
+        private readonly Dictionary<ITypeSymbol, int> typeIndexes = new(SymbolEqualityComparer.IncludeNullability);
+
+        /// <summary>The file's types table: each type the compiler gave a node, once, which the node's resolvedType indexes.</summary>
+        public List<Dictionary<string, object>> Types { get; } = [];
+
+        private TreeNode Typed(TreeNode node, ITypeSymbol? type)
+        {
+            if (type is null or IErrorTypeSymbol)
+            {
+                return node;
+            }
+
+            if (!typeIndexes.TryGetValue(type, out var index))
+            {
+                index = Types.Count;
+                typeIndexes[type] = index;
+                Types.Add(Described(type, 2));
+            }
+
+            return node.Fact("resolvedType", index);
+        }
+
+        /// <summary>A type as the contract's Types table describes it, its arguments and elements described to the depth given.</summary>
+        private static Dictionary<string, object> Described(ITypeSymbol type, int depth)
+        {
+            var described = new Dictionary<string, object> { ["text"] = type.ToDisplayString(Readings.Qualified) };
+            IEnumerable<ITypeSymbol> arguments = [];
+            switch (type)
+            {
+                case ITypeParameterSymbol parameter:
+                    described["kind"] = "parameter";
+                    described["name"] = parameter.Name;
+                    break;
+                case IArrayTypeSymbol array:
+                    described["kind"] = "array";
+                    arguments = [array.ElementType];
+                    break;
+                case IPointerTypeSymbol pointer:
+                    described["kind"] = "pointer";
+                    arguments = [pointer.PointedAtType];
+                    break;
+                case IDynamicTypeSymbol:
+                    described["kind"] = "keyword";
+                    described["name"] = "dynamic";
+                    break;
+                case INamedTypeSymbol { IsTupleType: true } tuple:
+                    described["kind"] = "tuple";
+                    if (depth > 0)
+                    {
+                        described["members"] = tuple.TupleElements.Select(element => Described(element.Type, depth - 1)).ToList();
+                    }
+
+                    break;
+                case INamedTypeSymbol { SpecialType: not SpecialType.None } special when type.ToDisplayString() is { } keyword && SyntaxFacts.GetKeywordKind(keyword.TrimEnd('?')) != SyntaxKind.None:
+                    described["kind"] = "keyword";
+                    described["name"] = keyword.TrimEnd('?');
+                    break;
+                case INamedTypeSymbol named:
+                    described["kind"] = "named";
+                    described["name"] = named.ConstructedFrom.ToDisplayString(Readings.Qualified.WithGenericsOptions(SymbolDisplayGenericsOptions.None)).TrimEnd('?');
+                    arguments = named.TypeArguments;
+                    break;
+                default:
+                    described["kind"] = "opaque";
+                    break;
+            }
+
+            if (depth > 0 && arguments.Any())
+            {
+                described["args"] = arguments.Select(argument => (object)Described(argument, depth - 1)).ToList();
+                if (type is IArrayTypeSymbol or IPointerTypeSymbol)
+                {
+                    described["element"] = Described(arguments.First(), depth - 1);
+                }
+            }
+
+            if (type.IsValueType)
+            {
+                described["nullable"] = type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+            }
+            else if (type.NullableAnnotation != NullableAnnotation.None)
+            {
+                described["nullable"] = type.NullableAnnotation == NullableAnnotation.Annotated;
+            }
+
+            described["valueType"] = type.IsValueType;
+            described["origin"] = "compiler";
+
+            return described;
+        }
+
+        private TreeNode Binding(SyntaxToken identifier)
+        {
+            var node = New("binding", identifier).Fact("name", identifier.ValueText);
+            var declared = identifier.Parent is { } declaration ? model.GetDeclaredSymbol(declaration) : null;
+            if (declared is ILocalSymbol or IParameterSymbol or IRangeVariableSymbol)
+            {
+                bound[declared] = node;
+            }
+
+            return Typed(node, declared switch
+            {
+                // A `var` local is nullable-annotated whatever it holds: its type is its initializer's.
+                ILocalSymbol local when identifier.Parent is VariableDeclaratorSyntax { Initializer: { } initial, Parent: VariableDeclarationSyntax { Type.IsVar: true } }
+                    => model.GetTypeInfo(initial.Value).Type ?? local.Type,
+                ILocalSymbol local => local.Type,
+                IParameterSymbol parameter => parameter.Type,
+                IFieldSymbol field => field.Type,
+                IPropertySymbol property => property.Type,
+                _ => null,
+            });
+        }
 
         private static string Spelled(ISymbol symbol) => symbol.OriginalDefinition.ToDisplayString(Readings.Declared);
 
@@ -189,7 +303,7 @@ public sealed partial class ContractWriter
 
             if (type is TypeDeclarationSyntax declaration)
             {
-                node.HoldsAll("typeParameters", TypeParameters(declaration.TypeParameterList));
+                node.HoldsAll("typeParameters", TypeParameters(declaration.TypeParameterList, declaration.ConstraintClauses));
 
                 if (declaration.ParameterList is { } primary)
                 {
@@ -310,7 +424,12 @@ public sealed partial class ContractWriter
                 .Fact("obligations", Obligations(declared))
                 .Fact("incomplete", incomplete)
                 .HoldsAll("attributes", Attributes(attributes))
-                .HoldsAll("typeParameters", TypeParameters(typeParameters))
+                .HoldsAll("typeParameters", TypeParameters(typeParameters, node switch
+                {
+                    MethodDeclarationSyntax method => method.ConstraintClauses,
+                    LocalFunctionStatementSyntax local => local.ConstraintClauses,
+                    _ => default,
+                }))
                 .HoldsAll("parameters", parameters?.Parameters.Select(Parameter) ?? [])
                 .Holds("returnType", returnType is null ? null : TypeExpression(returnType))
                 .Holds("body", body is not null ? Block(body) : arrow is { Expression.IsMissing: false } ? Expression(arrow.Expression) : null);
@@ -359,8 +478,25 @@ public sealed partial class ContractWriter
                 .Holds("default", parameter.Default is null ? null : Expression(parameter.Default.Value));
         }
 
-        private IEnumerable<TreeNode> TypeParameters(TypeParameterListSyntax? parameters) =>
-            parameters?.Parameters.Select(parameter => New("type-parameter", parameter).Fact("name", parameter.Identifier.ValueText)) ?? [];
+        /// <summary>Type parameters, each with the types its `where` clause constrains it to: one type, or their intersection.</summary>
+        private IEnumerable<TreeNode> TypeParameters(TypeParameterListSyntax? parameters, SyntaxList<TypeParameterConstraintClauseSyntax> clauses) =>
+            parameters?.Parameters.Select(parameter =>
+            {
+                var clause = clauses.FirstOrDefault(each => each.Name.Identifier.ValueText == parameter.Identifier.ValueText);
+                var constrained = clause?.Constraints.OfType<TypeConstraintSyntax>().ToList() ?? [];
+                var constraint = constrained.Count switch
+                {
+                    0 => null,
+                    1 => TypeExpression(constrained[0].Type),
+                    _ => New("type-expression", constrained[0].Parent!).Fact("form", "intersection").HoldsAll("members", constrained.Select(each => TypeExpression(each.Type))),
+                };
+
+                // A constraint is written in the `where` clause after the parameter list, so a constrained type parameter
+                // spans to the end of its clause and holds its constraint inside it.
+                var span = clause is null ? parameter.Span : TextSpan.FromBounds(parameter.SpanStart, clause.Span.End);
+
+                return New("type-parameter", span).Fact("name", parameter.Identifier.ValueText).Holds("constraint", constraint);
+            }) ?? [];
 
         private IEnumerable<TreeNode> Attributes(SyntaxList<AttributeListSyntax> lists) => lists.SelectMany(list => list.Attributes).Select(attribute =>
         {
@@ -511,7 +647,9 @@ public sealed partial class ContractWriter
 
         private TreeNode Expression(ExpressionSyntax expression)
         {
-            var node = Translated(expression);
+            var node = model.GetSymbolInfo(expression).Symbol is INamespaceOrTypeSymbol
+                ? Translated(expression)
+                : Typed(Translated(expression), model.GetTypeInfo(expression).Type);
 
             if (expression is IdentifierNameSyntax or MemberAccessExpressionSyntax && model.GetConstantValue(expression) is { HasValue: true } constant)
             {
@@ -550,6 +688,13 @@ public sealed partial class ContractWriter
                 .Holds("key", binding.ArgumentList.Arguments.Count > 0 ? Expression(binding.ArgumentList.Arguments[0].Expression) : null),
             InvocationExpressionSyntax call => Target(New("call", call), call)
                 .Holds("callee", Expression(call.Expression))
+                .HoldsAll("typeArguments", (call.Expression switch
+                {
+                    GenericNameSyntax generic => generic,
+                    MemberAccessExpressionSyntax { Name: GenericNameSyntax member } => member,
+                    MemberBindingExpressionSyntax { Name: GenericNameSyntax bound } => bound,
+                    _ => null,
+                })?.TypeArgumentList.Arguments.Select(TypeExpression) ?? [])
                 .HoldsAll("arguments", call.ArgumentList.Arguments.Select(Argument)),
             ObjectCreationExpressionSyntax creation => Construction(creation, creation.Type, creation.ArgumentList, creation.Initializer),
             ImplicitObjectCreationExpressionSyntax creation => Construction(creation, null, creation.ArgumentList, creation.Initializer),
@@ -592,6 +737,7 @@ public sealed partial class ContractWriter
             IsPatternExpressionSyntax test => IsPattern(test),
             SwitchExpressionSyntax @switch => New("dispatch", @switch)
                 .Fact("form", "match")
+                .Fact("exhaustive", !model.GetDiagnostics(@switch.Span).Any(diagnostic => diagnostic.Id is "CS8509" or "CS8524" or "CS8655") ? true : null)
                 .Holds("subject", Expression(@switch.GoverningExpression))
                 .HoldsAll("arms", @switch.Arms.Select(arm => New("arm", arm)
                     .Fact("default", arm.Pattern is DiscardPatternSyntax && arm.WhenClause is null)
@@ -619,7 +765,13 @@ public sealed partial class ContractWriter
                 _ => null,
             };
 
-            return New("reference", name).Fact("name", written).Fact("form", "name").Fact("refers", refers);
+            var reference = New("reference", name).Fact("name", written).Fact("form", "name").Fact("refers", refers);
+            if (named is ILocalSymbol or IParameterSymbol or IRangeVariableSymbol && bound.TryGetValue(named, out var declared))
+            {
+                reference.Link("binding", declared);
+            }
+
+            return reference;
         }
 
         private TreeNode Access(ExpressionSyntax access, ExpressionSyntax subject, SimpleNameSyntax member, string form, bool nullConditional) => New("access", access)
@@ -810,6 +962,8 @@ public sealed partial class ContractWriter
                     .Holds("testedType", TypeExpression(declared.Type))
                     .Holds("binding", declared.Designation is SingleVariableDesignationSyntax single ? Binding(single.Identifier) : null),
                 TypePatternSyntax typed => New("type-test", test).Fact("form", "is").Fact("negated", negated).Holds("subject", Expression(test.Expression)).Holds("testedType", TypeExpression(typed.Type)),
+                ConstantPatternSyntax { Expression: TypeSyntax named } when model.GetSymbolInfo(named).Symbol is ITypeSymbol =>
+                    New("type-test", test).Fact("form", "is").Fact("negated", negated).Holds("subject", Expression(test.Expression)).Holds("testedType", TypeExpression(named)),
                 _ => Unsupported(test, "is-pattern"),
             };
         }
@@ -819,6 +973,8 @@ public sealed partial class ContractWriter
         private TreeNode Pattern(PatternSyntax pattern) => pattern switch
         {
             ParenthesizedPatternSyntax parenthesized => Pattern(parenthesized.Pattern),
+            ConstantPatternSyntax { Expression: TypeSyntax named } typed when model.GetSymbolInfo(named).Symbol is ITypeSymbol =>
+                New("pattern", typed).Fact("form", "type").Holds("constrainedType", TypeExpression(named)),
             ConstantPatternSyntax constant => New("pattern", constant).Fact("form", "value").Holds("value", Expression(constant.Expression)),
             DiscardPatternSyntax discard => New("pattern", discard).Fact("form", "wildcard"),
             DeclarationPatternSyntax declared => New("pattern", declared).Fact("form", "type").Holds("constrainedType", TypeExpression(declared.Type)).HoldsAll("bindings", Bound(declared.Designation)),
@@ -853,7 +1009,9 @@ public sealed partial class ContractWriter
 
         // Types as written ------------------------------------------------------------------------------------------
 
-        private TreeNode TypeExpression(TypeSyntax type) => type switch
+        private TreeNode TypeExpression(TypeSyntax type) => Typed(WrittenType(type), type.IsVar ? null : model.GetTypeInfo(type).Type);
+
+        private TreeNode WrittenType(TypeSyntax type) => type switch
         {
             PredefinedTypeSyntax keyword => New("type-expression", keyword).Fact("form", "keyword").Fact("name", keyword.Keyword.Text),
             NullableTypeSyntax nullable => New("type-expression", nullable).Fact("form", "nullable").Holds("element", TypeExpression(nullable.ElementType)),
@@ -867,8 +1025,17 @@ public sealed partial class ContractWriter
             IdentifierNameSyntax { IsVar: true } var => New("type-expression", var).Fact("form", "keyword").Fact("name", "var"),
             NameSyntax name => New("type-expression", name)
                 .Fact("form", "named")
+                .Fact("name", name switch
+                {
+                    QualifiedNameSyntax qualified => qualified.Left + "." + qualified.Right.Identifier.ValueText,
+                    SimpleNameSyntax simple => simple.Identifier.ValueText,
+                    _ => name.ToString(),
+                })
                 .Fact("refers", Refers(name))
                 .HoldsAll("typeArguments", (name is QualifiedNameSyntax { Right: GenericNameSyntax right } ? right : name as GenericNameSyntax)?.TypeArgumentList.Arguments.Select(TypeExpression) ?? []),
+            FunctionPointerTypeSyntax pointer => New("type-expression", pointer).Fact("form", "function")
+                .HoldsAll("parameters", pointer.ParameterList.Parameters.SkipLast(1).Select(each => New("parameter", each).Holds("declaredType", TypeExpression(each.Type))))
+                .Holds("returnType", TypeExpression(pointer.ParameterList.Parameters.Last().Type)),
             _ => New("type-expression", type).Fact("form", "opaque"),
         };
 

@@ -71,9 +71,31 @@
             "$s.statements",
             "x",
             [
-              "!=",
-              "$x.kind",
-              "no-op"
+              "and",
+              [
+                "!=",
+                "$x.kind",
+                "no-op"
+              ],
+              [
+                "not",
+                [
+                  "proven",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$x.kind",
+                      "expression-statement"
+                    ],
+                    [
+                      "=",
+                      "$x.expression.kind",
+                      "literal"
+                    ]
+                  ]
+                ]
+              ]
             ]
           ]
         },

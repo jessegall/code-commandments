@@ -52,7 +52,6 @@ func (in *interned) node(node *Node) {
 	facts.Operators = in.list(facts.Operators)
 	facts.LiteralKind = in.string(facts.LiteralKind)
 	facts.Resolves = in.string(facts.Resolves)
-	facts.Written = in.typed(facts.Written)
 	facts.Source = in.string(facts.Source)
 	facts.Mode = in.string(facts.Mode)
 	facts.Passing = in.string(facts.Passing)

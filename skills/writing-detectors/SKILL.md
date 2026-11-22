@@ -107,7 +107,7 @@ judged.
 | `and` | truth, truth, … | truth | true when every operand is true; false when one is false; unknown otherwise |
 | `annotated` | node, text | list | the attributes, annotations or decorators on a declaration that name the symbol given, by what they resolve to |
 | `append` | list, list, … | list | the lists one after another |
-| `assignable` | value, text | truth | whether a resolved type is assignable to the type named; unknown when it is unresolved |
+| `assignable` | value, text | truth | whether a resolved type, a node's type or a type named by its symbol is assignable to the type named; unknown when it is unresolved |
 | `at` | list, number | value | the item of a list at a position, counted from 0; no value past its end |
 | `average` | list | number | the mean of a list of numbers; unknown for an empty one |
 | `baseName` | text | text | a path's last segment without its extension: config/app.php reads app |
@@ -137,7 +137,7 @@ judged.
 | `contentWords` | text | list | the stems of a text's content words, the small words left out |
 | `count` | list | number | how many items a list holds; unknown when the list is |
 | `countOf` | text, value | number | how many rows of one of the find's relations have fields equal to a record's |
-| `declarationOf` | node | node | the declaration a call's target or a reference resolves to, or the local binding a name is linked to; unknown when neither is known |
+| `declarationOf` | node | node | the declaration a call's target, a reference or an access's member resolves to, or the local binding a name is linked to; unknown when neither is known |
 | `declarationsOf` | value | list | every declaration of a symbol, or of what a node names: partial classes and overloads each once |
 | `declaredIn` | node | list | the bindings written directly in a node, not inside a block, function, type, loop, handler or comprehension written in it |
 | `defaultOf` | node | node | the value an expression falls back to when its subject is absent: the right side of ?? or ?:, the default a library's lookup is given; no node when it has none |
@@ -610,6 +610,7 @@ never against what the code happens to do today.
 | `commandments rule try <Rule> <path>…` | run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched |
 | `commandments rule prove [path]` | check every rule of the project flags exactly the code its samples mark, and nothing else |
 | `commandments rule prove --all [path]` | check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed |
+| `commandments rule trace <Rule> <file> --line=N [--lines=A-B] [--within=folder]` | ask a rule of every node it selects on that line, or in that range of lines (where only the nodes its where lets through are shown), and print each part of its where, let and having with what it answered, the folder read whole as its own project (the file's own folder by default) |
 | `commandments rule schema` | print the JSON Schema of a rule file |
 | `commandments rule export <folder>` | write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/ |
 

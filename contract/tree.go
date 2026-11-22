@@ -210,7 +210,6 @@ type RareFacts struct {
 	TypeOnly        bool           `json:"typeOnly,omitempty"`
 	RelativeLevel   int            `json:"relativeLevel,omitempty"`
 	Resolves        string         `json:"resolves,omitempty"`
-	Written         *Type          `json:"written,omitempty"`
 	Async           bool           `json:"async,omitempty"`
 	Generator       bool           `json:"generator,omitempty"`
 	Passing         string         `json:"passing,omitempty"`

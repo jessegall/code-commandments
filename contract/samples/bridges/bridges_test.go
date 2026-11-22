@@ -2,13 +2,16 @@
 package bridges
 
 import (
-	"encoding/json"
+	"bytes"
 	"flag"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/contract/samples"
@@ -34,14 +37,24 @@ func TestEveryBridgeWritesTheExpectedTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	unwritten, err := samples.Unwritten("../testdata/expected")
+	if err != nil {
+		t.Fatal(err)
+	}
+	all = append(all, unwritten...)
+	served := servedBridges{t: t, roots: map[contract.Language]string{}, askers: map[contract.Language]bridge.Asker{}}
+	defer served.close()
 	for _, expected := range all {
 		t.Run(string(expected.Language)+"/"+expected.Name(), func(t *testing.T) {
-			root := t.TempDir()
+			root, asker, err := served.of(expected.Language)
+			if err != nil {
+				t.Fatalf("the %s bridge could not start: %v", expected.Language, err)
+			}
 			placed, err := expected.Placed(root)
 			if err != nil {
 				t.Fatal(err)
 			}
-			stream, err := bridgeOf[expected.Language].Read([]string{root}, []string{placed}, func() {})
+			stream, err := asker.AskTallied(bridge.Request{Paths: []string{placed}, Write: []string{placed}}, func() {})
 			if err != nil {
 				t.Fatalf("the %s bridge could not read %s: %v", expected.Language, expected.Name(), err)
 			}
@@ -49,15 +62,78 @@ func TestEveryBridgeWritesTheExpectedTree(t *testing.T) {
 			if written == nil {
 				t.Fatalf("the %s bridge wrote no file for %s", expected.Language, placed)
 			}
-			if *update {
-				rewrite(t, expected, written, root)
+			written = sampled(t, stream.Header, written, root)
+			if expected.IsUnwritten() {
+				expected.Header.Contract, expected.Header.Version, expected.Header.Bridge = stream.Header.Contract, stream.Header.Version, stream.Header.Bridge
+				expected.File.Module = written.Module
+			}
+			if *update || expected.IsUnwritten() {
+				rewrite(t, expected, written)
 
 				return
 			}
-			for _, difference := range samples.Differences(expected.File, written) {
+			differences, observed := samples.Observed(expected.File, written)
+			for _, difference := range differences {
 				t.Error(difference)
 			}
+			witnessed.add(expected.Language, observed)
 		})
+	}
+	scored.Store(true)
+}
+
+var witnessed = observations{byLanguage: map[contract.Language]map[string]bool{}}
+
+var scored atomic.Bool
+
+type observations struct {
+	mutex      sync.Mutex
+	byLanguage map[contract.Language]map[string]bool
+}
+
+func (o *observations) add(language contract.Language, observed map[string]bool) {
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
+	held := o.byLanguage[language]
+	if held == nil {
+		held = map[string]bool{}
+		o.byLanguage[language] = held
+	}
+	for item, written := range observed {
+		previous, seen := held[item]
+		held[item] = written && (!seen || previous)
+	}
+}
+
+// servedBridges keeps one process of each language's bridge up for the whole run, over one folder per language that
+// every sample of it is placed in under its own construct's folder; each sample is still a request of its own, so no
+// sample resolves against another.
+type servedBridges struct {
+	t      *testing.T
+	roots  map[contract.Language]string
+	askers map[contract.Language]bridge.Asker
+}
+
+func (s *servedBridges) of(language contract.Language) (string, bridge.Asker, error) {
+	if asker, started := s.askers[language]; started {
+		return s.roots[language], asker, nil
+	}
+	root, err := filepath.EvalSymlinks(s.t.TempDir())
+	if err != nil {
+		return "", nil, err
+	}
+	asker, err := bridgeOf[language].Serving([]string{root})
+	if err != nil {
+		return "", nil, err
+	}
+	s.roots[language], s.askers[language] = root, asker
+
+	return root, asker, nil
+}
+
+func (s *servedBridges) close() {
+	for _, asker := range s.askers {
+		asker.Close()
 	}
 }
 
@@ -71,85 +147,28 @@ func writtenFile(stream *contract.Stream, placed string) *contract.File {
 	return nil
 }
 
-// rewrite writes the expected tree anew: its header as it was, and the file the bridge wrote under the tree's own path
-// and module, every fact that spells the run's temporary folder left out, since it differs each run.
-func rewrite(t *testing.T, expected samples.Expected, written *contract.File, root string) {
+func rewrite(t *testing.T, expected samples.Expected, written *contract.File) {
 	t.Helper()
 	written.Path, written.Module = expected.File.Path, expected.File.Module
-	file, err := json.Marshal(map[string]any{"file": written})
-	if err != nil {
+	var tree bytes.Buffer
+	if err := contract.Write(&tree, &contract.Stream{Header: expected.Header, Files: []*contract.File{written}}); err != nil {
 		t.Fatal(err)
 	}
-	var held any
-	if err := json.Unmarshal(file, &held); err != nil {
-		t.Fatal(err)
-	}
-	resolved, _ := filepath.EvalSymlinks(root)
-	file, err = json.Marshal(withoutFolder(withoutFolder(held, root), resolved))
-	if err != nil {
-		t.Fatal(err)
-	}
-	header, err := json.Marshal(map[string]any{"header": expected.Header})
-	if err != nil {
-		t.Fatal(err)
-	}
-	trailer := []byte(`{"trailer": {"files": 1}}`)
-	if err := os.WriteFile(expected.Tree, append(append(append(append(header, '\n'), file...), '\n'), append(trailer, '\n')...), 0o644); err != nil {
+	if err := os.WriteFile(expected.Tree, tree.Bytes(), 0o644); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// withoutFolder is the decoded JSON with every object field whose text spells the folder left out.
-func withoutFolder(held any, folder string) any {
-	switch value := held.(type) {
-	case map[string]any:
-		for key, field := range value {
-			if spellsFolder(field, folder) || factSpellsFolder(field, folder) {
-				delete(value, key)
-			} else {
-				value[key] = withoutFolder(field, folder)
-			}
-		}
-	case []any:
-		for at, item := range value {
-			value[at] = withoutFolder(item, folder)
-		}
+func sampled(t *testing.T, header contract.Header, file *contract.File, root string) *contract.File {
+	t.Helper()
+	var written bytes.Buffer
+	if err := contract.Write(&written, &contract.Stream{Header: header, Files: []*contract.File{file}}); err != nil {
+		t.Fatal(err)
+	}
+	stream, err := contract.ReadAll(strings.NewReader(strings.ReplaceAll(written.String(), root, "/sample")))
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	return held
-}
-
-// spellsFolder says whether a decoded JSON value is text, or a list holding text, that spells the folder.
-func spellsFolder(held any, folder string) bool {
-	if folder == "" {
-		return false
-	}
-	switch value := held.(type) {
-	case string:
-		return strings.Contains(value, folder)
-	case []any:
-		for _, item := range value {
-			if text, isText := item.(string); isText && strings.Contains(text, folder) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-// factSpellsFolder says whether a decoded JSON object is a fact, not a node (it has no kind) nor the file (no root), one of whose own fields
-// spells the folder: a call's target is compared whole, so it goes whole.
-func factSpellsFolder(held any, folder string) bool {
-	fact, isObject := held.(map[string]any)
-	if !isObject || fact["kind"] != nil || fact["root"] != nil {
-		return false
-	}
-	for _, field := range fact {
-		if spellsFolder(field, folder) {
-			return true
-		}
-	}
-
-	return false
+	return stream.Files[0]
 }

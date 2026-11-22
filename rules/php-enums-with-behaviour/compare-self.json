@@ -140,11 +140,11 @@
         "c"
       ],
       "expr": [
-        "typeDeclaration",
+        "enclosing",
         [
-          "at",
+          "declarationOf",
           [
-            "map",
+            "at",
             [
               "filter",
               "$c.operands",
@@ -154,11 +154,10 @@
                 "$o"
               ]
             ],
-            "o",
-            "$o.subject.resolved.name"
-          ],
-          0
-        ]
+            0
+          ]
+        ],
+        "type"
       ]
     },
     "offers": {
@@ -389,14 +388,20 @@
         "$enum"
       ],
       [
-        "!=",
-        "$enum.symbol",
+        "not",
         [
-          "tree.ownSymbol",
+          "proven",
           [
-            "enclosing",
-            "$c",
-            "type"
+            "=",
+            "$enum.symbol",
+            [
+              "tree.ownSymbol",
+              [
+                "enclosing",
+                "$c",
+                "type"
+              ]
+            ]
           ]
         ]
       ],

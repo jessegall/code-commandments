@@ -33,6 +33,7 @@ type kindTable struct {
 		Provenance string `json:"provenance"`
 	} `json:"facts"`
 	UniversalFacts []string            `json:"universalFacts"`
+	Promises       map[string]string   `json:"promises"`
 	Categories     map[string][]string `json:"categories"`
 }
 

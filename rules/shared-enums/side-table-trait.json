@@ -254,13 +254,12 @@
             [
               "=",
               [
-                "get",
+                "tree.formOf",
                 [
                   "enclosing",
                   "$anchor",
                   "type"
-                ],
-                "form"
+                ]
               ],
               "enum"
             ]

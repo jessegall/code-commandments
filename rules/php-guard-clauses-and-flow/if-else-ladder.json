@@ -18,27 +18,106 @@
     "select": "if",
     "as": "b",
     "where": [
-      "and",
+      "not",
       [
-        "not",
+        "tree.continuation",
+        "$b"
+      ]
+    ],
+    "let": [
+      [
+        "chain",
         [
-          "tree.continuation",
-          "$b"
+          "follow",
+          "$b",
+          "else",
+          "if"
         ]
       ],
       [
-        ">=",
+        "tail",
         [
-          "count",
+          "last",
+          "$chain"
+        ]
+      ],
+      [
+        "closingElse",
+        [
+          "proven",
           [
-            "follow",
-            "$b",
-            "else",
-            "if"
+            "or",
+            [
+              "and",
+              [
+                "exists",
+                "$tail.else"
+              ],
+              [
+                "!=",
+                "$tail.else.kind",
+                "if"
+              ]
+            ],
+            [
+              "and",
+              [
+                "not",
+                [
+                  "exists",
+                  "$tail.else"
+                ]
+              ],
+              [
+                "every",
+                "$chain",
+                "c",
+                [
+                  "not",
+                  [
+                    "completes",
+                    "$c.then"
+                  ]
+                ]
+              ],
+              [
+                ">",
+                [
+                  "count",
+                  [
+                    "after",
+                    "$b"
+                  ]
+                ],
+                0
+              ]
+            ]
           ]
-        ],
-        3
+        ]
+      ],
+      [
+        "branches",
+        [
+          "add",
+          [
+            "count",
+            "$chain"
+          ],
+          [
+            "case",
+            "$closingElse",
+            {
+              "true": 1
+            },
+            0
+          ]
+        ]
       ]
+    ],
+    "having": [
+      ">=",
+      "$branches",
+      4
     ],
     "emit": "$b"
   }

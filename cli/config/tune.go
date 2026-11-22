@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -10,10 +12,6 @@ import (
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 )
-
-type layeredDetector interface {
-	WithLayers(map[string][]string) rule.Detector
-}
 
 func (c Config) Enabled(installed Installed) ([]rule.Detector, error) {
 	var enabled []rule.Detector
@@ -31,10 +29,6 @@ func (c Config) Applied(list []rule.Detector) ([]rule.Detector, error) {
 	var kept []rule.Detector
 
 	for _, detector := range list {
-		if marks, ok := detector.(layeredDetector); ok {
-			engine, _ := rule.EngineOf(detector)
-			detector = marks.WithLayers(c.Layers(engine))
-		}
 		if file, ok := detector.(rule.Rule); ok {
 			var contracts []string
 			layers := map[string][]string{}
@@ -53,9 +47,22 @@ func (c Config) Applied(list []rule.Detector) ([]rule.Detector, error) {
 // Installed says whether the project has a package.
 type Installed func(sins.Package) bool
 
-func InstalledIn(root string) Installed {
+func InstalledIn(folder string) Installed {
+	root := composerProjectOf(folder)
+
 	return func(required sins.Package) bool {
 		return required.InstalledIn(root)
+	}
+}
+
+func composerProjectOf(folder string) string {
+	for at := folder; ; at = filepath.Dir(at) {
+		if _, err := os.Stat(filepath.Join(at, "composer.json")); err == nil {
+			return at
+		}
+		if filepath.Dir(at) == at {
+			return folder
+		}
 	}
 }
 

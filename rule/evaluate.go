@@ -327,6 +327,9 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		if !isNode || !site.Exists() {
 			return unknown
 		}
+		if member, _ := site.Single("member"); site.Kind() == "access" && member.Exists() {
+			site = member
+		}
 		symbol := site.TargetSymbol()
 		if symbol == "" {
 			symbol = site.Node().Refers
@@ -871,6 +874,9 @@ func numberOf(written string) value {
 // whose ancestors lie in code the codebase does not hold, is unknown.
 func (e evaluation) assignable(v, named value) engine.Truth {
 	resolved, isType := v.held.(*contract.Type)
+	if symbol, isSymbol := v.held.(string); isSymbol && symbol != "" {
+		resolved, isType = &contract.Type{Kind: "named", Name: symbol}, true
+	}
 	if site, isNode := nodeOf(v); isNode {
 		resolved, isType = site.Typed(), site.Typed() != nil
 		if node := site.Node(); !isType && node != nil && node.Kind == "type" && node.Symbol != "" {
@@ -946,6 +952,8 @@ func read(from value, segment string) value {
 		return unknown
 	}
 	switch held := from.held.(type) {
+	case nil:
+		return known(nil)
 	case engine.Match:
 		return readNode(held, segment)
 	case []value:

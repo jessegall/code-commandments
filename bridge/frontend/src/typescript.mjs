@@ -78,6 +78,12 @@ export class Translator {
         return new Node(kind, this.offset + node.getStart(this.sourceFile), this.offset + node.end)
     }
 
+    /** A declaration's type parameters, each with its constraint and default as written. */
+    typeParameters(node) {
+        return (node.typeParameters ?? []).map((parameter) => this.new('type-parameter', parameter).fact('name', parameter.name.text)
+            .holds('constraint', parameter.constraint && this.type(parameter.constraint)).holds('default', parameter.default && this.type(parameter.default)))
+    }
+
     between(kind, start, end) {
         return new Node(kind, this.offset + start, this.offset + end)
     }
@@ -175,12 +181,12 @@ export class Translator {
             .fact('symbol', this.checker ? this.symbolOf(node) : undefined)
             .fact('form', form)
             .fact('modifiers', this.modifiers(node))
+            .fact('obligations', this.checker ? this.obligationsOf(node) : undefined)
             .fact('async', this.async(node))
             .fact('generator', node.asteriskToken !== undefined)
             .fact('incomplete', this.incomplete(node))
             .holdsAll('attributes', this.attributes(node))
-            .holdsAll('typeParameters', (node.typeParameters ?? []).map((parameter) => this.new('type-parameter', parameter).fact('name', parameter.name.text)
-                .holds('constraint', parameter.constraint && this.type(parameter.constraint)).holds('default', parameter.default && this.type(parameter.default))))
+            .holdsAll('typeParameters', this.typeParameters(node))
             .holdsAll('parameters', node.parameters.map((parameter) => this.parameter(parameter)))
             .holds('returnType', node.type && this.type(node.type))
         if (node.body) out.holds('body', ts.isBlock(node.body) ? this.block(node.body) : this.expression(node.body))
@@ -189,12 +195,17 @@ export class Translator {
     }
 
     parameter(parameter) {
+        const binding = this.binding(parameter.name)
+        // A constructor parameter written with a visibility or readonly is a property of the class too: its binding
+        // carries the property's symbol.
+        if (this.checker && ts.isParameterPropertyDeclaration(parameter, parameter.parent)) binding.fact('symbol', this.idOf(parameter))
+
         return this.new('parameter', parameter)
             .fact('collects', parameter.dotDotDotToken ? 'rest' : undefined)
             .fact('optional', parameter.questionToken !== undefined)
             .fact('modifiers', this.modifiers(parameter))
             .holdsAll('attributes', this.attributes(parameter))
-            .holds('binding', this.binding(parameter.name))
+            .holds('binding', binding)
             .holds('declaredType', parameter.type && this.type(parameter.type))
             .holds('default', parameter.initializer && this.expression(parameter.initializer))
     }
@@ -305,7 +316,7 @@ export class Translator {
             .fact('form', form)
             .fact('modifiers', this.modifiers(node))
             .holdsAll('attributes', this.attributes(node))
-            .holdsAll('typeParameters', (node.typeParameters ?? []).map((parameter) => this.new('type-parameter', parameter).fact('name', parameter.name.text)))
+            .holdsAll('typeParameters', this.typeParameters(node))
             .holdsAll('bases', heritage(ts.SyntaxKind.ExtendsKeyword))
             .holdsAll('interfaces', heritage(ts.SyntaxKind.ImplementsKeyword))
             .holdsAll('writtenMembers', members)
@@ -390,7 +401,7 @@ export class Translator {
         if (ts.isEnumDeclaration(node)) return this.type_declaration(node, 'enum')
         if (ts.isTypeAliasDeclaration(node)) {
             return this.new('alias', node).fact('name', node.name.text).fact('symbol', this.checker ? this.symbolOf(node) : undefined)
-                .holdsAll('typeParameters', (node.typeParameters ?? []).map((parameter) => this.new('type-parameter', parameter).fact('name', parameter.name.text)))
+                .fact('modifiers', this.modifiers(node)).holdsAll('typeParameters', this.typeParameters(node))
                 .holds('underlyingType', this.type(node.type))
         }
         if (ts.isModuleDeclaration(node) && node.body && ts.isModuleBlock(node.body)) {
@@ -427,7 +438,39 @@ export class Translator {
                 .fact('fallsThrough', index < clauses.length - 1 && !jumps(clause.statements.at(-1)))
         })
 
-        return this.new('dispatch', node).fact('form', 'switch').holds('subject', this.expression(node.expression)).holdsAll('arms', arms)
+        return this.new('dispatch', node).fact('form', 'switch').fact('exhaustive', this.exhaustive(node))
+            .holds('subject', this.expression(node.expression)).holdsAll('arms', arms)
+    }
+
+    /**
+     * Whether a switch with no default names every value its subject's type allows: a union of literal types, booleans,
+     * enum members and null or undefined, each matched by a case of the same type.
+     */
+    exhaustive(node) {
+        if (!this.checker || node.caseBlock.clauses.some(ts.isDefaultClause)) return undefined
+        const subject = this.checker.getTypeAtLocation(node.expression)
+        const members = subject.isUnion() ? subject.types : [subject]
+        const closed = ts.TypeFlags.Literal | ts.TypeFlags.BooleanLiteral | ts.TypeFlags.EnumLiteral | ts.TypeFlags.Undefined | ts.TypeFlags.Null
+        if (!members.every((member) => member.flags & closed)) return undefined
+        const named = new Set(node.caseBlock.clauses.map((clause) => this.checker.typeToString(this.checker.getTypeAtLocation(clause.expression))))
+
+        return members.every((member) => named.has(this.checker.typeToString(member))) || undefined
+    }
+
+    /**
+     * The value a read of a constant folds to: a name or member read whose declaration is a `const` variable, an enum
+     * member or a readonly property, and whose type the checker narrows to one literal.
+     */
+    constantOf(node, type) {
+        if (!(ts.isIdentifier(node) || ts.isPropertyAccessExpression(node)) || !(type.flags & (ts.TypeFlags.StringLiteral | ts.TypeFlags.NumberLiteral | ts.TypeFlags.BooleanLiteral))) return undefined
+        const declaration = this.checker.getSymbolAtLocation(node)?.valueDeclaration
+        const fixed = declaration && (ts.isEnumMember(declaration)
+            || (ts.isVariableDeclaration(declaration) && ts.isVariableDeclarationList(declaration.parent) && (declaration.parent.flags & ts.NodeFlags.Const))
+            || ((ts.isPropertyDeclaration(declaration) || ts.isPropertySignature(declaration)) && (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Readonly)))
+        if (!fixed) return undefined
+        if (type.flags & ts.TypeFlags.BooleanLiteral) return { type: 'boolean', value: this.checker.typeToString(type) }
+
+        return { type: type.flags & ts.TypeFlags.StringLiteral ? 'string' : 'number', value: String(type.value) }
     }
 
     unsupported(node, construct) {
@@ -449,6 +492,7 @@ export class Translator {
             if (!(type.flags & ts.TypeFlags.Any) && !isErrorType(type)) {
                 this.tree.typed++
                 out.fact('resolvedType', this.tree.typeIndex(type, () => this.describedType(type, 'compiler')))
+                out.fact('constantValue', this.constantOf(node, type))
             }
         }
 
@@ -475,13 +519,15 @@ export class Translator {
                 .holds('subject', this.expression(node.expression)).holds('key', this.expression(node.argumentExpression))
         }
         if (ts.isCallExpression(node)) {
-            return this.new('call', node).fact('target', this.checker ? this.target(node) : undefined)
+            return this.new('call', node).fact('target', this.checker ? this.target(node) : undefined).fact('nullConditional', node.questionDotToken ? true : undefined)
                 .holds('callee', this.expression(node.expression)).holdsAll('typeArguments', (node.typeArguments ?? []).map((argument) => this.type(argument)))
                 .holdsAll('arguments', node.arguments.map((argument) => this.argument(argument)))
         }
         if (ts.isNewExpression(node)) {
             const named = ts.isIdentifier(node.expression) || ts.isPropertyAccessExpression(node.expression)
-            const type = named && this.new('type-expression', node.expression).fact('form', 'named').fact('refers', this.checker ? this.refersOf(node.expression) : undefined)
+            // The written type spans its type arguments too, `Map<string, number>`, as a C# construction's does.
+            const typeEnd = node.typeArguments ? node.typeArguments.end + 1 : node.expression.end
+            const type = named && this.between('type-expression', node.expression.getStart(this.sourceFile), typeEnd).fact('form', 'named').fact('refers', this.checker ? this.refersOf(node.expression) : undefined)
                 .holdsAll('typeArguments', (node.typeArguments ?? []).map((argument) => this.type(argument)))
 
             return this.new('construction', node).fact('target', this.checker ? this.target(node) : undefined)
@@ -654,6 +700,40 @@ export class Translator {
         return this.idOf(node)
     }
 
+    /**
+     * Every declaration a class member overrides or implements, up the class's bases and the interfaces it implements:
+     * its symbol id, and whether the project or a library declares it. None for a member outside a class.
+     */
+    obligationsOf(node) {
+        const owner = node.parent
+        if (!owner || !(ts.isClassDeclaration(owner) || ts.isClassExpression(owner)) || !node.name || ts.isComputedPropertyName(node.name)) return undefined
+        const name = node.name.text
+        const pending = []
+        const classSymbol = owner.name ? this.checker.getSymbolAtLocation(owner.name) : undefined
+        const own = classSymbol ? this.checker.getDeclaredTypeOfSymbol(classSymbol) : undefined
+        if (own) pending.push(...(this.checker.getBaseTypes(own) ?? []))
+        for (const clause of owner.heritageClauses ?? []) {
+            if (clause.token !== ts.SyntaxKind.ImplementsKeyword) continue
+            for (const implemented of clause.types) pending.push(this.checker.getTypeAtLocation(implemented.expression))
+        }
+        const found = []
+        const seen = new Set()
+        while (pending.length) {
+            const type = pending.shift()
+            if (!type || seen.has(type)) continue
+            seen.add(type)
+            const member = type.getProperty(name)
+            const declaration = member?.declarations?.find(declaresSymbol)
+            const id = declaration && this.idOf(declaration)
+            if (id && !found.some((each) => each.symbol === id)) {
+                found.push({ symbol: id, origin: this.program.isLibrary(declaration.getSourceFile()) ? 'external' : 'project' })
+            }
+            if (type.isClassOrInterface()) pending.push(...(this.checker.getBaseTypes(type) ?? []))
+        }
+
+        return found.length ? found : undefined
+    }
+
     /** The symbol id of `declaration`: `<path>#Qualified.name`, or the bare global name for the standard library. */
     idOf(declaration) {
         const names = []
@@ -692,7 +772,8 @@ export class Translator {
     target(node) {
         this.tree.calls++
         const declaration = this.checker.getResolvedSignature(node)?.declaration
-        if (!declaration || ts.isJSDocSignature(declaration)) return undefined
+        // A call of a function-typed value resolves to the signature of its type, which declares no function to target.
+        if (!declaration || ts.isJSDocSignature(declaration) || ts.isFunctionTypeNode(declaration) || ts.isConstructorTypeNode(declaration)) return undefined
         const symbol = this.idOf(declaration)
         if (!symbol) return undefined
         this.tree.resolved++
@@ -738,6 +819,10 @@ export class Translator {
     }
 
     shape(type, origin, depth) {
+        // `boolean` is the union `false | true` to the checker, but one keyword as written.
+        if (type.flags & ts.TypeFlags.Boolean) return { kind: 'keyword', name: 'boolean' }
+        // `this` inside a class is a type parameter constrained to the class: it is the class.
+        if (type.isThisType && type.getConstraint()) return this.shape(type.getConstraint(), origin, depth)
         if (type.isUnion()) return { kind: 'union', members: type.types.map((member) => this.typeOf(member, origin, depth)) }
         if (type.isIntersection()) return { kind: 'intersection', members: type.types.map((member) => this.typeOf(member, origin, depth)) }
         if (type.isStringLiteral()) return { kind: 'literal', value: type.value }

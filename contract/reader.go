@@ -313,6 +313,7 @@ func link(file *File) error {
 			file.reaches = comment.Span.End
 		}
 	}
+	derive(file)
 
 	return nil
 }

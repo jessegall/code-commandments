@@ -24,45 +24,169 @@
     "select": "function",
     "as": "f",
     "where": [
-      "and",
-      [
-        "tree.own",
-        "$f"
-      ],
-      [
-        "=",
-        [
-          "count",
-          "$f.body.statements"
-        ],
-        1
-      ]
+      "tree.own",
+      "$f"
     ],
     "let": [
       [
-        "branch",
+        "statements",
         [
-          "at",
-          "$f.body.statements",
-          0
+          "tree.effective",
+          "$f.body"
+        ]
+      ],
+      [
+        "choice",
+        [
+          "choiceOf",
+          [
+            "at",
+            "$statements",
+            0
+          ]
+        ]
+      ],
+      [
+        "flag",
+        [
+          "case",
+          "$choice.kind",
+          {
+            "if": [
+              "flagRead",
+              "$choice.condition"
+            ],
+            "conditional": [
+              "flagRead",
+              "$choice.condition"
+            ],
+            "dispatch": [
+              "flagRead",
+              "$choice.subject"
+            ]
+          },
+          null
+        ]
+      ],
+      [
+        "shaped",
+        [
+          "proven",
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "count",
+                  "$statements"
+                ],
+                1
+              ],
+              [
+                "=",
+                "$choice.kind",
+                "if"
+              ],
+              [
+                "exists",
+                "$choice.else"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                [
+                  "count",
+                  "$statements"
+                ],
+                1
+              ],
+              [
+                "=",
+                "$choice.kind",
+                "conditional"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                [
+                  "count",
+                  "$statements"
+                ],
+                1
+              ],
+              [
+                "=",
+                "$choice.kind",
+                "dispatch"
+              ],
+              [
+                "=",
+                [
+                  "count",
+                  "$choice.arms"
+                ],
+                2
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                [
+                  "count",
+                  "$statements"
+                ],
+                2
+              ],
+              [
+                "=",
+                "$choice.kind",
+                "if"
+              ],
+              [
+                "not",
+                [
+                  "exists",
+                  "$choice.else"
+                ]
+              ],
+              [
+                "not",
+                [
+                  "completes",
+                  "$choice.then"
+                ]
+              ]
+            ]
+          ]
         ]
       ]
     ],
     "having": [
       "and",
-      [
-        "=",
-        "$branch.kind",
-        "if"
-      ],
+      "$shaped",
       [
         "exists",
-        "$branch.else"
+        "$flag"
       ],
       [
-        "=",
-        "$branch.condition.kind",
-        "reference"
+        "every",
+        [
+          "arms",
+          "$choice",
+          "$statements"
+        ],
+        "a",
+        [
+          "behaves",
+          "$a"
+        ]
       ],
       [
         "some",
@@ -73,15 +197,276 @@
           [
             "=",
             "$p.binding.name",
-            "$branch.condition.name"
+            "$flag"
           ],
           [
-            "tree.boolean",
-            "$p.binding.resolved"
+            "flagParameter",
+            "$p"
           ]
         ]
       ]
     ],
     "emit": "$f"
+  },
+  "definitions": {
+    "flagRead": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "unary": [
+            "case",
+            "$c.operand.kind",
+            {
+              "reference": "$c.operand.name"
+            },
+            null
+          ],
+          "reference": "$c.name",
+          "comparison": [
+            "case",
+            [
+              "proven",
+              [
+                "and",
+                [
+                  "=",
+                  [
+                    "count",
+                    "$c.operands"
+                  ],
+                  2
+                ],
+                [
+                  "=",
+                  [
+                    "tree.kindOf",
+                    [
+                      "at",
+                      "$c.operands",
+                      0
+                    ]
+                  ],
+                  "reference"
+                ],
+                [
+                  "tree.nullish",
+                  [
+                    "at",
+                    "$c.operands",
+                    1
+                  ]
+                ]
+              ]
+            ],
+            {
+              "true": [
+                "nameOf",
+                [
+                  "at",
+                  "$c.operands",
+                  0
+                ]
+              ]
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "choiceOf": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.kind",
+        {
+          "return": [
+            "at",
+            "$s.values",
+            0
+          ]
+        },
+        "$s"
+      ]
+    },
+    "outcomeOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "return": [
+            "at",
+            "$x.values",
+            0
+          ],
+          "expression-statement": "$x.expression"
+        },
+        "$x"
+      ]
+    },
+    "behaves": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "proven",
+        [
+          "or",
+          [
+            ">",
+            [
+              "count",
+              [
+                "tree.effective",
+                "$s"
+              ]
+            ],
+            1
+          ],
+          [
+            "and",
+            [
+              "=",
+              [
+                "count",
+                [
+                  "tree.effective",
+                  "$s"
+                ]
+              ],
+              1
+            ],
+            [
+              "exists",
+              [
+                "outcomeOf",
+                [
+                  "at",
+                  [
+                    "tree.effective",
+                    "$s"
+                  ],
+                  0
+                ]
+              ]
+            ],
+            [
+              "not",
+              [
+                "in",
+                [
+                  "tree.kindOf",
+                  [
+                    "outcomeOf",
+                    [
+                      "at",
+                      [
+                        "tree.effective",
+                        "$s"
+                      ],
+                      0
+                    ]
+                  ]
+                ],
+                "literal",
+                "reference",
+                "collection",
+                "throw"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "arms": {
+      "args": [
+        "choice",
+        "statements"
+      ],
+      "expr": [
+        "case",
+        "$choice.kind",
+        {
+          "if": [
+            "case",
+            [
+              "exists",
+              "$choice.else"
+            ],
+            {
+              "true": [
+                "list",
+                "$choice.then",
+                "$choice.else"
+              ]
+            },
+            [
+              "list",
+              "$choice.then",
+              [
+                "at",
+                "$statements",
+                1
+              ]
+            ]
+          ],
+          "conditional": [
+            "list",
+            "$choice.consequent",
+            "$choice.alternative"
+          ],
+          "dispatch": [
+            "map",
+            "$choice.arms",
+            "a",
+            "$a.body"
+          ]
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "nameOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.name"
+    },
+    "flagParameter": {
+      "args": [
+        "p"
+      ],
+      "expr": [
+        "proven",
+        [
+          "or",
+          [
+            "tree.boolean",
+            "$p.declaredType"
+          ],
+          [
+            "and",
+            [
+              "exists",
+              "$p.default"
+            ],
+            [
+              "tree.nullish",
+              "$p.default"
+            ]
+          ]
+        ]
+      ]
+    }
   }
 }

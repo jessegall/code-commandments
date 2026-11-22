@@ -212,8 +212,7 @@ func literalTruth(condition engine.Match) engine.Truth {
 	return engine.TruthOf(truthful)
 }
 
-// breaksOutOf is each break that leaves the loop or dispatch: one whose destination it is, or, unresolved, one whose
-// nearest loop or dispatch it is.
+// breaksOutOf is each break that leaves the loop or dispatch: one whose destination it is.
 func breaksOutOf(site engine.Match) []engine.Match {
 	var found []engine.Match
 	for _, each := range descendantMatches(site) {
@@ -225,15 +224,10 @@ func breaksOutOf(site engine.Match) []engine.Match {
 	return found
 }
 
-// breakTarget is the statement a break or continue leaves.
+// breakTarget is the statement a break or continue leaves, as the reader links it.
 func breakTarget(jump engine.Match) engine.Match {
 	if destination := linkedMatches(jump, "destination"); len(destination) == 1 {
 		return destination[0]
-	}
-	for at := jump.Parent(); at.Exists() && !at.Node().Is("function-like"); at = at.Parent() {
-		if kind := at.Node().Kind; kind == "loop" || (kind == "dispatch" && jump.Node().Kind == "break") {
-			return at
-		}
 	}
 
 	return engine.Match{}

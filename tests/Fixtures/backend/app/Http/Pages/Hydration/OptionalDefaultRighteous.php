@@ -2,9 +2,11 @@
 
 namespace Shop\Http\Pages\Hydration;
 
+use JesseGall\CodeCommandments\Sins\Backend\FlagArgument;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullToOptionalMap;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\PreferOptionalCreate;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
 
@@ -23,6 +25,7 @@ final class Placement extends Data
         public readonly OptCoords|Optional $at = new Optional(),
     ) {}
 
+    #[Sinful(FlagArgument::class)]
     public function fallback(bool $absent): OptCoords|Optional
     {
         if ($absent) {

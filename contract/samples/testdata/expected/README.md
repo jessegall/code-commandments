@@ -73,6 +73,51 @@ validates against `contract/tree.schema.json` and that every span points into it
 | `flags` | section 19, flags | php, python, csharp, typescript, go, vue | see below |
 | `parse-failure` | unknown evidence | python | a file no parser could read, so mypy checks nothing (its resolver did not run) |
 | `unresolved-symbol` | unknown evidence, story 54 | typescript | a call of a name nothing declares, with the resolver run |
+| `contract-csharp-collections` | doc 65, the bridge validator | csharp | written for the csharp bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-csharp-declarations` | doc 65, the bridge validator | csharp | written for the csharp bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-csharp-patterns` | doc 65, the bridge validator | csharp | written for the csharp bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-csharp-statements` | doc 65, the bridge validator | csharp | written for the csharp bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-csharp-top-level` | doc 65, the bridge validator | csharp | written for the csharp bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-csharp-unsupported` | doc 65, the bridge validator | csharp | written for the csharp bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-go-declarations` | doc 65, the bridge validator | go | written for the go bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-go-flow` | doc 65, the bridge validator | go | written for the go bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-go-switches` | doc 65, the bridge validator | go | written for the go bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-declarations` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-dispatch` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-enum` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-expressions` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-flow` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-hooks` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-jumps` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-scopes` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-top-level` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-comprehensions` | doc 65, the bridge validator | python | written for the python bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-decorators` | doc 65, the bridge validator | python | written for the python bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-expressions` | doc 65, the bridge validator | python | written for the python bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-match` | doc 65, the bridge validator | python | written for the python bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-references` | doc 65, the bridge validator | python | written for the python bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-scopes` | doc 65, the bridge validator | python | written for the python bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-unsupported` | doc 65, the bridge validator | python | written for the python bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-python-typing` | doc 65, the bridge validator | python | written for the python bridge's contract score: enums and their cases, a type alias, type parameters, isinstance as a type test, typing.cast |
+| `contract-typescript-constants` | doc 65, the bridge validator | typescript | written for round three of the contract score: folded constants, exhaustive matches, type parameter constraints and the last roles of its bridge |
+| `contract-vue-script-constants` | doc 65, the bridge validator | vue | written for round three of the contract score: folded constants, exhaustive matches, type parameter constraints and the last roles of its bridge |
+| `contract-csharp-generics` | doc 65, the bridge validator | csharp | written for round three of the contract score: folded constants, exhaustive matches, type parameter constraints and the last roles of its bridge |
+| `contract-go-generic-call` | doc 65, the bridge validator | go | written for round three of the contract score: folded constants, exhaustive matches, type parameter constraints and the last roles of its bridge |
+| `contract-php-attributes` | doc 65, the bridge validator | php | written for round three of the contract score: folded constants, exhaustive matches, type parameter constraints and the last roles of its bridge |
+| `contract-python-constants` | doc 65, the bridge validator | python | written for round three of the contract score: folded constants, exhaustive matches, type parameter constraints and the last roles of its bridge |
+| `contract-typescript-async-generator` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-typescript-compiler-facts` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-typescript-declarations` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-typescript-expressions` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-typescript-imports` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-typescript-labels-loops` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-typescript-switch-dispatch` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-typescript-try-finally` | doc 65, the bridge validator | typescript | written for the typescript bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-vue-recovery` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-vue-script-declarations` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-vue-script-expressions` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-vue-script-statements` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-vue-template-markup` | doc 65, the bridge validator | vue | written for the vue bridge's contract score: the items it proves are named in reports 119 to 121 |
 
 Stories 20 to 22 and 24 are about how a run uses the tree, not about the tree itself: 20 and 21 are package facts
 (tasks 1245 and 1291), 22 is the cache (task 1230), and 24 is the reader's version refusal (`contract/reader_test.go`).
@@ -135,6 +180,6 @@ Every flag of section 19 is a fact in `flags/<language>`:
 | spread | argument `spread: positional` or `keyed` | `flags` php, python, typescript, go |
 | step | a loop's `steps[]` | `flags` php, csharp, typescript, go |
 | variadic | parameter `collects: rest` | `flags` php, python, csharp, typescript, go |
-| resolves | import `resolves`, an index fact | not stated: it is the absolute path a run reads the imported file at, which differs per run |
+| resolves | import `resolves`, an index fact | stated under `/sample/` for the folder the sample is placed in, since the absolute path a run reads the file at differs per run: `/sample/aliased_import/money.py` |
 | inherited | member `obligations`, a compiler fact | `flags` csharp: `ToString` overrides `object.ToString()`, fixed outside the project |
 | constant (wire key) | `constantValue`, a compiler fact | `flags` csharp: `Limit` folds to 3 |

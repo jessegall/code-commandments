@@ -178,7 +178,7 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`enum-case`**: `value?`, `attributes[]`. Facts `name`, `symbol`.
 - **`alias`**: a type alias. `typeParameters[]`, `underlyingType`. Facts `name`, `symbol`.
 - **`type-parameter`**: `constraint?`, `default?`. Fact `name`.
-- **`function`**: every function-like. `receiver?` (`parameter`: Go's receiver), `typeParameters[]`,
+- **`function`**: every function-like. `receiver?` (`parameter`: Go's receiver, Python's `self` or `cls`), `typeParameters[]`,
   `parameters[]`, `returnType?`, `body?`, `attributes[]`. `body` is a `block`, or an expression for an arrow
   or lambda written with an expression body; an absent body (an abstract or interface method, a declaration
   only) is known-empty and differs from an empty block. Facts `name?`, `symbol`, `form` (`function`, `method`,
@@ -191,7 +191,9 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   `keyword`), `optional` (TypeScript `x?`), `evaluated` (when its default is evaluated: `call`, or
   `definition` for Python). A promoted constructor parameter (PHP, a TypeScript parameter property) is
   the one written node of the field it declares: its `modifiers` are the field's, and its type lists it in `implicitMembers`.
-- **`variable`**: a local declaration with a keyword (`let`, `const`, `var`, C# typed locals, Go `var`).
+- **`variable`**: a local declaration with a keyword (`let`, `const`, `var`, C# typed locals, Go `var`). A
+  `using` declaration (C# `using var`, TypeScript `using` and `await using`) is form `using`: its value is released
+  where the enclosing block ends; the statement that holds a body is a `resource-scope`.
   `declarators[]`, `declaredType?`. Fact `form`. Go's `:=` is an `assignment` with mode `define`.
 - **`binding`**: a name a declaration introduces. Facts `name`, `symbol?`.
 - **`annotation`**: an attribute, annotation or decorator applied to a declaration. `callee` (a reference or
@@ -221,8 +223,9 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   break: Python's `for…else`). Facts `form` (`for`, `for-each`, `while`, `do-while`, `infinite`), `async`
   (`for await`, `async for`).
 - **`break`** and **`continue`**: `label?` (a reference to a label, as written). Link `destination?` (the
-  loop, dispatch or label it leaves, where resolved). Fact `depth?` (PHP `break 2`).
-- **`goto`**: `destination` (a reference, possibly unresolved). Link `label?`.
+  loop, switch, select or labelled statement it leaves; the reader derives it from the tree when a bridge does not). Fact `depth?` (PHP `break 2`).
+- **`goto`**: `destination` (a reference, possibly unresolved). Link `label?` (the label of that name in its
+  function, derived by the reader).
 - **`label`**: `binding`, `statement?`.
 - **`try`**: `body`, `handlers[]`, `normalCompletion?` (Python's `try…else`: after the body, only when it
   raised nothing), `finally?` (on exit, always).
@@ -248,13 +251,13 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   class it names: the enclosing one, or the one it extends). Link `binding?` (the local `binding` it names, or the `import-binding` of a name imported under its own name,
   where it is in the same file).
 - **`call`**: `callee` (the expression called: a `reference`, or an `access` for a method), `typeArguments[]`,
-  `arguments[]`. Link `receiver?` (the `access`'s subject, for a method call). Facts `nullConditional`
+  `arguments[]`. Facts `nullConditional`
   (`?->`, `?.()`), `target`. A language construct that behaves as a function (`isset`, `empty`, `echo`,
   `print`, `unset`) is a call whose callee refers to the language's own symbol for it. PHP's pipe
   `value |> callable` is the call `callable(value)`: the callable its callee, the value its one argument.
 - **`construction`**: `type?` (the type written after `new`, or an anonymous class's `type`), `callee?` (a
-  call of a class: Python `Money(...)`, which the compiler resolves to a construction), `typeArguments[]`,
-  `arguments[]`, `initializer?` (a C# object or collection initializer, a `collection`). Fact `target`.
+  call of a class: Python `Money(...)`, which the compiler resolves to a construction; its type arguments are the
+  written type's own, `List<int>`), `arguments[]`, `initializer?` (a C# object or collection initializer, a `collection`). Fact `target`.
 - **`argument`**: `value`. Facts `label?` (a named argument's name), `passing` (`value`, `reference`, `out`,
   `in`), `spread` (`none`, `positional`, `keyed`).
 - **`access`**: `subject`, `member` (a `reference` naming the member). Facts `form` (`instance`, `static`),
@@ -281,7 +284,7 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`fallback`**: `subject`, `replacement` (evaluated only when the trigger holds). Fact `trigger` (`null` for
   `??`, `falsy` for PHP's short ternary `a ?: b`).
 - **`conditional`**: `condition`, `consequent`, `alternative`.
-- **`type-test`**: `subject`, `testedType`, `binding?` (C# `x is Money m`, a type switch's bound name). Facts
+- **`type-test`**: `subject`, `testedType?` (absent only on a type switch, whose arms carry the types), `binding?` (C# `x is Money m`, a type switch's bound name). Facts
   `negated` (`!is`, `not isinstance`), `form` (`instanceof`, `is`, `isinstance`, `type-switch`). Python's
   `isinstance(x, A)` is a type-test where the compiler resolves the callee to the builtin.
 - **`cast`**: `operand`, `targetType`. Fact `form` (`checked`: C# `(T)x` or PHP `(int)$x`, which converts or
@@ -310,8 +313,7 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`type-expression`**: a type as written. `typeArguments[]`, `members[]` (a union's or intersection's alternatives),
   `element?` (an array's or pointer's element), `parameters[]` and `returnType?` (a function type). Facts
   `form` (`named`, `keyword`, `union`, `intersection`, `nullable`, `array`, `function`, `literal`,
-  `parameter`, `pointer`, `map`, `object`, `opaque`; `object` is an inline object type, its fields in its resolvedType), `refers` (a named type's id), `written` (the type as structure, see
-  *Types*). `?T` is form `nullable`. A `keyword` type carries the keyword as written as its `name` (`int`, `void`,
+  `parameter`, `pointer`, `map`, `object`, `opaque`; `object` is an inline object type, its fields in its resolvedType), `refers` (a named type's id). `?T` is form `nullable`. A `keyword` type carries the keyword as written as its `name` (`int`, `void`,
   `string`, `None`), so two keyword types are told apart without a resolver; a keyword naming a class (`self`,
   `static`, `parent`) also `refers` to that class.
 - **`tuple-type`**: `elements[]` (`tuple-element`). Separate from a `return` of several values, so a single
@@ -374,7 +376,7 @@ A resolved or written type is an object, so its structure survives and nothing r
 | `fields` | `object` | `[{"name", "type"?, "optional"?}]` |
 | `parameters`, `returns` | `function` | the parameter types and the return type |
 | `value` | `literal` | the value, decoded as a literal's is |
-| `nullable` | the compiler can say | `true` or `false`; absent only where the compiler cannot say (unknown) |
+| `nullable` | the compiler can say | `true` or `false`; absent only where the compiler cannot say (unknown), as for a type parameter. A Go nil slice or map is an empty one, so neither is nullable; a nil pointer, interface, func or channel is |
 | `valueType` | the compiler can say | `true` for a value type (a C# struct or enum, a Go basic type, struct or array), `false` for a reference; absent only where the compiler cannot say |
 | `element` | a collection whose element is known | the element type, one level |
 | `constructs` | the expression names a class | the class a call of it builds |
@@ -387,7 +389,7 @@ equality. Each language spells ids its own fixed way:
 
 | language | a type | a member | a function |
 |---|---|---|---|
-| php | `Shop\Cart` | `Shop\Cart::add()`, `Shop\Cart::$items`, `Shop\Cart::MAX` | `Shop\total()` |
+| php | `Shop\Cart` | `Shop\Cart::add`, `Shop\Cart::$items`, `Shop\Cart::MAX` | `Shop\total` |
 | python | `shop.cart.Cart` | `shop.cart.Cart.add` | `shop.cart.total` |
 | csharp | `global::Shop.Cart` | `global::Shop.Cart.Add(global::System.Int32)` | a local function: its member's id, `.`, its name |
 | go | `example.com/shop/cart.Cart` | `example.com/shop/cart.Cart.Add` | `example.com/shop/cart.Total` |

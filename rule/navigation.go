@@ -571,6 +571,9 @@ func consumer(site engine.Match) value {
 		return unknown
 	}
 	role, holder := site.Node().InRole(), parent.Node()
+	if valuePassesThrough(holder, role, parent) {
+		return consumer(passedTo(holder, parent))
+	}
 	use, user := "operand", parent
 	switch {
 	case holder.Kind == "expression-statement":
@@ -604,6 +607,28 @@ func consumer(site engine.Match) value {
 	}
 
 	return known(record{"use": known(use), "node": known(user)})
+}
+
+func valuePassesThrough(holder *contract.Node, role string, parent engine.Match) bool {
+	switch {
+	case holder.Kind == "conditional" && (role == "consequent" || role == "alternative"):
+		return true
+	case holder.Kind == "fallback" && role == "replacement":
+		return true
+	case holder.Kind == "arm" && role == "body":
+		dispatch := parent.Parent()
+		return dispatch.Exists() && dispatch.Node().Kind == "dispatch" && dispatch.Node().Form == "match"
+	}
+
+	return false
+}
+
+func passedTo(holder *contract.Node, parent engine.Match) engine.Match {
+	if holder.Kind == "arm" {
+		return parent.Parent()
+	}
+
+	return parent
 }
 
 // accessMode is whether a reference reads, writes, or reads and writes the name it names.

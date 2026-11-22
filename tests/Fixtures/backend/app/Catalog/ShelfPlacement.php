@@ -2,32 +2,36 @@
 
 namespace Shop\Catalog;
 
-use JesseGall\CodeCommandments\Sins\Backend\CancelledCoalesce;
-
+use JesseGall\CodeCommandments\Sins\Backend\EnumValueMatch;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
+use Shop\Enums\ProductCategory;
+use Shop\Models\Product;
 
 /**
- * Where a product sits on the shelf. Position 0 is the FRONT; no position at all means nobody has
- * placed it yet — two different facts the gate below answers with one branch.
+ * Picks an aisle by holding the category's scalar in a local and matching it against each case's value again.
  */
 final class ShelfPlacement
 {
-    #[Sinful(CancelledCoalesce::class)]
-    public function isAtTheFront(?int $position): bool
+    #[Sinful(EnumValueMatch::class)]
+    public function aisle(Product $product): int
     {
-        return ($position ?? 0) === 0;
+        $category = $product->category->value;
+
+        return match ($category) {
+            ProductCategory::Food->value => 1,
+            ProductCategory::Electronics->value => 4,
+            default => 9,
+        };
     }
 
-    #[Sinful(CancelledCoalesce::class)]
-    public function isBehindFront(?int $position): bool
+    #[Righteous(EnumValueMatch::class)]
+    public function shelfHeight(string $size): int
     {
-        return ($position ?? 0) > 0;
-    }
-
-    #[Righteous(CancelledCoalesce::class)]
-    public function reachesBackShelf(?int $position): bool
-    {
-        return ($position ?? 0) > 4;
+        return match ($size) {
+            'small' => 1,
+            'large' => 3,
+            default => 2,
+        };
     }
 }

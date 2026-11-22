@@ -2,6 +2,7 @@
 
 namespace Shop\Kiosk;
 
+use JesseGall\CodeCommandments\Sins\Backend\FlagArgument;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DanglingRouteName;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -13,6 +14,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  */
 final class KioskRedirects
 {
+    #[Sinful(FlagArgument::class)]
     #[Sinful(DanglingRouteName::class)]
     public function afterScan(bool $recognised): object
     {

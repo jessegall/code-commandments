@@ -129,6 +129,7 @@ export class VueWriter {
                     .fact('resolves', this.component(node.tag))
                 element.holdsAll('attributes', node.props.map((prop) => this.prop(prop, element)))
                 element.holdsAll('children', node.children.flatMap((child) => this.template(child)))
+                linkTemplateScope(element)
                 return [element]
             }
         }
@@ -253,4 +254,31 @@ function blank(text) {
 
 function pascal(tag) {
     return tag.replace(/(^|-)([a-z0-9])/g, (_, __, char) => char.toUpperCase())
+}
+
+/**
+ * Links each read of a name a `v-for` or `v-slot` on the element binds, inside the element, to that binding: the
+ * element's other attributes and its children, never the iterable the aliases come from. A read the script already
+ * linked keeps its link.
+ */
+function linkTemplateScope(element) {
+    const bound = new Map()
+    const iterables = new Set()
+    for (const directive of element.parts.attributes ?? []) {
+        if (directive.kind !== 'directive') continue
+        for (const binding of [...(directive.parts.bindings ?? []), directive.parts.pattern].filter(Boolean).flatMap(bindingsIn)) bound.set(binding.facts.name, binding)
+        if (directive.parts.iterable) iterables.add(directive.parts.iterable)
+    }
+    if (!bound.size) return
+    const visit = (node) => {
+        if (iterables.has(node)) return
+        if (node.kind === 'reference' && !node.links.binding && bound.has(node.facts.name)) node.link('binding', bound.get(node.facts.name))
+        node.children().forEach(visit)
+    }
+    element.children().forEach(visit)
+}
+
+/** The binding nodes a binding or a destructuring pattern holds. */
+function bindingsIn(node) {
+    return node.kind === 'binding' ? [node] : node.children().flatMap(bindingsIn)
 }

@@ -16,7 +16,6 @@ and calls inside are still read) or translates with a loss, and why.
 | `list()` and `[...]` as an assignment target | `collection` form `array` | version 5 writes a destructuring target as a `pattern`; not translated yet |
 | `echo`, `print`, `unset`, `isset`, `empty`, `exit`, `clone`, `eval`, `include` | `call` whose callee is a `reference` named for the keyword | the callee carries no `refers` to PHP's own symbol yet |
 | a cast `(int) $x` | `cast` whose `targetType` is a keyword `type-expression` | the written type's name is not stated |
-| a reference's `binding` link | absent | references are not linked to the local binding they name yet |
 | a parse error's partial declaration | the statements php-parser recovered | an `incomplete` node for the part it dropped is not written yet |
 
 ## Python: what the bridge does not translate yet
@@ -32,7 +31,6 @@ and calls inside are still read) or translates with a loss, and why.
 | `//` floor division | `binary` with operator `divide` | version 5 has no floor-division operator |
 | `@` matrix multiplication | `binary` with operator `multiply` | version 5 has no matrix-multiplication operator |
 | a field's `written` type structure | absent | the bridge writes each annotation as a `type-expression` tree; the `written` fact is not filled |
-| a reference's `binding` link | absent | references are not linked to the local binding they name yet |
 
 ## C#: what the bridge does not translate yet
 
@@ -50,7 +48,6 @@ and calls inside are still read) or translates with a loss, and why.
 | an indexer's parameters | absent | the indexer is a `field` named `this`; its parameters are not written |
 | a type parameter's constraints | absent | `where T : …` clauses are not joined to their `type-parameter` |
 | generic arguments on a called name (`Make<int>()`) | absent | the callee `reference` keeps the name only |
-| a reference's `binding` link | absent | references are not linked to the local binding they name yet |
 | a node's `resolvedType` | absent | the file's `types` table is not written yet; `target` and `constantValue` are |
 | an overload left ambiguous | no `target` | the ambiguity itself is not recorded |
 
@@ -68,7 +65,6 @@ names and calls inside are still read) or translates with a loss, and why.
 | an object type literal, a mapped, conditional, indexed or `typeof` type | `type-expression` form `opaque` | its structure is in the resolved type, not the written one |
 | `catch (e: unknown)` | `handler` form `catch-all`, the written type left out | a TypeScript catch catches everything; the annotation filters nothing |
 | a selected overload | `target` names the shared symbol of the overload set | the signature chosen among overloads is not told apart yet |
-| a reference's `binding` link | absent | references are not linked to the local binding they name yet |
 | a namespace `namespace X {}` | `type` form `object` | version 5's `module` is a file's own scope |
 
 ## Vue: what the bridge does not translate yet
@@ -103,4 +99,3 @@ and calls inside are still read) or translates with a loss, and why.
 | a defined type that is not a struct or interface (`type Celsius float64`) | `alias` with its `underlyingType` | version 5's `type` forms are struct and interface for Go |
 | `satisfies` across files | links only to interfaces declared in the same file | a link points at a node of the file it stands in |
 | a struct literal of a named type | `collection` form `object` | it builds a value, not through a constructor |
-| a reference's `binding` link | absent | references are not linked to the local binding they name yet |

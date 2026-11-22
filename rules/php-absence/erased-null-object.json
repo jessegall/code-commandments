@@ -111,13 +111,15 @@
           "and",
           [
             "=",
-            "$n.parent.kind",
-            "return"
-          ],
-          [
-            "=",
-            "$n.parent.parent.kind",
-            "block"
+            [
+              "get",
+              [
+                "consumer",
+                "$n"
+              ],
+              "use"
+            ],
+            "returned"
           ],
           [
             "=",

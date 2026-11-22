@@ -38,10 +38,13 @@ func (Command) Help() help.Help {
 		Form("rule try <Rule> <path>…", "run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched").
 		Form("rule prove [path]", "check every rule of the project flags exactly the code its samples mark, and nothing else").
 		Form("rule prove --all [path]", "check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed").
+		Form("rule trace <Rule> <file> --line=N [--lines=A-B] [--within=folder]", "ask a rule of every node it selects on that line, or in that range of lines (where only the nodes its where lets through are shown), and print each part of its where, let and having with what it answered, the folder read whole as its own project (the file's own folder by default)").
 		Form("rule schema", "print the JSON Schema of a rule file").
 		Form("rule export <folder>", "write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
 		Option("--work", "with `try`, print how many nodes, checks and analyses the rule cost").
+		Option("--lines=A-B", "with `trace`, every node the rule selects on lines A to B whose where holds").
+		Option("--within=folder", "with `trace`, the folder read whole, so a part reading other files answers as it does in a judge").
 		Option("--all", "with `prove`, prove the shipped rules too, over every fixture project under the path").
 		Note("<Rule> is a rule of `.commandments/custom/` by its name — `NoRawSql` or `NoRawSqlDetector` — or the path of a rule file anywhere.").
 		Note("A sample marks the code a rule must flag with a comment above it — `// @sin NoRawSqlDetector`, `# @sin …` in Python, `<!-- @sin … -->` in a Vue template — the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark, flags anything unmarked, has no `@sin` mark at all, or cannot be read, and when a mark names no rule of the project.")
@@ -58,6 +61,8 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return c.explain(in, console)
 	case "try":
 		return c.try(in, root, console)
+	case "trace":
+		return c.trace(in, root, console)
 	case "prove":
 		return c.prove(in, root, console)
 	case "schema":
@@ -77,7 +82,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 		return 0, nil
 	default:
-		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule prove`, `rule schema` or `rule export`."), nil
+		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule trace`, `rule prove`, `rule schema` or `rule export`."), nil
 	}
 }
 
@@ -163,6 +168,82 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 	cli.SayWorkWhen(in.HasFlag("work"), console, work)
 
 	return 0, nil
+}
+
+func (c Command) trace(in *cli.Input, root string, console cli.Console) (int, error) {
+	named, given := in.Argument(1)
+	file, located := in.Argument(2)
+	first, last, ranged := linesAsked(in)
+	if !given || !located || !ranged {
+		return help.Usage(console.Err, c, "name the rule, the file and the line, e.g. `"+binary.Here()+" rule trace compare-self app/Orders/Check.php --line=24`."), nil
+	}
+
+	traced, found := shippedOrOwn(custom.Load(root), named)
+	if !found {
+		return console.Refuse(named + " names no shipped rule and no rule of .commandments/custom/."), nil
+	}
+
+	within := filepath.Dir(file)
+	if folder, set := in.Option("within"); set {
+		within = folder
+	}
+
+	var languages []source.Language
+	for _, judged := range traced.Engines() {
+		languages = append(languages, source.OfEngine(judged)...)
+	}
+
+	codebase, err := scan.Walk([]string{within}, source.Excluded{}).Only(languages...).Load()
+	if err != nil {
+		return 0, err
+	}
+	codebase.Rooted(within)
+
+	asked, err := traced.Trace(codebase, filepath.ToSlash(file), first, last)
+	if err != nil {
+		return console.Refuse(err.Error()), nil
+	}
+
+	if len(asked) == 0 {
+		return console.Refuse(fmt.Sprintf("%s selects no node on lines %d to %d of %s.", traced.Name(), first, last, file)), nil
+	}
+
+	for _, each := range asked {
+		if first != last && !each.WhereHeld {
+			continue
+		}
+		console.Write(fmt.Sprintf("%s at %s:%d\n", each.Node.Kind(), each.Node.File(), each.Node.Line()))
+		for _, step := range each.Steps {
+			console.Write(fmt.Sprintf("  %-8s %-7s  %s\n", step.Part, step.Answered, step.Written))
+		}
+	}
+
+	return 0, nil
+}
+
+func linesAsked(in *cli.Input) (int, int, bool) {
+	if written, set := in.Option("lines"); set {
+		from, to, cut := strings.Cut(written, "-")
+		first, errFirst := strconv.Atoi(from)
+		last, errLast := strconv.Atoi(to)
+
+		return first, last, cut && errFirst == nil && errLast == nil && first >= 1 && last >= first
+	}
+	written, set := in.Option("line")
+	line, err := strconv.Atoi(written)
+
+	return line, line, set && err == nil && line >= 1
+}
+
+func shippedOrOwn(own custom.Project, named string) (rule.Rule, bool) {
+	if shipped, found := rule.Named(named); found {
+		file, isFile := shipped.(rule.Rule)
+
+		return file, isFile
+	}
+	file, err := ruleNamed(own, named)
+
+	return file, err == nil
 }
 
 func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, error) {

@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"strconv"
@@ -47,6 +48,12 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 	checked := newChecker(fset, packages)
 	written := map[string]bool{}
 	var files []*contract.File
+	folders := map[string]string{}
+	for _, one := range packages {
+		if len(one.Files) > 0 {
+			folders[one.Path] = filepath.Dir(one.Files[0])
+		}
+	}
 
 	for _, one := range packages {
 		if !slices.ContainsFunc(one.Files, asked) {
@@ -66,7 +73,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 			}
 			written[path] = true
 
-			file, err := fileLine(fset, parsed, path, one.Path, facts, false)
+			file, err := fileLine(fset, parsed, path, one.Path, facts, folders)
 			if err != nil {
 				return nil, err
 			}
@@ -87,7 +94,7 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 		if parsed == nil {
 			return nil, fmt.Errorf("%s: %w", path, parseErr)
 		}
-		file, err := fileLine(fset, parsed, path, parsed.Name.Name, nil, false)
+		file, err := fileLine(fset, parsed, path, parsed.Name.Name, nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -105,13 +112,13 @@ func Stream(paths, write []string) (*contract.Stream, error) {
 	return contract.Accept(header, files, nil, contract.Trailer{Files: len(files)})
 }
 
-func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts *types.Info, context bool) (*contract.File, error) {
+func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts *types.Info, folders map[string]string) (*contract.File, error) {
 	source, err := read(path)
 	if err != nil {
 		return nil, err
 	}
 
-	tree := &writer{fset: fset, source: source, facts: facts, module: module, types: map[types.Type]*contract.Type{}, imported: map[string]bool{}}
+	tree := &writer{fset: fset, source: source, facts: facts, module: module, folders: folders, types: map[types.Type]*contract.Type{}, imported: map[string]bool{}}
 	tree.owners = ownersIn(parsed, facts, module)
 	root := tree.file(parsed)
 	nodes := tree.numbered(root)
@@ -120,7 +127,6 @@ func fileLine(fset *token.FileSet, parsed *ast.File, path, module string, facts 
 		Path:     path,
 		Language: contract.Go,
 		Errors:   errorsIn(parsed, source),
-		Context:  context,
 		Module:   module,
 		Resolver: &contract.Resolver{Tool: "go/types", Ran: facts != nil},
 		Root:     root,

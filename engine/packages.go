@@ -113,13 +113,14 @@ func (c *Codebase) holds(facts PackageFacts) Truth {
 }
 
 // declaredBy says whether a target's declaring type is the type an entry names, or one of its subtypes.
+// Both are compared as bare symbols, so C#'s `global::System.Exception` is the entry's `System.Exception`.
 func (m Match) declaredBy(declaring, named string) bool {
-	if declaring == named {
+	if BareSymbol(declaring) == BareSymbol(named) {
 		return true
 	}
 	types, typed := m.Types()
 
-	return typed && IsA(types, declaring, named)
+	return typed && slices.ContainsFunc(Supertypes(types, declaring), func(supertype string) bool { return BareSymbol(supertype) == BareSymbol(named) })
 }
 
 // PackageVersion is the version of a package the project's lock file or manifest holds: empty when the project does
@@ -170,7 +171,7 @@ func readManifests(folder string, versions map[string]map[string]string) {
 			versions[ecosystem][name] = strings.TrimPrefix(version, "v")
 		}
 	}
-	if text, err := os.ReadFile(filepath.Join(folder, "composer.lock")); err == nil {
+	if text, err := os.ReadFile(filepath.Join(folder, "composer.lock")); err == nil && versions[Composer] == nil {
 		var lock struct {
 			Packages    []struct{ Name, Version string } `json:"packages"`
 			PackagesDev []struct{ Name, Version string } `json:"packages-dev"`

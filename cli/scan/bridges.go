@@ -478,6 +478,18 @@ func (b Bridge) Read(roots, files []string, tally func()) (*contract.Stream, err
 	return b.readHalving(kept, roots, files, files, tally, halvingsAtMost)
 }
 
+func (b Bridge) ReadWriting(roots, files, written []string) (*contract.Stream, error) {
+	return read(b, &keptLines{}, roots, files, written, func() {})
+}
+
+func (b Bridge) Serving(roots []string) (bridge.Asker, error) {
+	if asker, owned, err := b.Reach.Own(b, walk.RealEach(roots)); owned || err != nil {
+		return asker, err
+	}
+
+	return b.Reach.Open(b, walk.RealEach(roots))
+}
+
 const halvingsAtMost = 8
 
 // wavesAtMost is how many times a read starts the bridge for its misses: each wave reads the misses that import no

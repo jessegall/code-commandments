@@ -20,33 +20,135 @@
     "select": "dispatch",
     "as": "d",
     "where": [
-      "and",
+      "exists",
+      "$d.subject"
+    ],
+    "let": [
       [
-        "=",
-        "$d.subject.kind",
-        "access"
-      ],
-      [
-        "=",
-        "$d.subject.member.name",
-        "value"
+        "labelled",
+        [
+          "filter",
+          "$d.arms",
+          "a",
+          [
+            ">",
+            [
+              "count",
+              "$a.patterns"
+            ],
+            0
+          ]
+        ]
       ]
     ],
     "having": [
-      "not",
+      "and",
       [
-        "=",
+        "or",
         [
-          "tree.formOf",
-          [
-            "enclosing",
-            "$d",
-            "type"
-          ]
+          "valueRead",
+          "$d.subject"
         ],
-        "enum"
+        [
+          "and",
+          [
+            ">",
+            [
+              "count",
+              "$labelled"
+            ],
+            0
+          ],
+          [
+            "every",
+            "$labelled",
+            "a",
+            [
+              "every",
+              "$a.patterns",
+              "x",
+              [
+                "caseValue",
+                "$x.value"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            [
+              "tree.formOf",
+              [
+                "enclosing",
+                "$d",
+                "type"
+              ]
+            ],
+            "enum"
+          ]
+        ]
       ]
     ],
     "emit": "$d"
+  },
+  "definitions": {
+    "caseValue": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "proven",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$x.member.name",
+            "value"
+          ],
+          [
+            "=",
+            [
+              "tree.kindOf",
+              [
+                "declarationOf",
+                "$x.subject"
+              ]
+            ],
+            "enum-case"
+          ]
+        ]
+      ]
+    },
+    "valueRead": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "proven",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$x.member.name",
+            "value"
+          ]
+        ]
+      ]
+    }
   }
 }

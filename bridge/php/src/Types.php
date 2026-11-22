@@ -101,14 +101,16 @@ final class Types
             }
         }
         $constants = [];
+        $cases = [];
         foreach ($class->stmts as $statement) {
             if ($statement instanceof Stmt\ClassConst) {
                 foreach ($statement->consts as $constant) {
-                    $constants[$constant->name->toString()] = true;
+                    $constants[$constant->name->toString()] = self::folded($constant->value) ?? true;
                 }
             }
             if ($statement instanceof Stmt\EnumCase) {
                 $constants[$statement->name->toString()] = true;
+                $cases[] = $statement->name->toString();
             }
         }
         $traits = [];
@@ -130,7 +132,58 @@ final class Types
             'methods' => $methods,
             'properties' => $properties,
             'constants' => $constants,
+            'cases' => $class instanceof Stmt\Enum_ ? $cases : null,
         ];
+    }
+
+    /**
+     * Whether a match with no default arm names every case of the enum its subject is: an enum's cases are closed, so
+     * a match naming each cannot fall through to an UnhandledMatchError.
+     */
+    public function coversEveryCase(Expr\Match_ $match): bool
+    {
+        $enum = $match->cond->getAttribute('type')['name'] ?? null;
+        $cases = $enum !== null ? ($this->classes[strtolower(ltrim($enum, '\\'))]['cases'] ?? null) : null;
+        if ($cases === null) {
+            return false;
+        }
+        $named = [];
+        foreach ($match->arms as $arm) {
+            foreach ($arm->conds ?? [] as $condition) {
+                if (! $condition instanceof Expr\ClassConstFetch || ! $condition->name instanceof Node\Identifier || ! $condition->class instanceof Node\Name
+                    || strtolower($condition->class->toString()) !== strtolower(ltrim($enum, '\\'))) {
+                    return false;
+                }
+                $named[$condition->name->toString()] = true;
+            }
+        }
+
+        return array_diff($cases, array_keys($named)) === [];
+    }
+
+    /**
+     * The value a constant's initializer folds to when it is a literal: `{type, value}`, `{type: null}` for null.
+     *
+     * @return ?array{type: string, value?: string}
+     */
+    private static function folded(Expr $value): ?array
+    {
+        return match (true) {
+            $value instanceof Node\Scalar\String_ => ['type' => 'string', 'value' => $value->value],
+            $value instanceof Node\Scalar\Int_ => ['type' => 'int', 'value' => (string) $value->value],
+            $value instanceof Node\Scalar\Float_ => ['type' => 'float', 'value' => (string) $value->value],
+            $value instanceof Expr\ConstFetch && in_array($value->name->toLowerString(), ['true', 'false'], true) => ['type' => 'bool', 'value' => $value->name->toLowerString()],
+            $value instanceof Expr\ConstFetch && $value->name->toLowerString() === 'null' => ['type' => 'null'],
+            default => null,
+        };
+    }
+
+    /**
+     * The file the project declares a class in, when one of the files read declares it.
+     */
+    public function fileOf(string $class): ?string
+    {
+        return $this->classes[strtolower(ltrim($class, '\\'))]['file'] ?? null;
     }
 
     public function declareFunction(Stmt\Function_ $function, string $path): void
@@ -163,6 +216,12 @@ final class Types
             {
                 if ($node instanceof Stmt\ClassLike) {
                     $this->class = $node->namespacedName?->toString();
+                }
+                if ($node instanceof Node\UseItem && ($file = $this->types->fileOf($node->name->toString())) !== null) {
+                    $node->setAttribute('resolves', $file);
+                }
+                if ($node instanceof Stmt\ClassMethod && $this->class !== null) {
+                    $node->setAttribute('obligations', $this->types->obligations($this->class, $node->name->toString()));
                 }
                 if ($node instanceof Stmt\Foreach_ && $node->valueVar instanceof Expr\Variable && is_string($node->valueVar->name)) {
                     $this->scopes[array_key_last($this->scopes)]['variables'][$node->valueVar->name] = null;
@@ -198,6 +257,9 @@ final class Types
                     }
                     if ($type !== null) {
                         $node->setAttribute('type', $type);
+                    }
+                    if ($node instanceof Expr\Match_ && $this->types->coversEveryCase($node)) {
+                        $node->setAttribute('exhaustive', true);
                     }
                     if ($node instanceof Expr\Assign && $node->var instanceof Expr\Variable && is_string($node->var->name)) {
                         $this->scopes[$scope]['variables'][$node->var->name] = $type;
@@ -352,6 +414,41 @@ final class Types
         return null;
     }
 
+    /**
+     * Every declaration a method of the class overrides or implements, up its parents and interfaces: `Base::run`, and
+     * whether the project declares it. An ancestor that cannot be read adds none.
+     *
+     * @return list<array{symbol: string, origin: string}>
+     */
+    public function obligations(string $class, string $method): array
+    {
+        $own = $this->declaration($class);
+        if ($own === null) {
+            return [];
+        }
+        $key = strtolower($method);
+        $found = [];
+        $seen = [strtolower($own['name']) => true];
+        $pending = array_values(array_filter([$own['parent'] ?? null, ...($own['interfaces'] ?? [])]));
+        while ($pending !== []) {
+            $at = array_shift($pending);
+            if (isset($seen[strtolower(ltrim($at, '\\'))])) {
+                continue;
+            }
+            $seen[strtolower(ltrim($at, '\\'))] = true;
+            $declared = $this->declaration($at);
+            if ($declared === null) {
+                continue;
+            }
+            if (isset($declared['methods'][$key])) {
+                $found[] = ['symbol' => "{$declared['name']}::{$declared['methods'][$key]['name']}", 'origin' => $declared['file'] !== null ? 'project' : 'external'];
+            }
+            array_push($pending, ...array_filter([$declared['parent'] ?? null, ...($declared['interfaces'] ?? [])]));
+        }
+
+        return $found;
+    }
+
     /** A class constant or enum case read: the member names it, `Class::NAME`, and an enum case is of its enum's type. */
     private function constant(Expr\ClassConstFetch $fetch, ?string $class, string $name): ?array
     {
@@ -369,6 +466,9 @@ final class Types
             }
             if (isset($declared['constants'][$name])) {
                 $fetch->setAttribute('member', "{$declared['name']}::{$name}");
+                if (is_array($declared['constants'][$name])) {
+                    $fetch->setAttribute('constantValue', $declared['constants'][$name]);
+                }
 
                 return null;
             }

@@ -16,15 +16,19 @@ import (
 // operation, its parts under named roles, its facts, and byte spans into the file. Compiler facts come from go/types
 // and are left out when the package was not checked.
 type writer struct {
-	fset     *token.FileSet
-	source   []byte
-	facts    *types.Info
-	module   string
-	owners   map[*ast.Ident]string
-	types    map[types.Type]*contract.Type
-	links    []pendingLink
-	imported map[string]bool
-	declared []declaredType
+	fset       *token.FileSet
+	source     []byte
+	facts      *types.Info
+	module     string
+	owners     map[*ast.Ident]string
+	types      map[types.Type]*contract.Type
+	links      []pendingLink
+	imported   map[string]bool
+	declared   []declaredType
+	bound      map[types.Object]*contract.Node
+	signatures []*ast.FuncType
+	commaOk    map[ast.Expr]bool
+	folders    map[string]string
 }
 
 // pendingLink is a link whose target nodes have no ids until the tree is numbered.
@@ -100,19 +104,42 @@ func (w *writer) binding(name *ast.Ident) *contract.Node {
 	node.Own().Name = name.Name
 	if w.facts != nil {
 		node.Own().Symbol = w.symbol(name)
+		w.bind(name, node)
 	}
 
 	return node
 }
 
+// reference is a name read or written; a read of a local the file declares links to the node that declares it, a
+// binding or the name a short variable declaration defines.
 func (w *writer) reference(name *ast.Ident) *contract.Node {
 	node := w.at("reference", name)
 	node.Own().Name, node.Own().Form = name.Name, "name"
-	if w.facts != nil {
-		node.Own().Refers = w.refers(name)
+	if w.facts == nil {
+		return node
+	}
+	node.Own().Refers = w.refers(name)
+	if w.bind(name, node) {
+		return node
+	}
+	if declared := w.bound[w.facts.Uses[name]]; declared != nil {
+		w.link(node, "binding", []*contract.Node{declared}, false)
 	}
 
 	return node
+}
+
+func (w *writer) bind(name *ast.Ident, node *contract.Node) bool {
+	object := w.facts.Defs[name]
+	if object == nil || object.Parent() == nil || object.Parent() == types.Universe || (object.Pkg() != nil && object.Parent() == object.Pkg().Scope()) {
+		return object != nil
+	}
+	if w.bound == nil {
+		w.bound = map[types.Object]*contract.Node{}
+	}
+	w.bound[object] = node
+
+	return true
 }
 
 func visibility(name string) *contract.Effective {
@@ -184,6 +211,9 @@ func (w *writer) importOf(spec *ast.ImportSpec, span ast.Node) *contract.Node {
 	path, _ := strconv.Unquote(spec.Path.Value)
 	node := w.at("import", span)
 	node.Own().Source, node.Own().Form = path, "module"
+	if folder, read := w.folders[path]; read {
+		node.Own().Resolves = folder
+	}
 	if spec.Name != nil {
 		switch spec.Name.Name {
 		case "_":
@@ -319,6 +349,9 @@ func (w *writer) field(field *ast.Field) *contract.Node {
 }
 
 func (w *writer) value(spec *ast.ValueSpec, span ast.Node, tok token.Token) *contract.Node {
+	if len(spec.Names) == 2 {
+		w.markCommaOk([]ast.Expr{spec.Names[0], spec.Names[1]}, spec.Values)
+	}
 	kind := "variable"
 	if tok == token.CONST {
 		kind = "constant"
@@ -355,8 +388,50 @@ func (w *writer) function(declared *ast.FuncDecl) *contract.Node {
 	}
 	node := w.signature(w.at("function", declared), declared.Name, form, receiver, declared.Type, declared.Body)
 	holdAll(node, "typeParameters", w.typeParameters(declared.Type.TypeParams))
+	if receiver != nil && w.facts != nil {
+		node.Own().Obligations = w.obligations(declared.Name)
+	}
 
 	return node
+}
+
+func (w *writer) obligations(name *ast.Ident) []contract.Obligation {
+	method, isFunc := w.facts.Defs[name].(*types.Func)
+	if !isFunc || method.Pkg() == nil {
+		return nil
+	}
+	held := method.Type().(*types.Signature).Recv().Type()
+	if pointer, isPointer := held.(*types.Pointer); isPointer {
+		held = pointer.Elem()
+	}
+	var found []contract.Obligation
+	for _, scope := range append([]*types.Package{method.Pkg()}, method.Pkg().Imports()...) {
+		for _, each := range scope.Scope().Names() {
+			named, isType := scope.Scope().Lookup(each).(*types.TypeName)
+			if !isType || (scope != method.Pkg() && !named.Exported()) {
+				continue
+			}
+			face, isInterface := named.Type().Underlying().(*types.Interface)
+			if !isInterface || face.Empty() || !(types.Implements(held, face) || types.Implements(types.NewPointer(held), face)) {
+				continue
+			}
+			for at := range face.NumExplicitMethods() {
+				if satisfied := face.ExplicitMethod(at); satisfied.Name() == method.Name() {
+					found = append(found, contract.Obligation{Symbol: scope.Path() + "." + named.Name() + "." + satisfied.Name(), Origin: originOf(scope.Path(), w.module)})
+				}
+			}
+		}
+	}
+
+	return found
+}
+
+func originOf(path, module string) string {
+	if path == module || strings.HasPrefix(path, module+"/") {
+		return "project"
+	}
+
+	return "external"
 }
 
 func (w *writer) signature(node *contract.Node, name *ast.Ident, form string, receiver *ast.Field, signature *ast.FuncType, body *ast.BlockStmt) *contract.Node {
@@ -379,7 +454,9 @@ func (w *writer) signature(node *contract.Node, name *ast.Ident, form string, re
 	}
 	hold(node, "returnType", w.results(signature.Results))
 	if body != nil {
+		w.signatures = append(w.signatures, signature)
 		hold(node, "body", w.block(body))
+		w.signatures = w.signatures[:len(w.signatures)-1]
 	}
 
 	return node
@@ -485,6 +562,10 @@ func (w *writer) statement(statement ast.Stmt) *contract.Node {
 		return w.unsupported(held, "declaration")
 	case *ast.ReturnStmt:
 		node := w.at("return", held)
+		if enclosing := len(w.signatures) - 1; len(held.Results) == 0 && enclosing >= 0 && namesResults(w.signatures[enclosing]) {
+			named := true
+			node.Own().NamedResults = &named
+		}
 		var values []*contract.Node
 		for _, result := range held.Results {
 			values = append(values, w.expression(result))
@@ -565,7 +646,18 @@ func (w *writer) statement(statement ast.Stmt) *contract.Node {
 				hold(test, "subject", w.expression(asserted.X))
 			}
 			if name, isName := guard.Lhs[0].(*ast.Ident); isName {
-				hold(test, "binding", w.binding(name))
+				binding := w.binding(name)
+				hold(test, "binding", binding)
+				if w.facts != nil {
+					for _, clause := range held.Body.List {
+						if each, declared := w.facts.Implicits[clause]; declared {
+							if w.bound == nil {
+								w.bound = map[types.Object]*contract.Node{}
+							}
+							w.bound[each] = binding
+						}
+					}
+				}
 			}
 		case *ast.ExprStmt:
 			if asserted, isAssert := guard.X.(*ast.TypeAssertExpr); isAssert {
@@ -640,6 +732,7 @@ func (w *writer) simple(statement ast.Stmt) *contract.Node {
 	switch held := statement.(type) {
 	case *ast.AssignStmt:
 		node := w.at("assignment", held)
+		w.markCommaOk(held.Lhs, held.Rhs)
 		var targets, values []*contract.Node
 		for _, target := range held.Lhs {
 			name, isName := target.(*ast.Ident)
@@ -829,6 +922,9 @@ func (w *writer) translated(expression ast.Expr) *contract.Node {
 	case *ast.TypeAssertExpr:
 		node := w.at("cast", held)
 		node.Own().Form = "checked"
+		if w.commaOk[held] {
+			node.Own().Form = "safe"
+		}
 		hold(node, "operand", w.expression(held.X))
 		if held.Type != nil {
 			hold(node, "targetType", w.typeExpression(held.Type))
@@ -983,7 +1079,21 @@ func (w *writer) call(call *ast.CallExpr) *contract.Node {
 	if thrown := w.thrown(call); thrown != nil {
 		return thrown
 	}
-	node := hold(w.at("call", call), "callee", w.expression(call.Fun))
+	callee, typeArguments := call.Fun, []ast.Expr(nil)
+	switch indexed := call.Fun.(type) {
+	case *ast.IndexExpr:
+		if w.isType(indexed.Index) {
+			callee, typeArguments = indexed.X, []ast.Expr{indexed.Index}
+		}
+	case *ast.IndexListExpr:
+		callee, typeArguments = indexed.X, indexed.Indices
+	}
+	node := hold(w.at("call", call), "callee", w.expression(callee))
+	var written []*contract.Node
+	for _, argument := range typeArguments {
+		written = append(written, w.typeExpression(argument))
+	}
+	holdAll(node, "typeArguments", written)
 	if w.facts != nil {
 		node.Own().Target = w.target(call)
 	}
@@ -1092,6 +1202,12 @@ func (w *writer) typeExpression(written ast.Expr) *contract.Node {
 			holdAll(node, "parameters", parameters)
 		}
 		hold(node, "returnType", w.results(held.Results))
+	case *ast.BinaryExpr:
+		node.Own().Form = "union"
+		holdAll(node, "members", w.unionMembers(held))
+	case *ast.UnaryExpr:
+		node = w.typeExpression(held.X)
+		node.Span = w.at("type-expression", written).Span
 	case *ast.IndexExpr:
 		node = w.typeExpression(held.X)
 		node.Span = w.at("type-expression", written).Span
@@ -1172,4 +1288,33 @@ func predeclared(name *ast.Ident, facts *types.Info) bool {
 	_, isType := types.Universe.Lookup(name.Name).(*types.TypeName)
 
 	return isType
+}
+
+func namesResults(signature *ast.FuncType) bool {
+	return signature.Results != nil && len(signature.Results.List) > 0 && len(signature.Results.List[0].Names) > 0
+}
+
+func (w *writer) markCommaOk(targets, values []ast.Expr) {
+	if len(targets) != 2 || len(values) != 1 {
+		return
+	}
+	if assertion, asserts := ast.Unparen(values[0]).(*ast.TypeAssertExpr); asserts {
+		if w.commaOk == nil {
+			w.commaOk = map[ast.Expr]bool{}
+		}
+		w.commaOk[assertion] = true
+	}
+}
+
+func (w *writer) unionMembers(union *ast.BinaryExpr) []*contract.Node {
+	var members []*contract.Node
+	for _, side := range []ast.Expr{union.X, union.Y} {
+		if nested, joins := side.(*ast.BinaryExpr); joins && nested.Op == token.OR {
+			members = append(members, w.unionMembers(nested)...)
+		} else {
+			members = append(members, w.typeExpression(side))
+		}
+	}
+
+	return members
 }

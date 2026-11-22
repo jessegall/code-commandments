@@ -61,6 +61,37 @@ func AllExpected(folder string) ([]Expected, error) {
 	return expected, nil
 }
 
+func Unwritten(folder string) ([]Expected, error) {
+	sources, err := filepath.Glob(filepath.Join(folder, "*", "*.*"))
+	if err != nil {
+		return nil, err
+	}
+	var unwritten []Expected
+	for _, source := range sources {
+		language, known := contract.LanguageOfPath(source)
+		tree := strings.TrimSuffix(source, filepath.Ext(source)) + ".jsonl"
+		if _, err := os.Stat(tree); !known || err == nil {
+			continue
+		}
+		construct := filepath.Base(filepath.Dir(source))
+		unwritten = append(unwritten, Expected{
+			Construct: construct,
+			Source:    source,
+			Language:  language,
+			File: &contract.File{Path: "/expected/" + construct + "/" + filepath.Base(source), Language: language,
+				Module: strings.ReplaceAll(construct, "-", "_"), Resolver: &contract.Resolver{Ran: true}},
+			Tree:   tree,
+			Header: contract.Header{Language: language, Roots: []string{"/expected/" + construct}},
+		})
+	}
+
+	return unwritten, nil
+}
+
+func (e Expected) IsUnwritten() bool {
+	return e.File.Root == nil
+}
+
 // statedOnly are the facts an expected tree may leave unstated: what the compiler, an index or a package says, and
 // the parser facts that name rather than shape (a symbol's spelling, the effective modifiers, a written type's
 // structure). They are compared only where the expected tree states them.
@@ -79,7 +110,13 @@ var defaults = map[string]any{
 // Differences lists every way the actual file differs from the expected one: kind by kind, role by role, fact by
 // fact and span by span, ignoring local ids. An empty list means the bridge wrote the expected tree.
 func Differences(expected, actual *contract.File) []string {
-	comparing := &comparison{paired: map[*contract.Node]*contract.Node{}}
+	differences, _ := Observed(expected, actual)
+
+	return differences
+}
+
+func Observed(expected, actual *contract.File) ([]string, map[string]bool) {
+	comparing := &comparison{paired: map[*contract.Node]*contract.Node{}, observed: map[string]bool{}}
 	comparing.file(expected, actual)
 	if expected.Root != nil && actual.Root != nil {
 		comparing.node("file", expected.Root, actual.Root)
@@ -89,12 +126,18 @@ func Differences(expected, actual *contract.File) []string {
 	comparing.links(expected, actual)
 	comparing.comments(expected, actual)
 
-	return comparing.differences
+	return comparing.differences, comparing.observed
 }
 
 type comparison struct {
 	differences []string
 	paired      map[*contract.Node]*contract.Node
+	observed    map[string]bool
+}
+
+func (c *comparison) observe(item string, written bool) {
+	held, seen := c.observed[item]
+	c.observed[item] = written && (!seen || held)
 }
 
 func (c *comparison) says(format string, values ...any) {
@@ -123,6 +166,7 @@ func ran(file *contract.File) bool {
 func (c *comparison) node(at string, expected, actual *contract.Node) {
 	c.paired[expected] = actual
 	where := fmt.Sprintf("%s (%s, line %d)", at, expected.Kind, expected.Span.Line)
+	c.observe("kind/"+expected.Kind, expected.Kind == actual.Kind)
 	if expected.Kind != actual.Kind {
 		c.says("%s: a %s written", where, actual.Kind)
 
@@ -150,12 +194,22 @@ func (c *comparison) facts(where string, expected, actual *contract.Node) {
 		if !has && (slices.Contains(statedOnly, name) || contract.Provenance(name) != "parser") {
 			continue
 		}
-		if !reflect.DeepEqual(want, got) {
+		same := reflect.DeepEqual(want, got)
+		if has {
+			for _, item := range contract.FactItems(expected.Kind, name) {
+				c.observe(item, same)
+			}
+		}
+		if !same {
 			c.says("%s: fact %s %v expected, %v written", where, name, shown(want, has), shown(got, wrote))
 		}
 	}
-	if expected.Resolved != nil && (actual.Resolved == nil || expected.Resolved.Text != actual.Resolved.Text || expected.Resolved.Kind != actual.Resolved.Kind) {
-		c.says("%s: resolved type %q expected, %v written", where, expected.Resolved.Text, actual.Resolved)
+	if expected.Resolved != nil {
+		same := actual.Resolved != nil && expected.Resolved.Text == actual.Resolved.Text && expected.Resolved.Kind == actual.Resolved.Kind
+		c.observe("fact/*/resolvedType", same)
+		if !same {
+			c.says("%s: resolved type %q expected, %v written", where, expected.Resolved.Text, actual.Resolved)
+		}
 	}
 }
 
@@ -210,6 +264,9 @@ func (c *comparison) parts(at, where string, expected, actual *contract.Node) {
 	for _, part := range expected.Parts {
 		got, wrote := written[part.Role]
 		delete(written, part.Role)
+		if len(part.Nodes) > 0 {
+			c.observe("role/"+expected.Kind+"/"+part.Role, len(part.Nodes) == len(got.Nodes))
+		}
 		if !wrote && len(part.Nodes) > 0 {
 			c.says("%s: role %s holds %d nodes expected, none written", where, part.Role, len(part.Nodes))
 
@@ -242,7 +299,9 @@ func (c *comparison) links(expected, actual *contract.File) {
 					wanted = append(wanted, pair.ID)
 				}
 			}
-			if got := to.Linked(link.Name); !slices.Equal(wanted, got) {
+			got := to.Linked(link.Name)
+			c.observe("link/"+from.Kind+"/"+link.Name, slices.Equal(wanted, got))
+			if !slices.Equal(wanted, got) {
 				c.says("node %d (%s, line %d): link %s to %v expected, %v written", from.ID, from.Kind, from.Span.Line, link.Name, wanted, got)
 			}
 		}

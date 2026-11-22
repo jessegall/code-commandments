@@ -38,7 +38,7 @@ final readonly class Stream
         $written = 0;
         $types = new Types();
         $judged = array_values(array_filter($files, $this->request->judges(...)));
-        foreach ($judged as $path) {
+        foreach ($files as $path) {
             $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
             $types->declare($this->read($this->request->contents[$path] ?? (string) file_get_contents($path), $parser)[1], $path);
         }

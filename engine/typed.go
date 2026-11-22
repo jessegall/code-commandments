@@ -12,17 +12,14 @@ func (m Match) ResultType() *contract.Type {
 	return m.Child("returnType").Typed()
 }
 
-// Typed is the type of the node: the one the compiler resolved, else the one written on it, else the one written in
-// its declared type or, for a function, its return type.
+// Typed is the type of the node: the one the compiler resolved, else the one of its declared type or, for a
+// function, its return type.
 func (m Match) Typed() *contract.Type {
 	if m.node == nil {
 		return nil
 	}
-	switch {
-	case m.node.Resolved != nil:
+	if m.node.Resolved != nil {
 		return m.node.Resolved
-	case m.node.Written != nil:
-		return m.node.Written
 	}
 	if declared := m.Child("declaredType"); declared.Exists() {
 		return declared.Typed()

@@ -32,7 +32,7 @@ var Identity = sync.OnceValue(func() string {
 })
 
 var annotations = map[string]bool{"$schema": true, "$id": true, "title": true, "description": true, "$defs": true,
-	"kinds": true, "facts": true, "universalFacts": true, "categories": true}
+	"kinds": true, "facts": true, "universalFacts": true, "categories": true, "promises": true}
 
 var keywords = map[string]bool{
 	"$ref": true, "type": true, "properties": true, "required": true, "additionalProperties": true, "enum": true, "const": true,

@@ -25,20 +25,24 @@
         "doc"
       ],
       [
-        "exists",
+        "matchesText",
+        "$c.raw",
+        "^/\\*\\*"
+      ],
+      [
+        "not",
         [
-          "enclosing",
-          "$c.location",
-          "function"
+          "matchesText",
+          "$c.raw",
+          "^/\\*\\*\\s*\\*/$"
         ]
       ],
       [
         "not",
         [
-          "in",
-          "$c.documents.kind",
-          "function",
-          "type"
+          "matchesText",
+          "$c.raw",
+          "^/\\*\\*[ \\t]*\\r?\\n[\\s\\S]*\\n[ \\t]*\\*/$"
         ]
       ]
     ],

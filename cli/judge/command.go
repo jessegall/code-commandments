@@ -165,7 +165,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	installed := config.InstalledIn(cwd)
+	installed := config.InstalledIn(options.path)
 	if options.ignore {
 		installed = config.Everything
 	}

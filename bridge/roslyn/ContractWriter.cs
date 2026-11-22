@@ -237,6 +237,12 @@ public sealed partial class ContractWriter(IReadOnlyList<string> roots, IReadOnl
         root.Write(json);
         json.WritePropertyName("comments");
         TreeNode.Value(json, translator.Comments(nodes));
+        if (translator.Types.Count > 0)
+        {
+            json.WritePropertyName("types");
+            TreeNode.Value(json, translator.Types);
+        }
+
         json.WriteEndObject();
     }
 }

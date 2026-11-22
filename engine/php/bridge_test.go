@@ -122,6 +122,26 @@ func TestAFileOutsideTheWriteSetOnlyInforms(t *testing.T) {
 	}
 }
 
+func TestAWrittenFileResolvesWhatAFileOnlyReadDeclares(t *testing.T) {
+	folder := written(t, map[string]string{
+		"Category.php": "<?php\nnamespace App;\nenum Category: string {\n    case Food = 'food';\n}\n",
+		"Shelf.php":    "<?php\nnamespace App;\nfinal class Shelf {\n    public function aisle(string $kind): int {\n        return $kind === Category::Food->value ? 1 : 9;\n    }\n}\n",
+	})
+	stream := bridged(t, "--write="+filepath.Join(folder, "Shelf.php"), folder)
+	for _, file := range stream.Files {
+		if !strings.HasSuffix(file.Path, "Shelf.php") {
+			continue
+		}
+		food := find(file, func(node *contract.Node) bool { return named(node, "Food") })
+		if food == nil || food.Refers != `App\Category::Food` {
+			t.Fatalf("the case Food in the written Shelf.php resolves to %q, not to App\\Category::Food declared in the read Category.php", food.Refers)
+		}
+
+		return
+	}
+	t.Fatal("Shelf.php was not written")
+}
+
 func TestAnAnonymousClassLendsItsMembersNoSymbol(t *testing.T) {
 	folder := written(t, map[string]string{"Outer.php": "<?php\nnamespace Shop;\nclass Outer { public function make() { return new class { public function inner() {} }; } }\n"})
 	file := bridged(t, folder).Files[0]

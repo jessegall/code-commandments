@@ -18,10 +18,10 @@ from mypy.find_sources import InvalidSourceList, create_source_list
 from mypy.modulefinder import BuildSource
 from mypy.build import BuildResult, State
 from mypy.errors import CompileError
-from mypy.nodes import GDEF, CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, NameExpr, OverloadedFuncDef, RefExpr, TypeInfo
+from mypy.nodes import GDEF, CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, NameExpr, OverloadedFuncDef, RefExpr, TypeInfo, Var
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
-from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
+from mypy.types import AnyType, FunctionLike, Instance, LiteralType, NoneType, ProperType, TupleType, Type, TypeVarType, UnionType, get_proper_type
 from mypy.typestate import reset_global_state
 from mypy.util import decode_python_encoding
 
@@ -190,15 +190,19 @@ class ResolvedType:
     nullable: bool
     instance_of: str | None = None
     constructs: str | None = None
+    kind: str = "opaque"
+    name: str | None = None
+    members: tuple["ResolvedType", ...] | None = None
 
     def to_json(self) -> dict[str, object]:
         """The type as the contract writes it: named for its class when it has one, opaque otherwise."""
         pairs = (
             ("text", self.text),
-            ("kind", "named" if self.instance_of is not None else "opaque"),
-            ("name", self.instance_of),
+            ("kind", "named" if self.instance_of is not None else self.kind),
+            ("name", self.instance_of or self.name),
             ("nullable", self.nullable),
             ("constructs", self.constructs),
+            ("members", [member.to_json() for member in self.members] if self.members is not None else None),
             ("origin", "compiler"),
         )
         return {key: value for key, value in pairs if value is not None}
@@ -214,6 +218,10 @@ class TypedModule:
     by_span: dict[tuple[int, int], ResolvedType]
     targets: dict[tuple[int, int], dict[str, str]] | None = None
     names: dict[tuple[int, int], str] | None = None
+    obligations: dict[str, list[dict[str, str]]] | None = None
+    enum_members: dict[str, list[str]] | None = None
+    module_paths: dict[str, str] | None = None
+    constants: dict[tuple[int, int], dict[str, object]] | None = None
 
 
 def described(typ: Type) -> ResolvedType | None:
@@ -229,7 +237,24 @@ def described(typ: Type) -> ResolvedType | None:
         present = others[0] if len(others) == 1 else proper
     instance_of = present.type.fullname if isinstance(present, Instance) else None
     constructs = present.type_object().fullname if isinstance(present, FunctionLike) and present.is_type_obj() else None
-    return ResolvedType(str(typ), nullable, instance_of, constructs)
+    kind, name, members = "opaque", None, None
+    match present:
+        case NoneType():
+            kind, name, nullable = "keyword", "None", True
+        case UnionType():
+            kind, members = "union", present.items
+        case TupleType():
+            kind, members = "tuple", present.items
+        case LiteralType():
+            kind = "literal"
+        case TypeVarType():
+            kind, name = "parameter", present.name
+        case FunctionLike() if constructs is None:
+            kind = "function"
+    described_members = None if members is None else tuple(member for member in map(described, members) if member is not None)
+    if described_members is not None and len(described_members) < len(members):
+        kind, described_members = "opaque", None
+    return ResolvedType(str(typ), nullable, instance_of, constructs, kind, name, described_members)
 
 
 def states(graph: dict[str, State], wanted: set[str]) -> dict[str, State]:
@@ -262,7 +287,78 @@ def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule
         if name.kind != GDEF or not name.fullname or name.line < 1 or name.end_line is None or name.end_column is None or name.end_line > len(starts):
             continue
         names.setdefault((starts[name.line - 1] + name.column, starts[name.end_line - 1] + name.end_column), name.fullname)
-    return TypedModule(len(written), found, bound, names)
+    constants: dict[tuple[int, int], dict[str, object]] = {}
+    for read in (e for e in get_subexpressions(state.tree) if isinstance(e, (NameExpr, MemberExpr))) if state.tree is not None else []:
+        folded = getattr(read.node, "final_value", None) if isinstance(read.node, Var) else None
+        if folded is None or isinstance(folded, complex) or read.end_line is None or read.end_column is None or read.end_line > len(starts):
+            continue
+        span = (starts[read.line - 1] + read.column, starts[read.end_line - 1] + read.end_column)
+        constants[span] = {"type": type(folded).__name__, "value": str(folded).lower() if isinstance(folded, bool) else str(folded)}
+    for member in (e for e in get_subexpressions(state.tree) if isinstance(e, MemberExpr)) if state.tree is not None else []:
+        if member.end_line is None or member.end_column is None or member.end_line > len(starts):
+            continue
+        end = starts[member.end_line - 1] + member.end_column
+        declared = member_declaration(member, types)
+        if declared is not None:
+            names.setdefault((end - len(member.name.encode()), end), declared)
+    return TypedModule(len(written), found, bound, names, obligations_of(state), enum_members_of(state), module_paths_of(state), constants)
+
+
+def module_paths_of(state: State) -> dict[str, str]:
+    """The file each module the module depends on is read from, by the module's name: where its imports resolve."""
+    found: dict[str, str] = {}
+    for name in state.dependencies:
+        held = state.manager.modules.get(name)
+        if held is not None and held.path and not held.path.endswith(".pyi"):
+            found[name] = os.path.realpath(held.path)
+    return found
+
+
+def enum_members_of(state: State) -> dict[str, list[str]]:
+    """Every enum class the module declares, by its full name, with the names of its members as mypy counts them."""
+    if state.tree is None:
+        return {}
+    return {symbol.node.fullname: list(symbol.node.enum_members) for symbol in state.tree.names.values()
+            if isinstance(symbol.node, TypeInfo) and symbol.node.module_name == state.id and symbol.node.is_enum}
+
+
+def obligations_of(state: State) -> dict[str, list[dict[str, str]]]:
+    """Every method the module's classes declare, by its full name, with each declaration up its class's method
+    resolution order that it overrides, and whether the project or a package declares that one."""
+    found: dict[str, list[dict[str, str]]] = {}
+    if state.tree is None:
+        return found
+    modules = state.manager.modules
+    for symbol in state.tree.names.values():
+        info = symbol.node
+        if not isinstance(info, TypeInfo) or info.module_name != state.id:
+            continue
+        for name, member in info.names.items():
+            if not isinstance(member.node, (FuncBase, Decorator)):
+                continue
+            overridden = [base for base in info.mro[1:] if name in base.names and base.fullname != "builtins.object"]
+            if overridden:
+                found[f"{info.fullname}.{name}"] = [{"symbol": f"{base.fullname}.{name}", "origin": origin_of(modules.get(base.module_name))}
+                                                    for base in overridden]
+    return found
+
+
+def origin_of(module: MypyFile | None) -> str:
+    """Whether a module is the project's own or comes from a package or the standard library."""
+    path = module.path if module is not None else ""
+    return "external" if not path or "site-packages" in path or "typeshed" in path or "dist-packages" in path else "project"
+
+
+def member_declaration(member: MemberExpr, types: dict[Expression, Type]) -> str | None:
+    """The full name of the declaration an attribute read names: what mypy bound it to, else the member of its
+    subject's class."""
+    bound = member.node
+    if bound is not None and getattr(bound, "fullname", ""):
+        return bound.fullname
+    subject = get_proper_type(types[member.expr]) if member.expr in types else None
+    owner = subject.type if isinstance(subject, Instance) else subject.type_object() if isinstance(subject, FunctionLike) and subject.is_type_obj() else None
+    declared = owner.get(member.name) if owner is not None else None
+    return declared.node.fullname if declared is not None and declared.node is not None and getattr(declared.node, "fullname", "") else None
 
 
 def target_of(call: CallExpr, types: dict[Expression, Type]) -> dict[str, str] | None:

@@ -3,7 +3,9 @@
 namespace Shop\Dispatch;
 
 use JesseGall\CodeCommandments\Sins\Backend\DivergentTwin;
+use JesseGall\CodeCommandments\Sins\Backend\FlagArgument;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
  * Writes the carrier manifest, in the shape the chosen carrier reads. The two forms share almost
@@ -13,6 +15,7 @@ use JesseGall\CodeCommandments\Testing\Righteous;
  */
 final class ParcelManifest
 {
+    #[Sinful(FlagArgument::class)]
     public function write(array $lines, bool $palletised): string
     {
         return $palletised ? $this->asPallet($lines) : $this->asParcel($lines);
