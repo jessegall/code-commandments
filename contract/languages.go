@@ -31,10 +31,11 @@ type facts struct {
 	memberVisibility, typeVisibility, visibilityByName string
 	exportedBy                                         string
 	lexicon                                            Lexicon
+	removedWith                                        []string
 }
 
 var described = map[Language]facts{
-	PHP:        {extensions: []string{"php"}, label: "PHP", comment: [2]string{"// ", ""}, commentOpeners: []string{"//", "/*", "*"}, openings: []string{"<?php"}, namespaceSeparator: `\`, namesIgnoreCase: true, memberVisibility: "public", typeVisibility: "public", lexicon: Lexicon{LineComments: []string{"//", "#"}, NotComments: []string{"#["}, BlockComment: [2]string{"/*", "*/"}, Quotes: []Quote{{Open: "<<<", Heredoc: true}, {Open: "'", Close: "'", Escapes: true}, {Open: `"`, Close: `"`, Escapes: true}}}},
+	PHP:        {extensions: []string{"php"}, label: "PHP", comment: [2]string{"// ", ""}, commentOpeners: []string{"//", "/*", "*"}, openings: []string{"<?php"}, namespaceSeparator: `\`, namesIgnoreCase: true, memberVisibility: "public", typeVisibility: "public", removedWith: []string{"unset"}, lexicon: Lexicon{LineComments: []string{"//", "#"}, NotComments: []string{"#["}, BlockComment: [2]string{"/*", "*/"}, Quotes: []Quote{{Open: "<<<", Heredoc: true}, {Open: "'", Close: "'", Escapes: true}, {Open: `"`, Close: `"`, Escapes: true}}}},
 	Vue:        {extensions: []string{"vue"}, label: "Vue", comment: [2]string{"<!-- ", " -->"}, commentOpeners: []string{"<!--"}, holds: []Language{TypeScript}, memberVisibility: "public", typeVisibility: "public", exportedBy: "export", lexicon: Lexicon{BlockComment: [2]string{"<!--", "-->"}, Regions: []Region{{Open: "<script", Close: "</script>", Language: TypeScript}}}},
 	TypeScript: {extensions: []string{"ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"}, label: "TypeScript", comment: [2]string{"// ", ""}, commentOpeners: []string{"//", "/*", "*"}, testNames: []string{"*.test.*", "*.spec.*"}, memberVisibility: "public", typeVisibility: "public", exportedBy: "export", lexicon: Lexicon{LineComments: []string{"//"}, BlockComment: [2]string{"/*", "*/"}, Quotes: []Quote{{Open: "`", Close: "`", Escapes: true, Code: [2]string{"${", "}"}}, {Open: "'", Close: "'", Escapes: true}, {Open: `"`, Close: `"`, Escapes: true}}}},
 	Python:     {extensions: []string{"py"}, label: "Python", comment: [2]string{"# ", ""}, commentOpeners: []string{"#"}, testNames: []string{"test_*.py", "*_test.py", "conftest.py"}, namespaceSeparator: ".", visibilityByName: "underscored", lexicon: Lexicon{LineComments: []string{"#"}, Quotes: []Quote{{Open: `"""`, Close: `"""`, Escapes: true}, {Open: "'''", Close: "'''", Escapes: true}, {Open: `"`, Close: `"`, Escapes: true}, {Open: "'", Close: "'", Escapes: true}}}},
@@ -50,6 +51,10 @@ func OpensFirst(language Language, contents string) bool {
 }
 
 // Label is the language's name as a reader sees it.
+func RemovesWith(language Language, keyword string) bool {
+	return slices.Contains(described[language].removedWith, keyword)
+}
+
 func Label(language Language) string {
 	return described[language].label
 }

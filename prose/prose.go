@@ -16,6 +16,7 @@ var history = []phrase{
 	{pattern: words(`used to (?:be|live|have|hold|contain|return|exist|sit|post|fire)`), notAfter: endsWith(`is|are|be|only`)},
 	{pattern: words(`(?:this|the) (?:code|helper|method|class|function|implementation|detector|rule) (?:is retired|no longer (?:an?|reads|runs|fires|handles|unwraps|posts|matters))`)},
 	{pattern: words(`no longer (?:does|offers up)`)},
+	{pattern: words(`(?:code|method|function|class|block|lines?)(?: below| above)? (?:is|are) no longer (?:relevant|needed|necessary|used)`)},
 	{pattern: regexp.MustCompile(`(?i)^[\s/#*]*no longer an?\b`)},
 	{pattern: words(`now lives (?:in|inside)`)},
 	{pattern: words(`previously\s+(?:this|every|we|it)`)},

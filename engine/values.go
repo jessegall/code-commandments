@@ -50,6 +50,14 @@ func (m Match) constructWords() []string {
 		}
 
 		return prose.Assignment.Words()
+	case "call":
+		if callee := m.Child("callee"); callee.Kind() == "reference" && callee.Refers() == "" && m.file != nil && contract.RemovesWith(m.file.Language(), callee.Name()) {
+			return prose.Removal.Words()
+		}
+	case "unary":
+		if m.node.Operator == "delete" {
+			return prose.Removal.Words()
+		}
 	}
 
 	return constructOfKind[m.node.Kind].Words()

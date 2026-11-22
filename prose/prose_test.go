@@ -23,6 +23,8 @@ func TestHistoryIsToldFromARuntimeCondition(t *testing.T) {
 		"// no longer an array":                                                      true,
 		"No longer a singleton: each request builds its own.":                        true,
 		"Drops a session that is no longer a member of the pool.":                    false,
+		"// code below is no longer relevant.":                                       true,
+		"Skips a token that is no longer needed by any reader.":                      false,
 	} {
 		if NarratesHistory(text) != narrates {
 			t.Errorf("%q narrates history: %v", text, !narrates)

@@ -177,13 +177,40 @@
     "select": [
       "field",
       "constant",
-      "enum-case"
+      "enum-case",
+      "type-expression"
     ],
     "as": "m",
     "where": [
-      "=",
-      "$m.parent.kind",
-      "type"
+      "or",
+      [
+        "and",
+        [
+          "in",
+          "$m.kind",
+          "field",
+          "constant",
+          "enum-case"
+        ],
+        [
+          "=",
+          "$m.parent.kind",
+          "type"
+        ]
+      ],
+      [
+        "and",
+        [
+          "=",
+          "$m.role",
+          "mixins"
+        ],
+        [
+          "=",
+          "$m.parent.kind",
+          "type"
+        ]
+      ]
     ],
     "let": [
       [
@@ -221,64 +248,94 @@
       ]
     ],
     "having": [
-      "and",
+      "case",
       [
-        ">",
-        "$mine",
-        0
+        "=",
+        "$m.role",
+        "mixins"
       ],
-      [
-        "none",
-        "$earlier",
-        "r",
-        [
-          ">=",
-          "$r",
-          "$methods"
-        ]
-      ],
-      [
-        "some",
-        "$earlier",
-        "r",
-        [
-          ">",
-          "$r",
-          "$mine"
-        ]
-      ],
-      [
-        "not",
-        [
+      {
+        "true": [
           "some",
-          [
-            "descendants",
-            "$m"
-          ],
-          "x",
+          "$m.parent.writtenMembers",
+          "p",
           [
             "and",
             [
-              "=",
-              "$x.kind",
-              "reference"
+              "in",
+              "$p.kind",
+              "field",
+              "constant",
+              "enum-case"
             ],
             [
-              "some",
+              "<",
+              "$p.line",
+              "$m.line"
+            ]
+          ]
+        ]
+      },
+      [
+        "and",
+        [
+          ">",
+          "$mine",
+          0
+        ],
+        [
+          "none",
+          "$earlier",
+          "r",
+          [
+            ">=",
+            "$r",
+            "$methods"
+          ]
+        ],
+        [
+          "some",
+          "$earlier",
+          "r",
+          [
+            ">",
+            "$r",
+            "$mine"
+          ]
+        ],
+        [
+          "not",
+          [
+            "some",
+            [
+              "descendants",
+              "$m"
+            ],
+            "x",
+            [
+              "and",
               [
-                "before",
-                "$m"
+                "=",
+                "$x.kind",
+                "reference"
               ],
-              "p",
               [
-                "proven",
+                "some",
                 [
-                  "within",
+                  "before",
+                  "$m"
+                ],
+                "p",
+                [
+                  "proven",
                   [
-                    "declarationOf",
-                    "$x"
-                  ],
-                  "$p"
+                    "within",
+                    [
+                      "declarationOf",
+                      "$x"
+                    ],
+                    "$p"
+                  ]
                 ]
               ]
             ]
