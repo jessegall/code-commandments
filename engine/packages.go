@@ -209,6 +209,9 @@ func readManifests(folder string, versions map[string]map[string]string) {
 	}
 	if held, read := composerPackages(folder); read && versions[Composer] == nil {
 		versions[Composer] = map[string]string{}
+		if floor := phpFloor(folder); floor != "" {
+			add(Composer, "php", floor)
+		}
 		for _, each := range held {
 			add(Composer, each.Name, each.Version)
 			for _, stands := range slices.Concat(slices.Collect(maps.Keys(each.Replace)), slices.Collect(maps.Keys(each.Provide))) {
@@ -494,6 +497,48 @@ func composerPackages(folder string) ([]composerPackage, bool) {
 	}
 
 	return held, read
+}
+
+func phpFloor(folder string) string {
+	text, err := os.ReadFile(filepath.Join(folder, "composer.json"))
+	if err != nil {
+		return ""
+	}
+	var manifest struct {
+		Require map[string]string `json:"require"`
+	}
+	if json.Unmarshal(text, &manifest) != nil {
+		return ""
+	}
+	lowest := ""
+	for _, written := range phpVersions.FindAllString(manifest.Require["php"], -1) {
+		if lowest == "" || VersionBelow(written, lowest) {
+			lowest = written
+		}
+	}
+
+	return lowest
+}
+
+var phpVersions = regexp.MustCompile(`\d+(?:\.\d+)*`)
+
+// VersionBelow says whether one dotted version is lower than another, part by part, a missing part read as 0.
+func VersionBelow(version, other string) bool {
+	ours, theirs := strings.Split(version, "."), strings.Split(other, ".")
+	for at := range max(len(ours), len(theirs)) {
+		left, right := 0, 0
+		if at < len(ours) {
+			left, _ = strconv.Atoi(ours[at])
+		}
+		if at < len(theirs) {
+			right, _ = strconv.Atoi(theirs[at])
+		}
+		if left != right {
+			return left < right
+		}
+	}
+
+	return false
 }
 
 // PackagesIn is every package a folder's own manifests say the project holds, by ecosystem, each with its version

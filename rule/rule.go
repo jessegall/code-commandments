@@ -76,6 +76,7 @@ type sinFile struct {
 type requirement struct {
 	Name      string `json:"name"`
 	Ecosystem string `json:"ecosystem"`
+	Version   string `json:"version,omitempty"`
 }
 
 // scaffold is a helper the fix uses that a project may not have yet: where it goes and what it starts as.
@@ -466,7 +467,7 @@ func (r Rule) Origin() string {
 
 // knownKeys is every key a rule file may write, for the nearest one to a misspelt key.
 var knownKeys = []string{
-	"$schema", "engine", "sin", "parameters", "type", "default", "definitions", "find", "requires", "ecosystem",
+	"$schema", "engine", "sin", "parameters", "type", "default", "definitions", "find", "requires", "ecosystem", "version",
 	"scaffolds", "path", "stub", "frontend", "reporting", "crossFile", "runsLast", "requiresBestDesign", "advice",
 	"unpublished", "judges", "tags", "name", "aliases", "skill", "description",
 	"rule", "suggestion", "args", "expr", "select", "as", "where", "let", "having", "emit", "from", "pipeline", "relations",
@@ -762,7 +763,7 @@ func (s sinFile) required() sins.Package {
 		return sins.Package{}
 	}
 
-	return sins.Package{Name: s.Requires.Name, Ecosystem: sins.Ecosystem(s.Requires.Ecosystem)}
+	return sins.Package{Name: s.Requires.Name, Ecosystem: sins.Ecosystem(s.Requires.Ecosystem), Version: s.Requires.Version}
 }
 
 // IsStub says whether the rule file holds only its metadata, its find still to be written: a stub is not shipped.

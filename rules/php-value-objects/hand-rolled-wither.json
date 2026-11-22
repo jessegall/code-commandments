@@ -18,7 +18,12 @@
     "skill": "php/value-objects",
     "description": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.",
     "rule": "A wither should only say what changes: copying the object with the one field replaced states the intent, while re-listing every field just repeats the constructor in every wither.",
-    "suggestion": "Replace the constructor call that re-lists every field with the language's copy-with-change (`clone` with the changed field, a record's `with`, `dataclasses.replace`, an object spread)."
+    "suggestion": "Replace the constructor call that re-lists every field with the language's copy-with-change (`clone` with the changed field, a record's `with`, `dataclasses.replace`, an object spread).",
+    "requires": {
+      "name": "php",
+      "ecosystem": "composer",
+      "version": "8.5"
+    }
   },
   "definitions": {
     "builtBy": {

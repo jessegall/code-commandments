@@ -34,11 +34,11 @@ func TestTheSchemaOffersEveryShippedDetectorByName(t *testing.T) {
 	}
 
 	written := string(Schema(t.TempDir()))
-	if !strings.Contains(written, `"const": "php/ArrayBagDetector"`) {
-		t.Error("the schema does not name php/ArrayBagDetector")
+	if !strings.Contains(written, `"const": "php/FlagArgumentDetector"`) {
+		t.Error("the schema does not name php/FlagArgumentDetector")
 	}
 
-	if !strings.Contains(written, `"const": "php/ArrayBagDetector"`) {
-		t.Error("the schema drops backend/ArrayBagDetector, the name a config written before the engine was renamed uses")
+	if !strings.Contains(written, `"const": "php/FlagArgumentDetector"`) {
+		t.Error("the schema drops backend/FlagArgumentDetector, the name a config written before the engine was renamed uses")
 	}
 }

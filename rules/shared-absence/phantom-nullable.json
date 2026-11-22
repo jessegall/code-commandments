@@ -77,6 +77,24 @@
           "type-test"
         ],
         [
+          "=",
+          "$x.parent.kind",
+          "logical"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "unary"
+          ],
+          [
+            "=",
+            "$x.parent.operator",
+            "not"
+          ]
+        ],
+        [
           "and",
           [
             "=",
@@ -162,6 +180,10 @@
             "where": [
               "and",
               [
+                "not",
+                "$a.file.test"
+              ],
+              [
                 "=",
                 "$a.mode",
                 "assign"
@@ -225,12 +247,19 @@
         "pipeline": [
           {
             "where": [
-              "=",
+              "and",
               [
-                "count",
-                "$r.values"
+                "not",
+                "$r.file.test"
               ],
-              1
+              [
+                "=",
+                [
+                  "count",
+                  "$r.values"
+                ],
+                1
+              ]
             ]
           },
           {
@@ -269,6 +298,12 @@
         "from": "argument",
         "as": "g",
         "pipeline": [
+          {
+            "where": [
+              "not",
+              "$g.file.test"
+            ]
+          },
           {
             "project": {
               "from": [

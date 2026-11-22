@@ -77,17 +77,29 @@
             "name"
           ],
           [
-            "=",
+            "or",
             [
-              "tree.formOf",
+              "=",
               [
-                "typeDeclaration",
-                "$x.subject.resolved.name"
-              ]
+                "tree.formOf",
+                [
+                  "typeDeclaration",
+                  "$x.subject.resolved.name"
+                ]
+              ],
+              "enum"
             ],
-            "enum"
+            [
+              "=",
+              "$x.resolved.kind",
+              "keyword"
+            ]
           ]
         ]
+      ],
+      [
+        "not",
+        "$x.file.test"
       ]
     ],
     "let": [

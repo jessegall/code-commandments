@@ -33,6 +33,39 @@
         ">=",
         "$c.docsOnOwner",
         2
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "exists",
+            [
+              "enclosing",
+              "$c.documents",
+              "function"
+            ]
+          ],
+          [
+            "nonempty",
+            "$c.tags"
+          ],
+          [
+            "every",
+            "$c.tags",
+            "t",
+            [
+              "=",
+              "$t.name",
+              "var"
+            ]
+          ],
+          [
+            "=",
+            "$c.description",
+            ""
+          ]
+        ]
       ]
     ],
     "emit": "$c.location"

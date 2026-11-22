@@ -71,3 +71,25 @@ func TestAProjectHoldingOnlyItsLockOrOnlyItsInstalledListAnswersTheSame(t *testi
 		}
 	}
 }
+
+func TestARuleNeedingANewerPhpThanTheProjectRequiresIsNotRun(t *testing.T) {
+	needs := sins.Package{Name: "php", Ecosystem: sins.Composer, Version: "8.5"}
+	for written, wanted := range map[string]bool{
+		`{"require":{"php":"^8.3"}}`:            false,
+		`{"require":{"php":"^8.2 || ^8.5"}}`:    false,
+		`{"require":{"php":">=8.5"}}`:           true,
+		`{"require":{"php":"^9.0"}}`:            true,
+		`{"require":{"laravel/framework":"*"}}`: true,
+	} {
+		root := t.TempDir()
+		if err := os.WriteFile(filepath.Join(root, "composer.json"), []byte(written), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, "composer.lock"), []byte(`{"packages":[]}`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if got := InstalledIn(root)(needs); got != wanted {
+			t.Errorf("a rule needing PHP 8.5 in a project requiring %s runs: %v, and %v is right", written, got, wanted)
+		}
+	}
+}

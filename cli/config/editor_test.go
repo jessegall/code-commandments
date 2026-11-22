@@ -7,26 +7,26 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 )
 
-var arrayBag = Rule{Sin, catalog.PHP, "ArrayBag"}
+var flagArgument = Rule{Sin, catalog.PHP, "FlagArgument"}
 
 func TestAProjectWithNoConfigStartsWithConfigJSON(t *testing.T) {
 	dir := t.TempDir()
 	editor := EditorIn(dir)
 
-	if disabled, err := editor.Disable(arrayBag); !disabled || err != nil {
+	if disabled, err := editor.Disable(flagArgument); !disabled || err != nil {
 		t.Fatalf("%v %v", disabled, err)
 	}
 
 	config, err := Load(dir)
-	if err != nil || editor.Name() != ".commandments/config.json" || !reflect.DeepEqual(config.Disabled, []Rule{{Sin, catalog.PHP, "ArrayBag"}}) {
+	if err != nil || editor.Name() != ".commandments/config.json" || !reflect.DeepEqual(config.Disabled, []Rule{{Sin, catalog.PHP, "FlagArgument"}}) {
 		t.Errorf("%s %+v %v", editor.Name(), config, err)
 	}
 
-	if again, _ := editor.Disable(arrayBag); again {
+	if again, _ := editor.Disable(flagArgument); again {
 		t.Error("disabled twice")
 	}
 
-	if enabled, err := editor.Enable(arrayBag); !enabled || err != nil {
+	if enabled, err := editor.Enable(flagArgument); !enabled || err != nil {
 		t.Errorf("%v %v", enabled, err)
 	}
 

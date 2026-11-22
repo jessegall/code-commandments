@@ -211,14 +211,75 @@
           [
             "some",
             [
-              "tree.callsOf",
-              "$d.parent"
-            ],
-            "c",
-            [
-              "within",
-              "$c",
+              "descendants",
               "$d.parent.body"
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "call"
+              ],
+              [
+                "or",
+                [
+                  "=",
+                  "$x.callee.name",
+                  "$d.parent.name"
+                ],
+                [
+                  "=",
+                  "$x.callee.member.name",
+                  "$d.parent.name"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$d.kind",
+            "declarator"
+          ],
+          [
+            "some",
+            [
+              "referrers",
+              "$d.binding"
+            ],
+            "r",
+            [
+              "some",
+              [
+                "list",
+                [
+                  "enclosing",
+                  "$r",
+                  "assignment",
+                  "function"
+                ]
+              ],
+              "a",
+              [
+                "and",
+                [
+                  "=",
+                  "$a.kind",
+                  "assignment"
+                ],
+                [
+                  "=",
+                  "$a.mode",
+                  "compound"
+                ]
+              ]
             ]
           ]
         ]

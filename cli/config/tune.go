@@ -59,9 +59,12 @@ func InstalledIn(folder string) Installed {
 		if required.Ecosystem != sins.Composer {
 			return true
 		}
-		_, installed := held[string(required.Ecosystem)][strings.ToLower(required.Name)]
+		version, installed := held[string(required.Ecosystem)][strings.ToLower(required.Name)]
+		if required.Name == "php" && !installed {
+			return true
+		}
 
-		return installed
+		return installed && (required.Version == "" || version == "" || !engine.VersionBelow(version, required.Version))
 	}
 }
 

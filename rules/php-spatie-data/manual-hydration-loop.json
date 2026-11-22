@@ -82,6 +82,23 @@
             "$c"
           ]
         ]
+      ],
+      [
+        "none",
+        [
+          "ownDescendants",
+          [
+            "enclosing",
+            "$c",
+            "function"
+          ]
+        ],
+        "y",
+        [
+          "=",
+          "$y.kind",
+          "yield"
+        ]
       ]
     ],
     "emit": "$c"

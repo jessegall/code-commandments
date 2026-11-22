@@ -29,6 +29,7 @@ type Definition struct {
 type Package struct {
 	Name      string
 	Ecosystem Ecosystem
+	Version   string
 }
 
 // Ecosystem is where a package comes from.
