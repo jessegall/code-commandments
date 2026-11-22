@@ -669,10 +669,39 @@ final class Types
         }
     }
 
+    private function loadedAlready(string $class): bool
+    {
+        return class_exists($class, false) || interface_exists($class, false) || trait_exists($class, false) || enum_exists($class, false);
+    }
+
+    /**
+     * Whether loading a class would include no file twice: a file the autoloader would include for it may already be
+     * included under another spelling of its path, as on a filesystem that ignores case, and PHP cannot recover from
+     * declaring its class again.
+     */
+    private function loadableOnce(string $class): bool
+    {
+        $included = array_map('strtolower', get_included_files());
+        foreach (spl_autoload_functions() as $loader) {
+            if (is_array($loader) && is_object($loader[0]) && method_exists($loader[0], 'findFile')) {
+                $file = $loader[0]->findFile($class);
+                $real = is_string($file) ? realpath($file) : false;
+                if ($real !== false && in_array(strtolower($real), $included, true)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private function reflected(string $class): ?array
     {
         try {
-            if (! class_exists($class) && ! interface_exists($class) && ! trait_exists($class) && ! enum_exists($class)) {
+            if (! $this->loadedAlready($class) && ! $this->loadableOnce($class)) {
+                return null;
+            }
+            if (! class_exists($class) && ! $this->loadedAlready($class)) {
                 return null;
             }
             $reflection = new ReflectionClass($class);
