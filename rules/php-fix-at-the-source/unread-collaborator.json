@@ -16,7 +16,7 @@
       "python-unread-collaborator"
     ],
     "skill": "php/fix-at-the-source",
-    "description": "a collaborator promoted into a private field by the constructor and never read anywhere in the class \u2014 the class asks for something it does not use, and only a search of the whole type says so",
+    "description": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
     "rule": "A constructor asks for what the class uses, and nothing more: a collaborator no method reads is removed, along with what the callers pass.",
     "suggestion": "Delete the parameter and the field, then follow the callers: whatever they built or resolved only to hand it over goes too. If the class is meant to use it and does not, that is the bug the empty field is pointing at.",
     "reporting": {
@@ -205,27 +205,65 @@
         [
           "flatten",
           [
-            "map",
-            [
-              "list",
-              [
-                "enclosing",
-                "$d",
-                "type"
-              ]
-            ],
-            "t",
+            "list",
             [
               "flatten",
               [
                 "map",
-                "$t.mixins",
-                "m",
+                [
+                  "list",
+                  [
+                    "enclosing",
+                    "$d",
+                    "type"
+                  ]
+                ],
+                "t",
+                [
+                  "flatten",
+                  [
+                    "map",
+                    "$t.mixins",
+                    "m",
+                    [
+                      "descendants",
+                      [
+                        "typeDeclaration",
+                        "$m.refers"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            [
+              "flatten",
+              [
+                "map",
+                [
+                  "filter",
+                  [
+                    "referrers",
+                    [
+                      "enclosing",
+                      "$d",
+                      "type"
+                    ]
+                  ],
+                  "r",
+                  [
+                    "=",
+                    "$r.role",
+                    "mixins"
+                  ]
+                ],
+                "r",
                 [
                   "descendants",
                   [
-                    "typeDeclaration",
-                    "$m.refers"
+                    "enclosing",
+                    "$r",
+                    "type"
                   ]
                 ]
               ]

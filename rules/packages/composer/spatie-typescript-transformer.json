@@ -1,0 +1,16 @@
+{
+  "package": "spatie/typescript-transformer",
+  "ecosystem": "composer",
+  "versions": ">=2",
+  "provenance": "vendor/spatie/typescript-transformer/src/TypeScriptTransformerConfig.php:119 builds each transformer with new $transformer($this)",
+  "entries": [],
+  "exemptions": [
+    {
+      "classes": [
+        "Spatie\\TypeScriptTransformer\\Transformers\\Transformer"
+      ],
+      "tag": "no-container",
+      "why": "A type the package instantiates itself with new, without the container."
+    }
+  ]
+}

@@ -680,6 +680,21 @@
           ""
         ]
       ]
+    },
+    "notBoundOutside": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "none",
+        "$f.obligations",
+        "o",
+        [
+          "=",
+          "$o.origin",
+          "external"
+        ]
+      ]
     }
   }
 }

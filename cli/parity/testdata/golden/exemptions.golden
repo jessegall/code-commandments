@@ -9,14 +9,17 @@ exit: 0
   [36marray-return-contract[0m league/fractal: The framework requires this hook to return an array.
   [36marray-return-contract[0m spatie/laravel-data: The framework requires this hook to return an array.
   [36marray-returning [0m laravel/framework: A class whose whole job is handing the framework arrays: its array returns are contractual.
-  [36massociation     [0m laravel/framework: One end of a two-way association the framework requires both ends to name: it carries no dependency direction and cannot close a cycle.
+  [36massociation     [0m laravel/framework: One end of a two-way association the framework requires both ends to name (a relation's class argument, a factory's model, an observer or policy attribute): it carries no dependency direction and cannot close a cycle.
   [36mboundary        [0m laravel/framework: A framework entry point: behaviour does not move onto it, and a method taking one may unpack its input.
-  [36mcomposition-root[0m laravel/framework: A provider or framework construction hook that wires config into values without constructor injection.
+  [36mcomposition-root[0m laravel/framework: A provider, a framework construction hook, or a class the framework builds itself (a migration, a hydrated model), which takes config without constructor injection.
   [36mcomposition-root[0m spatie/laravel-data: A provider or framework construction hook that wires config into values without constructor injection.
   [36mcontract-method [0m laravel/framework: A framework-mandated method whose signature the framework dictates.
   [36mcontract-method [0m lorisleiva/laravel-actions: A framework-mandated method whose signature the framework dictates.
+  [36mcontract-method [0m php: A method PHP's JsonSerializable interface fixes: its name and its mixed return are the interface's.
   [36mcontract-method [0m spatie/laravel-data: A framework-mandated method whose signature the framework dictates.
   [36mdynamic-members [0m laravel/framework: A type whose framework supplies members at runtime.
+  [36mkeyed-state     [0m spatie/laravel-event-sourcing: An aggregate holds keyed domain state it replays from events; it is not a store of registered collaborators.
+  [36mno-container    [0m laravel/framework: A queued job's failure hook: the framework calls it with the failure only, and the job is serialized, so a service it needs cannot be injected.
   [36mno-container    [0m laravel/framework: A type the framework instantiates itself, without the container.
   [36mno-container    [0m spatie/laravel-data: A type the framework instantiates itself, without the container.
   [36mvalidation-response[0m laravel/framework: A framework factory builds a validation response from field messages and has no parameter for the caught failure.

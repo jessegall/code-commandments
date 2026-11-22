@@ -84,6 +84,16 @@
         "$t"
       ],
       [
+        "every",
+        "$t.bases",
+        "b",
+        [
+          "=",
+          "$b.refers",
+          "Spatie\\LaravelData\\Data"
+        ]
+      ],
+      [
         ">",
         [
           "count",

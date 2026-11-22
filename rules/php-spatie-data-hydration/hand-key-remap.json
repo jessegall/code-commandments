@@ -71,46 +71,130 @@
         ]
       ],
       [
-        ">=",
+        "or",
         [
-          "count",
-          "$items"
-        ],
-        2
-      ],
-      [
-        "every",
-        "$items",
-        "e",
-        [
-          "spatie.remapped",
-          "$e"
-        ]
-      ],
-      [
-        "=",
-        [
-          "distinctCount",
+          "and",
           [
-            "map",
+            ">=",
+            [
+              "count",
+              "$items"
+            ],
+            2
+          ],
+          [
+            "every",
             "$items",
             "e",
-            "$e.value.subject.name"
+            [
+              "spatie.remapped",
+              "$e"
+            ]
+          ],
+          [
+            "=",
+            [
+              "distinctCount",
+              [
+                "map",
+                "$items",
+                "e",
+                "$e.value.subject.name"
+              ]
+            ],
+            1
+          ],
+          [
+            "some",
+            "$items",
+            "e",
+            [
+              "!=",
+              "$e.key.value",
+              "$e.value.key.value"
+            ]
           ]
         ],
-        1
-      ],
-      [
-        "some",
-        "$items",
-        "e",
         [
-          "!=",
-          "$e.key.value",
-          "$e.value.key.value"
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              [
+                "filter",
+                "$items",
+                "e",
+                [
+                  "renamed",
+                  "$e"
+                ]
+              ]
+            ],
+            3
+          ],
+          [
+            "=",
+            [
+              "distinctCount",
+              [
+                "map",
+                [
+                  "filter",
+                  "$items",
+                  "e",
+                  [
+                    "renamed",
+                    "$e"
+                  ]
+                ],
+                "e",
+                "$e.value.subject.name"
+              ]
+            ],
+            1
+          ]
         ]
       ]
     ],
     "emit": "$c"
+  },
+  "definitions": {
+    "renamed": {
+      "args": [
+        "e"
+      ],
+      "expr": [
+        "and",
+        [
+          "literalIs",
+          "$e.key",
+          "string"
+        ],
+        [
+          "=",
+          "$e.value.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$e.value.subject.kind",
+          "reference"
+        ],
+        [
+          "=",
+          [
+            "snakeCase",
+            "$e.key.value"
+          ],
+          "$e.value.member.name"
+        ],
+        [
+          "!=",
+          "$e.key.value",
+          "$e.value.member.name"
+        ]
+      ]
+    }
   }
 }

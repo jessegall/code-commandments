@@ -16,16 +16,23 @@
       "python-flag-argument"
     ],
     "skill": "php/behaviour-per-method",
-    "description": "a method whose whole body branches on a `bool` parameter \u2014 or on whether a nullable one was given \u2014 two methods sharing one name",
-    "rule": "Split a method whose body is one branch on a flag into two NAMED methods \u2014 never make a call site say `true`, and never widen a required parameter to `?T = null` so that leaving it out means 'all of them'.",
+    "description": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name",
+    "rule": "Split a method whose body is one branch on a flag into two NAMED methods — never make a call site say `true`, and never widen a required parameter to `?T = null` so that leaving it out means 'all of them'.",
     "suggestion": "name each half for what it does (`renderCompact()` / `renderFull()`), with any shared middle as a private method both call"
   },
   "find": {
     "select": "function",
     "as": "f",
     "where": [
-      "tree.own",
-      "$f"
+      "and",
+      [
+        "tree.own",
+        "$f"
+      ],
+      [
+        "not",
+        "$f.file.test"
+      ]
     ],
     "let": [
       [
@@ -166,6 +173,26 @@
             ]
           ]
         ]
+      ],
+      [
+        "slot",
+        [
+          "position",
+          [
+            "at",
+            [
+              "filter",
+              "$f.parameters",
+              "p",
+              [
+                "=",
+                "$p.binding.name",
+                "$flag"
+              ]
+            ],
+            0
+          ]
+        ]
       ]
     ],
     "having": [
@@ -202,6 +229,82 @@
           [
             "flagParameter",
             "$p"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "sameConstruction",
+            "$choice",
+            "$statements"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "and",
+            [
+              ">=",
+              [
+                "count",
+                [
+                  "referrers",
+                  "$f"
+                ]
+              ],
+              1
+            ],
+            [
+              "every",
+              [
+                "referrers",
+                "$f"
+              ],
+              "o",
+              [
+                "and",
+                [
+                  "in",
+                  "$o.kind",
+                  "call",
+                  "construction"
+                ],
+                [
+                  ">",
+                  [
+                    "count",
+                    "$o.arguments"
+                  ],
+                  "$slot"
+                ],
+                [
+                  "not",
+                  [
+                    "in",
+                    [
+                      "tree.kindOf",
+                      [
+                        "at",
+                        [
+                          "map",
+                          "$o.arguments",
+                          "a",
+                          "$a.value"
+                        ],
+                        "$slot"
+                      ]
+                    ],
+                    "literal"
+                  ]
+                ]
+              ]
+            ]
           ]
         ]
       ]
@@ -382,6 +485,34 @@
                 "collection",
                 "throw"
               ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "in",
+                  [
+                    "tree.kindOf",
+                    [
+                      "declarationOf",
+                      [
+                        "outcomeOf",
+                        [
+                          "at",
+                          [
+                            "tree.effective",
+                            "$s"
+                          ],
+                          0
+                        ]
+                      ]
+                    ]
+                  ],
+                  "enum-case",
+                  "constant"
+                ]
+              ]
             ]
           ]
         ]
@@ -433,6 +564,94 @@
         },
         [
           "list"
+        ]
+      ]
+    },
+    "armOutcome": {
+      "args": [
+        "choice",
+        "statements",
+        "n"
+      ],
+      "expr": [
+        "outcomeOf",
+        [
+          "at",
+          [
+            "tree.effective",
+            [
+              "at",
+              [
+                "arms",
+                "$choice",
+                "$statements"
+              ],
+              "$n"
+            ]
+          ],
+          0
+        ]
+      ]
+    },
+    "resolvedNameOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.resolved.name"
+    },
+    "sameConstruction": {
+      "args": [
+        "choice",
+        "statements"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "armOutcome",
+              "$choice",
+              "$statements",
+              0
+            ]
+          ],
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "tree.kindOf",
+            [
+              "armOutcome",
+              "$choice",
+              "$statements",
+              1
+            ]
+          ],
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "resolvedNameOf",
+            [
+              "armOutcome",
+              "$choice",
+              "$statements",
+              0
+            ]
+          ],
+          [
+            "resolvedNameOf",
+            [
+              "armOutcome",
+              "$choice",
+              "$statements",
+              1
+            ]
+          ]
         ]
       ]
     },

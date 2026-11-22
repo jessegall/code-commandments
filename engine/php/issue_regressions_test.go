@@ -55,3 +55,35 @@ class Audit {
 		t.Errorf("the forwarded find, the inherited save and a method no package names read %v", effects)
 	}
 }
+
+func TestAFieldReadAfterAnAnonymousClassKeepsItsClass(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+class Clock { public function now(): int { return 0; } }
+class Ledger {
+    private Clock $clock;
+    public function stamp(): int {
+        $visitor = new class { public function visit(): void {} };
+        return $this->clock->now();
+    }
+    public function later(): int {
+        return $this->clock->now();
+    }
+}
+`)
+	var typed []string
+	for _, access := range codebase.WhereKind("access").Get() {
+		member, _ := access.Single("member")
+		if member.Node().Name != "clock" {
+			continue
+		}
+		name := ""
+		if found := access.Typed(); found != nil {
+			name = found.Name
+		}
+		typed = append(typed, name)
+	}
+	if len(typed) != 2 || typed[0] != `App\Clock` || typed[1] != `App\Clock` {
+		t.Errorf("the field reads after an anonymous class are typed %q, not App\\Clock twice", typed)
+	}
+}

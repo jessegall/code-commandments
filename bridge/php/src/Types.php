@@ -223,11 +223,17 @@ final class Types
 
             private ?string $class = null;
 
+            /**
+             * @var list<?string>
+             */
+            private array $enclosingClasses = [];
+
             public function __construct(private readonly Types $types) {}
 
             public function enterNode(Node $node): null
             {
                 if ($node instanceof Stmt\ClassLike) {
+                    $this->enclosingClasses[] = $this->class;
                     $this->class = $node->namespacedName?->toString();
                 }
                 if ($node instanceof Node\UseItem && ($file = $this->types->fileOf($node->name->toString())) !== null) {
@@ -282,7 +288,7 @@ final class Types
                     array_pop($this->scopes);
                 }
                 if ($node instanceof Stmt\ClassLike) {
-                    $this->class = null;
+                    $this->class = array_pop($this->enclosingClasses);
                 }
 
                 return null;

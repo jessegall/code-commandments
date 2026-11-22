@@ -34,6 +34,14 @@
         ]
       ],
       [
+        ">",
+        [
+          "count",
+          "$c.arguments"
+        ],
+        0
+      ],
+      [
         "not",
         [
           "and",
@@ -133,15 +141,6 @@
             "$m.name"
           ],
           "DataCollection"
-        ],
-        [
-          "in",
-          [
-            "shortName",
-            "$m.name"
-          ],
-          "Optional",
-          "Lazy"
         ],
         [
           "proven",

@@ -114,6 +114,7 @@ exit: 0
   near-duplicate-function
   repeated-folder-path
   repeated-guard
+  repeated-static-factory
   repeated-type-guard
   unnamed-vocabulary-literal
 [1;33mshared/enums[0m

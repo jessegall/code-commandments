@@ -1,0 +1,13 @@
+{
+  "package": "jessegall/inertia-overlay",
+  "ecosystem": "composer",
+  "versions": ">=0",
+  "provenance": "vendor/jessegall/inertia-overlay/src/ServiceProvider.php:32 reads config('overlays.overlay_class_map', [])",
+  "entries": [],
+  "identities": [
+    {
+      "name": "package-config-file",
+      "type": "overlays"
+    }
+  ]
+}

@@ -144,6 +144,60 @@
         ]
       ]
     },
+    "eachItem": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "spatie.perItem",
+          "$x"
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$x",
+              "function"
+            ]
+          ],
+          "f",
+          [
+            "and",
+            [
+              "exists",
+              "$f"
+            ],
+            [
+              "=",
+              "$f.parent.kind",
+              "argument"
+            ],
+            [
+              "=",
+              "$f.parent.parent.callee.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$f.parent.parent.callee.member.name",
+              "map"
+            ],
+            [
+              "assignable",
+              "$f.parent.parent.callee.subject",
+              [
+                "identity",
+                "collection"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
     "hydrates": {
       "args": [
         "c"
@@ -162,7 +216,7 @@
           ]
         ],
         [
-          "spatie.perItem",
+          "eachItem",
           "$c"
         ]
       ]
@@ -255,17 +309,16 @@
           "$t.handlers",
           "h",
           [
-            "some",
+            "none",
             [
               "descendants",
               "$h"
             ],
             "d",
             [
-              "in",
+              "=",
               "$d.kind",
-              "continue",
-              "return"
+              "throw"
             ]
           ]
         ]

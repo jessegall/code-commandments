@@ -31,9 +31,9 @@ sha256 fabe87464e32b017e451de6b0e5c9d31bcd868dbbb583c0f6e83c9ac22e4d2a6
 === created .agents/skills/commandments-shared-documentation/reference/examples.md
 sha256 55901189738e26f337fdfb9d99f080c8d551a8963a2d1a3476848aa3502dd7fb
 === created .agents/skills/commandments-shared-duplication/SKILL.md
-sha256 bf1632a0a16483dbbac5d89d6add84ce9b536ac74057a1193f55907a5f81b009
+sha256 62370b6e5a3f626c9d16c1b2fc6184b20ec37d44333f8712b4e0f0cd1099f533
 === created .agents/skills/commandments-shared-duplication/reference/detectors.md
-sha256 c00cc8ff85d187ab2ec859c901d589c9b6acfc0a00bd3a9e3d6275a9fe28b106
+sha256 252119f21e0951cb75b68b718464ebf1edcf96f965549ed6f7fe8f278d01222d
 === created .agents/skills/commandments-shared-duplication/reference/examples.md
 sha256 78c648796c9f2c43a9e26890aa6450413a7769c40744cfc52e1680520b47d0e8
 === created .agents/skills/commandments-shared-enums/SKILL.md
@@ -55,7 +55,7 @@ sha256 33d1c5c261d37af6a5ed480c73c3d98c3bc84f2cfbb61f7a556a599149ad783b
 === created .agents/skills/commandments-shared-flow/reference/examples.md
 sha256 3b9b0878085dbcf3516b3e80ac2463367a8106c9139317b36e45170683b13ed4
 === created .agents/skills/commandments-writing-detectors/SKILL.md
-sha256 6b99d487737244fcd34d61e1a9bfc63b41cc1f9e5b5b0fa7fd82e28113033bf6
+sha256 88974efa1383f90b8aa79ec28ed1d8fb30fbbfa17c99d4c56b65b5b3cc4c1c81
 === created .agents/skills/commandments-writing-detectors/reference/examples.md
 sha256 14844f8a9dd8b14be050a5e64c6cba491c210a91f7e994c738368edc8e7a1563
 === created .agents/skills/commandments/SKILL.md
@@ -140,7 +140,7 @@ Safe to delete — the conversion simply runs again on the next `composer update
 }
 
 === created .commandments/config.schema.json
-sha256 91896b7402a21628a24fc0c5de3b2bf87c2d0d7c2504cdc566882f7eafa0a3ef
+sha256 fc89a455d9255a7c883e14bc60fd63ed200a3a0b9e9e0362c82bd81e0e8dd800
 === created .commandments/published-skills
 # The skills code-commandments published here, so it can retire its own and leave yours
 # alone. Regenerated on every sync; deleting it only means a retired skill lingers.

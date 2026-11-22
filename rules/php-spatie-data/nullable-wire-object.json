@@ -91,16 +91,24 @@
                 [
                   "not",
                   [
-                    "and",
+                    "or",
                     [
-                      "=",
-                      "$m.form",
-                      "keyword"
+                      "and",
+                      [
+                        "=",
+                        "$m.form",
+                        "keyword"
+                      ],
+                      [
+                        "=",
+                        "$m.name",
+                        "null"
+                      ]
                     ],
                     [
                       "=",
-                      "$m.name",
-                      "null"
+                      "$m.refers",
+                      "Spatie\\LaravelData\\Lazy"
                     ]
                   ]
                 ]
@@ -226,12 +234,14 @@
             "enum"
           ],
           [
-            "=",
+            "every",
+            "$inner.bases",
+            "b",
             [
-              "count",
-              "$inner.bases"
-            ],
-            0
+              "=",
+              "$b.form",
+              "keyword"
+            ]
           ]
         ]
       ]

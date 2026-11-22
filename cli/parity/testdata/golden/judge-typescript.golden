@@ -1,8 +1,23 @@
-exit: 0
+exit: 1
 --- stdout
-[32m✓ No sins found in 147 files.[0m
+
+[1;33mtypescript/absence[0m  (8)
+  [1;36m↳ LOAD the skill `commandments-typescript-absence` before fixing[0m
+  [36mclient/cart-session.ts:15[0m  <project>/client/cart-session.ts#CartSession  [2m[falsely-optional-field][0m
+  [36mclient/cart-session.ts:18[0m  <project>/client/cart-session.ts#CartSession  [2m[falsely-optional-field][0m
+  [36mclient/label-printer.ts:10[0m  <project>/client/label-printer.ts#LabelPrinter  [2m[falsely-optional-field][0m
+  [36mclient/label-printer.ts:21[0m  <project>/client/label-printer.ts#LabelPrinter::target  [2m[defended-certain-field][0m
+  [36mclient/order-tracker.ts:21[0m  <project>/client/order-tracker.ts#OrderTracker::customerName  [2m[defended-certain-field][0m
+  [36mclient/order-tracker.ts:26[0m  <project>/client/order-tracker.ts#OrderTracker::slug  [2m[defended-certain-field][0m
+  [36mclient/stock-poller.ts:13[0m  <project>/client/stock-poller.ts#StockPoller  [2m[falsely-optional-field][0m
+  [36mclient/stock-poller.ts:20[0m  <project>/client/stock-poller.ts#StockPoller::poll  [2m[defended-certain-field][0m
+
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+[1m8 sins[0m across 1 skill.
 
 --- stderr
-· read 152 files in <took> (0 from the cache, 152 by the bridges), judged in <took> (2 rule answers from memory, 302 asked): 0 sins
+· read 159 files in <took> (0 from the cache, 159 by the bridges), judged in <took> (1 rule answers from memory, 317 asked): 8 sins
 
 --- files

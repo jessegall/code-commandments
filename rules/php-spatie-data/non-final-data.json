@@ -28,6 +28,10 @@
         "class"
       ],
       [
+        "nonempty",
+        "$t.name"
+      ],
+      [
         "none",
         "$t.modifiers",
         "m",

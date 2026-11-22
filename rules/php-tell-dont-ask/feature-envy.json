@@ -139,6 +139,27 @@
           "within",
           "$d",
           "$f"
+        ],
+        [
+          "none",
+          [
+            "descendants",
+            "$f.body"
+          ],
+          "n",
+          [
+            "and",
+            [
+              "=",
+              "$n.kind",
+              "function"
+            ],
+            [
+              "within",
+              "$d",
+              "$n"
+            ]
+          ]
         ]
       ]
     },
@@ -165,6 +186,23 @@
           "ownedType",
           "$x.subject",
           "$f"
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "exemptedBy",
+              "boundary",
+              [
+                "typeDeclaration",
+                [
+                  "typeName",
+                  "$x.subject"
+                ]
+              ]
+            ]
+          ]
         ]
       ]
     },
@@ -259,6 +297,14 @@
             "=",
             "$o.role",
             "callee"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$o.parent.arguments"
+            ],
+            0
           ],
           [
             "in",
@@ -360,9 +406,22 @@
                 "$a.arguments",
                 "g",
                 [
-                  "=",
-                  "$g.value.kind",
-                  "function"
+                  "and",
+                  [
+                    "=",
+                    "$g.value.kind",
+                    "function"
+                  ],
+                  [
+                    "not",
+                    [
+                      "proven",
+                      [
+                        "projection",
+                        "$g.value"
+                      ]
+                    ]
+                  ]
                 ]
               ],
               [
@@ -416,10 +475,230 @@
             "$o.parent.parent.parent.arguments",
             "g",
             [
+              "and",
+              [
+                "=",
+                "$g.value.kind",
+                "function"
+              ],
+              [
+                "not",
+                [
+                  "proven",
+                  [
+                    "projection",
+                    "$g.value"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "resultsOf": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          "$f.body.kind",
+          "block"
+        ],
+        {
+          "true": [
+            "map",
+            [
+              "filter",
+              [
+                "descendants",
+                "$f.body"
+              ],
+              "n",
+              [
+                "and",
+                [
+                  "=",
+                  "$n.kind",
+                  "return"
+                ],
+                [
+                  "nonempty",
+                  "$n.values"
+                ]
+              ]
+            ],
+            "n",
+            [
+              "at",
+              "$n.values",
+              0
+            ]
+          ]
+        },
+        [
+          "list",
+          "$f.body"
+        ]
+      ]
+    },
+    "projection": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "nonempty",
+          [
+            "resultsOf",
+            "$f"
+          ]
+        ],
+        [
+          "every",
+          [
+            "resultsOf",
+            "$f"
+          ],
+          "v",
+          [
+            "or",
+            [
+              "in",
+              "$v.kind",
+              "collection",
+              "construction",
+              "interpolation"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$v.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$v.callee.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$v.callee.form",
+                "static"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "configures": {
+      "args": [
+        "f",
+        "r",
+        "envies"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$f.form",
+          "closure",
+          "arrow"
+        ],
+        [
+          "=",
+          "$f.parent.kind",
+          "argument"
+        ],
+        [
+          "every",
+          [
+            "mine",
+            "$r",
+            "$envies"
+          ],
+          "o",
+          [
+            "mutated",
+            "$o"
+          ]
+        ]
+      ]
+    },
+    "reflective": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ],
+        "t",
+        [
+          "some",
+          "$t.interfaces",
+          "i",
+          [
+            "some",
+            [
+              "list",
+              [
+                "typeDeclaration",
+                "$i.refers"
+              ]
+            ],
+            "d",
+            [
               "=",
-              "$g.value.kind",
+              [
+                "count",
+                "$d.writtenMembers"
+              ],
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    "returnedContract": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$f.parent.kind",
+          "return"
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$f.parent",
               "function"
             ]
+          ],
+          "g",
+          [
+            ">",
+            [
+              "count",
+              "$g.obligations"
+            ],
+            0
           ]
         ]
       ]
@@ -786,82 +1065,7 @@
         [
           "or",
           [
-            "some",
-            [
-              "mine",
-              "$r",
-              "$envies"
-            ],
-            "o",
-            [
-              "mutated",
-              "$o"
-            ]
-          ],
-          [
-            "some",
-            [
-              "mine",
-              "$r",
-              "$envies"
-            ],
-            "o",
-            [
-              "and",
-              [
-                "iterates",
-                "$o"
-              ],
-              [
-                "not",
-                [
-                  "passedOn",
-                  "$o",
-                  "$f"
-                ]
-              ],
-              [
-                "not",
-                [
-                  "walksWithState",
-                  "$f",
-                  "$body"
-                ]
-              ]
-            ]
-          ],
-          [
-            "some",
-            [
-              "mine",
-              "$r",
-              "$envies"
-            ],
-            "o",
-            [
-              "queries",
-              "$o"
-            ]
-          ],
-          [
             "and",
-            [
-              ">=",
-              [
-                "distinctCount",
-                [
-                  "map",
-                  [
-                    "mine",
-                    "$r",
-                    "$envies"
-                  ],
-                  "o",
-                  "$o.member.name"
-                ]
-              ],
-              3
-            ],
             [
               "some",
               [
@@ -871,8 +1075,91 @@
               ],
               "o",
               [
-                "digs",
+                "mutated",
                 "$o"
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "configures",
+                  "$f",
+                  "$r",
+                  "$envies"
+                ]
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              "some",
+              [
+                "mine",
+                "$r",
+                "$envies"
+              ],
+              "o",
+              [
+                "and",
+                [
+                  "iterates",
+                  "$o"
+                ],
+                [
+                  "not",
+                  [
+                    "passedOn",
+                    "$o",
+                    "$f"
+                  ]
+                ],
+                [
+                  "not",
+                  [
+                    "walksWithState",
+                    "$f",
+                    "$body"
+                  ]
+                ]
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "projection",
+                  "$f"
+                ]
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              "some",
+              [
+                "mine",
+                "$r",
+                "$envies"
+              ],
+              "o",
+              [
+                "queries",
+                "$o"
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "projection",
+                  "$f"
+                ]
               ]
             ]
           ]
@@ -890,17 +1177,67 @@
         "$f.file.test"
       ],
       [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$f",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "proven",
+              [
+                "exemptedBy",
+                "test-data",
+                "$t"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
         "!=",
         "$f.form",
         "constructor"
       ],
       [
-        "tree.notOverriding",
+        "tree.notBoundOutside",
         "$f"
       ],
       [
         "exists",
         "$f.body"
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "reflective",
+            "$f"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "returnedContract",
+            "$f"
+          ]
+        ]
       ]
     ],
     "let": [

@@ -670,23 +670,73 @@
                 ],
                 "a",
                 [
-                  "and",
+                  "or",
                   [
-                    "=",
-                    "$a.kind",
-                    "call"
-                  ],
-                  [
-                    "some",
-                    [
-                      "identities",
-                      "serialized-callback"
-                    ],
-                    "i",
+                    "and",
                     [
                       "=",
-                      "$i",
-                      "$a.target.symbol"
+                      "$a.kind",
+                      "call"
+                    ],
+                    [
+                      "some",
+                      [
+                        "identities",
+                        "serialized-callback"
+                      ],
+                      "i",
+                      [
+                        "=",
+                        "$i",
+                        "$a.target.symbol"
+                      ]
+                    ]
+                  ],
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$a.kind",
+                      "function"
+                    ],
+                    [
+                      "=",
+                      "$a.parent.kind",
+                      "assignment"
+                    ],
+                    [
+                      "some",
+                      "$a.parent.targets",
+                      "t",
+                      [
+                        "some",
+                        [
+                          "referrers",
+                          "$t"
+                        ],
+                        "r",
+                        [
+                          "and",
+                          [
+                            "=",
+                            "$r.parent.kind",
+                            "argument"
+                          ],
+                          [
+                            "some",
+                            [
+                              "identities",
+                              "serialized-callback"
+                            ],
+                            "i",
+                            [
+                              "=",
+                              "$i",
+                              "$r.parent.parent.target.symbol"
+                            ]
+                          ]
+                        ]
+                      ]
                     ]
                   ]
                 ]

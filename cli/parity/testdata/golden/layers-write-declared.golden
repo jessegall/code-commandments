@@ -1,8 +1,8 @@
 exit: 0
 --- stdout
-[1mNamespace layers[0m — 108 namespaces
+[1mNamespace layers[0m — 109 namespaces
 
-  [32m52[0m are depended on but depend on nothing of yours — the floor your stack rests on
+  [32m53[0m are depended on but depend on nothing of yours — the floor your stack rests on
       Shop\Audit\Forwarding
       Shop\Auth\Gates
       Shop\Authoring
@@ -14,17 +14,16 @@ exit: 0
       Shop\Courier\Manifest
       Shop\Courier\Printing
       Shop\Domain
-      Shop\Events
-      … and 40 more
+      Shop\Domain\Factories
+      … and 41 more
 
   [33m31[0m sit in a cycle — declared below as they stand, each permitting the other:
       Shop\Enums  ->  Shop\Shipping
-      Shop\Models  ->  Shop\Fulfillment
       Shop\Telemetry  ->  Shop\Diagnostics
       Shop\Warranty  ->  Shop\Claims
     [2mrun `vendor/bin/commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
 
-  Proposed declaration — today's shape, held (108 namespaces):
+  Proposed declaration — today's shape, held (109 namespaces):
 
     "configure": {
         "php/NamespaceDependencyDetector": [
@@ -81,6 +80,11 @@ exit: 0
             {
                 "layer": [
                     "Shop\\Domain"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Domain\\Factories"
                 ]
             },
             {
@@ -644,7 +648,6 @@ exit: 0
                     "Shop\\Models",
                     [
                         "Shop\\Enums",
-                        "Shop\\Fulfillment",
                         "Shop\\Models\\Concerns",
                         "Shop\\Tills",
                         "Shop\\ValueObjects"

@@ -1,17 +1,16 @@
 exit: 1
 --- stdout
 
-[1;33mvue/vue-components[0m  (46)
+[1;33mvue/vue-components[0m  (35)
   [1;36m↳ LOAD the skill `commandments-vue-vue-components` before fixing[0m
   [36mcomponents/AccountMenu.vue:25[0m  (file)  [2m[prop-drilling][0m
   [36mcomponents/BasketPromoBanner.vue:8[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/BillingAddressPage.vue:10[0m  (file)  [2m[near-duplicate-element][0m
-  [36mcomponents/BillingAddressPage.vue:11[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/CheckoutPromoBanner.vue:8[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/CheckoutStep.vue:27[0m  (file)  [2m[prop-mutation][0m
   [36mcomponents/CheckoutTotalsBreakdown.vue:12[0m  (file)  [2m[deep-nested][0m
-  [36mcomponents/CustomerAccountPanel.vue:8[0m  (file)  [2m[oversized-component][0m
-  [36mcomponents/CustomerAccountPanel.vue:29[0m  (file)  [2m[deep-data-reach][0m
+  [36mcomponents/CustomerAccountPanel.vue:12[0m  (file)  [2m[oversized-component][0m
+  [36mcomponents/CustomerAccountPanel.vue:33[0m  (file)  [2m[deep-data-reach][0m
   [36mcomponents/DashboardMetricTile.vue:15[0m  (file)  [2m[deep-nested][0m
   [36mcomponents/DashboardMetricTile.vue:42[0m  (file)  [2m[prop-drilling][0m
   [36mcomponents/DeliverySlots.vue:11[0m  (file)  [2m[near-duplicate-element][0m
@@ -20,42 +19,32 @@ exit: 1
   [36mcomponents/FilterSidebar.vue:20[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/FilterSidebar.vue:26[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/InventoryFilterPanel.vue:16[0m  (file)  [2m[compound-inline-component][0m
-  [36mcomponents/InventoryFilterPanel.vue:18[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/MediaPreview.vue:7[0m  (file)  [2m[inline-case-views][0m
-  [36mcomponents/OrderDetailPanel.vue:8[0m  (file)  [2m[oversized-component][0m
-  [36mcomponents/OrderDetailPanel.vue:17[0m  (file)  [2m[deep-data-reach][0m
+  [36mcomponents/OrderDetailPanel.vue:12[0m  (file)  [2m[oversized-component][0m
+  [36mcomponents/OrderDetailPanel.vue:21[0m  (file)  [2m[deep-data-reach][0m
   [36mcomponents/OrderLineItems.vue:16[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/OrderLineItems.vue:21[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/OrderSummaryPanel.vue:13[0m  (file)  [2m[compound-inline-component][0m
-  [36mcomponents/OrderSummaryPanel.vue:14[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/OrderSummaryPanel.vue:36[0m  (file)  [2m[prop-drilling][0m
   [36mcomponents/ProductReviewList.vue:8[0m  (file)  [2m[duplicate-element][0m
-  [36mcomponents/ProductReviewList.vue:9[0m  (file)  [2m[duplicate-element][0m
-  [36mcomponents/ProductReviewList.vue:17[0m  (file)  [2m[duplicate-element][0m
-  [36mcomponents/ProductReviewList.vue:18[0m  (file)  [2m[duplicate-element][0m
+  [36mcomponents/ProductReviewList.vue:16[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/ReaderPairingPanel.vue:16[0m  (file)  [2m[compound-inline-component][0m
-  [36mcomponents/ReaderPairingPanel.vue:18[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/RefundWizard.vue:12[0m  (file)  [2m[inline-case-views][0m
   [36mcomponents/SettingsAccordionCard.vue:16[0m  (file)  [2m[deep-nested][0m
   [36mcomponents/SettingsAccordionCard.vue:47[0m  (file)  [2m[prop-mutation][0m
   [36mcomponents/ShipmentTracker.vue:7[0m  (file)  [2m[inline-case-views][0m
   [36mcomponents/ShippingAddressPage.vue:11[0m  (file)  [2m[near-duplicate-element][0m
-  [36mcomponents/ShippingAddressPage.vue:12[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/StockTables.vue:14[0m  (file)  [2m[near-duplicate-element][0m
-  [36mcomponents/StockTables.vue:15[0m  (file)  [2m[near-duplicate-element][0m
-  [36mcomponents/StockTables.vue:17[0m  (file)  [2m[duplicate-element][0m
   [36mcomponents/StockTables.vue:28[0m  (file)  [2m[near-duplicate-element][0m
-  [36mcomponents/StockTables.vue:29[0m  (file)  [2m[near-duplicate-element][0m
-  [36mcomponents/StockTables.vue:31[0m  (file)  [2m[duplicate-element][0m
-  [36mcomponents/StorefrontHero.vue:8[0m  (file)  [2m[oversized-component][0m
-  [36mcomponents/StorefrontHero.vue:16[0m  (file)  [2m[deep-data-reach][0m
+  [36mcomponents/StorefrontHero.vue:29[0m  (file)  [2m[oversized-component][0m
+  [36mcomponents/StorefrontHero.vue:37[0m  (file)  [2m[deep-data-reach][0m
 
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m46 sins[0m across 1 skill.
+[1m35 sins[0m across 1 skill.
 
 --- stderr
-· read 152 files in <took> (0 from the cache, 152 by the bridges), judged in <took> (3 rule answers from memory, 1365 asked): 46 sins
+· read 159 files in <took> (0 from the cache, 159 by the bridges), judged in <took> (3 rule answers from memory, 1428 asked): 35 sins
 
 --- files

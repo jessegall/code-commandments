@@ -1,147 +1,262 @@
 exit: 1
 --- stdout
 
-[1;33mphp/class-layout[0m  (5)
+[1;33mphp/behaviour-per-method[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-php-behaviour-per-method` before fixing[0m
+  [36mshop/invoice_render.py:11[0m  shop.invoice_render.InvoiceView::render  [2m[flag-argument][0m
+  [36mshop/parcel_labels.py:5[0m  (file)::label_for  [2m[flag-argument][0m
+  [36mshop/stock_queries.py:12[0m  (file)::units_in_stock  [2m[flag-argument][0m
+
+[1;33mphp/class-layout[0m  (7)
   [1;36m↳ LOAD the skill `commandments-php-class-layout` before fixing[0m
+  [36mshop/basket_limits.py:12[0m  shop.basket_limits.Basket  [2m[member-out-of-order][0m
+  [36mshop/carrier_profiles.py:11[0m  shop.carrier_profiles.CarrierProfile  [2m[member-out-of-order][0m
+  [36mshop/checkout_settings.py:8[0m  shop.checkout_settings.CheckoutSettings  [2m[member-out-of-order][0m
   [36mshop/export_jobs.py:11[0m  shop.export_jobs.ExportJob  [2m[member-after-method][0m
   [36mshop/export_jobs.py:39[0m  shop.export_jobs.ExportSlot  [2m[member-after-method][0m
-  [36mshop/export_jobs.py:42[0m  shop.export_jobs.ExportSlot  [2m[member-after-method][0m
   [36mshop/loyalty_cards.py:15[0m  shop.loyalty_cards.LoyaltyCard  [2m[member-after-method][0m
   [36mshop/retry_clients.py:17[0m  shop.retry_clients.SupplierClient  [2m[member-after-method][0m
 
-[1;33mphp/enums-with-behaviour[0m  (2)
-  [1;36m↳ LOAD the skill `commandments-php-enums-with-behaviour` before fixing[0m
-  [36mshop/box_sizes.py:22[0m  shop.box_sizes.Packer::box_for  [2m[enum-value-match][0m
-  [36mshop/refund_windows.py:13[0m  shop.refund_windows.SalesChannel::refund_days  [2m[enum-value-match][0m
+[1;33mphp/dependency-direction[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-php-dependency-direction` before fixing[0m
+  [36mshop/layout/grid.py:4[0m  (file)  [2m[namespace-dependency][0m
+  [36mshop/layout/theme.py:3[0m  (file)  [2m[namespace-dependency][0m
+  [36mshop/widgets/card.py:14[0m  shop.widgets.card.Card::link  [2m[namespace-dependency][0m
 
-[1;33mphp/fix-at-the-source[0m  (4)
+[1;33mphp/enums-with-behaviour[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-php-enums-with-behaviour` before fixing[0m
+  [36mshop/badge_colours.py:23[0m  (file)::badge  [2m[enum-value-match][0m
+  [36mshop/box_sizes.py:22[0m  shop.box_sizes.Packer::box_for  [2m[enum-value-match][0m
+  [36mshop/refund_windows.py:22[0m  (file)::refund_days  [2m[enum-value-match][0m
+
+[1;33mphp/fix-at-the-source[0m  (10)
   [1;36m↳ LOAD the skill `commandments-php-fix-at-the-source` before fixing[0m
+  [36mshop/label_waiting.py:13[0m  shop.label_waiting.LabelWaiting::__init__  [2m[unread-collaborator][0m
   [36mshop/ledger_export.py:11[0m  shop.ledger_export.LedgerExport::__init__  [2m[constructor-side-effect][0m
+  [36mshop/order_numbers.py:14[0m  shop.order_numbers.OrderNumbers::next  [2m[mutable-static-state][0m
+  [36mshop/pack_desk.py:20[0m  shop.pack_desk.PackDesk::__init__  [2m[unread-collaborator][0m
   [36mshop/payment_plugins.py:9[0m  shop.payment_plugins.CardPlugin::__init__  [2m[constructor-side-effect][0m
   [36mshop/receipt_printers.py:10[0m  shop.receipt_printers.ReceiptPrinter::__init__  [2m[constructor-side-effect][0m
-  [36mshop/receipt_printers.py:30[0m  shop.receipt_printers.PriceBoard::__init__  [2m[constructor-side-effect][0m
+  [36mshop/stocktake_sheets.py:14[0m  shop.stocktake_sheets.StocktakeSheets::__init__  [2m[unread-collaborator][0m
+  [36mshop/store_context.py:10[0m  (file)::enter_store  [2m[mutable-static-state][0m
+  [36mshop/tally_boards.py:10[0m  shop.tally_boards.TallyBoard::count  [2m[mutable-static-state][0m
+  [36mshop/tax_rates.py:11[0m  shop.tax_rates.TaxTable::load  [2m[mutable-static-state][0m
 
-[1;33mphp/pass-the-object[0m  (2)
+[1;33mphp/laravel-idioms[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-php-laravel-idioms` before fixing[0m
+  [36mshop/aisle_counts.py:26[0m  shop.aisle_counts.AisleCounts::counted  [2m[handed-out-collection][0m
+  [36mshop/damage_reports.py:32[0m  shop.damage_reports.DamageReport::aisles  [2m[handed-out-collection][0m
+  [36mshop/note_boards.py:15[0m  shop.note_boards.NoteBoard::notes  [2m[handed-out-collection][0m
+
+[1;33mphp/method-mood[0m  (6)
+  [1;36m↳ LOAD the skill `commandments-php-method-mood` before fixing[0m
+  [36mshop/courier_slots.py:11[0m  shop.courier_slots.CourierSlot::ships  [2m[bare-state-predicate][0m
+  [36mshop/gift_notes.py:16[0m  shop.gift_notes.GiftWrap::needs_card  [2m[bare-state-predicate][0m
+  [36mshop/parcel_locks.py:11[0m  shop.parcel_locks.LockerDoor::locks  [2m[bare-state-predicate][0m
+  [36mshop/picking_queue.py:12[0m  shop.picking_queue.PickingQueue::sorts  [2m[narrated-command][0m
+  [36mshop/shelf_labels.py:12[0m  shop.shelf_labels.ShelfLabel::reloads  [2m[narrated-command][0m
+  [36mshop/warehouse_returns.py:10[0m  shop.warehouse_returns.ReturnsBatch::waits_on_warehouse  [2m[bare-state-predicate][0m
+
+[1;33mphp/pass-the-object[0m  (14)
   [1;36m↳ LOAD the skill `commandments-php-pass-the-object` before fixing[0m
+  [36mshop/courier_picks.py:26[0m  shop.courier_picks.CourierPicker::pick_for  [2m[computed-boolean-argument][0m
+  [36mshop/courier_picks.py:40[0m  (file)::route_all  [2m[computed-boolean-argument][0m
+  [36mshop/courier_picks.py:46[0m  (file)::quote  [2m[computed-boolean-argument][0m
+  [36mshop/floor_plans.py:20[0m  (file)::relabel  [2m[param-resolved-from-param][0m
+  [36mshop/kiosk_receipts.py:25[0m  (file)::finish  [2m[derived-argument][0m
+  [36mshop/return_desk.py:27[0m  shop.return_desk.Desk::accept  [2m[computed-boolean-argument][0m
+  [36mshop/return_desk.py:36[0m  shop.return_desk.Portal::offers  [2m[computed-boolean-argument][0m
+  [36mshop/route_stops.py:30[0m  shop.route_stops.Dispatcher::tick  [2m[param-resolved-from-param][0m
+  [36mshop/seat_maps.py:19[0m  (file)::book  [2m[param-resolved-from-param][0m
+  [36mshop/shift_reports.py:28[0m  (file)::close  [2m[derived-argument][0m
+  [36mshop/stock_badges.py:31[0m  (file)::shelf_badge  [2m[computed-boolean-argument][0m
+  [36mshop/stock_badges.py:36[0m  (file)::search_badge  [2m[computed-boolean-argument][0m
   [36mshop/stock_moves.py:23[0m  (file)::restock  [2m[derived-argument][0m
   [36mshop/stock_moves.py:30[0m  (file)::empty_out  [2m[derived-argument][0m
 
-[1;33mphp/tell-dont-ask[0m  (2)
+[1;33mphp/repeated-call-helper[0m  (4)
+  [1;36m↳ LOAD the skill `commandments-php-repeated-call-helper` before fixing[0m
+  [36mshop/cart_lines.py:15[0m  (file)::mark_gift  [2m[repeated-named-call][0m
+  [36mshop/cart_lines.py:20[0m  (file)::mark_sample  [2m[repeated-named-call][0m
+  [36mshop/escalations.py:12[0m  shop.escalations.EscalationPolicy::escalate  [2m[repeated-named-call][0m
+  [36mshop/support_desk.py:7[0m  (file)::raise_level  [2m[repeated-named-call][0m
+
+[1;33mphp/role-vocabulary[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-php-role-vocabulary` before fixing[0m
+  [36mshop/parcel_tree/__init__.py:83[0m  shop.parcel_tree.ParcelTreeDirectory  [2m[hand-rolled-registry][0m
+  [36mshop/receipt_tree/__init__.py:69[0m  shop.receipt_tree.ReceiptTreeDirectory  [2m[hand-rolled-registry][0m
+  [36mshop/voucher_tree/__init__.py:98[0m  shop.voucher_tree.VoucherTreeDirectory  [2m[hand-rolled-registry][0m
+
+[1;33mphp/tell-dont-ask[0m  (31)
   [1;36m↳ LOAD the skill `commandments-php-tell-dont-ask` before fixing[0m
-  [36mshop/aisle_signs.py:36[0m  shop.aisle_signs.SignPrinter::heading  [2m[train-wreck][0m
-  [36mshop/till_drawers.py:36[0m  shop.till_drawers.CashOffice::came_up_short  [2m[train-wreck][0m
+  [36mshop/aisle_signs.py:35[0m  shop.aisle_signs.SignPrinter::heading  [2m[keyed-lookup-envy][0m
+  [36mshop/allergen_labels.py:26[0m  shop.allergen_labels.DeliCounter::allergens_of  [2m[keyed-lookup-envy][0m
+  [36mshop/dealer_facts.py:27[0m  shop.dealer_facts.DealerFacts::apply_plan  [2m[feature-envy][0m
+  [36mshop/dealer_facts.py:32[0m  shop.dealer_facts.DealerFacts::apply_language  [2m[feature-envy][0m
+  [36mshop/floor_plans.py:27[0m  (file)::relabel_bay  [2m[feature-envy][0m
+  [36mshop/member_points.py:11[0m  (file)::redeem  [2m[feature-envy][0m
+  [36mshop/member_points.py:24[0m  (file)::expire  [2m[feature-envy][0m
+  [36mshop/member_points.py:35[0m  (file)::expire_lapsed  [2m[feature-envy][0m
+  [36mshop/menu_boards.py:31[0m  shop.menu_boards.BoardPainter::vegan_line  [2m[feature-envy][0m
+  [36mshop/pallet_loads.py:22[0m  shop.pallet_loads.DockPlanner::heaviest_crate  [2m[feature-envy][0m
+  [36mshop/parcel_postage.py:12[0m  (file)::label  [2m[feature-envy][0m
+  [36mshop/parcel_postage.py:40[0m  (file)::weigh  [2m[feature-envy][0m
+  [36mshop/parcel_postage.py:62[0m  (file)::rezone  [2m[feature-envy][0m
+  [36mshop/parcel_refunds.py:18[0m  (file)::restock  [2m[feature-envy][0m
+  [36mshop/parcel_refunds.py:40[0m  (file)::restock_once  [2m[feature-envy][0m
+  [36mshop/parcel_tree/__init__.py:57[0m  shop.parcel_tree.ParcelTreeForwarder  [2m[middle-man][0m
+  [36mshop/parcel_tree/__init__.py:113[0m  (file)::read_parcel_tree  [2m[train-wreck][0m
+  [36mshop/parcel_tree/__init__.py:147[0m  (file)::seal_parcel_tree  [2m[guard-beside-transition][0m
+  [36mshop/receipt_tree/__init__.py:46[0m  shop.receipt_tree.ReceiptTreeForwarder  [2m[middle-man][0m
+  [36mshop/receipt_tree/__init__.py:98[0m  (file)::read_receipt_tree  [2m[train-wreck][0m
+  [36mshop/receipt_tree/__init__.py:131[0m  (file)::seal_receipt_tree  [2m[guard-beside-transition][0m
+  [36mshop/shift_rosters.py:23[0m  shop.shift_rosters.ShiftRoster::stamp_slots  [2m[feature-envy][0m
+  [36mshop/shipments.py:25[0m  (file)::pack_order  [2m[feature-envy][0m
+  [36mshop/stamp_cards.py:22[0m  shop.stamp_cards.RewardDesk::redeem  [2m[feature-envy][0m
+  [36mshop/till_drawers.py:33[0m  shop.till_drawers.CashOffice::came_up_short  [2m[keyed-lookup-envy][0m
+  [36mshop/till_slips.py:25[0m  shop.till_slips.TillPricer::add_lines  [2m[feature-envy][0m
+  [36mshop/till_slips.py:30[0m  shop.till_slips.TillPricer::add_tax  [2m[feature-envy][0m
+  [36mshop/till_slips.py:35[0m  shop.till_slips.TillPricer::seal  [2m[feature-envy][0m
+  [36mshop/voucher_tree/__init__.py:67[0m  shop.voucher_tree.VoucherTreeForwarder  [2m[middle-man][0m
+  [36mshop/voucher_tree/__init__.py:126[0m  (file)::read_voucher_tree  [2m[train-wreck][0m
+  [36mshop/voucher_tree/__init__.py:157[0m  (file)::seal_voucher_tree  [2m[guard-beside-transition][0m
 
-[1;33mphp/templates[0m  (1)
+[1;33mphp/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-php-templates` before fixing[0m
+  [36mshop/order_emails.py:11[0m  shop.order_emails.ConfirmationEmail::body  [2m[assembled-template][0m
   [36mshop/packing_slips.py:8[0m  (file)::slip  [2m[assembled-template][0m
+  [36mshop/receipt_banner.py:7[0m  (file)::banner  [2m[assembled-template][0m
 
-[1;33mphp/type-honesty[0m  (48)
+[1;33mphp/type-honesty[0m  (20)
   [1;36m↳ LOAD the skill `commandments-php-type-honesty` before fixing[0m
-  [36mshop/aisle_signs.py:39[0m  shop.aisle_signs.SignPrinter::heading_of  [2m[unused-parameter][0m
-  [36mshop/badges.py:63[0m  shop.badges.RefundCommand::arguments  [2m[unused-parameter][0m
-  [36mshop/badges.py:71[0m  shop.badges.ShipCommand::arguments  [2m[unused-parameter][0m
-  [36mshop/carrier_quotes.py:12[0m  shop.carrier_quotes.CarrierQuotes::cheapest  [2m[unused-parameter][0m
-  [36mshop/carrier_quotes.py:24[0m  shop.carrier_quotes.CarrierQuotes::spoken  [2m[unused-parameter][0m
   [36mshop/carrier_quotes.py:26[0m  shop.carrier_quotes.CarrierQuotes::spoken  [2m[impossible-guard][0m
-  [36mshop/courier_picks.py:14[0m  shop.courier_picks.CourierPicker::pick  [2m[unused-parameter][0m
-  [36mshop/customers.py:6[0m  shop.customers.Newsletter::subscribe  [2m[unused-parameter][0m
-  [36mshop/customers.py:6[0m  shop.customers.Newsletter::subscribe  [2m[unused-parameter][0m
-  [36mshop/dispatch_desk.py:20[0m  shop.dispatch_desk.DispatchDesk::may_leave  [2m[unused-parameter][0m
-  [36mshop/documents.py:9[0m  shop.documents.PackingSlip::rows  [2m[unused-parameter][0m
-  [36mshop/documents.py:20[0m  shop.documents.InvoiceSheet::line_items  [2m[unused-parameter][0m
-  [36mshop/gift_wrap.py:18[0m  shop.gift_wrap.Wrapper::paper  [2m[unused-parameter][0m
-  [36mshop/kiosk_sessions.py:15[0m  shop.kiosk_sessions.KioskScreen::minutes_left  [2m[unused-parameter][0m
+  [36mshop/category_walker.py:11[0m  shop.category_walker.CategoryWalker::visit  [2m[scratch-state-restore][0m
+  [36mshop/dealer_facts.py:27[0m  shop.dealer_facts.DealerFacts::apply_plan  [2m[filled-parameter][0m
+  [36mshop/dealer_facts.py:32[0m  shop.dealer_facts.DealerFacts::apply_language  [2m[filled-parameter][0m
   [36mshop/kiosk_sessions.py:17[0m  shop.kiosk_sessions.KioskScreen::minutes_left  [2m[impossible-guard][0m
-  [36mshop/label_printing.py:10[0m  shop.label_printing.LabelPrinter::print_label  [2m[unused-parameter][0m
-  [36mshop/label_printing.py:17[0m  shop.label_printing.LabelPrinter::print_on_a_thread  [2m[unused-parameter][0m
   [36mshop/language_texts.py:18[0m  shop.language_texts.LanguageTexts::has_translation  [2m[impossible-guard][0m
-  [36mshop/layout.py:14[0m  shop.layout.DeliveryNote::rows  [2m[unused-parameter][0m
-  [36mshop/layout.py:20[0m  shop.layout.ReturnForm::line_items  [2m[unused-parameter][0m
-  [36mshop/markdown_runs.py:5[0m  shop.markdown_runs.Markdown::applies_to  [2m[unused-parameter][0m
-  [36mshop/markdown_runs.py:24[0m  shop.markdown_runs.HonestMarkdownRun::run  [2m[unused-parameter][0m
-  [36mshop/menu_boards.py:31[0m  shop.menu_boards.BoardPainter::vegan_line  [2m[unused-parameter][0m
-  [36mshop/pallet_loads.py:22[0m  shop.pallet_loads.DockPlanner::heaviest_crate  [2m[unused-parameter][0m
-  [36mshop/pallet_loads.py:29[0m  shop.pallet_loads.DockPlanner::heaviest_on  [2m[unused-parameter][0m
-  [36mshop/payment_icons.py:19[0m  shop.payment_icons.CheckoutView::shows_card_icon  [2m[unused-parameter][0m
-  [36mshop/payment_icons.py:28[0m  shop.payment_icons.CheckoutView::shows_card_icon_for  [2m[unused-parameter][0m
+  [36mshop/parcel_tree/__init__.py:70[0m  shop.parcel_tree.ParcelTreeBroken::read  [2m[refused-bequest][0m
+  [36mshop/parcel_tree/__init__.py:124[0m  shop.parcel_tree.ParcelTreeSummary::_preflight  [2m[unused-private-member][0m
   [36mshop/receipt_arguments.py:4[0m  (file)::receipt  [2m[unused-parameter][0m
-  [36mshop/report_cells.py:16[0m  shop.report_cells.ReportRenderer::render  [2m[unused-parameter][0m
-  [36mshop/report_cells.py:22[0m  shop.report_cells.ReportRenderer::export  [2m[unused-parameter][0m
+  [36mshop/receipt_printing.py:14[0m  shop.receipt_printing.ReceiptPrinter::bundle  [2m[scratch-state-restore][0m
+  [36mshop/receipt_tree/__init__.py:59[0m  shop.receipt_tree.ReceiptTreeBroken::read  [2m[refused-bequest][0m
+  [36mshop/receipt_tree/__init__.py:110[0m  shop.receipt_tree.ReceiptTreeSummary::_draft  [2m[unused-private-member][0m
   [36mshop/reservation_arguments.py:4[0m  (file)::reservation  [2m[unused-parameter][0m
   [36mshop/restock_arguments.py:4[0m  (file)::restock  [2m[unused-parameter][0m
-  [36mshop/return_desk.py:14[0m  shop.return_desk.RefundPolicy::allows  [2m[unused-parameter][0m
-  [36mshop/return_desk.py:18[0m  shop.return_desk.RefundPolicy::allows_for  [2m[unused-parameter][0m
-  [36mshop/return_notes.py:8[0m  shop.return_notes.ReturnsDesk::walk  [2m[unused-parameter][0m
-  [36mshop/return_notes.py:16[0m  shop.return_notes.ReturnsDesk::walk_freshly  [2m[unused-parameter][0m
-  [36mshop/return_notes.py:25[0m  shop.return_notes.ReturnsDesk::walk_titled  [2m[unused-parameter][0m
-  [36mshop/shift_reports.py:18[0m  shop.shift_reports.TillPrinter::closing_line  [2m[unused-parameter][0m
-  [36mshop/shift_reports.py:22[0m  shop.shift_reports.TillPrinter::closing_line_of  [2m[unused-parameter][0m
-  [36mshop/shift_rosters.py:23[0m  shop.shift_rosters.ShiftRoster::stamp_slots  [2m[unused-parameter][0m
-  [36mshop/stock_badges.py:14[0m  shop.stock_badges.StockBadge::colour  [2m[unused-parameter][0m
-  [36mshop/stock_badges.py:22[0m  shop.stock_badges.StockBadge::colour_of  [2m[unused-parameter][0m
-  [36mshop/till_slips.py:25[0m  shop.till_slips.TillPricer::add_lines  [2m[unused-parameter][0m
-  [36mshop/till_slips.py:30[0m  shop.till_slips.TillPricer::add_tax  [2m[unused-parameter][0m
-  [36mshop/till_slips.py:35[0m  shop.till_slips.TillPricer::seal  [2m[unused-parameter][0m
-  [36mshop/till_slips.py:46[0m  shop.till_slips.TillTotals::tax_on  [2m[unused-parameter][0m
-  [36mshop/tip_cents.py:6[0m  shop.tip_cents.Cents::parse  [2m[unused-parameter][0m
-  [36mshop/voucher_guards.py:16[0m  shop.voucher_guards.VoucherGuard::fails_on  [2m[unused-parameter][0m
+  [36mshop/shift_rosters.py:23[0m  shop.shift_rosters.ShiftRoster::stamp_slots  [2m[filled-parameter][0m
+  [36mshop/tax_contexts.py:17[0m  shop.tax_contexts.Pricer::price_abroad  [2m[scratch-state-restore][0m
+  [36mshop/till_slips.py:25[0m  shop.till_slips.TillPricer::add_lines  [2m[filled-parameter][0m
+  [36mshop/till_slips.py:30[0m  shop.till_slips.TillPricer::add_tax  [2m[filled-parameter][0m
+  [36mshop/voucher_tree/__init__.py:83[0m  shop.voucher_tree.VoucherTreeBroken::read  [2m[refused-bequest][0m
+  [36mshop/voucher_tree/__init__.py:135[0m  shop.voucher_tree.VoucherTreeSummary::_largest  [2m[unused-private-member][0m
 
-[1;33mphp/value-objects[0m  (7)
+[1;33mphp/value-objects[0m  (16)
   [1;36m↳ LOAD the skill `commandments-php-value-objects` before fixing[0m
-  [36mshop/customer_profiles.py:20[0m  shop.customer_profiles.Profile::with_email  [2m[hand-rolled-wither][0m
+  [36mshop/barcode_parsing.py:13[0m  shop.barcode_parsing.Scanner::parse  [2m[positional-tuple-return][0m
+  [36mshop/cart_totals.py:9[0m  (file)::parse_line  [2m[array-return-bag][0m
+  [36mshop/customer_profiles.py:21[0m  shop.customer_profiles.Profile::with_email  [2m[hand-rolled-wither][0m
   [36mshop/delivery_addresses.py:19[0m  shop.delivery_addresses.DeliveryAddress::move  [2m[mutable-value-object][0m
-  [36mshop/delivery_addresses.py:41[0m  shop.delivery_addresses.PickRound::pick  [2m[mutable-value-object][0m
-  [36mshop/delivery_addresses.py:51[0m  shop.delivery_addresses.Invoice::pdf  [2m[mutable-value-object][0m
-  [36mshop/price_rules.py:38[0m  shop.price_rules.Coupon::used  [2m[hand-rolled-wither][0m
-  [36mshop/shipment_records.py:19[0m  shop.shipment_records.Shipment::delivered  [2m[hand-rolled-wither][0m
+  [36mshop/discounts.py:6[0m  (file)::discounted  [2m[array-bag][0m
+  [36mshop/exports.py:5[0m  (file)::export_row  [2m[array-bag][0m
+  [36mshop/frozen_prices.py:12[0m  shop.frozen_prices.ShelfPrice::discount  [2m[mutable-value-object][0m
+  [36mshop/import_progress.py:12[0m  shop.import_progress.StockImport::progress  [2m[array-return-bag][0m
+  [36mshop/invoice_split.py:8[0m  (file)::split_total  [2m[positional-tuple-return][0m
+  [36mshop/price_quotes.py:8[0m  (file)::price_quote  [2m[array-return-bag][0m
+  [36mshop/price_rules.py:21[0m  shop.price_rules.PriceRule::rerated  [2m[hand-rolled-wither][0m
+  [36mshop/shipment_records.py:20[0m  shop.shipment_records.Shipment::delivered  [2m[hand-rolled-wither][0m
+  [36mshop/shipping_labels.py:9[0m  (file)::label  [2m[array-bag][0m
+  [36mshop/stock_counts.py:8[0m  (file)::count_stock  [2m[positional-tuple-return][0m
+  [36mshop/stock_report.py:7[0m  (file)::report_line  [2m[array-bag][0m
   [36mshop/wallet_balances.py:19[0m  shop.wallet_balances.Balance::deposit  [2m[mutable-value-object][0m
 
-[1;33mpython/fix-at-the-source[0m  (11)
+[1;33mpython/fix-at-the-source[0m  (9)
   [1;36m↳ LOAD the skill `commandments-python-fix-at-the-source` before fixing[0m
-  [36mshop/attachments.py:17[0m  shop.attachments.Mailer::send_with  [2m[python-mutable-default][0m
-  [36mshop/category_walker.py:27[0m  shop.category_walker.CategoryPaths::visit  [2m[python-mutable-default][0m
   [36mshop/damage_marks.py:7[0m  (file)::mark  [2m[python-mutable-default][0m
   [36mshop/damage_marks.py:14[0m  (file)::block  [2m[python-mutable-default][0m
   [36mshop/feed_polling.py:24[0m  shop.feed_polling.FeedPoller::poll  [2m[python-blocked-await][0m
   [36mshop/label_printing.py:12[0m  shop.label_printing.LabelPrinter::print_label  [2m[python-blocked-await][0m
   [36mshop/pick_tallies.py:6[0m  (file)::tally  [2m[python-mutable-default][0m
-  [36mshop/pick_tallies.py:12[0m  (file)::tally_from  [2m[python-mutable-default][0m
   [36mshop/pick_tickets.py:10[0m  (file)::open_ticket  [2m[python-frozen-default][0m
   [36mshop/return_notes.py:8[0m  shop.return_notes.ReturnsDesk::walk  [2m[python-mutable-default][0m
   [36mshop/shift_handovers.py:10[0m  (file)::hand_over  [2m[python-frozen-default][0m
+  [36mshop/stamped_receipts.py:9[0m  (file)::stamp_receipt  [2m[python-frozen-default][0m
 
-[1;33mshared/absence[0m  (11)
+[1;33mpython/type-honesty[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-python-type-honesty` before fixing[0m
+  [36mshop/parcel_kinds.py:10[0m  shop.parcel_kinds.Envelope::kind  [2m[python-constant-property][0m
+  [36mshop/report_formats.py:12[0m  shop.report_formats.SalesReport::opening_total  [2m[python-constant-property][0m
+  [36mshop/session_limits.py:11[0m  shop.session_limits.Session::lifetime_seconds  [2m[python-constant-property][0m
+
+[1;33mshared/absence[0m  (42)
   [1;36m↳ LOAD the skill `commandments-shared-absence` before fixing[0m
+  [36mshop/attachments.py:12[0m  shop.attachments.Mailer::send  [2m[coalesced-loop-subject][0m
+  [36mshop/basket_codes.py:8[0m  (file)::has_coupon  [2m[cancelled-coalesce][0m
+  [36mshop/bay_roster.py:23[0m  shop.bay_roster.BayRoster::numbered  [2m[de-nulled-finder][0m
+  [36mshop/billing_probe.py:13[0m  shop.billing_probe.BillingProbe  [2m[capability-probe-hub][0m
   [36mshop/carrier_rates.py:14[0m  shop.carrier_rates.RateCache::rates  [2m[raw-decoded-array-return][0m
+  [36mshop/categories.py:10[0m  (file)::descendants  [2m[coalesced-loop-subject][0m
+  [36mshop/charges.py:6[0m  (file)::charge  [2m[manufactured-fake-fill][0m
+  [36mshop/closing.py:11[0m  (file)::close_till  [2m[nullable-callback][0m
+  [36mshop/couriers.py:10[0m  shop.couriers.Courier::book  [2m[blank-string-default][0m
+  [36mshop/crate_registry.py:33[0m  shop.crate_registry.CrateRegistry::find  [2m[de-nulled-finder][0m
+  [36mshop/crate_registry.py:35[0m  shop.crate_registry.CrateRegistry::find  [2m[nullable-registry-lookup][0m
+  [36mshop/dispatch_probe.py:17[0m  shop.dispatch_probe.DispatchProbe  [2m[capability-probe-hub][0m
+  [36mshop/exports.py:7[0m  (file)::export_row  [2m[manufactured-fake-fill][0m
   [36mshop/gift_notes.py:10[0m  shop.gift_notes.GiftWrap  [2m[blank-string-default][0m
   [36mshop/headlines.py:6[0m  (file)::headline  [2m[blank-string-default][0m
+  [36mshop/imports_progress.py:11[0m  shop.imports_progress.StockImport::run  [2m[nullable-callback][0m
+  [36mshop/inventory_probe.py:18[0m  shop.inventory_probe.InventoryProbe  [2m[capability-probe-hub][0m
+  [36mshop/mailer_options.py:8[0m  (file)::notify  [2m[conditional-array-spread][0m
+  [36mshop/markdown_runs.py:19[0m  shop.markdown_runs.MarkdownRun::reduced  [2m[masked-invariant][0m
+  [36mshop/notes.py:12[0m  shop.notes.Order::has_note  [2m[cancelled-coalesce][0m
   [36mshop/order_cards.py:14[0m  (file)::card_for  [2m[placeholder-filled-data][0m
+  [36mshop/owner_contracts.py:58[0m  shop.owner_contracts.ReceiptHistory::tag  [2m[nullable-registry-lookup][0m
+  [36mshop/payload_fields.py:19[0m  (file)::note_for  [2m[manufactured-fake-fill][0m
+  [36mshop/picking_waves.py:18[0m  shop.picking_waves.PickingWave::slip  [2m[masked-invariant][0m
+  [36mshop/price_tags.py:10[0m  shop.price_tags.PriceTag  [2m[phantom-nullable][0m
   [36mshop/printer_commands.py:12[0m  shop.printer_commands.LabelJob::command  [2m[conditional-array-spread][0m
+  [36mshop/printer_pool.py:24[0m  shop.printer_pool.PrinterRegistry::get  [2m[nullable-registry-lookup][0m
   [36mshop/product_teasers.py:16[0m  (file)::teaser  [2m[placeholder-filled-data][0m
-  [36mshop/product_teasers.py:33[0m  (file)::fresh_teaser  [2m[placeholder-filled-data][0m
+  [36mshop/quantities.py:14[0m  (file)::stock_rows  [2m[cancelled-coalesce][0m
+  [36mshop/queue_tickets.py:8[0m  shop.queue_tickets.QueueTicket::__init__  [2m[phantom-nullable][0m
+  [36mshop/receipts.py:15[0m  (file)::send_receipt  [2m[manufactured-fake-fill][0m
+  [36mshop/retries.py:7[0m  (file)::with_retries  [2m[nullable-callback][0m
+  [36mshop/run_ledger.py:29[0m  shop.run_ledger.RunLedger::referenced  [2m[de-nulled-finder][0m
+  [36mshop/scale_readers.py:11[0m  shop.scale_readers.ScaleReader  [2m[phantom-nullable][0m
+  [36mshop/shipments.py:10[0m  (file)::pack  [2m[coalesced-loop-subject][0m
   [36mshop/shipping_notices.py:20[0m  shop.shipping_notices.Notifier::notify  [2m[placeholder-filled-data][0m
   [36mshop/store_settings.py:15[0m  shop.store_settings.SettingsFile::read  [2m[raw-decoded-array-return][0m
   [36mshop/supplier_feed.py:9[0m  (file)::fetch_prices  [2m[raw-decoded-array-return][0m
+  [36mshop/tax_bands.py:17[0m  shop.tax_bands.TaxTable::band_for  [2m[nullable-registry-lookup][0m
+  [36mshop/till_sessions.py:17[0m  shop.till_sessions.TillSession::receipt_footer  [2m[masked-invariant][0m
+  [36mshop/voucher_book.py:18[0m  shop.voucher_book.VoucherBook::voucher  [2m[nullable-registry-lookup][0m
   [36mshop/webhook_payloads.py:8[0m  (file)::payload  [2m[conditional-array-spread][0m
 
-[1;33mshared/arguments[0m  (10)
+[1;33mshared/arguments[0m  (7)
   [1;36m↳ LOAD the skill `commandments-shared-arguments` before fixing[0m
   [36mshop/carrier_labels.py:25[0m  (file)::label_size  [2m[match-default-returns-null][0m
-  [36mshop/contacts.py:14[0m  shop.contacts.Contact::of  [2m[data-clump][0m
   [36mshop/customers.py:6[0m  shop.customers.Newsletter::subscribe  [2m[data-clump][0m
   [36mshop/customers.py:12[0m  shop.customers.Loyalty::enrol  [2m[data-clump][0m
   [36mshop/delivery.py:8[0m  (file)::book_delivery  [2m[data-clump][0m
+  [36mshop/payment_icons.py:26[0m  shop.payment_icons.CheckoutView::shows_card_icon  [2m[match-default-returns-null][0m
   [36mshop/quotes.py:5[0m  (file)::quote  [2m[data-clump][0m
-  [36mshop/stock_alerts.py:56[0m  (file)::escalation  [2m[match-default-returns-null][0m
-  [36mshop/stores.py:6[0m  shop.stores.Store::ship_to  [2m[data-clump][0m
-  [36mshop/stores.py:12[0m  shop.stores.WebStore::ship_to  [2m[data-clump][0m
-  [36mshop/stores.py:18[0m  shop.stores.PhoneStore::ship_to  [2m[data-clump][0m
+  [36mshop/stock_alerts.py:25[0m  (file)::channel  [2m[match-default-returns-null][0m
 
-[1;33mshared/dependencies[0m  (1)
+[1;33mshared/dependencies[0m  (11)
   [1;36m↳ LOAD the skill `commandments-shared-dependencies` before fixing[0m
+  [36mshop/bay_sheets.py:8[0m  shop.bay_sheets.BaySheets::__init__  [2m[concrete-cross-module-dependency][0m
   [36mshop/couriers/dispatch.py:5[0m  (file)  [2m[namespace-cycle][0m
+  [36mshop/crate_labels.py:9[0m  shop.crate_labels.CrateLabels::__init__  [2m[concrete-cross-module-dependency][0m
+  [36mshop/parcel_tree/__init__.py:7[0m  shop.parcel_tree.ParcelTreePort  [2m[lone-implementer-interface][0m
+  [36mshop/parcel_tree/__init__.py:29[0m  shop.parcel_tree.ParcelTreeOwner::__init__  [2m[concrete-cross-module-dependency][0m
+  [36mshop/receipt_tree/__init__.py:7[0m  shop.receipt_tree.ReceiptTreePort  [2m[lone-implementer-interface][0m
+  [36mshop/receipt_tree/__init__.py:21[0m  shop.receipt_tree.ReceiptTreeOwner::__init__  [2m[concrete-cross-module-dependency][0m
+  [36mshop/run_reports.py:7[0m  shop.run_reports.RunReports::__init__  [2m[concrete-cross-module-dependency][0m
+  [36mshop/slot_notices.py:8[0m  shop.slot_notices.SlotNotices::__init__  [2m[concrete-cross-module-dependency][0m
+  [36mshop/voucher_tree/__init__.py:7[0m  shop.voucher_tree.VoucherTreePort  [2m[lone-implementer-interface][0m
+  [36mshop/voucher_tree/__init__.py:40[0m  shop.voucher_tree.VoucherTreeOwner::__init__  [2m[concrete-cross-module-dependency][0m
 
-[1;33mshared/documentation[0m  (11)
+[1;33mshared/documentation[0m  (14)
   [1;36m↳ LOAD the skill `commandments-shared-documentation` before fixing[0m
   [36mshop/currency_rounding.py:5[0m  shop.currency_rounding.CurrencyRounder  [2m[negative-space-comment][0m
   [36mshop/delivery_windows.py:7[0m  shop.delivery_windows.DeliveryWindow  [2m[bloated-docblock][0m
@@ -149,29 +264,28 @@ exit: 1
   [36mshop/feature_flags.py:12[0m  shop.feature_flags.FeatureFlags::enable  [2m[negative-space-comment][0m
   [36mshop/gift_messages.py:5[0m  shop.gift_messages.GiftMessage  [2m[archaeology-comment][0m
   [36mshop/invoice_numbers.py:7[0m  (file)::next_number  [2m[archaeology-comment][0m
+  [36mshop/label_queue.py:14[0m  shop.label_queue.LabelQueue::pop  [2m[restated-comment][0m
+  [36mshop/order_archive.py:7[0m  (file)::archive  [2m[restated-comment][0m
   [36mshop/refund_policies.py:7[0m  shop.refund_policies.RefundPolicy.Rule  [2m[bloated-docblock][0m
   [36mshop/refund_policies.py:20[0m  shop.refund_policies.RefundPolicy.Window  [2m[bloated-docblock][0m
   [36mshop/reorder_alerts.py:5[0m  shop.reorder_alerts.ReorderAlert  [2m[bloated-docblock][0m
   [36mshop/retry_backoff.py:7[0m  (file)::backoff  [2m[negative-space-comment][0m
+  [36mshop/tax_totals.py:12[0m  shop.tax_totals.TaxTotal::amount  [2m[restated-comment][0m
   [36mshop/wishlists.py:12[0m  shop.wishlists.Wishlist::add  [2m[archaeology-comment][0m
 
-[1;33mshared/duplication[0m  (45)
+[1;33mshared/duplication[0m  (47)
   [1;36m↳ LOAD the skill `commandments-shared-duplication` before fixing[0m
   [36mshop/alerts.py:5[0m  (file)::register  [2m[near-duplicate-function][0m
-  [36mshop/badges.py:8[0m  (file)::status_colour  [2m[near-duplicate-function][0m
-  [36mshop/badges.py:19[0m  (file)::status_icon  [2m[near-duplicate-function][0m
-  [36mshop/badges.py:39[0m  shop.badges.Badge::render  [2m[near-duplicate-function][0m
-  [36mshop/badges.py:55[0m  shop.badges.Ribbon::render  [2m[near-duplicate-function][0m
-  [36mshop/badges.py:63[0m  shop.badges.RefundCommand::arguments  [2m[near-duplicate-function][0m
-  [36mshop/badges.py:71[0m  shop.badges.ShipCommand::arguments  [2m[near-duplicate-function][0m
-  [36mshop/carrier_labels.py:30[0m  (file)::label_size_for  [2m[near-duplicate-function][0m
   [36mshop/cli.py:11[0m  (file)::load_config  [2m[duplicate-function][0m
   [36mshop/couponsource_catalog.py:30[0m  (file)::all_types  [2m[list-mirrors-folder][0m
   [36mshop/courier_pickups.py:8[0m  (file)::load  [2m[repeated-guard][0m
+  [36mshop/csv_tokens.py:28[0m  shop.csv_tokens.PriceListReader::field_end  [2m[unnamed-vocabulary-literal][0m
   [36mshop/digests.py:6[0m  (file)::register  [2m[near-duplicate-function][0m
+  [36mshop/dispatch_desk.py:18[0m  shop.dispatch_desk.DispatchDesk::outgoing  [2m[repeated-guard][0m
   [36mshop/dispatch_desk.py:22[0m  shop.dispatch_desk.DispatchDesk::may_leave  [2m[repeated-guard][0m
   [36mshop/documents.py:9[0m  shop.documents.PackingSlip::rows  [2m[duplicate-function][0m
   [36mshop/documents.py:20[0m  shop.documents.InvoiceSheet::line_items  [2m[duplicate-function][0m
+  [36mshop/drop_slots.py:27[0m  (file)::evening_drop  [2m[unnamed-vocabulary-literal][0m
   [36mshop/encoders.py:11[0m  (file)::encode_text  [2m[near-duplicate-function][0m
   [36mshop/encoders.py:20[0m  (file)::encode_html  [2m[near-duplicate-function][0m
   [36mshop/events.py:12[0m  shop.events.ReceiptMailer::on_event  [2m[duplicate-function][0m
@@ -184,48 +298,69 @@ exit: 1
   [36mshop/label_archive.py:9[0m  (file)::archive_label  [2m[repeated-folder-path][0m
   [36mshop/label_purge.py:10[0m  (file)::purge_labels  [2m[repeated-folder-path][0m
   [36mshop/label_reprint.py:7[0m  (file)::reprint_labels  [2m[repeated-folder-path][0m
+  [36mshop/label_sizes.py:21[0m  (file)::promo_label  [2m[unnamed-vocabulary-literal][0m
+  [36mshop/ledger_dump.py:10[0m  (file)::dump  [2m[converted-argument][0m
+  [36mshop/ledger_posting.py:12[0m  shop.ledger_posting.Posting::post  [2m[converted-argument][0m
+  [36mshop/loyalty_points.py:15[0m  (file)::redeem  [2m[repeated-guard][0m
+  [36mshop/loyalty_points.py:23[0m  (file)::preview  [2m[repeated-guard][0m
+  [36mshop/parcel_weighing.py:17[0m  (file)::labels  [2m[converted-argument][0m
+  [36mshop/parcel_weighing.py:22[0m  (file)::heaviest_label  [2m[converted-argument][0m
   [36mshop/parcelnotice_catalog.py:30[0m  (file)::all_types  [2m[list-mirrors-folder][0m
-  [36mshop/payment_events.py:24[0m  (file)::challenge_url  [2m[repeated-guard][0m
-  [36mshop/payment_events.py:31[0m  (file)::notify_customer  [2m[repeated-guard][0m
+  [36mshop/payment_events.py:24[0m  (file)::challenge_url  [2m[repeated-type-guard][0m
+  [36mshop/payment_events.py:31[0m  (file)::notify_customer  [2m[repeated-type-guard][0m
   [36mshop/photo_archive.py:9[0m  (file)::archive_photos  [2m[divergent-twin][0m
   [36mshop/photo_archive.py:20[0m  (file)::archive_thumbnails  [2m[divergent-twin][0m
   [36mshop/price_export.py:9[0m  (file)::export_prices  [2m[divergent-twin][0m
   [36mshop/receipt_signing.py:10[0m  (file)::signature_matches  [2m[divergent-twin][0m
   [36mshop/receipt_signing.py:18[0m  (file)::refund_signature_matches  [2m[divergent-twin][0m
-  [36mshop/receipt_tree/__init__.py:128[0m  (file)::seal_receipt_tree  [2m[near-duplicate-function][0m
-  [36mshop/refund_events.py:7[0m  (file)::refund_cents  [2m[repeated-guard][0m
+  [36mshop/receipt_tree/__init__.py:129[0m  (file)::seal_receipt_tree  [2m[near-duplicate-function][0m
+  [36mshop/refund_events.py:7[0m  (file)::refund_cents  [2m[repeated-type-guard][0m
+  [36mshop/report_cells.py:18[0m  shop.report_cells.ReportRenderer::render  [2m[repeated-type-guard][0m
+  [36mshop/report_cells.py:24[0m  shop.report_cells.ReportRenderer::export  [2m[repeated-type-guard][0m
   [36mshop/settings.py:12[0m  (file)::read_settings  [2m[duplicate-function][0m
-  [36mshop/shelf_labels.py:12[0m  shop.shelf_labels.ShelfLabel::reloads  [2m[duplicate-function][0m
-  [36mshop/shelf_labels.py:24[0m  shop.shelf_labels.AisleLabel::reload  [2m[duplicate-function][0m
-  [36mshop/stock_alerts.py:30[0m  (file)::channel_for  [2m[near-duplicate-function][0m
   [36mshop/stock_export.py:9[0m  (file)::export_stock  [2m[divergent-twin][0m
-  [36mshop/streams.py:15[0m  shop.streams.FeedStream::chunks  [2m[duplicate-function][0m
-  [36mshop/streams.py:30[0m  shop.streams.AsyncFeedStream::chunks  [2m[duplicate-function][0m
-  [36mshop/voucher_tree/__init__.py:154[0m  (file)::seal_voucher_tree  [2m[near-duplicate-function][0m
+  [36mshop/tip_cents.py:24[0m  (file)::ring_up  [2m[converted-argument][0m
+  [36mshop/tip_cents.py:30[0m  (file)::ring_up_all  [2m[converted-argument][0m
+  [36mshop/voucher_tree/__init__.py:155[0m  (file)::seal_voucher_tree  [2m[near-duplicate-function][0m
 
-[1;33mshared/enums[0m  (3)
+[1;33mshared/enums[0m  (19)
   [1;36m↳ LOAD the skill `commandments-shared-enums` before fixing[0m
+  [36mshop/carrier_codes.py:7[0m  shop.carrier_codes.Carrier  [2m[const-class-enum][0m
+  [36mshop/carriers.py:10[0m  (file)::carrier_for  [2m[string-match-mirrors-enum][0m
   [36mshop/courier_surcharges.py:19[0m  (file)  [2m[side-table-trait][0m
+  [36mshop/courier_zones.py:18[0m  (file)::next_day_possible  [2m[in-array-mirrors-enum][0m
+  [36mshop/delivery_slots.py:17[0m  (file)::slot_fee  [2m[string-match-mirrors-enum][0m
+  [36mshop/discount_rules.py:24[0m  shop.discount_rules.Checkout::apply  [2m[type-switch][0m
+  [36mshop/dunning.py:18[0m  (file)::needs_reminder  [2m[enum-case-or-chain][0m
   [36mshop/label_stock.py:19[0m  (file)  [2m[side-table-trait][0m
+  [36mshop/loyalty_tiers.py:18[0m  (file)::points_for  [2m[in-array-mirrors-enum][0m
+  [36mshop/order_status.py:7[0m  shop.order_status.OrderStatus  [2m[const-class-enum][0m
+  [36mshop/parcel_returns.py:22[0m  shop.parcel_returns.ReturnsCounter::open_return  [2m[enum-case-or-chain][0m
+  [36mshop/reorder_levels.py:18[0m  (file)::reorder  [2m[enum-case-or-chain][0m
+  [36mshop/return_reasons.py:22[0m  shop.return_reasons.ReturnForm::is_shipping_refunded  [2m[string-match-mirrors-enum][0m
+  [36mshop/shipping_rates.py:25[0m  (file)::quote  [2m[type-switch][0m
+  [36mshop/stock_movements.py:12[0m  shop.stock_movements.Movement::delta  [2m[type-switch][0m
   [36mshop/tag_speech.py:22[0m  (file)  [2m[side-table-trait][0m
+  [36mshop/ticket_triage.py:22[0m  shop.ticket_triage.Triage::route  [2m[in-array-mirrors-enum][0m
+  [36mshop/vat_bands.py:7[0m  shop.vat_bands.VatBand  [2m[const-class-enum][0m
+  [36mshop/webhook_events.py:13[0m  (file)::handle  [2m[string-match-mirrors-enum][0m
 
-[1;33mshared/exceptions[0m  (27)
+[1;33mshared/exceptions[0m  (26)
   [1;36m↳ LOAD the skill `commandments-shared-exceptions` before fixing[0m
   [36mshop/badges.py:42[0m  shop.badges.Badge::render  [2m[message-at-throw][0m
   [36mshop/badges.py:58[0m  shop.badges.Ribbon::render  [2m[message-at-throw][0m
   [36mshop/catalog_file.py:27[0m  (file)::load_catalog  [2m[swallow-catch][0m
-  [36mshop/cleanup.py:14[0m  (file)::remove_upload  [2m[swallow-catch][0m
   [36mshop/count_sheets.py:14[0m  shop.count_sheets.CountSheet::post  [2m[rethrown-unchanged][0m
   [36mshop/csv_tokens.py:20[0m  shop.csv_tokens.PriceListReader::expect  [2m[message-at-throw][0m
   [36mshop/feed_reader.py:18[0m  (file)::read_feed  [2m[wrapping-without-cause][0m
   [36mshop/label_queue.py:14[0m  shop.label_queue.LabelQueue::pop  [2m[message-at-throw][0m
-  [36mshop/language_texts.py:30[0m  shop.language_texts.LanguageTexts::text_in  [2m[message-at-throw][0m
-  [36mshop/parcel_refunds.py:30[0m  (file)::refund  [2m[message-at-throw][0m
+  [36mshop/language_texts.py:31[0m  shop.language_texts.LanguageTexts::text_in  [2m[message-at-throw][0m
+  [36mshop/parcel_refunds.py:31[0m  (file)::refund  [2m[message-at-throw][0m
   [36mshop/parcel_tree/__init__.py:149[0m  (file)::seal_parcel_tree  [2m[message-at-throw][0m
   [36mshop/plugins.py:10[0m  (file)::run_plugins  [2m[swallow-catch][0m
   [36mshop/price_lists.py:23[0m  shop.price_lists.PriceList::price  [2m[wrapping-without-cause][0m
   [36mshop/quantity_parsing.py:16[0m  (file)::quantity  [2m[wrapping-without-cause][0m
-  [36mshop/receipt_tree/__init__.py:132[0m  (file)::seal_receipt_tree  [2m[message-at-throw][0m
+  [36mshop/receipt_tree/__init__.py:133[0m  (file)::seal_receipt_tree  [2m[message-at-throw][0m
   [36mshop/sessions.py:17[0m  (file)::basket  [2m[generic-exception][0m
   [36mshop/sessions.py:17[0m  (file)::basket  [2m[message-at-throw][0m
   [36mshop/shelf_imports.py:10[0m  (file)::import_plan  [2m[rethrown-unchanged][0m
@@ -234,12 +369,12 @@ exit: 1
   [36mshop/streams_io.py:13[0m  shop.streams_io.LineStream::read_line  [2m[message-at-throw][0m
   [36mshop/thumbnails.py:8[0m  (file)::make_thumbnail  [2m[swallow-catch][0m
   [36mshop/validation.py:9[0m  (file)::set_quantity  [2m[message-at-throw][0m
-  [36mshop/validation.py:12[0m  (file)::set_quantity  [2m[message-at-throw][0m
-  [36mshop/voucher_tree/__init__.py:158[0m  (file)::seal_voucher_tree  [2m[message-at-throw][0m
+  [36mshop/validation.py:13[0m  (file)::set_quantity  [2m[message-at-throw][0m
+  [36mshop/voucher_tree/__init__.py:159[0m  (file)::seal_voucher_tree  [2m[message-at-throw][0m
   [36mshop/warehouse_api.py:11[0m  (file)::reserve  [2m[generic-exception][0m
   [36mshop/warehouse_api.py:11[0m  (file)::reserve  [2m[message-at-throw][0m
 
-[1;33mshared/flow[0m  (37)
+[1;33mshared/flow[0m  (41)
   [1;36m↳ LOAD the skill `commandments-shared-flow` before fixing[0m
   [36mshop/aisle_marks.py:10[0m  (file)::unblock  [2m[collection-mutated-while-iterated][0m
   [36mshop/aisle_marks.py:24[0m  (file)::restock  [2m[collection-mutated-while-iterated][0m
@@ -247,31 +382,35 @@ exit: 1
   [36mshop/backups.py:9[0m  (file)::back_up  [2m[ternary-statement][0m
   [36mshop/bay_clearance.py:15[0m  shop.bay_clearance.BayClearance::walk  [2m[unnamed-condition][0m
   [36mshop/bay_loading.py:34[0m  shop.bay_loading.BayDispatcher::dispatch  [2m[unnamed-condition][0m
-  [36mshop/bay_windows.py:24[0m  shop.bay_windows.BayWindow::load  [2m[unnamed-condition][0m
   [36mshop/builds.py:7[0m  (file)::forget  [2m[short-circuit-statement][0m
   [36mshop/caches.py:11[0m  shop.caches.Cache::ensure  [2m[short-circuit-statement][0m
-  [36mshop/carriers.py:9[0m  (file)::carrier_for  [2m[subject-ladder][0m
+  [36mshop/carriers.py:10[0m  (file)::carrier_for  [2m[subject-ladder][0m
   [36mshop/coupons.py:11[0m  (file)::usable_coupon  [2m[deep-nesting][0m
+  [36mshop/couriers.py:13[0m  shop.couriers.Courier::book  [2m[reassigned-parameter][0m
   [36mshop/freight.py:9[0m  (file)::quote  [2m[nested-ternary][0m
   [36mshop/invoice_render.py:13[0m  shop.invoice_render.InvoiceView::render  [2m[redundant-else][0m
   [36mshop/invoicing.py:9[0m  (file)::invoice_all  [2m[loop-inverted-guard][0m
   [36mshop/labels.py:8[0m  (file)::print_labels  [2m[loop-inverted-guard][0m
-  [36mshop/member_points.py:12[0m  (file)::redeem  [2m[duplicated-branch-tail][0m
-  [36mshop/member_points.py:28[0m  (file)::expire  [2m[unreachable-statement][0m
-  [36mshop/parcel_postage.py:13[0m  (file)::label  [2m[duplicated-branch-tail][0m
-  [36mshop/parcel_postage.py:31[0m  (file)::sorted_count  [2m[unreachable-statement][0m
-  [36mshop/parcel_refunds.py:19[0m  (file)::restock  [2m[duplicated-branch-tail][0m
-  [36mshop/parcel_refunds.py:32[0m  (file)::refund  [2m[unreachable-statement][0m
+  [36mshop/member_points.py:13[0m  (file)::redeem  [2m[duplicated-branch-tail][0m
+  [36mshop/member_points.py:30[0m  (file)::expire  [2m[unreachable-statement][0m
+  [36mshop/member_points.py:55[0m  (file)::points_for  [2m[reassigned-parameter][0m
+  [36mshop/packing.py:10[0m  (file)::pack  [2m[deep-nesting][0m
+  [36mshop/packing.py:16[0m  (file)::pack  [2m[reassigned-parameter][0m
+  [36mshop/parcel_postage.py:14[0m  (file)::label  [2m[duplicated-branch-tail][0m
+  [36mshop/parcel_postage.py:32[0m  (file)::sorted_count  [2m[unreachable-statement][0m
+  [36mshop/parcel_postage.py:50[0m  (file)::postage_cents  [2m[reassigned-parameter][0m
+  [36mshop/parcel_refunds.py:20[0m  (file)::restock  [2m[duplicated-branch-tail][0m
+  [36mshop/parcel_refunds.py:33[0m  (file)::refund  [2m[unreachable-statement][0m
+  [36mshop/parcel_refunds.py:50[0m  (file)::refund_note  [2m[reassigned-parameter][0m
   [36mshop/pending_orders.py:14[0m  shop.pending_orders.PendingOrders::release  [2m[collection-mutated-while-iterated][0m
   [36mshop/picking.py:10[0m  (file)::pick_list  [2m[redundant-else][0m
-  [36mshop/pricing.py:14[0m  (file)::price  [2m[redundant-else][0m
+  [36mshop/pricing.py:15[0m  (file)::price  [2m[redundant-else][0m
   [36mshop/refunds.py:11[0m  (file)::refund  [2m[redundant-else][0m
   [36mshop/reminders.py:7[0m  (file)::send_reminders  [2m[loop-inverted-guard][0m
   [36mshop/reservation_sweep.py:11[0m  (file)::sweep  [2m[collection-mutated-while-iterated][0m
   [36mshop/restock.py:11[0m  (file)::rebalance  [2m[deep-nesting][0m
   [36mshop/restock.py:13[0m  (file)::rebalance  [2m[loop-inverted-guard][0m
   [36mshop/returns_desk.py:6[0m  (file)::process  [2m[subject-ladder][0m
-  [36mshop/search.py:28[0m  (file)::note  [2m[duplicated-branch-tail][0m
   [36mshop/shift_ticks.py:21[0m  shop.shift_ticks.TickAnnouncer::on_ticked  [2m[unnamed-condition][0m
   [36mshop/startup.py:13[0m  (file)  [2m[short-circuit-statement][0m
   [36mshop/status_colours.py:7[0m  (file)::badge  [2m[nested-ternary][0m
@@ -282,9 +421,9 @@ exit: 1
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m227 sins[0m across 17 skills.
+[1m345 sins[0m across 24 skills.
 
 --- stderr
-· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (793 rule answers from memory, 40863 asked): 227 sins
+· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (676 rule answers from memory, 41308 asked): 345 sins
 
 --- files

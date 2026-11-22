@@ -55,6 +55,99 @@
           "Spatie\\LaravelData\\Optional"
         ]
       ]
+    },
+    "threeWay": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "spatie.optional",
+          "$s.declaredType"
+        ],
+        [
+          "some",
+          "$s.declaredType.members",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.form",
+              "keyword"
+            ],
+            [
+              "=",
+              "$m.name",
+              "null"
+            ]
+          ]
+        ]
+      ]
+    },
+    "appliedPerField": {
+      "args": [
+        "t",
+        "slots"
+      ],
+      "expr": [
+        "some",
+        "$slots",
+        "s",
+        [
+          "some",
+          [
+            "referrers",
+            [
+              "case",
+              "$s.kind",
+              {
+                "parameter": "$s.binding",
+                "field": [
+                  "at",
+                  [
+                    "map",
+                    "$s.declarators",
+                    "d",
+                    "$d.binding"
+                  ],
+                  0
+                ]
+              },
+              null
+            ]
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$r.parent.parent.kind",
+              "type-test"
+            ],
+            [
+              "=",
+              "$r.parent.parent.testedType.refers",
+              "Spatie\\LaravelData\\Optional"
+            ],
+            [
+              "!=",
+              [
+                "enclosing",
+                "$r",
+                "type"
+              ],
+              "$t"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -100,11 +193,19 @@
       [
         "not",
         [
-          "and",
+          "some",
+          "$slots",
+          "s",
           [
-            "spatie.typescript",
-            "$t"
-          ],
+            "threeWay",
+            "$s"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
           [
             "every",
             "$slots",
@@ -112,6 +213,18 @@
             [
               "optionalDefault",
               "$s"
+            ]
+          ],
+          [
+            "or",
+            [
+              "spatie.typescript",
+              "$t"
+            ],
+            [
+              "appliedPerField",
+              "$t",
+              "$slots"
             ]
           ]
         ]

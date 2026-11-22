@@ -177,6 +177,31 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "function"
+            ]
+          ],
+          "f",
+          [
+            "some",
+            "$f.obligations",
+            "o",
+            [
+              "=",
+              "$o.origin",
+              "project"
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$c"

@@ -196,9 +196,75 @@
           "unionAll",
           "route-name-calls",
           "route-groups",
-          "route-resources"
+          "route-resources",
+          "route-array-names"
         ],
         "as": "r"
+      },
+      "route-array-names": {
+        "from": "call",
+        "as": "c",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "=",
+                "$c.callee.kind",
+                "access"
+              ],
+              [
+                "in",
+                "$c.callee.member.name",
+                "get",
+                "post",
+                "put",
+                "patch",
+                "delete",
+                "any",
+                "options",
+                "match",
+                "head"
+              ],
+              [
+                "laravel.routed",
+                "$c"
+              ],
+              [
+                "nonempty",
+                [
+                  "laravel.keyedLiteral",
+                  "$c",
+                  "as"
+                ]
+              ]
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$c",
+              "prefix": [
+                "laravel.prefixOf",
+                "$c"
+              ],
+              "first": [
+                "laravel.keyedLiteral",
+                "$c",
+                "as"
+              ]
+            }
+          },
+          {
+            "project": {
+              "kind": "exact",
+              "name": [
+                "concat",
+                "$prefix",
+                "$first"
+              ]
+            }
+          }
+        ]
       }
     },
     "select": "call",
@@ -312,6 +378,22 @@
                 ]
               ]
             ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "identities",
+            "package-route-name"
+          ],
+          "i",
+          [
+            "startsWith",
+            "$name",
+            "$i"
           ]
         ]
       ]

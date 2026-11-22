@@ -1,18 +1,23 @@
 exit: 1
 --- stdout
 
-[1;33mcsharp/absence[0m  (10)
+[1;33mcsharp/absence[0m  (6)
   [1;36m↳ LOAD the skill `commandments-csharp-absence` before fixing[0m
   [36mShop/Notifications/Mailing.cs:10[0m  global::Shop.Notifications.Mailing::Emails  [2m[csharp-null-forgiven][0m
   [36mShop/Orders/Customers.cs:14[0m  global::Shop.Orders.Customers::Named  [2m[csharp-null-forgiven][0m
   [36mShop/Pricing/CouponBooks.cs:19[0m  global::Shop.Pricing.CouponCounter::PercentFor  [2m[csharp-null-forgiven][0m
   [36mShop/Pricing/CouponBooks.cs:22[0m  global::Shop.Pricing.CouponCounter::Describe  [2m[csharp-null-forgiven][0m
-  [36mShop/Pricing/CouponBooks.cs:42[0m  global::Shop.Pricing.CouponIndexes::Declare  [2m[csharp-null-forgiven][0m
-  [36mShop/Shipping/Tracking.cs:10[0m  global::Shop.Shipping.Tracking  [2m[csharp-null-forgiven][0m
   [36mShop/Shipping/Tracking.cs:15[0m  global::Shop.Shipping.Tracking::Where  [2m[csharp-null-forgiven][0m
-  [36mShop/Tagging/TagStore.cs:20[0m  global::Shop.Tagging.TagReader::Of  [2m[csharp-null-forgiven][0m
-  [36mShop/Tagging/TagStore.cs:31[0m  global::Shop.Tagging.TagReader::Missed  [2m[csharp-null-forgiven][0m
-  [36mShop/Tagging/TagStore.cs:38[0m  global::Shop.Tagging.TagReader::Last  [2m[csharp-null-forgiven][0m
+  [36mShop/Tagging/TagStore.cs:37[0m  global::Shop.Tagging.TagReader::Last  [2m[csharp-null-forgiven][0m
+
+[1;33mcsharp/fix-at-the-source[0m  (6)
+  [1;36m↳ LOAD the skill `commandments-csharp-fix-at-the-source` before fixing[0m
+  [36mShop/Feeds/CourierFeeds.cs:15[0m  global::Shop.Feeds.CourierBooker::Book  [2m[csharp-blocked-await][0m
+  [36mShop/Feeds/CourierFeeds.cs:24[0m  global::Shop.Feeds.CourierBooker::Book  [2m[csharp-blocked-await][0m
+  [36mShop/Feeds/PriceFeeds.cs:11[0m  global::Shop.Feeds.PriceFeedReader::Read  [2m[csharp-blocked-await][0m
+  [36mShop/Feeds/StockFeeds.cs:10[0m  global::Shop.Feeds.StockFeedWriter::Save  [2m[csharp-blocked-await][0m
+  [36mShop/Feeds/StockFeeds.cs:13[0m  global::Shop.Feeds.StockFeedWriter::Save  [2m[csharp-blocked-await][0m
+  [36mShop/Shipping/LabelConverter.cs:26[0m  global::Shop.Shipping.LabelPrinter::Print  [2m[csharp-blocked-await][0m
 
 [1;33mcsharp/flow[0m  (4)
   [1;36m↳ LOAD the skill `commandments-csharp-flow` before fixing[0m
@@ -21,111 +26,150 @@ exit: 1
   [36mShop/Orders/CouponRedeem.cs:11[0m  global::Shop.Orders.CouponRedeem::Percent  [2m[csharp-inline-throw][0m
   [36mShop/Shipping/CarrierPick.cs:11[0m  global::Shop.Shipping.CarrierPick::Book  [2m[csharp-inline-throw][0m
 
-[1;33mphp/class-layout[0m  (25)
+[1;33mphp/behaviour-per-method[0m  (2)
+  [1;36m↳ LOAD the skill `commandments-php-behaviour-per-method` before fixing[0m
+  [36mShop/Documents/Summaries.cs:7[0m  global::Shop.Documents.Summaries::Line  [2m[flag-argument][0m
+  [36mShop/Shipping/Manifests.cs:7[0m  global::Shop.Shipping.ManifestCheck::Covers  [2m[flag-argument][0m
+
+[1;33mphp/class-layout[0m  (7)
   [1;36m↳ LOAD the skill `commandments-php-class-layout` before fixing[0m
-  [36mShop/Boards/DamageReports.cs:24[0m  global::Shop.Boards.DamageReport  [2m[member-after-method][0m
-  [36mShop/Boards/DamageReports.cs:34[0m  global::Shop.Boards.DamageReport  [2m[member-after-method][0m
-  [36mShop/Boards/NoteBoards.cs:13[0m  global::Shop.Boards.NoteBoard  [2m[member-after-method][0m
-  [36mShop/Boards/NoteBoards.cs:23[0m  global::Shop.Boards.PinnedBoard  [2m[member-after-method][0m
-  [36mShop/Loyalty/Members.cs:11[0m  global::Shop.Loyalty.Member  [2m[member-after-method][0m
-  [36mShop/Notifications/LastSent.cs:9[0m  global::Shop.Notifications.ReceiptMailer  [2m[member-out-of-order][0m
   [36mShop/Notifications/Throttles.cs:9[0m  global::Shop.Notifications.Throttle  [2m[member-out-of-order][0m
-  [36mShop/Orders/InvoiceNumbers.cs:12[0m  global::Shop.Orders.InvoiceNumbers  [2m[member-after-method][0m
-  [36mShop/Pricing/CreditNotes.cs:11[0m  global::Shop.Pricing.CreditNote  [2m[member-after-method][0m
+  [36mShop/Orders/InvoiceNumbers.cs:11[0m  global::Shop.Orders.InvoiceNumbers  [2m[member-after-method][0m
   [36mShop/Pricing/ExchangeRates.cs:9[0m  global::Shop.Pricing.ExchangeRates  [2m[member-out-of-order][0m
   [36mShop/Reports/ExportJobs.cs:9[0m  global::Shop.Reports.ExportJob  [2m[member-after-method][0m
-  [36mShop/Shipping/Carriers.cs:31[0m  global::Shop.Shipping.CourierCarrier  [2m[member-after-method][0m
   [36mShop/Shipping/CourierAccounts.cs:13[0m  global::Shop.Shipping.CourierAccount  [2m[member-after-method][0m
   [36mShop/Shipping/CourierAccounts.cs:16[0m  global::Shop.Shipping.CourierAccount  [2m[member-after-method][0m
-  [36mShop/Shipping/CourierAccounts.cs:19[0m  global::Shop.Shipping.CourierAccount  [2m[member-after-method][0m
-  [36mShop/Shipping/Lockers.cs:10[0m  global::Shop.Shipping.Locker  [2m[member-after-method][0m
-  [36mShop/Shipping/Parcels.cs:23[0m  global::Shop.Shipping.Parcel  [2m[member-after-method][0m
-  [36mShop/Shipping/Parcels.cs:44[0m  global::Shop.Shipping.Envelope  [2m[member-after-method][0m
-  [36mShop/Stock/Reorders.cs:9[0m  global::Shop.Stock.ReorderPoint  [2m[member-out-of-order][0m
   [36mShop/Stock/Reorders.cs:16[0m  global::Shop.Stock.ReorderPoint  [2m[member-out-of-order][0m
-  [36mShop/TypeTree/OwnerContracts.cs:53[0m  global::Shop.LocalTree.ReceiptJob  [2m[member-after-method][0m
-  [36mShop/TypeTree/ParcelSettingsTree.cs:83[0m  global::Shop.LocalTree.ParcelSettingsTreeDisplay  [2m[member-after-method][0m
-  [36mShop/TypeTree/StockSettingsTree.cs:135[0m  global::Shop.LocalTree.StockSettingsTreeDisplay  [2m[member-after-method][0m
-  [36mShop/TypeTree/TillReconciliation.cs:132[0m  global::Shop.LocalTree.TillReconciliation  [2m[member-after-method][0m
-  [36mShop/TypeTree/VoucherSettingsTree.cs:125[0m  global::Shop.LocalTree.VoucherSettingsTreeDisplay  [2m[member-after-method][0m
 
-[1;33mphp/fix-at-the-source[0m  (6)
+[1;33mphp/dependency-direction[0m  (8)
+  [1;36m↳ LOAD the skill `commandments-php-dependency-direction` before fixing[0m
+  [36mShop/Catalog/Products.cs:8[0m  global::Shop.Catalog.Product::FitsIn  [2m[namespace-dependency][0m
+  [36mShop/Catalog/Products.cs:8[0m  global::Shop.Catalog.Product::FitsIn  [2m[namespace-dependency][0m
+  [36mShop/Checkout/Carts.cs:16[0m  global::Shop.Checkout.Cart::BackLink  [2m[namespace-dependency][0m
+  [36mShop/Checkout/Carts.cs:16[0m  global::Shop.Checkout.Cart::BackLink  [2m[namespace-dependency][0m
+  [36mShop/Search/Indexes.cs:12[0m  global::Shop.Search.SearchIndex::Slugs  [2m[namespace-dependency][0m
+  [36mShop/Search/Indexes.cs:12[0m  global::Shop.Search.SearchIndex::Slugs  [2m[namespace-dependency][0m
+  [36mShop/Search/Rankings.cs:9[0m  global::Shop.Search.Rankings::Shown  [2m[namespace-dependency][0m
+  [36mShop/Search/Rankings.cs:9[0m  global::Shop.Search.Rankings::Shown  [2m[namespace-dependency][0m
+
+[1;33mphp/fix-at-the-source[0m  (11)
   [1;36m↳ LOAD the skill `commandments-php-fix-at-the-source` before fixing[0m
+  [36mShop/Documents/ArchiveErrors.cs:19[0m  global::Shop.Documents.ArchiveRefused  [2m[unread-collaborator][0m
+  [36mShop/Notifications/LastSent.cs:14[0m  global::Shop.Notifications.ReceiptMailer::Send  [2m[mutable-static-state][0m
   [36mShop/Notifications/Subscriptions.cs:22[0m  global::Shop.Notifications.NewsletterPreference::NewsletterPreference  [2m[constructor-side-effect][0m
   [36mShop/Orders/OrderCounter.cs:12[0m  global::Shop.Orders.OrderNumbering::Next  [2m[mutable-static-state][0m
+  [36mShop/Packing/LabelDesks.cs:10[0m  global::Shop.Packing.LabelDesk  [2m[unread-collaborator][0m
+  [36mShop/Packing/LabelWaiting.cs:6[0m  global::Shop.Packing.LabelWaiting  [2m[unread-collaborator][0m
+  [36mShop/Packing/PackDesk.cs:11[0m  global::Shop.Packing.PackDesk  [2m[unread-collaborator][0m
+  [36mShop/Packing/StocktakeSheets.cs:10[0m  global::Shop.Packing.StocktakeSheets  [2m[unread-collaborator][0m
   [36mShop/Pricing/PriceBoard.cs:25[0m  global::Shop.Pricing.PriceBoard::PriceBoard  [2m[constructor-side-effect][0m
   [36mShop/Pricing/TaxTable.cs:11[0m  global::Shop.Pricing.TaxTable::RateFor  [2m[mutable-static-state][0m
   [36mShop/Stock/ShelfSensors.cs:24[0m  global::Shop.Stock.ShelfSensor::ShelfSensor  [2m[constructor-side-effect][0m
-  [36mShop/TypeTree/StockSettingsTree.cs:40[0m  global::Shop.LocalTree.StockSettingsTreeOwner::StockSettingsTreeOwner  [2m[constructor-side-effect][0m
 
-[1;33mphp/method-mood[0m  (1)
+[1;33mphp/laravel-idioms[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-php-laravel-idioms` before fixing[0m
+  [36mShop/Boards/AisleCounts.cs:28[0m  global::Shop.Boards.AisleCounts::Counted  [2m[handed-out-collection][0m
+  [36mShop/Boards/DamageReports.cs:34[0m  global::Shop.Boards.DamageReport::Aisles  [2m[handed-out-collection][0m
+  [36mShop/Boards/NoteBoards.cs:13[0m  global::Shop.Boards.NoteBoard::Notes  [2m[handed-out-collection][0m
+
+[1;33mphp/method-mood[0m  (7)
   [1;36m↳ LOAD the skill `commandments-php-method-mood` before fixing[0m
-  [36mShop/Orders/Returns.cs:7[0m  global::Shop.Orders.ReturnWindow::Closes  [2m[narrated-command][0m
+  [36mShop/Flow/ReceiptRouting.cs:42[0m  global::Shop.Flow.ReceiptRouting::Dispatches  [2m[narrated-command][0m
+  [36mShop/Flow/StockRouting.cs:58[0m  global::Shop.Flow.StockRouting::Updates  [2m[narrated-command][0m
+  [36mShop/Flow/TransferRouting.cs:39[0m  global::Shop.Flow.TransferRouting::Processes  [2m[narrated-command][0m
+  [36mShop/Orders/Returns.cs:7[0m  global::Shop.Orders.ReturnWindow::Closes  [2m[bare-state-predicate][0m
+  [36mShop/Pricing/PromotionRules.cs:7[0m  global::Shop.Pricing.PromotionRule::Publishes  [2m[bare-state-predicate][0m
+  [36mShop/Shipping/Lockers.cs:7[0m  global::Shop.Shipping.Locker::Accepts  [2m[bare-state-predicate][0m
+  [36mShop/Stock/Shelving.cs:14[0m  global::Shop.Stock.ShelfPlan::NeedsPower  [2m[bare-state-predicate][0m
 
-[1;33mphp/pass-the-object[0m  (8)
+[1;33mphp/pass-the-object[0m  (15)
   [1;36m↳ LOAD the skill `commandments-php-pass-the-object` before fixing[0m
+  [36mShop/Flow/ReceiptRouting.cs:28[0m  global::Shop.Flow.ReceiptRouting::Check  [2m[computed-boolean-argument][0m
+  [36mShop/Flow/ReceiptRouting.cs:30[0m  global::Shop.Flow.ReceiptRouting::Check  [2m[computed-boolean-argument][0m
+  [36mShop/Flow/StockRouting.cs:29[0m  global::Shop.Flow.StockRouting::HoldRoutes  [2m[computed-boolean-argument][0m
+  [36mShop/Flow/StockRouting.cs:43[0m  global::Shop.Flow.StockRouting::IsFirstHeld  [2m[computed-boolean-argument][0m
+  [36mShop/Flow/TransferRouting.cs:19[0m  global::Shop.Flow.TransferRouting::Status  [2m[computed-boolean-argument][0m
+  [36mShop/Flow/TransferRouting.cs:25[0m  global::Shop.Flow.TransferRouting::SaveStatus  [2m[computed-boolean-argument][0m
+  [36mShop/Notifications/Campaigns.cs:15[0m  global::Shop.Notifications.CampaignSender::Send  [2m[param-resolved-from-param][0m
   [36mShop/Notifications/InvoiceMailers.cs:20[0m  global::Shop.Notifications.InvoiceMailer::Deliver  [2m[derived-argument][0m
   [36mShop/Notifications/InvoiceMailers.cs:26[0m  global::Shop.Notifications.InvoiceMailer::Remind  [2m[derived-argument][0m
-  [36mShop/Notifications/SmsAlerts.cs:13[0m  global::Shop.Notifications.Alerts::Short  [2m[derived-argument][0m
-  [36mShop/Notifications/SmsAlerts.cs:15[0m  global::Shop.Notifications.Alerts::Long  [2m[derived-argument][0m
-  [36mShop/Returns/ReturnLineChecks.cs:19[0m  global::Shop.Returns.ReturnLineChecks::MayCancel  [2m[derived-argument][0m
-  [36mShop/Returns/ReturnLineChecks.cs:23[0m  global::Shop.Returns.ReturnLineChecks::MayRevise  [2m[derived-argument][0m
+  [36mShop/Pricing/PriceBooks.cs:13[0m  global::Shop.Pricing.Quotes::Quote  [2m[param-resolved-from-param][0m
+  [36mShop/Shipping/CourierBookings.cs:15[0m  global::Shop.Shipping.Dispatcher::Today  [2m[derived-argument][0m
+  [36mShop/Shipping/CourierBookings.cs:19[0m  global::Shop.Shipping.Dispatcher::Batch  [2m[derived-argument][0m
+  [36mShop/Stock/Aisles.cs:23[0m  global::Shop.Stock.Slotting::Reserve  [2m[param-resolved-from-param][0m
   [36mShop/Stock/StockMoves.cs:18[0m  global::Shop.Stock.Mover::Move  [2m[derived-argument][0m
   [36mShop/Stock/StockMoves.cs:24[0m  global::Shop.Stock.Mover::Undo  [2m[derived-argument][0m
 
-[1;33mphp/tell-dont-ask[0m  (4)
-  [1;36m↳ LOAD the skill `commandments-php-tell-dont-ask` before fixing[0m
-  [36mShop/TypeTree/ParcelSettingsTree.cs:39[0m  global::Shop.LocalTree.ParcelSettingsTreeForwarder  [2m[middle-man][0m
-  [36mShop/TypeTree/StockSettingsTree.cs:65[0m  global::Shop.LocalTree.StockSettingsTreeForwarder  [2m[middle-man][0m
-  [36mShop/TypeTree/TillReconciliation.cs:41[0m  global::Shop.LocalTree.DrawerCounter  [2m[middle-man][0m
-  [36mShop/TypeTree/VoucherSettingsTree.cs:64[0m  global::Shop.LocalTree.VoucherSettingsTreeForwarder  [2m[middle-man][0m
+[1;33mphp/role-vocabulary[0m  (4)
+  [1;36m↳ LOAD the skill `commandments-php-role-vocabulary` before fixing[0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:54[0m  global::Shop.LocalTree.ParcelSettingsTreeRegistry  [2m[hand-rolled-registry][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:95[0m  global::Shop.LocalTree.StockSettingsTreeRegistry  [2m[hand-rolled-registry][0m
+  [36mShop/TypeTree/TillReconciliation.cs:82[0m  global::Shop.LocalTree.CountedReceipts  [2m[hand-rolled-registry][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:86[0m  global::Shop.LocalTree.VoucherSettingsTreeRegistry  [2m[hand-rolled-registry][0m
 
-[1;33mphp/templates[0m  (1)
+[1;33mphp/tell-dont-ask[0m  (31)
+  [1;36m↳ LOAD the skill `commandments-php-tell-dont-ask` before fixing[0m
+  [36mShop/Flow/ReceiptRouting.cs:54[0m  global::Shop.Flow.ReceiptRouting::Owner  [2m[keyed-lookup-envy][0m
+  [36mShop/Flow/StockRouting.cs:73[0m  global::Shop.Flow.StockRouting::Rate  [2m[keyed-lookup-envy][0m
+  [36mShop/Flow/TransferRouting.cs:52[0m  global::Shop.Flow.TransferRouting::Track  [2m[keyed-lookup-envy][0m
+  [36mShop/Loyalty/Members.cs:18[0m  global::Shop.Loyalty.Member::Affordable  [2m[feature-envy][0m
+  [36mShop/Loyalty/PunchCards.cs:15[0m  global::Shop.Loyalty.CardDesk::Redeem  [2m[feature-envy][0m
+  [36mShop/Orders/Approvals.cs:40[0m  global::Shop.Orders.Approvals::Signed  [2m[feature-envy][0m
+  [36mShop/Orders/Invoicing.cs:8[0m  global::Shop.Orders.Invoicing::Bill  [2m[feature-envy][0m
+  [36mShop/Orders/Invoicing.cs:27[0m  global::Shop.Orders.Invoicing::BillFlat  [2m[feature-envy][0m
+  [36mShop/Orders/Invoicing.cs:47[0m  global::Shop.Orders.Invoicing::FirstBackordered  [2m[feature-envy][0m
+  [36mShop/Orders/Refunds.cs:10[0m  global::Shop.Orders.Refunds::Amount  [2m[feature-envy][0m
+  [36mShop/Packing/DealerFacts.cs:20[0m  global::Shop.Packing.DealerFactsGatherer::ApplyPlan  [2m[feature-envy][0m
+  [36mShop/Packing/DealerFacts.cs:27[0m  global::Shop.Packing.DealerFactsGatherer::ApplyLanguage  [2m[feature-envy][0m
+  [36mShop/Packing/PackingNotes.cs:24[0m  global::Shop.Packing.PackingNotes::WriteLines  [2m[feature-envy][0m
+  [36mShop/Packing/ShiftRosters.cs:20[0m  global::Shop.Packing.ShiftRoster::StampSlots  [2m[feature-envy][0m
+  [36mShop/Packing/TillSlips.cs:20[0m  global::Shop.Packing.TillPricer::AddLines  [2m[feature-envy][0m
+  [36mShop/Packing/TillSlips.cs:27[0m  global::Shop.Packing.TillPricer::AddTax  [2m[feature-envy][0m
+  [36mShop/Packing/TillSlips.cs:34[0m  global::Shop.Packing.TillPricer::Seal  [2m[feature-envy][0m
+  [36mShop/Returns/ReturnInspections.cs:13[0m  global::Shop.Returns.ReturnInspector::NeedsRestocking  [2m[feature-envy][0m
+  [36mShop/Stock/Totes.cs:16[0m  global::Shop.Stock.ToteWeigher::Weigh  [2m[feature-envy][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:39[0m  global::Shop.LocalTree.ParcelSettingsTreeForwarder  [2m[middle-man][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:77[0m  global::Shop.LocalTree.ParcelSettingsTreeDisplay::Read  [2m[train-wreck][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:103[0m  global::Shop.LocalTree.ParcelSettingsTreeSender::Dispatch  [2m[guard-beside-transition][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:65[0m  global::Shop.LocalTree.StockSettingsTreeForwarder  [2m[middle-man][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:125[0m  global::Shop.LocalTree.StockSettingsTreeDisplay::Load  [2m[train-wreck][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:162[0m  global::Shop.LocalTree.StockSettingsTreeSender::Dispatch  [2m[guard-beside-transition][0m
+  [36mShop/TypeTree/TillReconciliation.cs:41[0m  global::Shop.LocalTree.DrawerCounter  [2m[middle-man][0m
+  [36mShop/TypeTree/TillReconciliation.cs:119[0m  global::Shop.LocalTree.TillReconciliation::Count  [2m[train-wreck][0m
+  [36mShop/TypeTree/TillReconciliation.cs:157[0m  global::Shop.LocalTree.TillClosing::Publish  [2m[guard-beside-transition][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:64[0m  global::Shop.LocalTree.VoucherSettingsTreeForwarder  [2m[middle-man][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:115[0m  global::Shop.LocalTree.VoucherSettingsTreeDisplay::Watch  [2m[train-wreck][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:149[0m  global::Shop.LocalTree.VoucherSettingsTreeSender::Dispatch  [2m[guard-beside-transition][0m
+
+[1;33mphp/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-php-templates` before fixing[0m
+  [36mShop/Documents/Emails.cs:9[0m  global::Shop.Documents.ShippedEmail::Body  [2m[assembled-template][0m
+  [36mShop/Reports/DailySummary.cs:7[0m  global::Shop.Reports.DailySummary::Render  [2m[assembled-template][0m
   [36mShop/Shipping/CarrierConfig.cs:7[0m  global::Shop.Shipping.CarrierConfig::For  [2m[assembled-template][0m
 
-[1;33mphp/type-honesty[0m  (52)
+[1;33mphp/type-honesty[0m  (33)
   [1;36m↳ LOAD the skill `commandments-php-type-honesty` before fixing[0m
-  [36mShop/Documents/Invoice.cs:9[0m  global::Shop.Documents.Invoice::Title  [2m[useless-property-hook][0m
-  [36mShop/Documents/PackingSlip.cs:7[0m  global::Shop.Documents.PackingSlip::IsEmpty  [2m[useless-property-hook][0m
+  [36mShop/Boards/KioskScreens.cs:13[0m  global::Shop.Boards.KioskScreen::MinutesLeft  [2m[impossible-guard][0m
+  [36mShop/Boards/LanguageTexts.cs:12[0m  global::Shop.Boards.LanguageTexts::HasTranslation  [2m[impossible-guard][0m
+  [36mShop/Boards/QuoteSpeech.cs:11[0m  global::Shop.Boards.QuoteSpeech::Spoken  [2m[impossible-guard][0m
+  [36mShop/Boards/QuoteSpeech.cs:17[0m  global::Shop.Boards.QuoteSpeech::Printed  [2m[impossible-guard][0m
   [36mShop/Flow/ReceiptRouting.cs:36[0m  global::Shop.Flow.ReceiptRouting::Caption  [2m[unused-parameter][0m
   [36mShop/Flow/ReceiptRouting.cs:60[0m  global::Shop.Flow.ReceiptRouting::Inspect  [2m[scratch-state-restore][0m
   [36mShop/Flow/StockRouting.cs:48[0m  global::Shop.Flow.StockRouting::Caption  [2m[unused-parameter][0m
   [36mShop/Flow/StockRouting.cs:79[0m  global::Shop.Flow.StockRouting::Inspect  [2m[scratch-state-restore][0m
   [36mShop/Flow/TransferRouting.cs:30[0m  global::Shop.Flow.TransferRouting::Print  [2m[unused-parameter][0m
   [36mShop/Flow/TransferRouting.cs:58[0m  global::Shop.Flow.TransferRouting::Inspect  [2m[scratch-state-restore][0m
-  [36mShop/Loyalty/Members.cs:9[0m  global::Shop.Loyalty.Member::Id  [2m[useless-property-hook][0m
-  [36mShop/Loyalty/Members.cs:11[0m  global::Shop.Loyalty.Member::Points  [2m[useless-property-hook][0m
-  [36mShop/Notifications/DeliveredMail.cs:8[0m  global::Shop.Notifications.DeliveredMail::Subject  [2m[useless-property-hook][0m
-  [36mShop/Notifications/Quiet.cs:15[0m  global::Shop.Notifications.Preferences::IsQuiet  [2m[useless-property-hook][0m
-  [36mShop/Orders/Checkouts.cs:12[0m  global::Shop.Orders.Checkout::Steps  [2m[useless-property-hook][0m
-  [36mShop/Orders/Checkouts.cs:19[0m  global::Shop.Orders.PaymentStep::Attempts  [2m[useless-property-hook][0m
-  [36mShop/Orders/Dispatch.cs:13[0m  global::Shop.Orders.Dispatchable::IsReady  [2m[useless-property-hook][0m
-  [36mShop/Orders/Order.cs:15[0m  global::Shop.Orders.OrderLine::Subtotal  [2m[useless-property-hook][0m
-  [36mShop/Orders/Returns.cs:7[0m  global::Shop.Orders.ReturnWindow::Closes  [2m[useless-property-hook][0m
-  [36mShop/Orders/SupplierInvoices.cs:24[0m  global::Shop.Orders.Remittance::Reference  [2m[useless-property-hook][0m
+  [36mShop/Notifications/DeliveredMail.cs:9[0m  global::Shop.Notifications.DeliveredMail::Subject  [2m[useless-property-hook][0m
+  [36mShop/Orders/Checkouts.cs:13[0m  global::Shop.Orders.Checkout::Steps  [2m[useless-property-hook][0m
+  [36mShop/Orders/Checkouts.cs:21[0m  global::Shop.Orders.PaymentStep::Attempts  [2m[useless-property-hook][0m
   [36mShop/Packing/DealerFacts.cs:20[0m  global::Shop.Packing.DealerFactsGatherer::ApplyPlan  [2m[filled-parameter][0m
   [36mShop/Packing/DealerFacts.cs:27[0m  global::Shop.Packing.DealerFactsGatherer::ApplyLanguage  [2m[filled-parameter][0m
+  [36mShop/Packing/PackDesk.cs:11[0m  global::Shop.Packing.PackDesk  [2m[unused-private-member][0m
   [36mShop/Packing/ShiftRosters.cs:20[0m  global::Shop.Packing.ShiftRoster::StampSlots  [2m[filled-parameter][0m
+  [36mShop/Packing/StocktakeSheets.cs:10[0m  global::Shop.Packing.StocktakeSheets  [2m[unused-private-member][0m
   [36mShop/Packing/TillSlips.cs:20[0m  global::Shop.Packing.TillPricer::AddLines  [2m[filled-parameter][0m
   [36mShop/Packing/TillSlips.cs:27[0m  global::Shop.Packing.TillPricer::AddTax  [2m[filled-parameter][0m
-  [36mShop/Pricing/CreditNotes.cs:11[0m  global::Shop.Pricing.CreditNote::Total  [2m[useless-property-hook][0m
-  [36mShop/Pricing/Quotas.cs:11[0m  global::Shop.Pricing.Quota::Remaining  [2m[useless-property-hook][0m
-  [36mShop/Rewards/Vouchers.cs:8[0m  global::Shop.Rewards.VoucherCatalog::All  [2m[useless-property-hook][0m
-  [36mShop/Shipping/Carriers.cs:12[0m  global::Shop.Shipping.PostalCarrier::Surcharge  [2m[useless-property-hook][0m
-  [36mShop/Shipping/Carriers.cs:29[0m  global::Shop.Shipping.CourierCarrier::Name  [2m[useless-property-hook][0m
-  [36mShop/Shipping/Carriers.cs:34[0m  global::Shop.Shipping.CourierCarrier::Surcharge  [2m[useless-property-hook][0m
-  [36mShop/Shipping/CollectionPoints.cs:19[0m  global::Shop.Shipping.CollectionPoint::IsFull  [2m[useless-property-hook][0m
-  [36mShop/Shipping/CourierAccounts.cs:19[0m  global::Shop.Shipping.CourierAccount::IsOverdrawn  [2m[useless-property-hook][0m
-  [36mShop/Shipping/DeliverySlots.cs:11[0m  global::Shop.Shipping.DeliverySlot::Driver  [2m[useless-property-hook][0m
-  [36mShop/Shipping/DeliverySlots.cs:21[0m  global::Shop.Shipping.BookedSlot::Driver  [2m[useless-property-hook][0m
-  [36mShop/Shipping/Lockers.cs:10[0m  global::Shop.Shipping.Locker::IsAccepting  [2m[useless-property-hook][0m
-  [36mShop/Shipping/Parcels.cs:23[0m  global::Shop.Shipping.Parcel::Volume  [2m[useless-property-hook][0m
-  [36mShop/Shipping/Parcels.cs:44[0m  global::Shop.Shipping.Envelope::FitsLetterbox  [2m[useless-property-hook][0m
-  [36mShop/Shipping/Windows.cs:7[0m  global::Shop.Shipping.PickupWindow::Today  [2m[useless-property-hook][0m
-  [36mShop/Stock/Audits.cs:12[0m  global::Shop.Stock.CountMismatch::Details  [2m[useless-property-hook][0m
-  [36mShop/Stock/BinLocations.cs:9[0m  global::Shop.Stock.BinLocation::Label  [2m[useless-property-hook][0m
-  [36mShop/Storefront/Shelves.cs:6[0m  global::Shop.Storefront.Shelf<T>::Count  [2m[useless-property-hook][0m
+  [36mShop/Shipping/Carriers.cs:30[0m  global::Shop.Shipping.CourierCarrier::Name  [2m[useless-property-hook][0m
   [36mShop/TypeTree/ParcelSettingsTree.cs:50[0m  global::Shop.LocalTree.ParcelSettingsTreeBroken::Read  [2m[refused-bequest][0m
   [36mShop/TypeTree/ParcelSettingsTree.cs:81[0m  global::Shop.LocalTree.ParcelSettingsTreeDisplay::Draft  [2m[unused-private-member][0m
   [36mShop/TypeTree/ParcelSettingsTree.cs:86[0m  global::Shop.LocalTree.ParcelSettingsTreeDisplay::Weight  [2m[useless-property-hook][0m
@@ -139,153 +183,237 @@ exit: 1
   [36mShop/TypeTree/VoucherSettingsTree.cs:120[0m  global::Shop.LocalTree.VoucherSettingsTreeDisplay::Draft  [2m[unused-private-member][0m
   [36mShop/TypeTree/VoucherSettingsTree.cs:128[0m  global::Shop.LocalTree.VoucherSettingsTreeDisplay::Prefix  [2m[useless-property-hook][0m
 
-[1;33mphp/value-objects[0m  (1)
+[1;33mphp/value-objects[0m  (15)
   [1;36m↳ LOAD the skill `commandments-php-value-objects` before fixing[0m
-  [36mShop/Pricing/Quotas.cs:13[0m  global::Shop.Pricing.Quota::Spend  [2m[mutable-value-object][0m
+  [36mShop/Feeds/ListingKeyMaps.cs:11[0m  global::Shop.Feeds.ListingKeyMaps::FromStored  [2m[array-bag][0m
+  [36mShop/Flow/ReceiptRouting.cs:48[0m  global::Shop.Flow.ReceiptRouting::WithCounter  [2m[hand-rolled-wither][0m
+  [36mShop/Flow/StockRouting.cs:67[0m  global::Shop.Flow.StockRouting::WithReserve  [2m[hand-rolled-wither][0m
+  [36mShop/Flow/TransferRouting.cs:46[0m  global::Shop.Flow.TransferRouting::WithOffice  [2m[hand-rolled-wither][0m
+  [36mShop/Notifications/QuietHours.cs:9[0m  global::Shop.Notifications.QuietHours  [2m[coupled-fields][0m
+  [36mShop/Orders/Receipts.cs:7[0m  global::Shop.Orders.Receipts::Footer  [2m[array-return-bag][0m
+  [36mShop/Orders/SupplierInvoices.cs:6[0m  global::Shop.Orders.SupplierInvoice  [2m[coupled-fields][0m
+  [36mShop/Pricing/Quotas.cs:14[0m  global::Shop.Pricing.Quota::Spend  [2m[mutable-value-object][0m
+  [36mShop/Pricing/Surcharges.cs:8[0m  global::Shop.Pricing.Surcharges::Rate  [2m[array-bag][0m
+  [36mShop/Pricing/VatSplits.cs:7[0m  global::Shop.Pricing.VatSplits::Split  [2m[positional-tuple-return][0m
+  [36mShop/Reports/Snapshots.cs:11[0m  global::Shop.Reports.DailySnapshot::Figures  [2m[array-return-bag][0m
+  [36mShop/Shipping/DeliverySlots.cs:9[0m  global::Shop.Shipping.DeliverySlot  [2m[coupled-fields][0m
+  [36mShop/Shipping/Webhooks.cs:19[0m  global::Shop.Shipping.Webhooks::Status  [2m[array-bag][0m
+  [36mShop/Stock/Audits.cs:22[0m  global::Shop.Stock.CountMismatch::Labels  [2m[array-return-bag][0m
+  [36mShop/Stock/ImportRows.cs:8[0m  global::Shop.Stock.ImportRows::Units  [2m[array-bag][0m
 
-[1;33mshared/absence[0m  (8)
+[1;33mshared/absence[0m  (35)
   [1;36m↳ LOAD the skill `commandments-shared-absence` before fixing[0m
   [36mShop/Addresses/PostcodeChecks.cs:7[0m  global::Shop.Addresses.PostcodeChecks::HasPostcode  [2m[cancelled-coalesce][0m
-  [36mShop/Documents/ArchiveErrors.cs:12[0m  global::Shop.Documents.ArchiveError::New  [2m[placeholder-filled-data][0m
   [36mShop/Documents/Headings.cs:7[0m  global::Shop.Documents.Headings::Of  [2m[blank-string-default][0m
+  [36mShop/Documents/LabelTemplates.cs:10[0m  global::Shop.Documents.TemplateShelf::Named  [2m[de-nulled-finder][0m
+  [36mShop/Notifications/Digests.cs:11[0m  global::Shop.Notifications.DigestBuilder::Empty  [2m[placeholder-filled-data][0m
+  [36mShop/Notifications/Receipts.cs:10[0m  global::Shop.Notifications.Receipts::Send  [2m[manufactured-fake-fill][0m
+  [36mShop/Notifications/SmsSettings.cs:7[0m  global::Shop.Notifications.SmsSettings  [2m[blank-string-default][0m
+  [36mShop/Orders/GiftMessages.cs:9[0m  global::Shop.Orders.GiftMessage::IsBlank  [2m[cancelled-coalesce][0m
+  [36mShop/Orders/OrderNotes.cs:15[0m  global::Shop.Orders.OrderNotes::Count  [2m[coalesced-loop-subject][0m
   [36mShop/Orders/Payouts.cs:12[0m  global::Shop.Orders.Payouts::Queued  [2m[placeholder-filled-data][0m
+  [36mShop/Pricing/CouponBooks.cs:10[0m  global::Shop.Pricing.CouponBook::Find  [2m[de-nulled-finder][0m
   [36mShop/Pricing/DiscountCodes.cs:9[0m  global::Shop.Pricing.DiscountCode::IsUnused  [2m[cancelled-coalesce][0m
+  [36mShop/Shelving/ShelfCode.cs:14[0m  global::Shop.Shelving.ShelfCode::Parse  [2m[manufactured-fake-fill][0m
+  [36mShop/Shipping/BillingOptionalState.cs:13[0m  global::Shop.Absence.BillingState  [2m[phantom-nullable][0m
+  [36mShop/Shipping/BillingOptionalState.cs:24[0m  global::Shop.Absence.BillingState::DraftValue  [2m[masked-invariant][0m
+  [36mShop/Shipping/BillingOptionalState.cs:33[0m  global::Shop.Absence.BillingState::Announce  [2m[nullable-callback][0m
+  [36mShop/Shipping/BillingOptionalState.cs:44[0m  global::Shop.Absence.BillingState::Find  [2m[nullable-registry-lookup][0m
+  [36mShop/Shipping/BillingOptionalState.cs:50[0m  global::Shop.Absence.BillingState::Read  [2m[raw-decoded-array-return][0m
   [36mShop/Shipping/BillingOptionalState.cs:65[0m  global::Shop.Absence.BillingProbe  [2m[capability-probe-hub][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:10[0m  global::Shop.Absence.DispatchState  [2m[phantom-nullable][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:25[0m  global::Shop.Absence.DispatchState::AssignedStopCount  [2m[masked-invariant][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:35[0m  global::Shop.Absence.DispatchState::SendToGate  [2m[nullable-callback][0m
+  [36mShop/Shipping/DispatchOptionalState.cs:51[0m  global::Shop.Absence.DispatchState::LatestAt  [2m[nullable-registry-lookup][0m
   [36mShop/Shipping/DispatchOptionalState.cs:72[0m  global::Shop.Absence.DispatchProbe  [2m[capability-probe-hub][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:12[0m  global::Shop.Absence.InventoryState  [2m[phantom-nullable][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:28[0m  global::Shop.Absence.InventoryState::QuantityLastCounted  [2m[masked-invariant][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:32[0m  global::Shop.Absence.InventoryState::Replay  [2m[nullable-callback][0m
+  [36mShop/Shipping/InventoryOptionalState.cs:46[0m  global::Shop.Absence.InventoryState::Snapshot  [2m[nullable-registry-lookup][0m
   [36mShop/Shipping/InventoryOptionalState.cs:61[0m  global::Shop.Absence.InventoryProbe  [2m[capability-probe-hub][0m
+  [36mShop/Shipping/ParcelLabels.cs:12[0m  global::Shop.Shipping.ParcelLabels::Marks  [2m[coalesced-loop-subject][0m
+  [36mShop/Shipping/Pickups.cs:21[0m  global::Shop.Shipping.Pickups::Booked  [2m[placeholder-filled-data][0m
+  [36mShop/Stock/Aisles.cs:6[0m  global::Shop.Stock.StorageAisle  [2m[blank-string-default][0m
+  [36mShop/Stock/BinResolvers.cs:8[0m  global::Shop.Stock.IBinResolver::Resolve  [2m[de-nulled-finder][0m
+  [36mShop/Stock/PickLists.cs:11[0m  global::Shop.Stock.PickLists::Lines  [2m[coalesced-loop-subject][0m
+  [36mShop/Stock/Reservations.cs:10[0m  global::Shop.Stock.Reservations::Report  [2m[manufactured-fake-fill][0m
+  [36mShop/Stock/ShelfNotes.cs:9[0m  global::Shop.Stock.ShelfNote::ShelfNote  [2m[blank-string-default][0m
 
-[1;33mshared/arguments[0m  (7)
+[1;33mshared/arguments[0m  (10)
   [1;36m↳ LOAD the skill `commandments-shared-arguments` before fixing[0m
   [36mShop/Addresses/LabelPrinter.cs:8[0m  global::Shop.Addresses.LabelPrinter::Print  [2m[data-clump][0m
   [36mShop/Addresses/Quotes.cs:6[0m  global::Shop.Addresses.Quotes::Price  [2m[data-clump][0m
-  [36mShop/Pricing/TierImport.cs:15[0m  global::Shop.Pricing.TierImport::Read  [2m[match-default-returns-null][0m
+  [36mShop/Pricing/TierImport.cs:16[0m  global::Shop.Pricing.TierImport::Read  [2m[match-default-returns-null][0m
+  [36mShop/Reports/Granularity.cs:24[0m  global::Shop.Reports.BucketFormats::FormatFor  [2m[match-default-returns-null][0m
+  [36mShop/Reports/SalesReport.cs:8[0m  global::Shop.Reports.SalesReport::Total  [2m[data-clump][0m
+  [36mShop/Reports/SalesReport.cs:15[0m  global::Shop.Reports.ReturnsReport::Count  [2m[data-clump][0m
+  [36mShop/Reports/SalesReport.cs:22[0m  global::Shop.Reports.IPeriodic::Sum  [2m[data-clump][0m
   [36mShop/Shipping/CarrierLogos.cs:19[0m  global::Shop.Shipping.CarrierLogos::LogoFor  [2m[match-default-returns-null][0m
-  [36mShop/Shipping/CarrierLogos.cs:35[0m  global::Shop.Shipping.CarrierLogos::TrackingHost  [2m[match-default-returns-null][0m
   [36mShop/Stock/Listings.cs:8[0m  global::Shop.Stock.ShelfListing::Page  [2m[data-clump][0m
   [36mShop/Stock/Listings.cs:15[0m  global::Shop.Stock.BackorderListing::Page  [2m[data-clump][0m
 
-[1;33mshared/dependencies[0m  (5)
+[1;33mshared/dependencies[0m  (11)
   [1;36m↳ LOAD the skill `commandments-shared-dependencies` before fixing[0m
-  [36mShop/Orders/Discounting.cs:3[0m  (file)  [2m[namespace-cycle][0m
+  [36mShop/Loyalty/Members.cs:5[0m  (file)  [2m[namespace-cycle][0m
+  [36mShop/Orders/Discounting.cs:4[0m  (file)  [2m[namespace-cycle][0m
+  [36mShop/Returns/Claims.cs:4[0m  (file)  [2m[namespace-cycle][0m
   [36mShop/Shipping/LabelConverter.cs:16[0m  global::Shop.Shipping.ILabelPrinter  [2m[lone-implementer-interface][0m
   [36mShop/TypeTree/ParcelSettingsTree.cs:8[0m  global::Shop.LocalTree.IParcelSettingsTreePort  [2m[lone-implementer-interface][0m
+  [36mShop/TypeTree/ParcelSettingsTree.cs:24[0m  global::Shop.LocalTree.ParcelSettingsTreeOwner::ParcelSettingsTreeOwner  [2m[concrete-cross-module-dependency][0m
   [36mShop/TypeTree/StockSettingsTree.cs:8[0m  global::Shop.LocalTree.IStockSettingsTreePort  [2m[lone-implementer-interface][0m
+  [36mShop/TypeTree/StockSettingsTree.cs:34[0m  global::Shop.LocalTree.StockSettingsTreeOwner::StockSettingsTreeOwner  [2m[concrete-cross-module-dependency][0m
+  [36mShop/TypeTree/TillReconciliation.cs:13[0m  global::Shop.LocalTree.TillClosingReport::TillClosingReport  [2m[concrete-cross-module-dependency][0m
   [36mShop/TypeTree/VoucherSettingsTree.cs:8[0m  global::Shop.LocalTree.IVoucherSettingsTreePort  [2m[lone-implementer-interface][0m
+  [36mShop/TypeTree/VoucherSettingsTree.cs:30[0m  global::Shop.LocalTree.VoucherSettingsTreeOwner::VoucherSettingsTreeOwner  [2m[concrete-cross-module-dependency][0m
 
-[1;33mshared/documentation[0m  (11)
+[1;33mshared/documentation[0m  (14)
   [1;36m↳ LOAD the skill `commandments-shared-documentation` before fixing[0m
   [36mShop/Orders/Checkouts.cs:10[0m  global::Shop.Orders.Checkout  [2m[bloated-docblock][0m
   [36mShop/Orders/GiftWrapping.cs:5[0m  global::Shop.Orders.WrapStation  [2m[dangling-doc-reference][0m
+  [36mShop/Orders/Gratuities.cs:9[0m  global::Shop.Orders.Gratuity::On  [2m[restated-comment][0m
   [36mShop/Orders/RefundWindows.cs:8[0m  global::Shop.Orders.RefundWindows::Days  [2m[archaeology-comment][0m
   [36mShop/Pricing/PrizeDraws.cs:9[0m  global::Shop.Pricing.PrizeDraw::Winner  [2m[negative-space-comment][0m
   [36mShop/Reports/Rounding.cs:7[0m  global::Shop.Reports.ReportRounding::Cents  [2m[negative-space-comment][0m
   [36mShop/Shipping/ColdChain.cs:7[0m  global::Shop.Shipping.ChilledParcels  [2m[negative-space-comment][0m
+  [36mShop/Shipping/Consignments.cs:10[0m  global::Shop.Shipping.Consignment::TotalWeight  [2m[restated-comment][0m
   [36mShop/Shipping/Couriers.cs:9[0m  global::Shop.Shipping.BookableCourier  [2m[bloated-docblock][0m
   [36mShop/Shipping/FreightZones.cs:9[0m  global::Shop.Shipping.FreightZones::ZoneOf  [2m[dangling-doc-reference][0m
   [36mShop/Shipping/Surcharges.cs:8[0m  global::Shop.Shipping.IslandSurcharge::For  [2m[archaeology-comment][0m
   [36mShop/Stock/BinLocations.cs:5[0m  global::Shop.Stock.BinLocation  [2m[archaeology-comment][0m
+  [36mShop/Stock/BinSweeps.cs:11[0m  global::Shop.Stock.BinSweep::Empty  [2m[restated-comment][0m
   [36mShop/Stock/ShelfAudits.cs:16[0m  global::Shop.Stock.AuditPlanner::Recount  [2m[dangling-doc-reference][0m
 
-[1;33mshared/duplication[0m  (30)
+[1;33mshared/duplication[0m  (44)
   [1;36m↳ LOAD the skill `commandments-shared-duplication` before fixing[0m
-  [36mShop/Documents/Invoice.cs:12[0m  global::Shop.Documents.Invoice::Lines  [2m[duplicate-function][0m
-  [36mShop/Documents/PackingSlip.cs:10[0m  global::Shop.Documents.PackingSlip::Rows  [2m[duplicate-function][0m
-  [36mShop/Notifications/DeliveredMail.cs:11[0m  global::Shop.Notifications.DeliveredMail::Compose  [2m[near-duplicate-function][0m
+  [36mShop/Documents/Barcodes.cs:13[0m  global::Shop.Documents.DispatchSheet::Top  [2m[converted-argument][0m
+  [36mShop/Documents/Barcodes.cs:17[0m  global::Shop.Documents.DispatchSheet::All  [2m[converted-argument][0m
+  [36mShop/Documents/Invoice.cs:13[0m  global::Shop.Documents.Invoice::Lines  [2m[duplicate-function][0m
+  [36mShop/Documents/LabelFooters.cs:9[0m  global::Shop.Documents.LabelPrinter::Footer  [2m[repeated-guard][0m
+  [36mShop/Documents/PackingSlip.cs:11[0m  global::Shop.Documents.PackingSlip::Rows  [2m[duplicate-function][0m
+  [36mShop/Notifications/ChannelNames.cs:23[0m  global::Shop.Notifications.OrderAlerts::Textable  [2m[unnamed-vocabulary-literal][0m
+  [36mShop/Notifications/DeliveredMail.cs:12[0m  global::Shop.Notifications.DeliveredMail::Compose  [2m[near-duplicate-function][0m
+  [36mShop/Notifications/Promises.cs:9[0m  global::Shop.Notifications.CustomerDesk::CanPromiseToday  [2m[repeated-guard][0m
   [36mShop/Notifications/ShippedMail.cs:11[0m  global::Shop.Notifications.ShippedMail::Render  [2m[near-duplicate-function][0m
+  [36mShop/Orders/Dispatch.cs:21[0m  global::Shop.Orders.Warehouse::Status  [2m[repeated-guard][0m
+  [36mShop/Pricing/CreditNotes.cs:23[0m  global::Shop.Pricing.CreditNoteBuilder::For  [2m[converted-argument][0m
+  [36mShop/Pricing/CreditNotes.cs:33[0m  global::Shop.Pricing.CreditNoteBuilder::Single  [2m[converted-argument][0m
   [36mShop/Pricing/Discounts.cs:10[0m  global::Shop.Pricing.Discounts::Wholesale  [2m[near-duplicate-function][0m
   [36mShop/Pricing/Discounts.cs:32[0m  global::Shop.Pricing.Discounts::Retail  [2m[near-duplicate-function][0m
+  [36mShop/Reports/CreditSummaries.cs:12[0m  global::Shop.Reports.CreditSummary::Credited  [2m[converted-argument][0m
+  [36mShop/Reports/Damage.cs:15[0m  global::Shop.Reports.DamageReport::ToInspect  [2m[repeated-type-guard][0m
+  [36mShop/Reports/ReportKinds.cs:20[0m  global::Shop.Reports.ReportSchedule::EndOfMonth  [2m[unnamed-vocabulary-literal][0m
+  [36mShop/Shelving/OpeningHours.cs:13[0m  global::Shop.Shelving.OpeningHours::Status  [2m[repeated-static-factory][0m
+  [36mShop/Shelving/PickRoute.cs:6[0m  global::Shop.Shelving.PickRoute::Stop  [2m[repeated-static-factory][0m
+  [36mShop/Shelving/ReceiptLine.cs:11[0m  global::Shop.Shelving.ReceiptLine::Describe  [2m[repeated-static-factory][0m
   [36mShop/Shipping/Carriers.cs:12[0m  global::Shop.Shipping.PostalCarrier::Surcharge  [2m[duplicate-function][0m
-  [36mShop/Shipping/Carriers.cs:34[0m  global::Shop.Shipping.CourierCarrier::Surcharge  [2m[duplicate-function][0m
+  [36mShop/Shipping/Carriers.cs:35[0m  global::Shop.Shipping.CourierCarrier::Surcharge  [2m[duplicate-function][0m
   [36mShop/Shipping/CashReconcile.cs:15[0m  global::Shop.Shipping.CashReconcile::ReconcileTill  [2m[divergent-twin][0m
-  [36mShop/Shipping/CashReconcile.cs:15[0m  global::Shop.Shipping.CashReconcile::ReconcileTill  [2m[near-duplicate-function][0m
   [36mShop/Shipping/CouponSourceCatalog.cs:40[0m  global::Shop.Shipping.CouponSourceCatalog::All  [2m[list-mirrors-folder][0m
+  [36mShop/Shipping/Crates.cs:26[0m  global::Shop.Shipping.CrateHandling::Instructions  [2m[repeated-type-guard][0m
   [36mShop/Shipping/GiftwrapSizeCatalog.cs:41[0m  global::Shop.Shipping.GiftwrapSizeCatalog::SizesFor  [2m[list-mirrors-folder][0m
   [36mShop/Shipping/LabelArchive.cs:12[0m  global::Shop.Shipping.LabelArchive::Write  [2m[repeated-folder-path][0m
   [36mShop/Shipping/LabelPurge.cs:14[0m  global::Shop.Shipping.LabelPurge::RemoveExpired  [2m[repeated-folder-path][0m
   [36mShop/Shipping/LabelReprint.cs:10[0m  global::Shop.Shipping.LabelReprint::Print  [2m[repeated-folder-path][0m
   [36mShop/Shipping/ParcelNoticeCatalog.cs:41[0m  global::Shop.Shipping.ParcelNoticeCatalog::Post  [2m[list-mirrors-folder][0m
   [36mShop/Shipping/ParcelReadiness.cs:15[0m  global::Shop.Shipping.ParcelReadiness::DispatchParcel  [2m[divergent-twin][0m
-  [36mShop/Shipping/ParcelReadiness.cs:15[0m  global::Shop.Shipping.ParcelReadiness::DispatchParcel  [2m[near-duplicate-function][0m
   [36mShop/Shipping/ParcelReadiness.cs:24[0m  global::Shop.Shipping.ParcelReadiness::DispatchInsuredParcel  [2m[divergent-twin][0m
-  [36mShop/Shipping/ParcelReadiness.cs:24[0m  global::Shop.Shipping.ParcelReadiness::DispatchInsuredParcel  [2m[near-duplicate-function][0m
   [36mShop/Shipping/StockDelivery.cs:15[0m  global::Shop.Shipping.StockDelivery::ReceiveStock  [2m[divergent-twin][0m
-  [36mShop/Shipping/StockDelivery.cs:15[0m  global::Shop.Shipping.StockDelivery::ReceiveStock  [2m[near-duplicate-function][0m
   [36mShop/Shipping/StockDelivery.cs:24[0m  global::Shop.Shipping.StockDelivery::ReceiveOrderStock  [2m[divergent-twin][0m
-  [36mShop/Shipping/StockDelivery.cs:24[0m  global::Shop.Shipping.StockDelivery::ReceiveOrderStock  [2m[near-duplicate-function][0m
   [36mShop/Shipping/TillAudit.cs:6[0m  global::Shop.Shipping.TillAudit::AuditTill  [2m[divergent-twin][0m
-  [36mShop/Shipping/TillAudit.cs:6[0m  global::Shop.Shipping.TillAudit::AuditTill  [2m[near-duplicate-function][0m
+  [36mShop/Shipping/TrackingLinks.cs:9[0m  global::Shop.Shipping.TrackingLinks::IsShowable  [2m[repeated-guard][0m
+  [36mShop/Stock/BinImports.cs:17[0m  global::Shop.Stock.BinImport::Load  [2m[converted-argument][0m
+  [36mShop/Stock/BinImports.cs:21[0m  global::Shop.Stock.BinImport::Reload  [2m[converted-argument][0m
   [36mShop/Stock/Ledgers.cs:8[0m  global::Shop.Stock.Ledgers::Counts  [2m[near-duplicate-function][0m
   [36mShop/Stock/Ledgers.cs:29[0m  global::Shop.Stock.Ledgers::Reservations  [2m[near-duplicate-function][0m
+  [36mShop/Stock/Palletising.cs:11[0m  global::Shop.Stock.PalletPlan::SlotsFor  [2m[repeated-type-guard][0m
   [36mShop/Stock/Replenishment.cs:10[0m  global::Shop.Stock.Replenishment::Shortfall  [2m[duplicate-function][0m
   [36mShop/Stock/Replenishment.cs:24[0m  global::Shop.Stock.Replenishment::Shortfall  [2m[duplicate-function][0m
+  [36mShop/Stock/StockZones.cs:33[0m  global::Shop.Stock.Receiving::Pallet  [2m[unnamed-vocabulary-literal][0m
 
-[1;33mshared/enums[0m  (11)
+[1;33mshared/enums[0m  (22)
   [1;36m↳ LOAD the skill `commandments-shared-enums` before fixing[0m
-  [36mShop/Notifications/ChannelNames.cs:3[0m  global::Shop.Notifications.NotifyChannel  [2m[const-class-enum][0m
+  [36mShop/Checkout/SourceOwners.cs:19[0m  global::Shop.Checkout.SourceOwners::Of  [2m[type-switch][0m
+  [36mShop/Notifications/ChannelNames.cs:4[0m  global::Shop.Notifications.NotifyChannel  [2m[const-class-enum][0m
   [36mShop/Notifications/Channels.cs:5[0m  global::Shop.Notifications.ContactChannel  [2m[const-class-enum][0m
-  [36mShop/Notifications/Channels.cs:14[0m  global::Shop.Notifications.NotificationHeaders  [2m[const-class-enum][0m
+  [36mShop/Notifications/Quiet.cs:15[0m  global::Shop.Notifications.Preferences::IsQuiet  [2m[enum-case-or-chain][0m
+  [36mShop/Orders/Discounting.cs:12[0m  global::Shop.Orders.Discounting::Total  [2m[type-switch][0m
+  [36mShop/Orders/Fulfilment.cs:27[0m  global::Shop.Orders.Fulfilment::Note  [2m[enum-case-or-chain][0m
+  [36mShop/Orders/ParkedRuns.cs:22[0m  global::Shop.Orders.ParkedRuns::Sweeps  [2m[enum-case-or-chain][0m
   [36mShop/Orders/PaymentStates.cs:4[0m  global::Shop.Orders.PaymentState  [2m[const-class-enum][0m
+  [36mShop/Orders/PaymentWebhooks.cs:19[0m  global::Shop.Orders.PaymentWebhooks::Settles  [2m[in-array-mirrors-enum][0m
   [36mShop/Orders/RefundDesk.cs:10[0m  global::Shop.Orders.RefundDesk::Priority  [2m[string-match-mirrors-enum][0m
-  [36mShop/Reports/ReportKinds.cs:3[0m  global::Shop.Reports.ReportKind  [2m[const-class-enum][0m
+  [36mShop/Orders/StatusFeed.cs:10[0m  global::Shop.Orders.StatusFeed::Handle  [2m[string-match-mirrors-enum][0m
+  [36mShop/Pricing/Promotions.cs:35[0m  global::Shop.Pricing.PromotionLabels::Label  [2m[type-switch][0m
+  [36mShop/Pricing/TierImport.cs:9[0m  global::Shop.Pricing.TierImport::Read  [2m[string-match-mirrors-enum][0m
+  [36mShop/Reports/PromotionReport.cs:17[0m  global::Shop.Reports.PromotionReport::Count  [2m[type-switch][0m
+  [36mShop/Reports/ReportKinds.cs:4[0m  global::Shop.Reports.ReportKind  [2m[const-class-enum][0m
   [36mShop/Shipping/InsuredCouriers.cs:19[0m  global::Shop.Shipping.InsuredCouriers  [2m[side-table-trait][0m
   [36mShop/Shipping/ServiceLevels.cs:5[0m  global::Shop.Shipping.ServiceLevel  [2m[const-class-enum][0m
+  [36mShop/Stock/Batches.cs:16[0m  global::Shop.Stock.Batches::WrittenOff  [2m[enum-case-or-chain][0m
   [36mShop/Stock/HiddenStockSources.cs:17[0m  global::Shop.Stock.HiddenStockSources  [2m[side-table-trait][0m
-  [36mShop/Stock/StockZones.cs:3[0m  global::Shop.Stock.Zone  [2m[const-class-enum][0m
+  [36mShop/Stock/Holds.cs:9[0m  global::Shop.Stock.Holds::Held  [2m[in-array-mirrors-enum][0m
+  [36mShop/Stock/StockZones.cs:4[0m  global::Shop.Stock.Zone  [2m[const-class-enum][0m
   [36mShop/Tags/TagSpeech.cs:17[0m  global::Shop.Tags.TagSpeech  [2m[side-table-trait][0m
 
-[1;33mshared/exceptions[0m  (25)
+[1;33mshared/exceptions[0m  (23)
   [1;36m↳ LOAD the skill `commandments-shared-exceptions` before fixing[0m
-  [36mShop/Addresses/CountryCodes.cs:9[0m  global::Shop.Addresses.CountryCodes::Upper  [2m[message-at-throw][0m
-  [36mShop/Addresses/CountryCodes.cs:15[0m  global::Shop.Addresses.CountryCodes::CheckedUpper  [2m[message-at-throw][0m
   [36mShop/Documents/InvoiceArchive.cs:16[0m  global::Shop.Documents.InvoiceArchive::NumberOf  [2m[message-at-throw][0m
   [36mShop/Documents/InvoiceArchive.cs:16[0m  global::Shop.Documents.InvoiceArchive::NumberOf  [2m[wrapping-without-cause][0m
   [36mShop/Documents/InvoiceArchive.cs:27[0m  global::Shop.Documents.InvoiceArchive::Contents  [2m[rethrown-unchanged][0m
   [36mShop/Notifications/Outbox.cs:19[0m  global::Shop.Notifications.Outbox::Flush  [2m[swallow-catch][0m
+  [36mShop/Orders/Lifecycle.cs:15[0m  global::Shop.Orders.Lifecycle::Ship  [2m[generic-exception][0m
   [36mShop/Orders/Lifecycle.cs:15[0m  global::Shop.Orders.Lifecycle::Ship  [2m[message-at-throw][0m
-  [36mShop/Orders/Statuses.cs:35[0m  global::Shop.Orders.Statuses::Label  [2m[swallow-catch][0m
   [36mShop/Picking/CountSheets.cs:15[0m  global::Shop.Picking.CountSheets::Post  [2m[rethrown-unchanged][0m
   [36mShop/Picking/PickRetries.cs:33[0m  global::Shop.Picking.PickRetries::LastOfSeveral  [2m[rethrown-unchanged][0m
+  [36mShop/Pricing/Currencies.cs:13[0m  global::Shop.Pricing.Currencies::Rate  [2m[generic-exception][0m
   [36mShop/Pricing/Currencies.cs:13[0m  global::Shop.Pricing.Currencies::Rate  [2m[message-at-throw][0m
   [36mShop/Pricing/RateCache.cs:14[0m  global::Shop.Pricing.RateCache::Store  [2m[swallow-catch][0m
   [36mShop/Pricing/RateFeed.cs:18[0m  global::Shop.Pricing.RateFeed::Rate  [2m[message-at-throw][0m
   [36mShop/Pricing/RateFeed.cs:18[0m  global::Shop.Pricing.RateFeed::Rate  [2m[wrapping-without-cause][0m
   [36mShop/Pricing/RateFeed.cs:22[0m  global::Shop.Pricing.RateFeed::Rate  [2m[message-at-throw][0m
+  [36mShop/Shipping/CarrierDirectory.cs:13[0m  global::Shop.Shipping.CarrierDirectory::Account  [2m[generic-exception][0m
   [36mShop/Shipping/CarrierDirectory.cs:13[0m  global::Shop.Shipping.CarrierDirectory::Account  [2m[message-at-throw][0m
   [36mShop/Shipping/CarrierDirectory.cs:36[0m  global::Shop.Shipping.CarrierDirectory::Normalised  [2m[message-at-throw][0m
-  [36mShop/Shipping/Webhooks.cs:16[0m  global::Shop.Shipping.Webhooks::Parcel  [2m[message-at-throw][0m
+  [36mShop/Shipping/Webhooks.cs:15[0m  global::Shop.Shipping.Webhooks::Parcel  [2m[message-at-throw][0m
   [36mShop/Stock/Snapshots.cs:16[0m  global::Shop.Stock.Snapshots::Load  [2m[swallow-catch][0m
-  [36mShop/Stock/Snapshots.cs:29[0m  global::Shop.Stock.Snapshots::LoadOrEmpty  [2m[swallow-catch][0m
-  [36mShop/Stock/Snapshots.cs:42[0m  global::Shop.Stock.Snapshots::LoadIfReadable  [2m[swallow-catch][0m
   [36mShop/Stock/StockHolds.cs:15[0m  global::Shop.Stock.StockHolds::Hold  [2m[rethrown-unchanged][0m
   [36mShop/Stock/StockImport.cs:16[0m  global::Shop.Stock.StockImport::Read  [2m[message-at-throw][0m
   [36mShop/Stock/StockImport.cs:16[0m  global::Shop.Stock.StockImport::Read  [2m[wrapping-without-cause][0m
   [36mShop/Stock/StockImport.cs:30[0m  global::Shop.Stock.StockImport::ReadKeepingTheCause  [2m[message-at-throw][0m
 
-[1;33mshared/flow[0m  (30)
+[1;33mshared/flow[0m  (38)
   [1;36m↳ LOAD the skill `commandments-shared-flow` before fixing[0m
   [36mShop/Addresses/Quotes.cs:8[0m  global::Shop.Addresses.Quotes::Price  [2m[nested-ternary][0m
   [36mShop/Documents/Summaries.cs:10[0m  global::Shop.Documents.Summaries::Line  [2m[redundant-else][0m
   [36mShop/Flow/LoyaltyPoints.cs:14[0m  global::Shop.Flow.LoyaltyPoints::Redeem  [2m[duplicated-branch-tail][0m
   [36mShop/Flow/LoyaltyPoints.cs:37[0m  global::Shop.Flow.LoyaltyPoints::Expire  [2m[unreachable-statement][0m
+  [36mShop/Flow/LoyaltyPoints.cs:63[0m  global::Shop.Flow.LoyaltyPoints::PointsFor  [2m[reassigned-parameter][0m
   [36mShop/Flow/ParcelPostage.cs:13[0m  global::Shop.Flow.ParcelPostage::Label  [2m[duplicated-branch-tail][0m
   [36mShop/Flow/ParcelPostage.cs:38[0m  global::Shop.Flow.ParcelPostage::Sorted  [2m[unreachable-statement][0m
+  [36mShop/Flow/ParcelPostage.cs:59[0m  global::Shop.Flow.ParcelPostage::PostageCents  [2m[reassigned-parameter][0m
   [36mShop/Flow/ParcelReturns.cs:15[0m  global::Shop.Flow.ParcelReturns::Restock  [2m[duplicated-branch-tail][0m
+  [36mShop/Flow/ParcelReturns.cs:34[0m  global::Shop.Flow.ParcelReturns::Refund  [2m[reassigned-parameter][0m
   [36mShop/Flow/ParcelReturns.cs:34[0m  global::Shop.Flow.ParcelReturns::Refund  [2m[unreachable-statement][0m
+  [36mShop/Flow/ParcelReturns.cs:57[0m  global::Shop.Flow.ParcelReturns::RefundNote  [2m[reassigned-parameter][0m
   [36mShop/Loading/BayClearance.cs:15[0m  global::Shop.Loading.BayClearance::Walk  [2m[unnamed-condition][0m
   [36mShop/Loading/BayLoading.cs:36[0m  global::Shop.Loading.BayDispatcher::Dispatch  [2m[unnamed-condition][0m
   [36mShop/Loading/ShiftTicks.cs:24[0m  global::Shop.Loading.TickAnnouncer::OnTicked  [2m[unnamed-condition][0m
   [36mShop/Orders/Approvals.cs:30[0m  global::Shop.Orders.Approvals::Approvers  [2m[non-counting-for][0m
   [36mShop/Orders/Checkout.cs:10[0m  global::Shop.Orders.Checkout::Charge  [2m[redundant-else][0m
-  [36mShop/Orders/Checkout.cs:40[0m  global::Shop.Orders.Checkout::Greeting  [2m[duplicated-branch-tail][0m
   [36mShop/Orders/Invoicing.cs:15[0m  global::Shop.Orders.Invoicing::Bill  [2m[loop-inverted-guard][0m
+  [36mShop/Orders/Refunds.cs:22[0m  global::Shop.Orders.Refunds::Amount  [2m[deep-nesting][0m
   [36mShop/Orders/StatusBadge.cs:12[0m  global::Shop.Orders.StatusBadge::Colour  [2m[subject-ladder][0m
+  [36mShop/Picking/AisleBlocks.cs:14[0m  global::Shop.Picking.AisleBlocks::Restock  [2m[collection-mutated-while-iterated][0m
+  [36mShop/Picking/PickLists.cs:16[0m  global::Shop.Picking.PickList::Settle  [2m[collection-mutated-while-iterated][0m
+  [36mShop/Picking/ReservationSweeps.cs:14[0m  global::Shop.Picking.ReservationSweep::Sweep  [2m[collection-mutated-while-iterated][0m
   [36mShop/Pricing/LoyaltyTiers.cs:9[0m  global::Shop.Pricing.LoyaltyTiers::Percent  [2m[nested-ternary][0m
   [36mShop/Pricing/PriceList.cs:14[0m  global::Shop.Pricing.PriceList::Parse  [2m[loop-inverted-guard][0m
   [36mShop/Pricing/Rounding.cs:9[0m  global::Shop.Pricing.Rounding::ToNickel  [2m[redundant-else][0m
   [36mShop/Pricing/Units.cs:18[0m  global::Shop.Pricing.Units::Suffix  [2m[subject-ladder][0m
   [36mShop/Reports/PageReader.cs:20[0m  global::Shop.Reports.PageReader::CountRows  [2m[non-counting-for][0m
+  [36mShop/Shipping/CarrierCodes.cs:12[0m  global::Shop.Shipping.CarrierCodes::TrackingUrl  [2m[subject-ladder][0m
   [36mShop/Shipping/Carriers.cs:15[0m  global::Shop.Shipping.PostalCarrier::Surcharge  [2m[nested-ternary][0m
-  [36mShop/Shipping/Carriers.cs:37[0m  global::Shop.Shipping.CourierCarrier::Surcharge  [2m[nested-ternary][0m
+  [36mShop/Shipping/Carriers.cs:38[0m  global::Shop.Shipping.CourierCarrier::Surcharge  [2m[nested-ternary][0m
   [36mShop/Shipping/Dispatch.cs:20[0m  global::Shop.Shipping.Dispatch::Run  [2m[deep-nesting][0m
   [36mShop/Shipping/ParcelSizes.cs:7[0m  global::Shop.Shipping.ParcelSizes::Of  [2m[nested-ternary][0m
   [36mShop/Stock/Arrivals.cs:13[0m  global::Shop.Stock.Arrivals::Book  [2m[loop-inverted-guard][0m
@@ -297,9 +425,9 @@ exit: 1
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m239 sins[0m across 18 skills.
+[1m352 sins[0m across 23 skills.
 
 --- stderr
-· read 0 files in <took> (0 from the cache, 0 by the bridges), judged in <took> (0 rule answers from memory, 0 asked): 239 sins
+· read 270 files in <took> (0 from the cache, 270 by the bridges), judged in <took> (0 rule answers from memory, 24840 asked): 352 sins
 
 --- files

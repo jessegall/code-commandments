@@ -1,33 +1,46 @@
 exit: 1
 --- stdout
 
+[1;33mphp/documentation[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-php-documentation` before fixing[0m
+  [36mapp/Support/FeatureGate.php:20[0m  Shop\Support\FeatureGate  [2m[inline-docblock][0m
+
 [1;33mphp/guard-clauses-and-flow[0m  (1)
   [1;36m↳ LOAD the skill `commandments-php-guard-clauses-and-flow` before fixing[0m
   [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[inline-throw][0m
+
+[1;33mphp/method-mood[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-php-method-mood` before fixing[0m
+  [36mapp/Support/FeatureGate.php:27[0m  Shop\Support\FeatureGate::supportsTracking  [2m[bare-state-predicate][0m
 
 [1;33mphp/value-objects[0m  (1)
   [1;36m↳ LOAD the skill `commandments-php-value-objects` before fixing[0m
   [36mapp/Webhooks/PaymentEventHandler.php:28[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[array-bag][0m
 
+[1;33mshared/arguments[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-shared-arguments` before fixing[0m
+  [36mapp/Support/FeatureGate.php:39[0m  Shop\Support\FeatureGate::factory  [2m[redundant-arrow-return-type][0m
+
 [1;33mshared/documentation[0m  (1)
   [1;36m↳ LOAD the skill `commandments-shared-documentation` before fixing[0m
   [36mapp/Webhooks/PaymentEventHandler.php:31[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[archaeology-comment][0m
 
-[1;33mshared/exceptions[0m  (3)
+[1;33mshared/exceptions[0m  (4)
   [1;36m↳ LOAD the skill `commandments-shared-exceptions` before fixing[0m
   [36mapp/Services/PaymentProcessor.php:36[0m  Shop\Services\PaymentProcessor::charge  [2m[generic-exception][0m
   [36mapp/Services/PaymentProcessor.php:36[0m  Shop\Services\PaymentProcessor::charge  [2m[message-at-throw][0m
+  [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[generic-exception][0m
   [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[message-at-throw][0m
 
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
-[1m6 sins[0m across 4 skills.
+[1m10 sins[0m across 7 skills.
 
 --- stderr
-· reading the whole path, not only the 3 files judged: 66 of the 131 rules read across files, so the scope chose what is reported, not what is read
+· reading the whole path, not only the 3 files judged: 96 of the 159 rules read across files, so the scope chose what is reported, not what is read
 ⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
   ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
-· read 824 files in <took> (0 from the cache, 824 by the bridges), judged in <took> (0 rule answers from memory, 105472 asked): 6 sins
+· read 834 files in <took> (0 from the cache, 834 by the bridges), judged in <took> (0 rule answers from memory, 130104 asked): 10 sins
 
 --- files

@@ -1,0 +1,13 @@
+{
+  "package": "filament/filament",
+  "ecosystem": "composer",
+  "versions": ">=3",
+  "provenance": "Filament registers its panel pages and resources under route names that start with filament. and the panel id; the project holds no registration for them",
+  "entries": [],
+  "identities": [
+    {
+      "name": "package-route-name",
+      "type": "filament."
+    }
+  ]
+}

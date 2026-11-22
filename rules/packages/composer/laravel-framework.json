@@ -2509,6 +2509,14 @@
         ]
       },
       "why": "A queued job's failure hook: the framework calls it with the failure only, and the job is serialized, so a service it needs cannot be injected."
+    },
+    {
+      "classes": [
+        "Illuminate\\Database\\Seeder",
+        "Illuminate\\Database\\Eloquent\\Factories\\Factory"
+      ],
+      "tag": "test-data",
+      "why": "A seeder or a model factory builds rows for tests and seeding: filling another object's fields is its job."
     }
   ],
   "identities": [

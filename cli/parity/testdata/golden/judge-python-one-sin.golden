@@ -1,8 +1,19 @@
-exit: 0
+exit: 1
 --- stdout
-[32m✓ No sins found in 328 files.[0m
+
+[1;33mphp/value-objects[0m  (4)
+  [1;36m↳ LOAD the skill `commandments-php-value-objects` before fixing[0m
+  [36mdiscounts.py:6[0m  (file)::discounted  [2m[array-bag][0m
+  [36mexports.py:5[0m  (file)::export_row  [2m[array-bag][0m
+  [36mshipping_labels.py:9[0m  (file)::label  [2m[array-bag][0m
+  [36mstock_report.py:7[0m  (file)::report_line  [2m[array-bag][0m
+
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+[1m4 sins[0m across 1 skill.
 
 --- stderr
-· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (0 rule answers from memory, 328 asked): 0 sins
+· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (0 rule answers from memory, 328 asked): 4 sins
 
 --- files

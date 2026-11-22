@@ -36,8 +36,8 @@ Options:
                                  .commandments/sessions/<id>/ or the journal plugin's data folder)
   --no-checklist                 print only, don't write the checklist file
   --benchmark                    time each detector and print the slowest
-  --profile=FILE                 with --benchmark, write a CPU profile of the detectors to FILE,
-                                 read with `go tool pprof`
+  --profile=FILE                 write a CPU profile of the whole judging, the read included, to
+                                 FILE, read with `go tool pprof`
 
   With no [path], judge scans the source roots declared under "paths" in .commandments/config.json
   — auto-detected on first run from your composer.json PSR-4 map (plus app/src), so scaffolding

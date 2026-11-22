@@ -299,24 +299,146 @@ func (p Parts) MarshalJSON() ([]byte, error) {
 }
 
 func (p *Parts) UnmarshalJSON(data []byte) error {
-	return orderedObject(data, func(role string, value json.RawMessage) error {
-		part := Part{Role: role}
-		if trimmed := bytes.TrimSpace(value); len(trimmed) > 0 && trimmed[0] == '[' {
-			part.List = true
-			if err := strictly(value, &part.Nodes); err != nil {
-				return fmt.Errorf("role %s: %w", role, err)
-			}
-		} else {
-			var node Node
-			if err := strictly(value, &node); err != nil {
-				return fmt.Errorf("role %s: %w", role, err)
-			}
-			part.Nodes = []*Node{&node}
+	return p.decodeFrom(json.NewDecoder(bytes.NewReader(data)))
+}
+
+func (p *Parts) decodeFrom(decoder *json.Decoder) error {
+	opened, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	if opened != json.Delim('{') {
+		return fmt.Errorf("an object, not %v", opened)
+	}
+	for decoder.More() {
+		key, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		role := key.(string)
+		part, err := decodedPart(role, decoder)
+		if err != nil {
+			return fmt.Errorf("role %s: %w", role, err)
 		}
 		*p = append(*p, part)
+	}
+	_, err = decoder.Token()
 
-		return nil
-	})
+	return err
+}
+
+func decodedPart(role string, decoder *json.Decoder) (Part, error) {
+	part := Part{Role: role}
+	opened, err := decoder.Token()
+	if err != nil {
+		return part, err
+	}
+	switch opened {
+	case nil:
+		part.Nodes = []*Node{{}}
+
+		return part, nil
+	case json.Delim('{'):
+		node := &Node{}
+		part.Nodes = []*Node{node}
+
+		return part, node.decodeFrom(decoder)
+	case json.Delim('['):
+		part.List = true
+		part.Nodes = []*Node{}
+		for decoder.More() {
+			element, err := decoder.Token()
+			if err != nil {
+				return part, err
+			}
+			if element != json.Delim('{') {
+				return part, fmt.Errorf("a node, not %v", element)
+			}
+			node := &Node{}
+			if err := node.decodeFrom(decoder); err != nil {
+				return part, err
+			}
+			part.Nodes = append(part.Nodes, node)
+		}
+		_, err := decoder.Token()
+
+		return part, err
+	}
+
+	return part, fmt.Errorf("a node or a list of nodes, not %v", opened)
+}
+
+func (n *Node) UnmarshalJSON(data []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	opened, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	if opened != json.Delim('{') {
+		return fmt.Errorf("a node is an object, not %v", opened)
+	}
+
+	return n.decodeFrom(decoder)
+}
+
+func (n *Node) decodeFrom(decoder *json.Decoder) error {
+	for decoder.More() {
+		key, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		name := key.(string)
+		if name == "parts" {
+			if err := n.Parts.decodeFrom(decoder); err != nil {
+				return err
+			}
+			continue
+		}
+		index, declared := nodeFields[name]
+		if !declared {
+			return fmt.Errorf("json: unknown field %q", name)
+		}
+		if err := decoder.Decode(n.field(index)); err != nil {
+			return err
+		}
+	}
+	_, err := decoder.Token()
+
+	return err
+}
+
+func (n *Node) field(index []int) any {
+	value := reflect.ValueOf(n).Elem()
+	for _, at := range index {
+		if value.Kind() == reflect.Pointer {
+			if value.IsNil() {
+				value.Set(reflect.New(value.Type().Elem()))
+			}
+			value = value.Elem()
+		}
+		value = value.Field(at)
+	}
+
+	return value.Addr().Interface()
+}
+
+var nodeFields = fieldsNamed(reflect.TypeFor[Node](), nil, map[string][]int{})
+
+func fieldsNamed(of reflect.Type, path []int, fields map[string][]int) map[string][]int {
+	for at := range of.NumField() {
+		field := of.Field(at)
+		index := append(slices.Clone(path), at)
+		if field.Anonymous && field.Type.Kind() == reflect.Pointer {
+			fieldsNamed(field.Type.Elem(), index, fields)
+			continue
+		}
+		name, _, _ := strings.Cut(field.Tag.Get("json"), ",")
+		if field.IsExported() && name != "" && name != "-" && name != "parts" {
+			fields[name] = index
+		}
+	}
+
+	return fields
 }
 
 // Link is the node ids one link of a node points at: one id, or an ordered list.

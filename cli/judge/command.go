@@ -96,7 +96,7 @@ func (Command) Help() help.Help {
 		Option("--checklist=FILE", "write the checklist here (default: your session's sins/sins.md, in .commandments/sessions/<id>/ or the journal plugin's data folder)").
 		Option("--no-checklist", "print only, don't write the checklist file").
 		Option("--benchmark", "time each detector and print the slowest").
-		Option("--profile=FILE", "with --benchmark, write a CPU profile of the detectors to FILE, read with `go tool pprof`").
+		Option("--profile=FILE", "write a CPU profile of the whole judging, the read included, to FILE, read with `go tool pprof`").
 		Note("With no [path], judge scans the source roots declared under \"paths\" in " +
 			".commandments/config.json — auto-detected on first run from your composer.json PSR-4 map (plus " +
 			"app/src), so scaffolding like database/, storage/ and config/ is not judged. Run `commandments config " +
@@ -245,6 +245,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 }
 
 func (c Command) judge(options options, selected []rule.Detector, judged config.Config, targets scope.Scope, space workspace.Workspace, console cli.Console) (int, error) {
+	defer profiled(options.profile, console)()
 	if !options.parallelGiven && judged.Parallel > 0 {
 		options.parallel = judged.Parallel
 	}
@@ -484,9 +485,7 @@ func (c Command) run(tasks []Task, options options, progress *cli.Progress, pars
 		return judgement
 	}
 
-	stop := profiled(options.profile, console)
 	judgement, profiles := Benchmark(tasks, console.Err)
-	stop()
 	progress.Finish()
 	fmt.Fprint(console.Err, Profiles(profiles, parseSeconds))
 

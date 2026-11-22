@@ -41,11 +41,13 @@ exit: 0
 [33mHow to fix it[0m
 
   Return a typed value object, not a multi-field string-keyed array literal.
-  Return a Spatie `Data` object via `::from(...)`.
+  Return a value object with those fields (a data class, a record, a struct) instead of
+  the keyed literal.
 
 [33mCommands[0m
 
   [36mLearn     [0m load the skill [1mcommandments-php-value-objects[0m
+  [36mExempts   [0m commandments exemptions array-return-bag
   [36mFind it   [0m commandments judge --sin=array-return-bag
   [36mTurn off  [0m commandments disable array-return-bag
   [36mWrong?    [0m commandments report --detector=array-return-bag --reason="…" --ref=PATH:LINE
