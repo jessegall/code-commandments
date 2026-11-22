@@ -19,3 +19,16 @@ func TestAPathIsCleanedOfDotsAndEmptySegments(t *testing.T) {
 		}
 	}
 }
+
+func TestAPathNamesTheFoldersAboveTheFileItEndsOn(t *testing.T) {
+	cases := map[string][]string{
+		"framework/cache":                  {"framework", "cache"},
+		"framework/cache/error-count.json": {"framework", "cache"},
+		"app/Exports/":                     {"app", "Exports"},
+	}
+	for path, want := range cases {
+		if got, spelled := engine.FoldersBelow(path); !spelled || !slices.Equal(got, want) {
+			t.Errorf("%s names the folders %v, want %v", path, got, want)
+		}
+	}
+}

@@ -5,15 +5,15 @@ import (
 	"unicode"
 )
 
-// FoldersBelow is the folders a relative path written as text names, its last segment left out unless a slash follows
-// it, and whether the text reads as a path at all.
+// FoldersBelow is the folders a relative path written as text names, its last segment left out when it names a file
+// (it has an extension and no slash follows it), and whether the text reads as a path at all.
 func FoldersBelow(written string) ([]string, bool) {
 	if !readsAsPath(written) {
 		return nil, false
 	}
 	segments := PathSegments(written)
-	if !strings.HasSuffix(written, "/") {
-		segments = segments[:max(len(segments)-1, 0)]
+	if last := len(segments) - 1; last >= 0 && !strings.HasSuffix(written, "/") && strings.Contains(segments[last], ".") {
+		segments = segments[:last]
 	}
 	folder := CleanPath(segments)
 

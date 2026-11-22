@@ -3,7 +3,6 @@ package engine
 import (
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -227,17 +226,11 @@ func (cm Commented) Restates() bool {
 }
 
 func (cm Commented) Documents() Match {
-	if cm.Attached != nil {
-		return cm.File.Match(*cm.Attached)
-	}
-
-	documentable := documentableIn(cm.File)
-	at := sort.Search(len(documentable), func(i int) bool { return documentable[i].node.Span.Start >= cm.Span.End })
-	if at == len(documentable) {
+	if cm.Attached == nil {
 		return Match{}
 	}
 
-	return documentable[at]
+	return cm.File.Match(*cm.Attached)
 }
 
 func (cm Commented) Line() int {
@@ -261,32 +254,3 @@ func (cm Commented) Location() Match {
 
 	return cm.Match()
 }
-
-func documentableIn(file *File) []Match {
-	return Analysis(file.Codebase(), documentableOf{file}, func(*Codebase) []Match {
-		var kept []Match
-		for _, match := range file.Match(0).Descendants() {
-			if documentable(match) {
-				kept = append(kept, match)
-			}
-		}
-
-		return kept
-	})
-}
-
-// documentableOf keys one file's documentable nodes as an analysis of the codebase.
-type documentableOf struct {
-	file *File
-}
-
-func documentable(match Match) bool {
-	if match.Is("declaration") && !slices.Contains(undocumented, match.Kind()) {
-		return true
-	}
-
-	return match.Role() != "expression" && match.Role() != "other"
-}
-
-// undocumented are the declarations a comment above never documents: what they declare is documented with its owner.
-var undocumented = []string{"module", "import", "import-binding", "binding", "declarator", "parameter"}
