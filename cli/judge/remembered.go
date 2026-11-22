@@ -7,7 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 
 // Remembered is what one run keeps for the next in its project's own folder, good only for the build that wrote it: what every detector answered for each file's contents. It lives at the journal of the project root when the journal drives the project, and under the user's cache otherwise: one folder per project that all its worktrees share, so the plugin's runs, queued runs and runs started by hand remember together and claim the same project. Finding it also hands on the hours the project keeps an unused cache, so the run and every bridge it starts prune by them.
 type Remembered struct {
-	Memories detectors.MemoryFile
+	Memories rule.MemoryFile
 }
 
 func RememberedFor(project string, warn func(...string)) (Remembered, bool) {
@@ -36,7 +36,7 @@ func RememberedFor(project string, warn func(...string)) (Remembered, bool) {
 	}
 
 	return Remembered{
-		Memories: detectors.MemoryFile{Memories: detectors.EveryMemory(), Path: filepath.Join(folder, rememberedDetectorsFile), Build: bridge.Build(), Warn: warn},
+		Memories: rule.MemoryFile{Memories: rule.EveryMemory(), Path: filepath.Join(folder, rememberedDetectorsFile), Build: bridge.Build(), Warn: warn},
 	}, true
 }
 

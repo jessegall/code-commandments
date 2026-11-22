@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/detectors"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func inAProject(t *testing.T) string {
@@ -98,8 +98,8 @@ func finds(t *testing.T, root, sin string) bool {
 		t.Fatal(err)
 	}
 
-	return slices.ContainsFunc(enabled, func(rule detectors.Detector) bool {
-		return rule.Sin().Definition().Name == sin
+	return slices.ContainsFunc(enabled, func(asked rule.Detector) bool {
+		return asked.Sin().Definition().Name == sin
 	})
 }
 

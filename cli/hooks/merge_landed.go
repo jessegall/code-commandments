@@ -12,7 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const landedEvent = "suites.coding.workers.worker_worktree.merge"
@@ -186,7 +186,7 @@ func marksBrought(where string, changed []string, before, after string) ([]SinMa
 	marking := Marks(projectOf(l.project)).In(l.project)
 	brought := git.ChangedLinesBetweenEach(l.project, before, after, files)
 
-	marks, _, read := judgedWhole(l.project, project, rules, func(file string) []detectors.Detector { return project.RulesFor(l.project, file, rules) },
+	marks, _, read := judgedWhole(l.project, project, rules, func(file string) []rule.Detector { return project.RulesFor(l.project, file, rules) },
 		files, brought, marking)
 	if !read {
 		return nil, treeNotRead
@@ -195,7 +195,7 @@ func marksBrought(where string, changed []string, before, after string) ([]SinMa
 	return marks, ""
 }
 
-func enabledIn(project config.Config, root string) []detectors.Detector {
+func enabledIn(project config.Config, root string) []rule.Detector {
 	enabled, err := project.Enabled(config.InstalledIn(root))
 	if err != nil {
 		return nil

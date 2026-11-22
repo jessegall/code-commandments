@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -32,7 +31,7 @@ func TestConfigureSetsARuleParameterByItsNameOrAlias(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		tuned, err := tune([]detectors.Detector{parameterisedRule(t)}, project.Configurators)
+		tuned, err := tune([]rule.Detector{parameterisedRule(t)}, project.Configurators)
 		if err != nil {
 			t.Fatalf("%s is refused: %v", written, err)
 		}
@@ -47,7 +46,7 @@ func TestConfigureRefusesAnUnknownParameterNamingRuleAndKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = tune([]detectors.Detector{parameterisedRule(t)}, project.Configurators)
+	_, err = tune([]rule.Detector{parameterisedRule(t)}, project.Configurators)
 	if err == nil || !strings.Contains(err.Error(), "configure(") || !strings.Contains(err.Error(), `"minClass"`) || !strings.Contains(err.Error(), "layered-imports") {
 		t.Errorf("an unknown parameter is refused with %v", err)
 	}

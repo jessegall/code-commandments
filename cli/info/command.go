@@ -16,7 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skills"
 )
@@ -85,7 +85,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-func (c Command) describe(detector detectors.Detector, full bool, console cli.Console) {
+func (c Command) describe(detector rule.Detector, full bool, console cli.Console) {
 	sin := detector.Sin().Definition()
 	teaching := sin.Skill.Definition()
 

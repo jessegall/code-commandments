@@ -7,13 +7,13 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/reported"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 // SinMark is one sin a rule found in an edited file, whether it stands on a line the edit changed, and the report this project has already filed about it, where there is one.
 type SinMark struct {
-	Rule    detectors.Detector
+	Rule    rule.Detector
 	Match   engine.Match
 	Touched bool
 	Filed   reported.Row
@@ -48,9 +48,9 @@ func (m Marking) CutFrom(cut string) Marking {
 	return m
 }
 
-func (m Marking) Of(rule detectors.Detector, match engine.Match, changed git.ChangedLines) SinMark {
-	mark := SinMark{Rule: rule, Match: match, Touched: changed.Covers(match.Line())}
-	mark.Filed, _ = m.record.Reported(append([]string{catalog.Name(rule)}, rule.Sin().Definition().Names()...), m.root, match.File(), match.Line())
+func (m Marking) Of(asked rule.Detector, match engine.Match, changed git.ChangedLines) SinMark {
+	mark := SinMark{Rule: asked, Match: match, Touched: changed.Covers(match.Line())}
+	mark.Filed, _ = m.record.Reported(append([]string{catalog.Name(asked)}, asked.Sin().Definition().Names()...), m.root, match.File(), match.Line())
 
 	return mark
 }

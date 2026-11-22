@@ -1,4 +1,4 @@
-package detectors
+package rule
 
 import (
 	"reflect"

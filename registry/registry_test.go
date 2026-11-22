@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func TestTheRegistryEnrolsEveryRuleFolder(t *testing.T) {
@@ -26,22 +26,22 @@ func TestTheRegistryEnrolsEveryRuleFolder(t *testing.T) {
 }
 
 func TestANameOneRuleOfSeveralEnginesAnswersToIsThatRule(t *testing.T) {
-	named := detectors.EveryNamedIn(detectors.All(), "DeepNestingDetector")
-	if len(named) != 1 || len(detectors.EnginesOf(named[0])) < 2 {
+	named := rule.EveryNamedIn(rule.All(), "DeepNestingDetector")
+	if len(named) != 1 || len(rule.EnginesOf(named[0])) < 2 {
 		t.Fatalf("want the one deep-nesting rule of several engines, got %d rules", len(named))
 	}
-	if rule, found := detectors.Named("DeepNestingDetector"); !found || rule.Sin().Definition().Name != "deep-nesting" {
+	if named, found := rule.Named("DeepNestingDetector"); !found || rule.Sin().Definition().Name != "deep-nesting" {
 		t.Fatalf("DeepNestingDetector names no single rule")
 	}
 }
 
 func TestANameGivenItsEngineMeansTheRuleJudgingThatEngine(t *testing.T) {
 	for _, engine := range []catalog.Engine{catalog.PHP, catalog.Python, catalog.CSharp, catalog.Go} {
-		rule, found := detectors.Named(string(engine) + "/DeepNestingDetector")
+		named, found := rule.Named(string(engine) + "/DeepNestingDetector")
 		if !found {
 			t.Fatalf("%s/DeepNestingDetector means no rule", engine)
 		}
-		if !slices.Contains(detectors.EnginesOf(rule), engine) {
+		if !slices.Contains(rule.EnginesOf(named), engine) {
 			t.Fatalf("%s/DeepNestingDetector means a rule that does not judge %s", engine, engine)
 		}
 	}

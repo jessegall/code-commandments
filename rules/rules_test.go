@@ -7,7 +7,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/rules"
 )
@@ -22,7 +21,7 @@ func TestInstalledRulesAllLoad(t *testing.T) {
 }
 
 func TestInstalledRuleIsRegisteredUnderItsNameAliasesAndSkill(t *testing.T) {
-	for _, detector := range detectors.All() {
+	for _, detector := range rule.All() {
 		sin := detector.Sin().Definition()
 		if sin.Name != "namespace-cycle" {
 			continue

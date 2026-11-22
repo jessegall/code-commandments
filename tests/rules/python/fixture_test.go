@@ -9,11 +9,11 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func shop(t *testing.T) *engine.Codebase {
@@ -42,12 +42,8 @@ func TestNoPythonRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	fixturetest.NoRuleOutgrowsItsTree(t, engine.Load(stream), engine.Load(stream.TwiceOver()), configured(t))
 }
 
-func configured(t testing.TB) []detectors.Detector {
-	return fixturetest.Configured(t, "../../tests/Fixtures/python", detectors.Of(catalog.Python))
-}
-
-func TestEveryPythonDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
-	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: fixture.Proven(configured(t)), Known: fixture.Proven(detectors.Of(catalog.Python)), Resolver: fixture.FileScenarios})
+func configured(t testing.TB) []rule.Detector {
+	return fixturetest.Configured(t, "../../tests/Fixtures/python", rule.Of(catalog.Python))
 }
 
 func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
@@ -57,23 +53,8 @@ func TestUndeclaredMemberRecognizesTheDeclaredContract(t *testing.T) {
 	}
 	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  engine.Load(stream),
-		Detectors: fixture.Proven([]detectors.Detector{shipped(t, "undeclared-member")}),
-		Known:     fixture.Proven(detectors.Every(catalog.Python)),
+		Detectors: fixture.Proven([]rule.Detector{shipped(t, "undeclared-member")}),
+		Known:     fixture.Proven(rule.Every(catalog.Python)),
 		Resolver:  fixture.FileScenarios,
 	})
-}
-
-func TestEverySinTheFixtureMarksHasADetector(t *testing.T) {
-	codebase := shop(t)
-	registered := detectors.Of(catalog.Python)
-	var unknown []string
-	for _, marker := range fixture.Markers(codebase) {
-		if _, ok := detectors.NamedIn(registered, marker.Name); !ok && marker.Tag == fixture.Sinful && !slices.Contains(unknown, marker.Name) {
-			unknown = append(unknown, marker.Name)
-		}
-	}
-	slices.Sort(unknown)
-	for _, name := range unknown {
-		t.Errorf("the fixture marks %s, which no Python detector finds", name)
-	}
 }

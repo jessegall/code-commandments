@@ -7,23 +7,22 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 )
 
 type publicContractDetector interface {
-	detectors.Detector
-	WithPublicContracts([]string, []string) detectors.Detector
+	rule.Detector
+	WithPublicContracts([]string, []string) rule.Detector
 }
 
 type layeredDetector interface {
-	WithLayers(map[string][]string) detectors.Detector
+	WithLayers(map[string][]string) rule.Detector
 }
 
-func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
-	var enabled []detectors.Detector
-	for _, detector := range Packaged(detectors.All(), installed) {
+func (c Config) Enabled(installed Installed) ([]rule.Detector, error) {
+	var enabled []rule.Detector
+	for _, detector := range Packaged(rule.All(), installed) {
 		if !c.TurnsOff(detector) {
 			enabled = append(enabled, detector)
 		}
@@ -33,12 +32,12 @@ func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 }
 
 // Applied is each detector as the config tunes it: its layers, its public contracts, then the configure steps.
-func (c Config) Applied(list []detectors.Detector) ([]detectors.Detector, error) {
-	var kept []detectors.Detector
+func (c Config) Applied(list []rule.Detector) ([]rule.Detector, error) {
+	var kept []rule.Detector
 
 	for _, detector := range list {
 		if marks, ok := detector.(layeredDetector); ok {
-			engine, _ := detectors.EngineOf(detector)
+			engine, _ := rule.EngineOf(detector)
 			detector = marks.WithLayers(c.Layers(engine))
 		}
 		if file, ok := detector.(rule.Rule); ok {
@@ -47,7 +46,7 @@ func (c Config) Applied(list []detectors.Detector) ([]detectors.Detector, error)
 			detector = file.WithLayers(c.Layers(engine)).WithPublicContracts(contracts)
 		}
 		if accepts, ok := detector.(publicContractDetector); ok {
-			engine, _ := detectors.EngineOf(detector)
+			engine, _ := rule.EngineOf(detector)
 			contracts := slices.AppendSeq(slices.Clone(c.PublicContracts[engine]), maps.Keys(c.ContractReasons[engine]))
 			if registrars := c.ContractRegistrars[engine]; len(contracts) > 0 || len(registrars) > 0 {
 				detector = accepts.WithPublicContracts(contracts, registrars)
@@ -72,8 +71,8 @@ func Everything(sins.Package) bool {
 	return true
 }
 
-func Packaged(list []detectors.Detector, installed Installed) []detectors.Detector {
-	var kept []detectors.Detector
+func Packaged(list []rule.Detector, installed Installed) []rule.Detector {
+	var kept []rule.Detector
 
 	for _, detector := range list {
 		if required := detector.Sin().Definition().Requires; required.Name == "" || installed(required) {
@@ -84,8 +83,8 @@ func Packaged(list []detectors.Detector, installed Installed) []detectors.Detect
 	return kept
 }
 
-func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.Detector, error) {
-	tuned := append([]detectors.Detector(nil), list...)
+func tune(list []rule.Detector, configurators []Configurator) ([]rule.Detector, error) {
+	tuned := append([]rule.Detector(nil), list...)
 
 	for _, configurator := range configurators {
 		calls := slices.DeleteFunc(slices.Clone(configurator.Calls), func(call Call) bool { return call.Method == Judges })
@@ -115,7 +114,7 @@ func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.
 
 // indexOf is where the rule a configure names stands in the list: by its name, its sin's name or an alias, under any
 // engine it judges, or none written.
-func indexOf(list []detectors.Detector, named Rule) int {
+func indexOf(list []rule.Detector, named Rule) int {
 	for i, detector := range list {
 		if named.Kind == Detector && named.Names(detector) {
 			return i
@@ -132,7 +131,7 @@ type parameterised interface {
 
 // apply sets one parameter of a rule: configure's {"name": [value]}. A layer step is read once for the whole engine
 // and reaches every rule through WithLayers, so it is left to that.
-func apply(detector detectors.Detector, call Call) (detectors.Detector, error) {
+func apply(detector rule.Detector, call Call) (rule.Detector, error) {
 	declaring, declares := detector.(parameterised)
 	switch {
 	case call.Method == "layer":

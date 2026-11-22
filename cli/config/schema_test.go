@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func TestTheSchemaOffersEveryShippedDetectorByName(t *testing.T) {
@@ -25,8 +25,8 @@ func TestTheSchemaOffersEveryShippedDetectorByName(t *testing.T) {
 		}
 	}
 
-	for _, detector := range detectors.All() {
-		engine, _ := detectors.EngineOf(detector)
+	for _, detector := range rule.All() {
+		engine, _ := rule.EngineOf(detector)
 
 		if id := (Rule{Detector, engine, catalog.Name(detector)}).ID(); !offered[id] {
 			t.Errorf("%s is not offered", id)

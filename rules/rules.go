@@ -15,7 +15,6 @@ import (
 	"testing/fstest"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
@@ -168,7 +167,7 @@ func Packages() ([]engine.PackageFacts, error) {
 func init() {
 	for _, each := range installed.Rules {
 		if !each.IsUnpublished() {
-			detectors.Register(each.Engine(), each)
+			rule.Register(each.Engine(), each)
 		}
 	}
 	facts, err := Packages()
@@ -181,18 +180,18 @@ func init() {
 }
 
 // All is every rule the tool ships: the installed rule files.
-func All() []detectors.Detector {
-	return detectors.All()
+func All() []rule.Detector {
+	return rule.All()
 }
 
 // Of is every shipped rule that judges the engine.
-func Of(engine catalog.Engine) []detectors.Detector {
-	return detectors.Of(engine)
+func Of(engine catalog.Engine) []rule.Detector {
+	return rule.Of(engine)
 }
 
 // EnginesOf is every engine a shipped rule judges.
-func EnginesOf(rule detectors.Detector) []catalog.Engine {
-	return detectors.EnginesOf(rule)
+func EnginesOf(asked rule.Detector) []catalog.Engine {
+	return rule.EnginesOf(asked)
 }
 
 var described = rule.Describe(Sources(), skill.Slugged)

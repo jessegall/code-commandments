@@ -13,7 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -42,7 +42,7 @@ func (e Examples) Add(more Examples) {
 	}
 }
 
-func Key(detector detectors.Detector) string {
+func Key(detector rule.Detector) string {
 	return detector.Sin().Definition().Slug() + ":" + catalog.Name(detector)
 }
 
@@ -153,8 +153,8 @@ func commands(definition skill.Definition, taught []sins.Sin) string {
 		if scaffolding, helps := sin.(sins.Scaffolding); helps && len(scaffolding.Scaffolds()) > 0 {
 			scaffolds = append(scaffolds, name)
 		}
-		if slices.ContainsFunc(finders, func(detector detectors.Detector) bool {
-			_, demands := detector.(detectors.RequiresBestDesign)
+		if slices.ContainsFunc(finders, func(detector rule.Detector) bool {
+			_, demands := detector.(rule.RequiresBestDesign)
 
 			return demands
 		}) {
@@ -382,7 +382,7 @@ func sinsOf(slug string) []sins.Sin {
 	return taught
 }
 
-func detectorOf(sin sins.Sin) (detectors.Detector, bool) {
+func detectorOf(sin sins.Sin) (rule.Detector, bool) {
 	finders := detectorsOf(sin)
 	if len(finders) == 0 {
 		return nil, false
@@ -391,9 +391,9 @@ func detectorOf(sin sins.Sin) (detectors.Detector, bool) {
 	return finders[0], true
 }
 
-func detectorsOf(sin sins.Sin) []detectors.Detector {
-	var finders []detectors.Detector
-	for _, detector := range detectors.All() {
+func detectorsOf(sin sins.Sin) []rule.Detector {
+	var finders []rule.Detector
+	for _, detector := range rule.All() {
 		if detector.Sin().Definition().Name == sin.Definition().Name {
 			finders = append(finders, detector)
 		}

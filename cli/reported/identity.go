@@ -9,15 +9,28 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/rule"
 )
 
-func Identity(rule, root, file string, line int) (id string, read bool) {
+func Identity(name, root, file string, line int) (id string, read bool) {
+	return identityAs(canonical(name), root, file, line)
+}
+
+func canonical(name string) string {
+	if found, named := rule.Named(name); named {
+		return found.Sin().Definition().Name
+	}
+
+	return name
+}
+
+func identityAs(name, root, file string, line int) (id string, read bool) {
 	text, read := flaggedText(file, line)
 	if !read {
 		text = "line " + strconv.Itoa(line)
 	}
 
-	return fmt.Sprintf("%x", sha1.Sum([]byte(rule+"\x00"+source.Relative(root, file)+"\x00"+text))), read
+	return fmt.Sprintf("%x", sha1.Sum([]byte(name+"\x00"+source.Relative(root, file)+"\x00"+text))), read
 }
 
 func flaggedText(file string, line int) (text string, read bool) {

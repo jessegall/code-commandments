@@ -6,7 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -16,7 +16,7 @@ func (c Config) Judged(detector Rule) []string {
 	return c.judged(func(target Rule) bool { return target.ID() == detector.ID() })
 }
 
-func (c Config) JudgedBy(detector detectors.Detector, judging catalog.Engine) []string {
+func (c Config) JudgedBy(detector rule.Detector, judging catalog.Engine) []string {
 	return c.judged(func(target Rule) bool {
 		return target.Kind == Detector && target.Names(detector) && (target.Engine == "" || judging == "" || target.Engine == judging)
 	})
@@ -86,16 +86,16 @@ func folderOf(value any) string {
 	return strings.Trim(strings.TrimSpace(named), "/")
 }
 
-func (c Config) RulesFor(root, file string, rules []detectors.Detector) []detectors.Detector {
+func (c Config) RulesFor(root, file string, rules []rule.Detector) []rule.Detector {
 	inside := c.judgedFolderOf(root, file)
 	if inside == "" {
 		return rules
 	}
 
-	var kept []detectors.Detector
-	for _, rule := range rules {
-		if slices.Contains(c.JudgedBy(rule, ""), inside) {
-			kept = append(kept, rule)
+	var kept []rule.Detector
+	for _, each := range rules {
+		if slices.Contains(c.JudgedBy(each, ""), inside) {
+			kept = append(kept, each)
 		}
 	}
 
@@ -125,11 +125,11 @@ type Declaring interface {
 	Judges() []string
 }
 
-func (c Config) Judging(rules []detectors.Detector) Config {
+func (c Config) Judging(rules []rule.Detector) Config {
 	var declared []Configurator
 
-	for _, rule := range rules {
-		declaring, declares := rule.(Declaring)
+	for _, each := range rules {
+		declaring, declares := each.(Declaring)
 		if !declares {
 			continue
 		}

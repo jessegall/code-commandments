@@ -15,8 +15,8 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/sidebyside"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 // Judgement is what a run found, and the rules that broke and could not run.
@@ -27,7 +27,7 @@ type Judgement struct {
 
 // Task is one detector and the codebase it judges.
 type Task struct {
-	Detector detectors.Detector
+	Detector rule.Detector
 	Codebase *engine.Codebase
 }
 
@@ -82,14 +82,14 @@ func try(task Task, warn io.Writer) (result attempt) {
 		result = attempt{skipped: name}
 	}()
 
-	matches := detectors.FindRemembering(task.Detector, task.Codebase)
+	matches := rule.FindRemembering(task.Detector, task.Codebase)
 
 	return attempt{findings: findings(task.Detector, matches)}
 }
 
-func findings(detector detectors.Detector, matches []engine.Match) []engine.Finding {
+func findings(detector rule.Detector, matches []engine.Match) []engine.Finding {
 	sin := detector.Sin().Definition()
-	language, _ := detectors.EngineOf(detector)
+	language, _ := rule.EngineOf(detector)
 	groups := groupsOf(detector, matches)
 	found := make([]engine.Finding, 0, len(matches))
 
@@ -108,13 +108,13 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 		}
 
 		group := ""
-		if grouped, isGrouped := detector.(detectors.Grouped); isGrouped {
+		if grouped, isGrouped := detector.(rule.Grouped); isGrouped {
 			if key, keyed := grouped.GroupKey(match); keyed {
 				group = key
 			}
 		}
 		advice := ""
-		if advises, ok := detector.(detectors.AdvisingDetector); ok {
+		if advises, ok := detector.(rule.AdvisingDetector); ok {
 			advice = advises.AdviceFor(match)
 		}
 
@@ -160,8 +160,8 @@ func Twinned(findings []engine.Finding) []engine.Finding {
 	return findings
 }
 
-func groupsOf(detector detectors.Detector, matches []engine.Match) [][]string {
-	grouped, isGrouped := detector.(detectors.Grouped)
+func groupsOf(detector rule.Detector, matches []engine.Match) [][]string {
+	grouped, isGrouped := detector.(rule.Grouped)
 	groups := make([][]string, len(matches))
 
 	if !isGrouped {

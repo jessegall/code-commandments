@@ -9,8 +9,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const (
@@ -43,25 +43,25 @@ const (
 	judgedAlone    Narrowed = "an edit is judged on its own, and the whole tree is read only to judge the changes together"
 )
 
-func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
+func marksOver(codebase *engine.Codebase, marking Marking, file string, rules []rule.Detector, changed git.ChangedLines) []SinMark {
 	narrowed := codebase.Reporting(file)
 	language := source.OfFile(file)
 
 	var marks []SinMark
 
-	for _, rule := range rules {
-		if !detectors.JudgesAny(rule, language.Engines()) {
+	for _, each := range rules {
+		if !rule.JudgesAny(each, language.Engines()) {
 			continue
 		}
 
 		asked := narrowed
 
-		for _, match := range safely(rule, asked) {
+		for _, match := range safely(each, asked) {
 			if match.File() != file {
 				continue
 			}
 
-			marks = append(marks, marking.Of(rule, match, changed))
+			marks = append(marks, marking.Of(each, match, changed))
 		}
 	}
 

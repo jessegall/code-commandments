@@ -10,8 +10,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/sidebyside"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -19,7 +19,7 @@ import (
 // checkout shares, every rule asked, and the marks kept that land on the lines each named file changed. A rule that
 // reads across files sees the whole tree, and an unchanged file costs a cache read.
 // It says false when the checkout could not be read, so nothing was asked.
-func judgedWhole(checkout string, project config.Config, rules []detectors.Detector, rulesFor func(string) []detectors.Detector,
+func judgedWhole(checkout string, project config.Config, rules []rule.Detector, rulesFor func(string) []rule.Detector,
 	files []string, linesOf func(string) git.ChangedLines, marking Marking) ([]SinMark, judgedTimes, bool) {
 	if len(files) == 0 {
 		return nil, judgedTimes{}, true
@@ -46,10 +46,10 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 	found := make([][]engine.Match, len(rules))
 	sidebyside.Each(len(rules), project.Parallel, func(at int) { found[at] = safely(rules[at], reported) })
 	var marks []SinMark
-	for at, rule := range rules {
+	for at, judging := range rules {
 		for _, match := range found[at] {
 			file := match.File()
-			if !slices.Contains(files, file) || !askedOf(asked, rulesFor, file)[detectors.IdentityOf(rule)] {
+			if !slices.Contains(files, file) || !askedOf(asked, rulesFor, file)[rule.IdentityOf(judging)] {
 				continue
 			}
 			if _, read := lines[file]; !read {
@@ -58,7 +58,7 @@ func judgedWhole(checkout string, project config.Config, rules []detectors.Detec
 			if !lines[file].Covers(match.Line()) {
 				continue
 			}
-			if mark := marking.Of(rule, match, lines[file]); !mark.IsFiled() {
+			if mark := marking.Of(judging, match, lines[file]); !mark.IsFiled() {
 				marks = append(marks, mark)
 			}
 		}
@@ -94,13 +94,13 @@ var readWhole = func(checkout string, project config.Config, changed []string) (
 }
 
 // askedOf is the rules a file is judged by, by identity, worked out once a file.
-func askedOf(asked map[string]map[string]bool, rulesFor func(string) []detectors.Detector, file string) map[string]bool {
+func askedOf(asked map[string]map[string]bool, rulesFor func(string) []rule.Detector, file string) map[string]bool {
 	if known, held := asked[file]; held {
 		return known
 	}
 	known := map[string]bool{}
-	for _, rule := range rulesFor(file) {
-		known[detectors.IdentityOf(rule)] = true
+	for _, each := range rulesFor(file) {
+		known[rule.IdentityOf(each)] = true
 	}
 	asked[file] = known
 

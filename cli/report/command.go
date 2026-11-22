@@ -15,7 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 var hedges = []string{
@@ -116,7 +116,7 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 		return 2
 	}
 
-	if _, known := detectors.Named(detector); !known && len(sharedByEngines(detector)) == 0 {
+	if _, known := rule.Named(detector); !known && len(sharedByEngines(detector)) == 0 {
 		console.Warn("✋ no rule is named " + detector + ", so there is nothing to report and no issue was filed.")
 
 		return 2
@@ -182,8 +182,8 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 }
 
 func ruleName(detector string) string {
-	if rule, found := detectors.Named(detector); found {
-		return catalog.Name(rule)
+	if named, found := rule.Named(detector); found {
+		return catalog.Name(named)
 	}
 
 	return detector
@@ -236,8 +236,8 @@ func remember(detector, reason string, refs []Reference, filed Filed, console cl
 }
 
 func sinOf(detector string) string {
-	if rule, found := detectors.Named(detector); found {
-		return rule.Sin().Definition().Name
+	if named, found := rule.Named(detector); found {
+		return named.Sin().Definition().Name
 	}
 
 	return ""
@@ -266,12 +266,12 @@ func workingFolder() string {
 }
 
 func requiresBestDesign(name string) bool {
-	detector, found := detectors.Named(name)
+	detector, found := rule.Named(name)
 	if !found {
 		return false
 	}
 
-	asks, marked := detector.(detectors.RequiresBestDesign)
+	asks, marked := detector.(rule.RequiresBestDesign)
 
 	return marked && asks.RequiresBestDesign()
 }
@@ -345,19 +345,19 @@ func summarise(reason string) string {
 
 func sharedByEngines(name string) []string {
 	var spellings []string
-	for _, rule := range detectors.EveryNamedIn(detectors.All(), name) {
-		engine, _ := detectors.EngineOf(rule)
-		spellings = append(spellings, "--detector="+string(engine)+"/"+catalog.Name(rule))
+	for _, each := range rule.EveryNamedIn(rule.All(), name) {
+		engine, _ := rule.EngineOf(each)
+		spellings = append(spellings, "--detector="+string(engine)+"/"+catalog.Name(each))
 	}
 
 	return spellings
 }
 
-func ownRule(name string) (detectors.Detector, bool) {
-	var own []detectors.Detector
+func ownRule(name string) (rule.Detector, bool) {
+	var own []rule.Detector
 	for _, read := range custom.InForce(workspace.ProjectRoot(workingFolder())).Rules {
 		own = append(own, read)
 	}
 
-	return detectors.NamedIn(own, name)
+	return rule.NamedIn(own, name)
 }

@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/config"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/rules"
 )
 
 // shippedNamed is each shipped rule judging Go whose sin has one of the names, in the order named.
-func shippedNamed(t *testing.T, names ...string) []detectors.Detector {
+func shippedNamed(t *testing.T, names ...string) []rule.Detector {
 	t.Helper()
-	var found []detectors.Detector
+	var found []rule.Detector
 	for _, name := range names {
 		for _, shipped := range rules.All() {
 			if shipped.Sin().Definition().Name == name {

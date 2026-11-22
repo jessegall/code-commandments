@@ -13,7 +13,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/skill"
@@ -196,8 +195,8 @@ func fromRoot(root, path string) string {
 	return filepath.ToSlash(path)
 }
 
-func (p Project) Enabled(project config.Config) []detectors.Detector {
-	var enabled []detectors.Detector
+func (p Project) Enabled(project config.Config) []rule.Detector {
+	var enabled []rule.Detector
 
 	for _, own := range p.Rules {
 		if slices.Contains(project.Detectors, own.Name()) && !project.Disables(config.Rule{Kind: config.Detector, Name: own.Name()}) {
@@ -248,7 +247,7 @@ func (p Project) ClassWarnings() []string {
 	return warnings
 }
 
-func Owns(detector detectors.Detector) bool {
+func Owns(detector rule.Detector) bool {
 	read, isRule := detector.(rule.Rule)
 
 	return isRule && read.Origin() == rule.Project

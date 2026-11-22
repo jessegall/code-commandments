@@ -2,8 +2,8 @@ package judge
 
 import (
 	"github.com/jessegall/code-commandments/cli/reported"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 // Reported is a finding this project has already reported to the tool's own repository, with the report that covers it.
@@ -37,7 +37,7 @@ func apart(root string, findings []engine.Finding) (active []engine.Finding, fil
 // answeredNames is every name the rule a finding names answers to, so a report filed under a former name still holds.
 func answeredNames(detector string) []string {
 	names := []string{detector}
-	for _, each := range detectors.EveryNamedIn(detectors.All(), detector) {
+	for _, each := range rule.EveryNamedIn(rule.All(), detector) {
 		names = append(names, each.Sin().Definition().Names()...)
 	}
 

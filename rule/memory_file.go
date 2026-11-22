@@ -1,4 +1,4 @@
-package detectors
+package rule
 
 import "github.com/jessegall/code-commandments/cache"
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func TestAWorkersFileInAWorktreeIsJudged(t *testing.T) {
@@ -52,7 +52,7 @@ func TestAWorkersFileInAWorktreeIsJudged(t *testing.T) {
 	}
 }
 
-func allRules(t *testing.T, root string, project config.Config) []detectors.Detector {
+func allRules(t *testing.T, root string, project config.Config) []rule.Detector {
 	t.Helper()
 
 	enabled, err := project.Enabled(config.InstalledIn(root))

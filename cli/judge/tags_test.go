@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 )
 
-func ownRule(t *testing.T, name, tags string) detectors.Detector {
+func ownRule(t *testing.T, name, tags string) rule.Detector {
 	t.Helper()
 
 	text := `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "` + name + `", "description": "a test rule", "skill": "python/flow"}, "find": {"select": "call", "as": "c", "where": true, "emit": "$c"}` + tags + `}`
@@ -23,7 +22,7 @@ func ownRule(t *testing.T, name, tags string) detectors.Detector {
 }
 
 func TestATagRunsOnlyTheRulesCarryingIt(t *testing.T) {
-	all := []detectors.Detector{
+	all := []rule.Detector{
 		ownRule(t, "sleep-in-a-test", `, "tags": ["testing"]`),
 		ownRule(t, "clock-loop", `, "tags": ["testing", "time"]`),
 		ownRule(t, "raw-print", ``),

@@ -12,7 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func oracleOver(t *testing.T, checkout, file string, settings config.Config) []string {
@@ -24,13 +24,13 @@ func oracleOver(t *testing.T, checkout, file string, settings config.Config) []s
 	}
 
 	var said []string
-	for _, rule := range allRules(t, checkout, settings) {
-		for _, match := range safely(rule, codebase) {
+	for _, each := range allRules(t, checkout, settings) {
+		for _, match := range safely(each, codebase) {
 			if match.File() != file {
 				continue
 			}
 
-			said = append(said, oracleSays(rule, match.Line()))
+			said = append(said, oracleSays(each, match.Line()))
 		}
 	}
 
@@ -39,8 +39,8 @@ func oracleOver(t *testing.T, checkout, file string, settings config.Config) []s
 	return said
 }
 
-func oracleSays(rule detectors.Detector, line int) string {
-	return rule.Sin().Definition().Name + ":" + strconv.Itoa(line)
+func oracleSays(asked rule.Detector, line int) string {
+	return asked.Sin().Definition().Name + ":" + strconv.Itoa(line)
 }
 
 func TestTheOracleReportsADifferenceWhenTheOverlayIsWrong(t *testing.T) {

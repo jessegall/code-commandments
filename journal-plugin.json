@@ -63,14 +63,13 @@
     },
     {
       "name": "commandments",
-      "description": "Run any code-commandments verb through the binary this plugin fetched: report, info, repent, exemptions, make",
+      "description": "Run any code-commandments verb through the binary this plugin fetched: report, info, exemptions, make",
       "line": "bin/commandments-release {args}",
       "args": [
         "report follow",
         "report forget <issue>",
         "report --detector=<rule> --reason=<why> --ref=<path:line>",
         "info <sin>",
-        "repent --dry-run",
         "judge --changes"
       ],
       "env": {
@@ -88,7 +87,7 @@
     },
     {
       "kind": "sin-resolved",
-      "label": "File repented",
+      "label": "File cleared",
       "tone": "good",
       "icon": "check",
       "collapsed": true

@@ -7,11 +7,11 @@ import (
 	"slices"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 	}
 	codebase := engine.Load(scripts, server)
 	var lines []string
-	for _, detector := range detectors.OnePerSin(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...)) {
+	for _, detector := range rule.OnePerSin(append(rule.Of(catalog.Vue), rule.Of(catalog.TypeScript)...)) {
 		for _, finding := range detector.Find(codebase) {
 			lines = append(lines, fmt.Sprintf("%s [%s]", finding.Location(), catalog.Name(detector)))
 		}

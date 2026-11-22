@@ -12,7 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/walk"
 )
@@ -83,7 +83,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 		{"C# detectors", []catalog.Engine{catalog.CSharp}},
 		{"Go detectors", []catalog.Engine{catalog.Go}},
 	} {
-		row(console, engine.label, strconv.Itoa(countIn(enabled, engine.engines))+" running  ·  "+strconv.Itoa(countIn(detectors.All(), engine.engines))+" available")
+		row(console, engine.label, strconv.Itoa(countIn(enabled, engine.engines))+" running  ·  "+strconv.Itoa(countIn(rule.All(), engine.engines))+" available")
 	}
 
 	row(console, "Custom detectors", strconv.Itoa(len(project.Detectors)))
@@ -106,11 +106,11 @@ func reindex(root string, console cli.Console) (int, error) {
 	return console.Say("\033[32m✓ Reindexed " + strconv.Itoa(len(roots)) + " source root(s) into " + editor.Name() + ":\033[0m " + strings.Join(roots, ", ")), nil
 }
 
-func countIn(list []detectors.Detector, engines []catalog.Engine) int {
+func countIn(list []rule.Detector, engines []catalog.Engine) int {
 	count := 0
 
 	for _, detector := range list {
-		engine, _ := detectors.EngineOf(detector)
+		engine, _ := rule.EngineOf(detector)
 
 		for _, wanted := range engines {
 			if engine == wanted {

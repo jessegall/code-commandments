@@ -12,8 +12,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/walk"
 )
 
@@ -31,10 +31,10 @@ func (Allow) Help() help.Help {
 }
 
 func (command Allow) Run(in *cli.Input, console cli.Console) (int, error) {
-	rule, _ := in.FirstArgument()
+	asked, _ := in.FirstArgument()
 	given, named := in.Argument(1)
 	_, extra := in.Argument(2)
-	if rule != loneImplementer || !named || extra {
+	if asked != loneImplementer || !named || extra {
 		return help.Usage(console.Err, command, "Name "+loneImplementer+" and one interface file or fully qualified name."), nil
 	}
 	cwd, err := os.Getwd()
@@ -47,8 +47,8 @@ func (command Allow) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 	language, _ := source.Of(declared.Source().Language())
-	for _, detector := range detectors.All() {
-		engine, _ := detectors.EngineOf(detector)
+	for _, detector := range rule.All() {
+		engine, _ := rule.EngineOf(detector)
 		if _, accepts := detector.(publicContractDetector); !accepts || !slices.Contains(language.Engines(), engine) {
 			continue
 		}

@@ -12,8 +12,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/detectors"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func goProject(t *testing.T) (root, edited, sibling string) {
@@ -149,7 +149,7 @@ func goMarks(t *testing.T, root, file string) []SinMark {
 		t.Fatal(err)
 	}
 
-	found, _, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), git.ChangedLines{})
+	found, _, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, rule.ReadsBeyondOneFile), git.ChangedLines{})
 
 	return found
 }

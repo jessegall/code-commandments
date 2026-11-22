@@ -64,16 +64,15 @@ func Of(root string) (held Record, read bool) {
 	return held, true
 }
 
-// Reported is the report filed for a finding at a line, under any name its rule answers to: a report filed before a
-// rule was renamed names it by its former name.
+// Reported is the report filed for a finding at a line: under its rule's canonical name, or under any name the rule
+// answers to as a report filed by an older build keyed it.
 func (r Record) Reported(names []string, root, file string, line int) (Row, bool) {
-	for _, rule := range names {
-		id, read := Identity(rule, root, file, line)
-		if !read {
-			continue
-		}
-		if held, reported := r.Reports[id]; reported {
-			return held, true
+	for _, name := range names {
+		for _, identify := range []func(string, string, string, int) (string, bool){Identity, identityAs} {
+			id, read := identify(name, root, file, line)
+			if held, reported := r.Reports[id]; read && reported {
+				return held, true
+			}
 		}
 	}
 

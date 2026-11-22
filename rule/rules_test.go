@@ -10,7 +10,6 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/skill"
@@ -34,7 +33,7 @@ func judged(t *testing.T, shipped string, sources map[string]string) []string {
 		}
 	}
 	name := strings.TrimSuffix(filepath.Base(shipped), ".json")
-	index := slices.IndexFunc(rules.All(), func(each detectors.Detector) bool { return each.Sin().Definition().Name == name })
+	index := slices.IndexFunc(rules.All(), func(each rule.Detector) bool { return each.Sin().Definition().Name == name })
 	if index < 0 {
 		t.Fatalf("no shipped rule is named %s", name)
 	}

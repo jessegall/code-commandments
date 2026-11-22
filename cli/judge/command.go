@@ -29,8 +29,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/walk"
 )
@@ -183,7 +183,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	selected := selectFrom(enabled, options.skill, options.sinQueries, options.tags)
 
 	if options.oneFileRules {
-		selected = slices.DeleteFunc(slices.Clone(selected), detectors.ReadsBeyondOneFile)
+		selected = slices.DeleteFunc(slices.Clone(selected), rule.ReadsBeyondOneFile)
 	}
 
 	if len(selected) == 0 {
@@ -195,7 +195,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		if detector.Sin().Definition().Name != "lone-implementer-interface" {
 			continue
 		}
-		detectorEngine, _ := detectors.EngineOf(detector)
+		detectorEngine, _ := rule.EngineOf(detector)
 		reasons := project.ContractReasons[detectorEngine]
 		for _, name := range slices.Sorted(maps.Keys(reasons)) {
 			fmt.Fprintf(console.Err, "Public contract %s: %s\n", name, reasons[name])
@@ -237,7 +237,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	return c.judge(options, selected, judged, targets, space, console)
 }
 
-func (c Command) judge(options options, selected []detectors.Detector, judged config.Config, targets scope.Scope, space workspace.Workspace, console cli.Console) (int, error) {
+func (c Command) judge(options options, selected []rule.Detector, judged config.Config, targets scope.Scope, space workspace.Workspace, console cli.Console) (int, error) {
 	if !options.parallelGiven && judged.Parallel > 0 {
 		options.parallel = judged.Parallel
 	}
@@ -451,10 +451,10 @@ func plural(count int, one, many string) string {
 	return many
 }
 
-func saying(selected []detectors.Detector) map[string]string {
+func saying(selected []rule.Detector) map[string]string {
 	says := map[string]string{}
-	for _, rule := range selected {
-		definition := rule.Sin().Definition()
+	for _, each := range selected {
+		definition := each.Sin().Definition()
 		says[definition.Name] = definition.Description
 	}
 
@@ -486,8 +486,8 @@ func (c Command) run(tasks []Task, options options, progress *cli.Progress, pars
 	return judgement
 }
 
-func selectFrom(list []detectors.Detector, skill string, sinQueries, tags []string) []detectors.Detector {
-	var kept []detectors.Detector
+func selectFrom(list []rule.Detector, skill string, sinQueries, tags []string) []rule.Detector {
+	var kept []rule.Detector
 
 	for _, detector := range list {
 		definition := detector.Sin().Definition()
@@ -510,14 +510,14 @@ func selectFrom(list []detectors.Detector, skill string, sinQueries, tags []stri
 	return kept
 }
 
-func matchesSkill(detector detectors.Detector, query string) bool {
+func matchesSkill(detector rule.Detector, query string) bool {
 	teaching := detector.Sin().Definition().Skill.Definition()
 	needle := catalog.Normalise(query)
 	if strings.Contains(catalog.Normalise(teaching.Slug), needle) {
 		return true
 	}
 	subject, shared := strings.CutPrefix(teaching.Slug, "shared/")
-	engine, known := detectors.EngineOf(detector)
+	engine, known := rule.EngineOf(detector)
 	if !shared || !known {
 		return false
 	}
@@ -551,8 +551,8 @@ func tagsOf(in *cli.Input) []string {
 	return tags
 }
 
-func carriesOneOf(detector detectors.Detector, tags []string) bool {
-	tagged, carries := detector.(detectors.Tagged)
+func carriesOneOf(detector rule.Detector, tags []string) bool {
+	tagged, carries := detector.(rule.Tagged)
 	if !carries {
 		return false
 	}
@@ -592,11 +592,11 @@ func readAlongside(engines []catalog.Engine) []source.Language {
 	return languages
 }
 
-func languagesFor(selected []detectors.Detector, project config.Config, root string) []source.Language {
+func languagesFor(selected []rule.Detector, project config.Config, root string) []source.Language {
 	var languages []source.Language
 
 	for _, detector := range selected {
-		for _, language := range readAlongside(detectors.EnginesOf(detector)) {
+		for _, language := range readAlongside(rule.EnginesOf(detector)) {
 			if project.Reads(root, language) && !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}
@@ -606,7 +606,7 @@ func languagesFor(selected []detectors.Detector, project config.Config, root str
 	return languages
 }
 
-func readAcrossFiles(selected []detectors.Detector) []string {
+func readAcrossFiles(selected []rule.Detector) []string {
 	var across []string
 	for _, detector := range selected {
 		if catalog.IsCrossFile(detector) {
@@ -642,11 +642,11 @@ func ofNoLanguage(targets scope.Scope, languages []source.Language) bool {
 	return true
 }
 
-func scannedLanguages(selected []detectors.Detector) []source.Language {
+func scannedLanguages(selected []rule.Detector) []source.Language {
 	var languages []source.Language
 
 	for _, detector := range selected {
-		for _, language := range writtenIn(detectors.EnginesOf(detector)) {
+		for _, language := range writtenIn(rule.EnginesOf(detector)) {
 			if !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}
@@ -699,13 +699,13 @@ func readNothing(sources scan.Sources, codebase *engine.Codebase) []string {
 
 // wholeAndByProject splits the rules by how they are judged: a rule judging C# reads each C# project as its own unit,
 // and a rule judging any other engine reads the whole tree, so a rule of several engines is judged both ways.
-func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors.Detector) {
-	for _, rule := range rules {
-		if detectors.Judges(rule, catalog.CSharp) {
-			byProject = append(byProject, rule)
+func wholeAndByProject(rules []rule.Detector) (whole, byProject []rule.Detector) {
+	for _, each := range rules {
+		if rule.Judges(each, catalog.CSharp) {
+			byProject = append(byProject, each)
 		}
-		if slices.ContainsFunc(detectors.EnginesOf(rule), func(engine catalog.Engine) bool { return engine != catalog.CSharp }) {
-			whole = append(whole, rule)
+		if slices.ContainsFunc(rule.EnginesOf(each), func(engine catalog.Engine) bool { return engine != catalog.CSharp }) {
+			whole = append(whole, each)
 		}
 	}
 
@@ -818,8 +818,8 @@ func keep(findings []engine.Finding, exclude []string, targets scope.Scope, judg
 
 func judgesItsFolder(judged config.Config, finding engine.Finding, targets scope.Scope) bool {
 	folders := judged.Judged(config.RuleNamed(config.Detector, finding.Detector))
-	for _, rule := range detectors.EveryNamedIn(detectors.All(), finding.Detector) {
-		folders = append(folders, judged.JudgedBy(rule, catalog.Engine(finding.Engine))...)
+	for _, each := range rule.EveryNamedIn(rule.All(), finding.Detector) {
+		folders = append(folders, judged.JudgedBy(each, catalog.Engine(finding.Engine))...)
 	}
 	if len(folders) == 0 {
 		return false

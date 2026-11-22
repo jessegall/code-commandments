@@ -20,10 +20,7 @@ type Apple struct{}
 
 func (Apple) Rule() {}
 
-type Draft struct{}
 
-func (Draft) Rule()        {}
-func (Draft) Unpublished() {}
 
 type Binding struct {
 	name   string
@@ -45,23 +42,19 @@ func names(rules []Rule) []string {
 	return named
 }
 
-func TestACatalogListsPublishedRulesByEngineThenName(t *testing.T) {
+func TestACatalogListsRulesByEngineThenName(t *testing.T) {
 	var rules catalog.Catalog[Rule]
 	rules.Register(catalog.Python, Apple{})
 	rules.Register(catalog.PHP, Zebra{})
-	rules.Register(catalog.PHP, Draft{})
 
 	if got := names(rules.All()); !slices.Equal(got, []string{"Zebra", "Apple"}) {
 		t.Fatalf("got %v", got)
 	}
 	if got := names(rules.Of(catalog.PHP)); !slices.Equal(got, []string{"Zebra"}) {
-		t.Fatalf("an unpublished rule is left out, got %v", got)
+		t.Fatalf("got %v", got)
 	}
 	if engine, ok := rules.EngineOf(Apple{}); !ok || engine != catalog.Python {
 		t.Fatalf("got %s", engine)
-	}
-	if _, ok := rules.EngineOf(Draft{}); ok {
-		t.Fatal("an unpublished rule has no engine to judge")
 	}
 }
 

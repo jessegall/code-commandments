@@ -9,8 +9,8 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func TestTheScanFindsWhatTheFrontendParityToolFinds(t *testing.T) {
@@ -35,7 +35,7 @@ func TestTheScanFindsWhatTheFrontendParityToolFinds(t *testing.T) {
 
 	var found []string
 
-	for _, detector := range detectors.OnePerSin(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...)) {
+	for _, detector := range rule.OnePerSin(append(rule.Of(catalog.Vue), rule.Of(catalog.TypeScript)...)) {
 		for _, match := range detector.Find(codebase) {
 			found = append(found, match.Location()+" ["+catalog.Name(detector)+"]")
 		}

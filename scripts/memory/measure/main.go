@@ -19,9 +19,9 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func main() {
@@ -111,7 +111,7 @@ func measure(path, heap, judged string, fields bool) (reading, error) {
 		if !reads(engine, held) {
 			continue
 		}
-		for _, detector := range detectors.Of(engine) {
+		for _, detector := range rule.Of(engine) {
 			detector.Find(codebase)
 		}
 	}

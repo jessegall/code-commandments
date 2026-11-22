@@ -13,7 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const (
@@ -198,14 +198,14 @@ func (m merging) sins() handIn {
 	return judged
 }
 
-func (m merging) deep(project config.Config, rules []detectors.Detector) handIn {
+func (m merging) deep(project config.Config, rules []rule.Detector) handIn {
 	changed := m.changed(project)
 	if len(changed) == 0 {
 		return handIn{got: gotWhole}
 	}
 
 	files := slices.Sorted(maps.Keys(changed))
-	marks, times, read := judgedWhole(m.worktree, project, rules, func(string) []detectors.Detector { return rules }, files,
+	marks, times, read := judgedWhole(m.worktree, project, rules, func(string) []rule.Detector { return rules }, files,
 		git.ChangedLinesSinceEach(m.worktree, m.since, files),
 		Marks(projectOf(m.worktree)).In(m.worktree).CutFrom(m.since))
 	if !read {

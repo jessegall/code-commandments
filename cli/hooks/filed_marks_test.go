@@ -10,7 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/reported"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func TestAReportedSinIsNotToldToTheAgent(t *testing.T) {
@@ -105,7 +105,7 @@ func marksOfOneFile(t *testing.T, root, file string) []SinMark {
 		t.Fatal(err)
 	}
 
-	found, _, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile), git.ChangedLines{})
+	found, _, _ := marksIn(Marks(root), file, slices.DeleteFunc(enabled, rule.ReadsBeyondOneFile), git.ChangedLines{})
 
 	return found
 }

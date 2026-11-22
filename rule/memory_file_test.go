@@ -1,4 +1,4 @@
-package detectors_test
+package rule_test
 
 import (
 	"os"
@@ -11,8 +11,8 @@ import (
 	"github.com/jessegall/code-commandments/cache"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/contract/samples"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const savedDetector = "php\x00SomeRule\x00definition"
@@ -76,11 +76,11 @@ func (f *fileUnderTest) warn(lines ...string) {
 	f.warnings = append(f.warnings, lines...)
 }
 
-func (f *fileUnderTest) of(build string) detectors.MemoryFile {
-	return detectors.MemoryFile{Memories: detectors.NewMemories(f.clock), Path: f.path, Build: build, Warn: f.warn}
+func (f *fileUnderTest) of(build string) rule.MemoryFile {
+	return rule.MemoryFile{Memories: rule.NewMemories(f.clock), Path: f.path, Build: build, Warn: f.warn}
 }
 
-func (f *fileUnderTest) judgedAndSaved(t *testing.T, detector *countedDetector, content string) detectors.MemoryFile {
+func (f *fileUnderTest) judgedAndSaved(t *testing.T, detector *countedDetector, content string) rule.MemoryFile {
 	t.Helper()
 
 	file := f.of("one")

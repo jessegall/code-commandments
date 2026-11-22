@@ -7,8 +7,8 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 )
 
@@ -33,11 +33,11 @@ func (alsoAcrossFiles) Find(*engine.Codebase) []engine.Match { return nil }
 func (alsoAcrossFiles) CrossFile()                           {}
 
 func TestOnlyTheRulesThatReadAcrossFilesAreNamed(t *testing.T) {
-	if across := readAcrossFiles([]detectors.Detector{oneFile{}}); len(across) != 0 {
+	if across := readAcrossFiles([]rule.Detector{oneFile{}}); len(across) != 0 {
 		t.Errorf("a rule that answers from its own file widened the read: %v", across)
 	}
 
-	across := readAcrossFiles([]detectors.Detector{oneFile{}, acrossFiles{}, alsoAcrossFiles{}})
+	across := readAcrossFiles([]rule.Detector{oneFile{}, acrossFiles{}, alsoAcrossFiles{}})
 	if len(across) != 2 || across[0] != catalog.Name(acrossFiles{}) {
 		t.Errorf("the rules that read across files are %v", across)
 	}

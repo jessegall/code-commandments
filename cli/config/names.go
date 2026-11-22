@@ -9,18 +9,18 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 )
 
 var ownRuleName = regexp.MustCompile(ownRule)
 
-func (r Rule) Names(detector detectors.Detector) bool {
+func (r Rule) Names(detector rule.Detector) bool {
 	if r.Kind == Skill {
 		return r.namesSkill(detector.Sin().Definition().Skill)
 	}
 
-	return (r.Kind == Detector || r.Kind == Sin) && len(detectors.EveryNamedIn([]detectors.Detector{detector}, r.ID())) == 1
+	return (r.Kind == Detector || r.Kind == Sin) && len(rule.EveryNamedIn([]rule.Detector{detector}, r.ID())) == 1
 }
 
 func (r Rule) namesSkill(taught skill.Skill) bool {
@@ -36,12 +36,12 @@ func (r Rule) mayBeTheProjects() bool {
 	return r.Engine == "" && ownRuleName.MatchString(r.Name)
 }
 
-func (c Config) TurnsOff(detector detectors.Detector) bool {
+func (c Config) TurnsOff(detector rule.Detector) bool {
 	return slices.ContainsFunc(c.Disabled, func(off Rule) bool { return off.Names(detector) })
 }
 
 func (c Config) resolved() error {
-	every := detectors.All()
+	every := rule.All()
 	var lines []string
 
 	for _, off := range c.Disabled {

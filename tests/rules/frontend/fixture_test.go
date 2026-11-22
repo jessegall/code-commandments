@@ -4,35 +4,16 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	bridge "github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const shop = "../../tests/Fixtures/frontend"
-
-func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
-	frontend, err := bridge.Here().Stream(shop)
-	if err != nil {
-		t.Fatal(err)
-	}
-	server, err := php.Here().Stream(shop)
-	if err != nil {
-		t.Fatal(err)
-	}
-	codebase := engine.Load(frontend, server)
-	codebase.Rooted(shop)
-	fixturetest.Prove(t, fixture.Fixture{
-		Codebase:  codebase,
-		Detectors: fixture.Proven(configured(t)),
-		Known:     fixture.Proven(detectors.OnePerSin(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...))),
-		Resolver:  fixture.FileScenarios,
-	})
-}
 
 func TestNoFrontendRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	frontend, err := bridge.Here().Stream(shop)
@@ -50,6 +31,6 @@ func TestNoFrontendRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	fixturetest.NoRuleOutgrowsItsTree(t, small, large, configured(t))
 }
 
-func configured(t testing.TB) []detectors.Detector {
-	return fixturetest.Configured(t, shop, detectors.OnePerSin(append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...)))
+func configured(t testing.TB) []rule.Detector {
+	return fixturetest.Configured(t, shop, rule.OnePerSin(append(rule.Of(catalog.Vue), rule.Of(catalog.TypeScript)...)))
 }

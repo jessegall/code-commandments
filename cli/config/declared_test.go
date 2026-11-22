@@ -3,8 +3,8 @@ package config
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 )
 
@@ -34,7 +34,7 @@ func (r packagedRule) Find(*engine.Codebase) []engine.Match { return nil }
 func TestARulesOwnFileNamesTheFolderItJudges(t *testing.T) {
 	project := Config{Paths: []string{"src"}, Excluded: []string{"tests"}}
 
-	judging := project.Judging([]detectors.Detector{projectsRule{name: "TestsDriveTheRealPath", judges: []string{"tests"}}})
+	judging := project.Judging([]rule.Detector{projectsRule{name: "TestsDriveTheRealPath", judges: []string{"tests"}}})
 
 	folders := judging.Judged(Rule{Kind: Detector, Name: "TestsDriveTheRealPath"})
 	if len(folders) != 1 || folders[0] != "tests" {
@@ -55,7 +55,7 @@ func TestAFolderNamedInBothTheRuleAndTheConfigCountsOnce(t *testing.T) {
 		}},
 	}
 
-	judging := project.Judging([]detectors.Detector{projectsRule{name: "TestsDriveTheRealPath", judges: []string{"tests", "spec"}}})
+	judging := project.Judging([]rule.Detector{projectsRule{name: "TestsDriveTheRealPath", judges: []string{"tests", "spec"}}})
 
 	folders := judging.Judged(Rule{Kind: Detector, Name: "TestsDriveTheRealPath"})
 	if len(folders) != 2 {
@@ -69,7 +69,7 @@ func TestAFolderNamedInBothTheRuleAndTheConfigCountsOnce(t *testing.T) {
 func TestARuleThatNamesNoFolderChangesNothing(t *testing.T) {
 	project := Config{Paths: []string{"src"}, Excluded: []string{"tests"}}
 
-	judging := project.Judging([]detectors.Detector{
+	judging := project.Judging([]rule.Detector{
 		packagedRule{name: "php/FacadeCallDetector"},
 		projectsRule{name: "NoRawSql"},
 	})
@@ -84,8 +84,8 @@ func TestOnlyTheRuleThatNamesTheFolderMarksAFileInIt(t *testing.T) {
 	letIn := projectsRule{name: "TestsDriveTheRealPath", judges: []string{"tests"}}
 	other := projectsRule{name: "NoRawSql"}
 
-	judging := project.Judging([]detectors.Detector{letIn, other})
-	rules := []detectors.Detector{letIn, other}
+	judging := project.Judging([]rule.Detector{letIn, other})
+	rules := []rule.Detector{letIn, other}
 
 	inTests := judging.RulesFor("/project", "/project/tests/cart_test.py", rules)
 	if len(inTests) != 1 {

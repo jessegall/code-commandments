@@ -10,7 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/reported"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 
 	_ "github.com/jessegall/code-commandments/registry"
 )
@@ -176,10 +176,10 @@ func input(t *testing.T, ref string) *cli.Input {
 
 func namesOf(t *testing.T, detector string) []string {
 	t.Helper()
-	rule, found := detectors.Named(detector)
+	named, found := rule.Named(detector)
 	if !found {
 		t.Fatalf("no rule answers to %s", detector)
 	}
 
-	return catalog.Names(rule)
+	return catalog.Names(named)
 }

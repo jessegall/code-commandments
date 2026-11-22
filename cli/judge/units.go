@@ -5,14 +5,14 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 )
 
-func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, options options, progress *cli.Progress, console cli.Console) (Judgement, int, error) {
+func (c Command) judgeUnits(sources scan.Sources, rules []rule.Detector, options options, progress *cli.Progress, console cli.Console) (Judgement, int, error) {
 	var clean []bool
 	units, err := sources.Units(func(codebase *engine.Codebase) error {
-		clean = append(clean, !slices.ContainsFunc(rules, func(rule detectors.Detector) bool { return !detectors.KnownClean(rule, codebase) }))
+		clean = append(clean, !slices.ContainsFunc(rules, func(asked rule.Detector) bool { return !rule.KnownClean(asked, codebase) }))
 
 		return nil
 	})
@@ -29,8 +29,8 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 	judge := func(codebase *engine.Codebase) {
 		files += len(codebase.Files())
 		tasks := make([]Task, len(rules))
-		for i, rule := range rules {
-			tasks[i] = Task{rule, codebase}
+		for i, asked := range rules {
+			tasks[i] = Task{asked, codebase}
 		}
 		progress.Plan(len(tasks))
 		part := Run(tasks, options.parallel, progress, console.Err)

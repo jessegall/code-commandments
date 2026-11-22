@@ -9,7 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func sweptMarks(record Announced, root string) (marks []SinMark, read []string) {
@@ -30,7 +30,7 @@ func sweptMarks(record Announced, root string) (marks []SinMark, read []string) 
 
 	enabled = append(enabled, custom.InForce(root).Enabled(project)...)
 	project = project.Judging(enabled)
-	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
+	single := slices.DeleteFunc(enabled, rule.ReadsBeyondOneFile)
 	marking := Marks(root)
 
 	codebase, err := scan.Walk(files, source.Excluded{}).Load()

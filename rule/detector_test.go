@@ -1,11 +1,11 @@
-package detectors_test
+package rule_test
 
 import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -33,34 +33,17 @@ func (WrappingWithoutCauseDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Get()
 }
 
-type HalfBuiltDetector struct{ WrappingWithoutCauseDetector }
-
-func (HalfBuiltDetector) Unpublished() {}
-
 func init() {
 	skill.Register(catalog.PHP, Exceptions{})
 	sins.Register(catalog.PHP, WrappingWithoutCause{})
-	detectors.Register(catalog.PHP, WrappingWithoutCauseDetector{})
-	detectors.Register(catalog.PHP, HalfBuiltDetector{})
+	rule.Register(catalog.PHP, WrappingWithoutCauseDetector{})
 }
 
 func TestADetectorIsFoundByItsNameLeniently(t *testing.T) {
 	for _, name := range []string{"WrappingWithoutCauseDetector", "WrappingWithoutCause", "wrappingwithoutcause"} {
-		if _, ok := detectors.Named(name); !ok {
+		if _, ok := rule.Named(name); !ok {
 			t.Fatalf("%s names no detector", name)
 		}
-	}
-	if _, ok := detectors.Named("HalfBuilt"); ok {
-		t.Fatal("an unpublished detector is never found")
-	}
-}
-
-func TestAnUnpublishedDetectorStaysOutOfTheCatalog(t *testing.T) {
-	if all := detectors.All(); len(all) != 1 || len(detectors.Of(catalog.PHP)) != 1 || len(detectors.Of(catalog.Python)) != 0 {
-		t.Fatalf("got %d detectors", len(all))
-	}
-	if engine, ok := detectors.EngineOf(WrappingWithoutCauseDetector{}); !ok || engine != catalog.PHP {
-		t.Fatalf("got %s", engine)
 	}
 }
 

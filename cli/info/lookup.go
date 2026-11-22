@@ -10,15 +10,15 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 )
 
-func Detectors(query string) []detectors.Detector {
+func Detectors(query string) []rule.Detector {
 	needle := normalise(query)
-	var found []detectors.Detector
+	var found []rule.Detector
 	shared := map[string]bool{}
 
-	for _, detector := range config.InClassOrder(config.Detector, detectors.All()) {
+	for _, detector := range config.InClassOrder(config.Detector, rule.All()) {
 		if !matches(detector, query, needle) {
 			continue
 		}
@@ -41,20 +41,20 @@ func Detectors(query string) []detectors.Detector {
 	return found
 }
 
-func matches(detector detectors.Detector, query, needle string) bool {
-	return detector.Sin().Definition().Matches(query) || len(detectors.EveryNamedIn([]detectors.Detector{detector}, query)) == 1 ||
+func matches(detector rule.Detector, query, needle string) bool {
+	return detector.Sin().Definition().Matches(query) || len(rule.EveryNamedIn([]rule.Detector{detector}, query)) == 1 ||
 		slices.ContainsFunc(catalog.Names(detector), func(name string) bool { return strings.Contains(normalise(name), needle) })
 }
 
-func ownRules() []detectors.Detector {
+func ownRules() []rule.Detector {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil
 	}
 
-	var own []detectors.Detector
-	for _, rule := range custom.InForce(workspace.ProjectRoot(cwd)).Rules {
-		own = append(own, rule)
+	var own []rule.Detector
+	for _, each := range custom.InForce(workspace.ProjectRoot(cwd)).Rules {
+		own = append(own, each)
 	}
 
 	return own
@@ -63,7 +63,7 @@ func ownRules() []detectors.Detector {
 func Suggestions(limit int) []string {
 	var names []string
 
-	for _, detector := range detectors.All() {
+	for _, detector := range rule.All() {
 		names = append(names, detector.Sin().Definition().Name)
 	}
 

@@ -19,7 +19,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -71,9 +71,9 @@ func bound(sin sins.Sin) int {
 }
 
 func sinsTable() Table {
-	bySkill := map[string][]detectors.Detector{}
+	bySkill := map[string][]rule.Detector{}
 	var slugs []string
-	for _, detector := range detectors.OnePerSin(config.InClassOrder(config.Detector, detectors.All())) {
+	for _, detector := range rule.OnePerSin(config.InClassOrder(config.Detector, rule.All())) {
 		slug := detector.Sin().Definition().Slug()
 		if _, seen := bySkill[slug]; !seen {
 			slugs = append(slugs, slug)
@@ -87,7 +87,7 @@ func sinsTable() Table {
 
 		return strings.Compare(a, b)
 	})
-	total := len(detectors.OnePerSin(detectors.All()))
+	total := len(rule.OnePerSin(rule.All()))
 	lines := []string{fmt.Sprintf("_%d sins across %d skills._\n", total, len(slugs))}
 	for _, engine := range engines() {
 		lines = append(lines, "### "+heading(engine)+"\n")
@@ -205,8 +205,8 @@ func PluginSettings() *jsonfile.Object {
 	for _, language := range source.Languages {
 		settings.Set("language_"+string(language), setting(language.Label(), "Enables "+language.Label()+" sin detection", "flag", "true", "Languages"))
 	}
-	ordered := slices.Clone(detectors.All())
-	slices.SortStableFunc(ordered, func(a, b detectors.Detector) int {
+	ordered := slices.Clone(rule.All())
+	slices.SortStableFunc(ordered, func(a, b rule.Detector) int {
 		if order := strings.Compare(a.Sin().Definition().Slug(), b.Sin().Definition().Slug()); order != 0 {
 			return order
 		}

@@ -9,8 +9,8 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/detectors"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const configTheRelease7ReadmeShows = `{
@@ -74,8 +74,8 @@ func TestAConfigWrittenForRelease7RunsWithTheSameEffect(t *testing.T) {
 		}
 	}
 
-	if len(enabled) >= len(detectors.All()) {
-		t.Errorf("%d of %d rules run", len(enabled), len(detectors.All()))
+	if len(enabled) >= len(rule.All()) {
+		t.Errorf("%d of %d rules run", len(enabled), len(rule.All()))
 	}
 }
 

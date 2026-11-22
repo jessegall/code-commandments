@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func Prove(t testing.TB, f fixture.Fixture) {
@@ -73,7 +73,7 @@ func report(t testing.TB, f fixture.Fixture, result fixture.Result) {
 	}
 }
 
-func proveDiversity(t testing.TB, f fixture.Fixture, detector detectors.Detector) {
+func proveDiversity(t testing.TB, f fixture.Fixture, detector rule.Detector) {
 	t.Helper()
 	scenarios, err := f.Scenarios(detector)
 	if err != nil {
@@ -89,7 +89,7 @@ func proveDiversity(t testing.TB, f fixture.Fixture, detector detectors.Detector
 
 const mostARuleMayGrow = 3
 
-func NoRuleOutgrowsItsTree(t testing.TB, small, large *engine.Codebase, rules []detectors.Detector) {
+func NoRuleOutgrowsItsTree(t testing.TB, small, large *engine.Codebase, rules []rule.Detector) {
 	t.Helper()
 
 	if len(rules) == 0 {
@@ -114,7 +114,7 @@ func NoRuleOutgrowsItsTree(t testing.TB, small, large *engine.Codebase, rules []
 
 // Configured is the detectors as the fixture project's own configuration tunes them: its layers and its configure
 // steps, read from the .commandments folder under its root, as a project's judge reads them.
-func Configured(t testing.TB, root string, list []detectors.Detector) []detectors.Detector {
+func Configured(t testing.TB, root string, list []rule.Detector) []rule.Detector {
 	t.Helper()
 	project, err := config.Load(root)
 	if err != nil {

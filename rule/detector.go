@@ -1,5 +1,5 @@
 // Package detectors holds the sin detectors: thin finders over the engine, each finding one sin.
-package detectors
+package rule
 
 import (
 	"slices"

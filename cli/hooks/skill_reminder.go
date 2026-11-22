@@ -18,8 +18,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/walk"
 )
@@ -71,7 +71,7 @@ func (SkillReminder) Handle(event Event) Response {
 	files, lost := edited(event, project)
 	lost = slices.DeleteFunc(lost, event.OnlyRemovedLinesOf)
 
-	single := slices.DeleteFunc(slices.Clone(enabled), detectors.ReadsBeyondOneFile)
+	single := slices.DeleteFunc(slices.Clone(enabled), rule.ReadsBeyondOneFile)
 
 	reported := ReportedIn(event.Workspace())
 	marking := Marks(projectOf(event.Root)).In(event.Root).CutFrom(cutOf(event))
@@ -338,16 +338,16 @@ func absolutely(root, file string) string {
 	return absolute
 }
 
-func sinsOf(rules []detectors.Detector) []string {
+func sinsOf(rules []rule.Detector) []string {
 	named := make([]string, 0, len(rules))
-	for _, rule := range rules {
-		named = append(named, rule.Sin().Definition().Name)
+	for _, each := range rules {
+		named = append(named, each.Sin().Definition().Name)
 	}
 
 	return named
 }
 
-func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) ([]SinMark, time.Duration, error) {
+func marksIn(marking Marking, file string, rules []rule.Detector, changed git.ChangedLines) ([]SinMark, time.Duration, error) {
 	language := source.OfFile(file)
 
 	reading := time.Now()
@@ -365,16 +365,16 @@ func marksIn(marking Marking, file string, rules []detectors.Detector, changed g
 
 	var marks []SinMark
 
-	for _, rule := range rules {
-		if !detectors.JudgesAny(rule, language.Engines()) {
+	for _, each := range rules {
+		if !rule.JudgesAny(each, language.Engines()) {
 			continue
 		}
 
-		for _, match := range safely(rule, codebase) {
+		for _, match := range safely(each, codebase) {
 			if match.File() != file {
 				continue
 			}
-			marks = append(marks, marking.Of(rule, match, changed))
+			marks = append(marks, marking.Of(each, match, changed))
 		}
 	}
 
@@ -401,15 +401,15 @@ func bySkill(marks []SinMark) (map[string][]string, []string) {
 	return found, order
 }
 
-func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engine.Match) {
+func safely(asked rule.Detector, codebase *engine.Codebase) (matches []engine.Match) {
 	defer func() {
 		if failure := recover(); failure != nil {
 			matches = nil
-			logRuleFailure(detectors.IdentityOf(rule), failure)
+			logRuleFailure(rule.IdentityOf(asked), failure)
 		}
 	}()
 
-	return detectors.FindRemembering(rule, codebase)
+	return rule.FindRemembering(asked, codebase)
 }
 
 func owed(marks []SinMark) []string {

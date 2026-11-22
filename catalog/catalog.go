@@ -11,11 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// Unpublished marks a rule still being calibrated.
-type Unpublished interface {
-	Unpublished()
-}
-
 // CrossFile marks a rule that reads MORE than the file it reports in: a recurrence across sites, a twin, a caller, what refers to a declaration, a layer stack, what another engine published.
 type CrossFile interface {
 	CrossFile()
@@ -162,7 +157,7 @@ func (c *Catalog[T]) All() []T {
 	for _, engine := range Curriculum {
 		var rules []T
 		for _, registered := range c.entries {
-			if registered.engine == engine && !IsUnpublished(registered.rule) {
+			if registered.engine == engine {
 				rules = append(rules, registered.rule)
 			}
 		}
@@ -179,7 +174,7 @@ func (c *Catalog[T]) Of(engine Engine) []T {
 	defer c.mutex.Unlock()
 	var rules []T
 	for _, registered := range c.entries {
-		if !judges(registered, engine) || IsUnpublished(registered.rule) {
+		if !judges(registered, engine) {
 			continue
 		}
 		rules = append(rules, registered.rule)
@@ -221,7 +216,7 @@ func (c *Catalog[T]) EngineOf(rule T) (Engine, bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	for _, registered := range c.entries {
-		if sameRegistration(registered.rule, rule) && !IsUnpublished(rule) {
+		if sameRegistration(registered.rule, rule) {
 			return registered.engine, true
 		}
 	}
@@ -244,19 +239,6 @@ func sameRegistration(left, right any) bool {
 	return true
 }
 
-// Publishing is a rule that answers for itself whether it is published, as a rule bound from a shared one does.
-type Publishing interface {
-	Published() bool
-}
-
-func IsUnpublished(rule any) bool {
-	if answers, states := rule.(Publishing); states {
-		return !answers.Published()
-	}
-	_, unpublished := rule.(Unpublished)
-
-	return unpublished
-}
 
 func Name(rule any) string {
 	if named, states := rule.(interface{ Name() string }); states {

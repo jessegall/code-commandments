@@ -18,7 +18,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/rule"
@@ -194,7 +193,7 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 		return 0, err
 	}
 
-	var proven []detectors.Detector
+	var proven []rule.Detector
 	var languages []source.Language
 	for _, each := range own.Rules {
 		proven = append(proven, each.WithLayers(project.Layers(each.Engine())))
@@ -215,7 +214,7 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 
 // verified proves each rule against what the codebase's markers say, says each result, and says whether any failed;
 // a marker no rule answers to fails, saying what it is no rule of.
-func verified(root string, codebase *engine.Codebase, proven []detectors.Detector, unknownMarker string, console cli.Console) bool {
+func verified(root string, codebase *engine.Codebase, proven []rule.Detector, unknownMarker string, console cli.Console) bool {
 	markers := fixture.Markers(codebase)
 	failed := false
 
@@ -289,8 +288,8 @@ func fileOf(place string) string {
 	return place[:max(strings.LastIndex(place, ":"), 0)]
 }
 
-func warnUntwinned(markers []fixture.Marker, rule detectors.Detector, console cli.Console) {
-	if len(fixture.Marking(markers, fixture.Righteous, rule)) == 0 {
+func warnUntwinned(markers []fixture.Marker, asked rule.Detector, console cli.Console) {
+	if len(fixture.Marking(markers, fixture.Righteous, asked)) == 0 {
 		console.Write("    \033[33m⚠\033[0m no `@righteous` look-alike shows it leaves anything alone\n")
 	}
 }
@@ -418,10 +417,10 @@ func (c Command) proveAll(in *cli.Input, root string, console cli.Console) (int,
 		for _, each := range own.Rules {
 			enabled = append(enabled, each)
 		}
-		var proven []detectors.Detector
-		for _, rule := range enabled {
-			if slices.ContainsFunc(detectors.EnginesOf(rule), func(engine catalog.Engine) bool { return judgesAny(codebase, engine) }) {
-				proven = append(proven, rule)
+		var proven []rule.Detector
+		for _, each := range enabled {
+			if slices.ContainsFunc(rule.EnginesOf(each), func(engine catalog.Engine) bool { return judgesAny(codebase, engine) }) {
+				proven = append(proven, each)
 			}
 		}
 		console.Write(folder.Name() + "\n")

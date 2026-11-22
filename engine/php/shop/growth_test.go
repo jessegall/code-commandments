@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 )
 
@@ -17,9 +17,9 @@ func TestNoRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	small := shop.Fresh(t)
 	large := shop.Doubled(t)
 
-	var rules []detectors.Detector
-	for _, rule := range detectors.Of(catalog.PHP) {
-		rules = append(rules, rule)
+	var rules []rule.Detector
+	for _, each := range rule.Of(catalog.PHP) {
+		rules = append(rules, each)
 	}
 
 	fixturetest.NoRuleOutgrowsItsTree(t, small, large, rules)
