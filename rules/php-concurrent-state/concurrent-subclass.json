@@ -27,16 +27,32 @@
       "class"
     ],
     "having": [
-      "some",
-      "$t.bases",
-      "b",
+      "and",
       [
-        "has",
+        "some",
+        "$t.bases",
+        "b",
         [
-          "identities",
-          "concurrent"
+          "has",
+          [
+            "identities",
+            "concurrent"
+          ],
+          "$b.refers"
+        ]
+      ],
+      [
+        "none",
+        [
+          "docTags",
+          "$t"
         ],
-        "$b.refers"
+        "g",
+        [
+          "=",
+          "$g.name",
+          "template"
+        ]
       ]
     ],
     "emit": "$t"
