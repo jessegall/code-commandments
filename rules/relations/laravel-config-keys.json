@@ -246,6 +246,20 @@
                 "$e.file.path"
               ]
             ]
+          ],
+          [
+            "not",
+            [
+              "has",
+              [
+                "identities",
+                "package-config-file"
+              ],
+              [
+                "baseName",
+                "$e.file.path"
+              ]
+            ]
           ]
         ]
       },

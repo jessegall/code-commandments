@@ -1113,6 +1113,51 @@
               "$c.callee.member.name"
             ]
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "in",
+            "$c.callee.member.name",
+            "get",
+            "string",
+            "integer",
+            "boolean",
+            "array",
+            "float"
+          ],
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                "$c.callee.subject.kind",
+                "call"
+              ],
+              [
+                "some",
+                "$c.callee.subject.arguments",
+                "a",
+                [
+                  "literalEquals",
+                  "$a.value",
+                  "config"
+                ]
+              ]
+            ],
+            [
+              "in",
+              "$c.callee.subject.resolved.name",
+              "Illuminate\\Contracts\\Config\\Repository",
+              "Illuminate\\Config\\Repository"
+            ]
+          ]
         ]
       ]
     },
