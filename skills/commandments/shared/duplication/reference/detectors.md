@@ -9,5 +9,6 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`near-duplicate-function`** — Two functions run the same code with different names or data — `near-duplicate-function`
 - **`repeated-folder-path`** — One folder is spelled out at three or more sites across separate scopes — `repeated-folder-path`
 - **`repeated-guard`** — A compound condition about an object is written out at more than one site — `repeated-guard`
+- **`repeated-static-factory`** — One function asks a static factory for the same object twice, with the same arguments, and asks each one something, instead of holding the object and asking it — `repeated-static-factory`
 - **`repeated-type-guard`** — The same compound type check is written out at more than one site — `repeated-type-guard`
 - **`unnamed-vocabulary-literal`** — A string literal fills a parameter that already has a named constant for that value — `unnamed-vocabulary-literal`

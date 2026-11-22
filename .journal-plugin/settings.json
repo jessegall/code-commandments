@@ -1240,6 +1240,14 @@
         "help": "A compound condition about an object is written out at more than one site"
     },
     {
+        "key": "sin_repeated-static-factory",
+        "title": "repeated-static-factory",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "One function asks a static factory for the same object twice, with the same arguments, and asks each one something, instead of holding the object and asking it"
+    },
+    {
         "key": "sin_repeated-type-guard",
         "title": "repeated-type-guard",
         "type": "flag",

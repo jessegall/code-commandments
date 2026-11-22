@@ -29,6 +29,8 @@ Put the shared code where its data or responsibility lives. Pass the values that
       _Put the folder in a shared constant or a method and use it to build paths within that folder._
 - [ ] Give a repeated condition one name and have the callers use it.
       _Put a named predicate on the object that owns most of the condition and use it at each site._
+- [ ] Call a static factory once per function for one set of arguments, keep the object it returns in a variable, and ask that.
+      _`$type = Reflector::of($class);` once, then `$type->isSubclassOf(Tool::class) || $type->isAbstract()`._
 - [ ] Give a repeated type test one name and use it at each site.
       _Extract the combined test to a predicate that describes which values it accepts._
 - [ ] Use the vocabulary the parameter already has.
@@ -37,10 +39,10 @@ Put the shared code where its data or responsibility lives. Pass the values that
 ## Commands
 
 - `{{binary}} judge --skill=shared/duplication` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `converted-argument`, `divergent-twin`, `duplicate-function`, `list-mirrors-folder`, `near-duplicate-function`, `repeated-folder-path`, `repeated-guard`, `repeated-type-guard`, `unnamed-vocabulary-literal`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `converted-argument`, `divergent-twin`, `duplicate-function`, `list-mirrors-folder`, `near-duplicate-function`, `repeated-folder-path`, `repeated-guard`, `repeated-static-factory`, `repeated-type-guard`, `unnamed-vocabulary-literal`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

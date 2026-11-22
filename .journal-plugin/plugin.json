@@ -2477,6 +2477,34 @@
             ],
             "detail": true
         },
+        "sin_repeated-static-factory": {
+            "title": "repeated-static-factory",
+            "help": "One function asks a static factory for the same object twice, with the same arguments, and asks each one something, instead of holding the object and asking it",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/duplication",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_repeated-type-guard": {
             "title": "repeated-type-guard",
             "help": "The same compound type check is written out at more than one site",

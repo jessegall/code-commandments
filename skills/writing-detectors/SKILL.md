@@ -162,7 +162,7 @@ judged.
 | `endsWith` | text, text | truth | whether the text ends with the part |
 | `equivalent` | node, node, text | truth | whether two subtrees are the same in the fingerprint mode named |
 | `every` | list, name, truth | truth | whether the body is true for every item |
-| `exclusive` | node, node | truth | whether no run executes both nodes: they lie in different arms of one if, ternary or dispatch whose arms do not fall through |
+| `exclusive` | node, node | truth | whether no run executes both nodes: they lie in different arms of one if, ternary or dispatch whose arms do not fall through, or in two handlers of one try |
 | `exemptedBy` | text, node | truth | whether a library the project holds excuses the node under the exemption tag named, by its resolved symbol |
 | `exists` | value | truth | whether a role, link or fact holds something |
 | `exitsOf` | node | list | the returns and throws under a node, and the breaks, continues and gotos under it that leave it, its own functions left out |

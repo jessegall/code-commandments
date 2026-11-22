@@ -17,7 +17,7 @@ func init() {
 		"dominates":      {operands: []valueType{node, node}, gives: truth, says: "whether every path to the second node passes the first: the first runs on every path through what holds both, before the part that holds the second; unknown for nodes of two functions"},
 		"pathConditions": {operands: []valueType{node}, gives: list, says: "the conditions that must hold for a node to run, each a record of condition and holds (true or false): the if, else, loop, ternary, and and or around it, and each guard before it that returns when its condition holds; unknown in a function with a goto"},
 		"complexity":     {operands: []valueType{node, text}, gives: number, says: "the node's cyclomatic complexity (one plus each decision: if, loop, case, handler, ternary, and, or) or cognitive complexity (each break in the flow, weighed by how deeply it is nested)"},
-		"exclusive":      {operands: []valueType{node, node}, gives: truth, says: "whether no run executes both nodes: they lie in different arms of one if, ternary or dispatch whose arms do not fall through"},
+		"exclusive":      {operands: []valueType{node, node}, gives: truth, says: "whether no run executes both nodes: they lie in different arms of one if, ternary or dispatch whose arms do not fall through, or in two handlers of one try"},
 		"carriesCause":   {operands: []valueType{node}, gives: truth, says: "whether a throw inside a handler carries the failure it caught: a rethrow, a raise from, or a new failure built from the caught one"},
 		"catchesAll":     {operands: []valueType{node}, gives: truth, says: "whether a handler catches every failure: a catch-all, or one whose caught type is the language's root failure type"},
 		"failureType":    {operands: []valueType{anyValue, text}, gives: truth, says: "whether a type is one of the language's failure types of the class named: root (Throwable, BaseException, System.Exception, Error) or generic (Exception, RuntimeError, ApplicationException and the like); unknown for a type the compiler did not resolve"},
@@ -457,6 +457,8 @@ func exclusive(first, second engine.Match) engine.Truth {
 		return engine.TruthOf(roles[0] == "else" && roles[1] == "then")
 	case "conditional":
 		return engine.TruthOf(roles[0] == "alternative" && roles[1] == "consequent")
+	case "try":
+		return engine.TruthOf(roles[0] == "handlers" && roles[1] == "handlers")
 	case "dispatch":
 		if roles[0] != "arms" || roles[1] != "arms" {
 			return engine.False
