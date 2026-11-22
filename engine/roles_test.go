@@ -132,6 +132,15 @@ func TestAFilePurposeIsDerivedOnceFromItsEvidence(t *testing.T) {
 			t.Errorf("%s is %q, want %q", path, got, want)
 		}
 	}
+	for path, want := range map[string]Purpose{
+		"app/Console/Commands/GenerateLabelsTest.php": Ordinary,
+		"tests/Feature/OrderTest.php":                 Testing,
+		"src/Bundle/Tests/OrderTest.php":              Testing,
+	} {
+		if got := purposeOf(contract.PHP, "/src/"+path, path, false); got != want {
+			t.Errorf("%s is %q, want %q", path, got, want)
+		}
+	}
 	if got := purposeOf(contract.CSharp, "/src/Orders/Reader.cs", "Orders/Reader.cs", true); got != Testing {
 		t.Errorf("a file the bridge marks as a test project's is %q, want a test", got)
 	}

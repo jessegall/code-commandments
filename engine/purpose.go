@@ -31,11 +31,15 @@ func purposeOf(language contract.Language, path, fromProject string, test bool) 
 	switch {
 	case InFolderNamed(fromProject, "testdata") || inFixtureFolder(fromProject):
 		return TestFixture
-	case test || contract.IsTestName(language, path) || InFolderNamed(fromProject, testFolders...):
+	case test || contract.IsTestName(language, path) || inTestFolder(fromProject):
 		return Testing
 	}
 
 	return Ordinary
+}
+
+func inTestFolder(path string) bool {
+	return InFolderNamed(strings.ToLower(path), testFolders...)
 }
 
 func inFixtureFolder(path string) bool {
