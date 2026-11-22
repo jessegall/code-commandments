@@ -26,11 +26,17 @@ func (m Match) InheritedMembers() []Match {
 }
 
 func (m Match) Members() []Match {
-	if !m.Is(TypeDeclaration) {
+	if !m.Is(TypeDeclaration) || m.file == nil {
 		return nil
 	}
+	members := m.ChildrenIn("writtenMembers")
+	for _, id := range m.node.Linked("implicitMembers") {
+		if node, found := m.file.Node(id); found {
+			members = append(members, Match{node: node, file: m.file})
+		}
+	}
 
-	return nil
+	return members
 }
 
 func (m Match) Parameters() []Match {
