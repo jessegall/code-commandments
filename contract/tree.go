@@ -213,6 +213,7 @@ type RareFacts struct {
 	Resolves        string         `json:"resolves,omitempty"`
 	Async           bool           `json:"async,omitempty"`
 	Generator       bool           `json:"generator,omitempty"`
+	Capture         string         `json:"capture,omitempty"`
 	Passing         string         `json:"passing,omitempty"`
 	Collects        string         `json:"collects,omitempty"`
 	Position        string         `json:"position,omitempty"`

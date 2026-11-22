@@ -357,8 +357,12 @@ func pathConditions(site engine.Match) ([]value, bool) {
 		return nil, false
 	}
 	var conditions []value
+	copied := false
 	var add func(condition engine.Match, holds bool)
 	add = func(condition engine.Match, holds bool) {
+		if copied && !readsOnlyVariables(condition) {
+			return
+		}
 		conditions = append(conditions, known(record{"condition": known(condition), "holds": truthValue(engine.TruthOf(holds))}))
 		joined := condition.Node()
 		if joined.Kind == "logical" && ((holds && joined.Operator == "and") || (!holds && joined.Operator == "or")) {
@@ -366,7 +370,13 @@ func pathConditions(site engine.Match) ([]value, bool) {
 			add(condition.Child("right"), holds)
 		}
 	}
-	for at := site; at.Parent().Exists() && !at.Node().Is("function-like"); at = at.Parent() {
+	for at := site; at.Parent().Exists(); at = at.Parent() {
+		if at.Node().Is("function-like") {
+			if at.Node().Capture != "value" {
+				break
+			}
+			copied = true
+		}
 		parent := at.Parent()
 		role := at.Node().InRole()
 		switch holder := parent.Node(); {
@@ -398,6 +408,22 @@ func pathConditions(site engine.Match) ([]value, bool) {
 	}
 
 	return conditions, true
+}
+
+func readsOnlyVariables(condition engine.Match) bool {
+	for _, each := range append([]engine.Match{condition}, descendantMatches(condition)...) {
+		switch node := each.Node(); node.Kind {
+		case "reference":
+			if isSelf(each) != engine.False {
+				return false
+			}
+		case "literal", "type-test", "type-expression", "comparison", "logical", "unary":
+		default:
+			return false
+		}
+	}
+
+	return true
 }
 
 // decisions is how many decisions a node holds, its own functions left out.

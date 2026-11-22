@@ -188,8 +188,9 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   or lambda written with an expression body; an absent body (an abstract or interface method, a declaration
   only) is known-empty and differs from an empty block. Facts `name?`, `symbol`, `form` (`function`, `method`,
   `constructor`, `get`, `set`, `closure`, `arrow`, `lambda`, `local`), `async`, `generator`. A closure's
-  `captures[]` are the bindings it takes from outside as written (PHP `use`). A closure, arrow and lambda open
-  their own scope.
+  `captures[]` are the bindings it takes from outside as written (PHP `use`). Fact `capture?` (`value`,
+  `reference`): how a function written inside another sees the variables it takes, where every one is taken the
+  same way (a PHP arrow function copies each at its creation). A closure, arrow and lambda open their own scope.
 - **`parameter`**: `binding?` (absent only for an unnamed parameter of a function type: Go's `func(int) error`),
   `declaredType?`, `default?`, `attributes[]`. Facts `passing` (`value`,
   `reference`, `out`, `in`), `collects` (`none`, `rest`, `keywords`), `position` (`either`, `positional`,

@@ -864,6 +864,12 @@
         "generator": {
           "type": "boolean"
         },
+        "capture": {
+          "enum": [
+            "value",
+            "reference"
+          ]
+        },
         "passing": {
           "enum": [
             "value",
@@ -1456,7 +1462,8 @@
         "symbol",
         "form",
         "async",
-        "generator"
+        "generator",
+        "capture"
       ],
       "required": [
         "form"
@@ -2167,6 +2174,9 @@
       "provenance": "parser"
     },
     "generator": {
+      "provenance": "parser"
+    },
+    "capture": {
       "provenance": "parser"
     },
     "passing": {

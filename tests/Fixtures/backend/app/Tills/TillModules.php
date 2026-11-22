@@ -34,6 +34,18 @@ final class TillModules
         return $module->footer();
     }
 
+    /**
+     * @param  list<string>  $lines
+     * @return list<string>
+     */
+    #[Righteous(UndeclaredMember::class)]
+    public function signedLines(TillModule $module, array $lines): array
+    {
+        return $module instanceof ReceiptPrinter
+            ? array_map(fn (string $line) => $line.$module->footer(), $lines)
+            : $lines;
+    }
+
     #[Righteous(UndeclaredMember::class)]
     public function wake(RemoteModule $remote): void
     {

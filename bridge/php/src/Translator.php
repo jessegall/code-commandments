@@ -669,6 +669,7 @@ final class Translator
         $made = $this->of('function', $function, [
             'name' => $named, 'symbol' => $symbol, 'form' => $form,
             'modifiers' => $this->modifiers($function), 'generator' => $this->yields($function),
+            'capture' => $function instanceof Expr\ArrowFunction ? 'value' : null,
             'obligations' => $function->getAttribute('obligations'),
         ]);
         $parameters = array_map($this->parameter(...), $function->getParams());
