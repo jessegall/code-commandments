@@ -47,6 +47,10 @@ schema` prints every operator: logic (`and`, `or`, `not`, `case`), lists (`some`
 4. **A fact the tree does not carry** (a resolved type, an outside symbol, a doc comment's tags) is added to
    the bridge that parses the language and to the contract. A language supplies plain facts only; it never
    decides a rule, and a rule never guesses a fact back from text.
+5. **A rule whose fix needs a package or a language version** names it in `sin.requires`
+   (`{"ecosystem": "composer", "name": "php", "version": "8.5"}`); a project below that version does not run it.
+6. **A finding's advice** (`find.advice`) reads the same relations the find does, so it can name the other side
+   of what it found (`rowsOf`, `rowOf`); a node's `file.fromProject` is the path the report shows.
 
 > Smell test: if you are about to compare a name with a list, or `startsWith` a class name, stop: the tree's
 > kind, role or resolved type already answers it. A name check is a smell to justify, not a default.

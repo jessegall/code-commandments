@@ -733,6 +733,14 @@
               ]
             ],
             [
+              "valueField",
+              "$a"
+            ],
+            [
+              "valueField",
+              "$b"
+            ],
+            [
               "<",
               2,
               [
@@ -795,55 +803,19 @@
                       "$t.symbol"
                     ],
                     [
-                      "some",
+                      "handedIn",
+                      "$u",
                       [
-                        "descendants",
-                        "$u"
-                      ],
-                      "x",
-                      [
-                        "and",
-                        [
-                          "tree.selfField",
-                          "$x"
-                        ],
-                        [
-                          "=",
-                          [
-                            "readName",
-                            "$x"
-                          ],
-                          [
-                            "nameOf",
-                            "$a"
-                          ]
-                        ]
+                        "nameOf",
+                        "$a"
                       ]
                     ],
                     [
-                      "some",
+                      "handedIn",
+                      "$u",
                       [
-                        "descendants",
-                        "$u"
-                      ],
-                      "x",
-                      [
-                        "and",
-                        [
-                          "tree.selfField",
-                          "$x"
-                        ],
-                        [
-                          "=",
-                          [
-                            "readName",
-                            "$x"
-                          ],
-                          [
-                            "nameOf",
-                            "$b"
-                          ]
-                        ]
+                        "nameOf",
+                        "$b"
                       ]
                     ]
                   ]
@@ -853,6 +825,48 @@
             ]
           ]
         ]
+      ]
+    },
+    "handedIn": {
+      "args": [
+        "u",
+        "n"
+      ],
+      "expr": [
+        "some",
+        "$u.arguments",
+        "g",
+        [
+          "and",
+          [
+            "tree.selfField",
+            "$g.value"
+          ],
+          [
+            "=",
+            [
+              "readName",
+              "$g.value"
+            ],
+            "$n"
+          ]
+        ]
+      ]
+    },
+    "valueField": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "!=",
+        [
+          "typeCategory",
+          [
+            "typeOf",
+            "$m"
+          ]
+        ],
+        "named"
       ]
     }
   },

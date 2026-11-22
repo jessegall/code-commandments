@@ -16,7 +16,7 @@
       "python-mutable-static-state"
     ],
     "skill": "php/fix-at-the-source",
-    "description": "A write to a static property \u2014 really a global variable with a namespace attached \u2014 where whichever write happens last wins, so the order code runs in changes the result.",
+    "description": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
     "rule": "Hold changing state on an INSTANCE someone owns and passes; never write a static property.",
     "suggestion": "Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down."
   },
@@ -98,6 +98,16 @@
           "=",
           "$fn.form",
           "constructor"
+        ],
+        [
+          "none",
+          "$fn.modifiers",
+          "m",
+          [
+            "=",
+            "$m",
+            "static"
+          ]
         ]
       ],
       [

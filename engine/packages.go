@@ -89,7 +89,7 @@ func (m Match) HasEffect(effect string) Truth {
 	answer := False
 	for _, facts := range registeredPackageFacts() {
 		if !slices.ContainsFunc(facts.Entries, func(entry PackageEntry) bool {
-			return entry.Effect == effect && entry.Name == target.Name && m.declaredBy(target.Type, entry.Type)
+			return entry.Effect == effect && entry.Name == target.Name && (m.declaredBy(target.Type, entry.Type) || m.declaredBy(m.receiverType(), entry.Type))
 		}) {
 			continue
 		}
@@ -548,6 +548,17 @@ func PackagesIn(folder string) map[string]map[string]string {
 	readManifests(folder, versions)
 
 	return versions
+}
+
+func (m Match) receiverType() string {
+	callees, _ := m.node.Role("callee")
+	for _, callee := range callees {
+		if subjects, _ := callee.Role("subject"); len(subjects) == 1 && subjects[0].Resolved != nil {
+			return subjects[0].Resolved.Name
+		}
+	}
+
+	return ""
 }
 
 func (m Match) writtenCallee() string {

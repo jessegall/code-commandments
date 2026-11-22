@@ -221,50 +221,115 @@
         "a"
       ],
       "expr": [
-        "some",
+        "or",
         [
-          "ancestors",
-          "$a"
-        ],
-        "q",
-        [
-          "and",
+          "some",
           [
-            "=",
-            "$q.kind",
-            "if"
+            "ancestors",
+            "$a"
           ],
+          "q",
           [
-            "some",
+            "and",
             [
-              "flatten",
+              "=",
+              "$q.kind",
+              "if"
+            ],
+            [
+              "some",
               [
-                "list",
+                "flatten",
                 [
                   "list",
-                  "$q.condition"
+                  [
+                    "list",
+                    "$q.condition"
+                  ],
+                  [
+                    "descendants",
+                    "$q.condition"
+                  ]
+                ]
+              ],
+              "c",
+              [
+                "and",
+                [
+                  "=",
+                  "$c.kind",
+                  "comparison"
                 ],
                 [
-                  "descendants",
-                  "$q.condition"
+                  "some",
+                  "$c.operands",
+                  "o",
+                  [
+                    "tree.nullish",
+                    "$o"
+                  ]
                 ]
               ]
-            ],
-            "c",
+            ]
+          ]
+        ],
+        [
+          "some",
+          [
+            "before",
             [
-              "and",
+              "enclosing",
+              "$a",
+              "expression-statement"
+            ]
+          ],
+          "g",
+          [
+            "and",
+            [
+              "=",
+              "$g.kind",
+              "if"
+            ],
+            [
+              "not",
               [
-                "=",
-                "$c.kind",
-                "comparison"
-              ],
+                "completes",
+                "$g.then"
+              ]
+            ],
+            [
+              "some",
               [
-                "some",
-                "$c.operands",
-                "o",
+                "flatten",
                 [
-                  "tree.nullish",
-                  "$o"
+                  "list",
+                  [
+                    "list",
+                    "$g.condition"
+                  ],
+                  [
+                    "descendants",
+                    "$g.condition"
+                  ]
+                ]
+              ],
+              "c",
+              [
+                "and",
+                [
+                  "=",
+                  "$c.kind",
+                  "comparison"
+                ],
+                [
+                  "some",
+                  "$c.operands",
+                  "o",
+                  [
+                    "tree.nullish",
+                    "$o"
+                  ]
                 ]
               ]
             ]
@@ -372,8 +437,16 @@
     "select": "function",
     "as": "f",
     "where": [
-      "tree.method",
-      "$f"
+      "and",
+      [
+        "tree.method",
+        "$f"
+      ],
+      [
+        "!=",
+        "$f.form",
+        "get"
+      ]
     ],
     "let": [
       [

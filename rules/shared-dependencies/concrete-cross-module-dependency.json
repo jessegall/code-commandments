@@ -211,6 +211,27 @@
           [
             "and",
             [
+              "or",
+              [
+                ">",
+                [
+                  "count",
+                  "$d.implicitMembers"
+                ],
+                0
+              ],
+              [
+                "some",
+                "$d.writtenMembers",
+                "m",
+                [
+                  "=",
+                  "$m.kind",
+                  "field"
+                ]
+              ]
+            ],
+            [
               "every",
               "$d.implicitMembers",
               "p",

@@ -108,8 +108,11 @@
           "$c.operands",
           "o",
           [
-            "caseOf",
-            "$o"
+            "proven",
+            [
+              "caseOf",
+              "$o"
+            ]
           ]
         ]
       ]
@@ -127,8 +130,11 @@
           [
             "not",
             [
-              "caseOf",
-              "$o"
+              "proven",
+              [
+                "caseOf",
+                "$o"
+              ]
             ]
           ]
         ],
@@ -150,8 +156,11 @@
               "$c.operands",
               "o",
               [
-                "caseOf",
-                "$o"
+                "proven",
+                [
+                  "caseOf",
+                  "$o"
+                ]
               ]
             ],
             0

@@ -102,6 +102,19 @@
             "assignment"
           ],
           [
+            "=",
+            "$x.parent.mode",
+            "fallback"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "assignment"
+          ],
+          [
             "tree.nullish",
             [
               "at",

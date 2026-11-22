@@ -207,6 +207,76 @@
     }
   },
   "find": {
+    "relations": {
+      "constant-arguments": {
+        "from": "argument",
+        "as": "g",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "in",
+                "$g.value.kind",
+                "reference",
+                "access"
+              ],
+              [
+                "in",
+                "$g.parent.kind",
+                "call",
+                "construction"
+              ],
+              [
+                "nonempty",
+                "$g.parent.target.symbol"
+              ],
+              [
+                "nonempty",
+                [
+                  "constantWord",
+                  "$g.value"
+                ]
+              ],
+              [
+                "not",
+                "$g.file.test"
+              ],
+              [
+                "!=",
+                [
+                  "enclosing",
+                  [
+                    "declarationOf",
+                    "$g.value"
+                  ],
+                  "type"
+                ],
+                [
+                  "enclosing",
+                  "$g",
+                  "type"
+                ]
+              ]
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$g",
+              "callee": "$g.parent.target.symbol",
+              "at": [
+                "position",
+                "$g"
+              ],
+              "word": [
+                "constantWord",
+                "$g.value"
+              ]
+            }
+          }
+        ]
+      }
+    },
     "select": "argument",
     "as": "a",
     "where": [
@@ -366,6 +436,26 @@
                 ]
               ]
             ]
+          ]
+        ]
+      ],
+      [
+        "and",
+        [
+          "nonempty",
+          "$a.parent.target.symbol"
+        ],
+        [
+          "hasRow",
+          "constant-arguments",
+          [
+            "record",
+            "callee",
+            "$a.parent.target.symbol",
+            "at",
+            "$at",
+            "word",
+            "$a.value.value"
           ]
         ]
       ]
