@@ -2729,5 +2729,11 @@
       "name": "scoped-binding",
       "type": "scopedIf"
     }
+  ],
+  "forwards": [
+    {
+      "type": "Illuminate\\Database\\Eloquent\\Model",
+      "to": "Illuminate\\Database\\Eloquent\\Builder"
+    }
   ]
 }

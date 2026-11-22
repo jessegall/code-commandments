@@ -24,6 +24,14 @@ type PackageFacts struct {
 	Entries    []PackageEntry     `json:"entries"`
 	Exemptions []PackageExemption `json:"exemptions,omitempty"`
 	Identities []PackageIdentity  `json:"identities,omitempty"`
+	Forwards   []PackageForward   `json:"forwards,omitempty"`
+}
+
+// PackageForward is a library type that answers a method it does not declare by handing the call to another type, as
+// an Eloquent model hands a static query call to its query builder.
+type PackageForward struct {
+	Type string `json:"type"`
+	To   string `json:"to"`
 }
 
 // PackageEntry is one effect of one method: the type that declares it, its name, the effect (database-read,
@@ -73,11 +81,7 @@ func (m Match) HasEffect(effect string) Truth {
 	}
 	target := m.node.Target
 	if target == nil {
-		if m.file.Knows("target") {
-			return False
-		}
-
-		return Unknown
+		return m.writtenCallEffect(effect)
 	}
 	answer := False
 	for _, facts := range registeredPackageFacts() {
@@ -509,4 +513,76 @@ func (m Match) NamesAnAssociation() bool {
 	}
 
 	return false
+}
+
+func (m Match) writtenCallEffect(effect string) Truth {
+	receiver, method := m.writtenReceiver(), m.writtenCallee()
+	if receiver == "" || method == "" {
+		if m.file.Knows("target") {
+			return False
+		}
+
+		return Unknown
+	}
+	answer := False
+	for _, facts := range registeredPackageFacts() {
+		answering := []string{}
+		for _, forward := range facts.Forwards {
+			if m.declaredBy(receiver, forward.Type) {
+				answering = append(answering, forward.To)
+			}
+		}
+		if !slices.ContainsFunc(facts.Entries, func(entry PackageEntry) bool {
+			return entry.Effect == effect && entry.Name == method && (m.declaredBy(receiver, entry.Type) || slices.Contains(answering, entry.Type))
+		}) {
+			continue
+		}
+		if held := m.file.codebase.holds(facts); held == True {
+			return True
+		} else {
+			answer = answer.Or(held)
+		}
+	}
+
+	return answer
+}
+
+func (m Match) writtenReceiver() string {
+	callees, _ := m.node.Role("callee")
+	if len(callees) != 1 || callees[0].Kind != "access" {
+		return ""
+	}
+	subjects, _ := callees[0].Role("subject")
+	if len(subjects) != 1 {
+		return ""
+	}
+	subject := subjects[0]
+	if callees[0].Form == "static" {
+		return subject.Refers
+	}
+	held := Match{node: subject, file: m.file}
+	if typed := held.Typed(); typed != nil && typed.Kind == "named" {
+		return typed.Name
+	}
+	if subject.Kind == "call" && subject.Target == nil {
+		return held.forwardedResult()
+	}
+
+	return ""
+}
+
+func (m Match) forwardedResult() string {
+	receiver := m.writtenReceiver()
+	if receiver == "" {
+		return ""
+	}
+	for _, facts := range registeredPackageFacts() {
+		for _, forward := range facts.Forwards {
+			if m.declaredBy(receiver, forward.Type) || m.declaredBy(receiver, forward.To) {
+				return forward.To
+			}
+		}
+	}
+
+	return ""
 }
