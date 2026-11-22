@@ -30,6 +30,7 @@ func TestEveryBridgeWritesAFileAsIfEveryFileWereWritten(t *testing.T) {
 			continue
 		}
 		t.Run(held.Label, func(t *testing.T) {
+			t.Parallel()
 			defer proved(t, language, "promise/read-declaration-resolves")
 			project := t.TempDir()
 			placedFile(t, project, "go.mod", "module shop\n\ngo 1.22\n")
@@ -76,6 +77,7 @@ func TestEveryBridgeNamesWhatAWrittenMethodOverrides(t *testing.T) {
 			continue
 		}
 		t.Run(held.Label, func(t *testing.T) {
+			t.Parallel()
 			defer proved(t, language, "promise/obligation-across-files")
 			project := t.TempDir()
 			placedFile(t, project, "go.mod", "module shop\n\ngo 1.22\n")
@@ -130,6 +132,7 @@ func TestEveryBridgeLinksAReadToItsLocalBinding(t *testing.T) {
 			continue
 		}
 		t.Run(held.Label, func(t *testing.T) {
+			t.Parallel()
 			defer proved(t, language, "promise/read-links-binding")
 			project := t.TempDir()
 			placedFile(t, project, "go.mod", "module shop\n\ngo 1.22\n")
@@ -275,6 +278,7 @@ var importCases = []struct {
 func TestEveryBridgeResolvesAnImportToTheFileItReads(t *testing.T) {
 	for _, each := range importCases {
 		t.Run(string(each.language), func(t *testing.T) {
+			t.Parallel()
 			project, err := filepath.EvalSymlinks(t.TempDir())
 			if err != nil {
 				t.Fatal(err)

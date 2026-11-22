@@ -42,44 +42,57 @@ func TestEveryBridgeWritesTheExpectedTree(t *testing.T) {
 		t.Fatal(err)
 	}
 	all = append(all, unwritten...)
-	served := servedBridges{t: t, roots: map[contract.Language]string{}, askers: map[contract.Language]bridge.Asker{}}
-	defer served.close()
+	t.Cleanup(func() { scored.Store(true) })
+	byLanguage := map[contract.Language][]samples.Expected{}
 	for _, expected := range all {
-		t.Run(string(expected.Language)+"/"+expected.Name(), func(t *testing.T) {
-			root, asker, err := served.of(expected.Language)
-			if err != nil {
-				t.Fatalf("the %s bridge could not start: %v", expected.Language, err)
+		byLanguage[expected.Language] = append(byLanguage[expected.Language], expected)
+	}
+	for language, held := range byLanguage {
+		t.Run(string(language), func(t *testing.T) {
+			t.Parallel()
+			served := servedBridges{t: t, roots: map[contract.Language]string{}, askers: map[contract.Language]bridge.Asker{}}
+			defer served.close()
+			for _, expected := range held {
+				t.Run(expected.Name(), func(t *testing.T) {
+					sampleWritten(t, &served, expected)
+				})
 			}
-			placed, err := expected.Placed(root)
-			if err != nil {
-				t.Fatal(err)
-			}
-			stream, err := asker.AskTallied(bridge.Request{Paths: []string{placed}, Write: []string{placed}}, func() {})
-			if err != nil {
-				t.Fatalf("the %s bridge could not read %s: %v", expected.Language, expected.Name(), err)
-			}
-			written := writtenFile(stream, placed)
-			if written == nil {
-				t.Fatalf("the %s bridge wrote no file for %s", expected.Language, placed)
-			}
-			written = sampled(t, stream.Header, written, root)
-			if expected.IsUnwritten() {
-				expected.Header.Contract, expected.Header.Version, expected.Header.Bridge = stream.Header.Contract, stream.Header.Version, stream.Header.Bridge
-				expected.File.Module = written.Module
-			}
-			if *update || expected.IsUnwritten() {
-				rewrite(t, expected, written)
-
-				return
-			}
-			differences, observed := samples.Observed(expected.File, written)
-			for _, difference := range differences {
-				t.Error(difference)
-			}
-			witnessed.add(expected.Language, observed)
 		})
 	}
-	scored.Store(true)
+}
+
+func sampleWritten(t *testing.T, served *servedBridges, expected samples.Expected) {
+	root, asker, err := served.of(expected.Language)
+	if err != nil {
+		t.Fatalf("the %s bridge could not start: %v", expected.Language, err)
+	}
+	placed, err := expected.Placed(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream, err := asker.AskTallied(bridge.Request{Paths: []string{placed}, Write: []string{placed}}, func() {})
+	if err != nil {
+		t.Fatalf("the %s bridge could not read %s: %v", expected.Language, expected.Name(), err)
+	}
+	written := writtenFile(stream, placed)
+	if written == nil {
+		t.Fatalf("the %s bridge wrote no file for %s", expected.Language, placed)
+	}
+	written = sampled(t, stream.Header, written, root)
+	if expected.IsUnwritten() {
+		expected.Header.Contract, expected.Header.Version, expected.Header.Bridge = stream.Header.Contract, stream.Header.Version, stream.Header.Bridge
+		expected.File.Module = written.Module
+	}
+	if *update || expected.IsUnwritten() {
+		rewrite(t, expected, written)
+
+		return
+	}
+	differences, observed := samples.Observed(expected.File, written)
+	for _, difference := range differences {
+		t.Error(difference)
+	}
+	witnessed.add(expected.Language, observed)
 }
 
 var witnessed = observations{byLanguage: map[contract.Language]map[string]bool{}}
