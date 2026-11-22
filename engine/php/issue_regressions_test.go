@@ -124,3 +124,19 @@ class Slugger {
 		}
 	}
 }
+
+func TestANullsafeCallIsTypedAsNullable(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+class Clock { public function now(): int { return 0; } }
+class Ledger {
+    private ?Clock $clock = null;
+    public function stamp(): ?int { return $this->clock?->now(); }
+}
+`)
+	for _, call := range codebase.WhereKind("call").Get() {
+		if call.Line() == 6 && !call.Typed().IsNullable() {
+			t.Errorf("the nullsafe call is typed %+v, which admits no null", call.Typed())
+		}
+	}
+}

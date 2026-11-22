@@ -374,3 +374,27 @@ spl_autoload_register(function (string $class): void {
 		t.Errorf("the static call to a class the autoloader loads reaches %q, not Framework\\Validation\\Failure::withMessages", targets)
 	}
 }
+
+func TestAMethodATraitDeclaresAbstractIsBoundButOneItWritesIsNot(t *testing.T) {
+	folder := written(t, map[string]string{"Report.php": `<?php
+namespace App;
+trait Exports {
+    abstract public function rows(): array;
+    public function title(): string { return ''; }
+}
+class Report {
+    use Exports;
+    public function rows(): array { return []; }
+    public function title(): string { return 'Report'; }
+}
+`})
+	bound := map[string]int{}
+	for _, node := range bridged(t, folder).Files[0].Nodes() {
+		if node.Kind == "function" && node.Name != "" {
+			bound[node.Name] += len(node.Obligations)
+		}
+	}
+	if bound["rows"] != 1 || bound["title"] != 0 {
+		t.Errorf("the obligations are %v: rows answers the trait's abstract method once, title overrides nothing it must keep", bound)
+	}
+}

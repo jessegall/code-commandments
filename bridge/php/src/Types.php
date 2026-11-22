@@ -86,7 +86,7 @@ final class Types
         $methods = [];
         $properties = [];
         foreach ($class->getMethods() as $method) {
-            $methods[strtolower($method->name->toString())] = ['name' => $method->name->toString(), 'returns' => $this->written($method->returnType, null), 'static' => $method->isStatic()];
+            $methods[strtolower($method->name->toString())] = ['name' => $method->name->toString(), 'returns' => $this->written($method->returnType, null), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract()];
             if ($method->name->toLowerString() === '__construct') {
                 foreach ($method->params as $parameter) {
                     if ($parameter->flags !== 0 && $parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
@@ -129,6 +129,7 @@ final class Types
                 default => [],
             }),
             'traits' => $traits,
+            'trait' => $class instanceof Stmt\Trait_,
             'methods' => $methods,
             'properties' => $properties,
             'constants' => $constants,
@@ -307,6 +308,17 @@ final class Types
      */
     public function typeOf(Expr $expression, ?string $class, array $variables): ?array
     {
+        $type = $this->typeWritten($expression, $class, $variables);
+        $nullsafe = $expression instanceof Expr\NullsafeMethodCall || $expression instanceof Expr\NullsafePropertyFetch;
+
+        return $nullsafe && $type !== null ? ['nullable' => true] + $type : $type;
+    }
+
+    /**
+     * @param  array<string, ?array>  $variables
+     */
+    private function typeWritten(Expr $expression, ?string $class, array $variables): ?array
+    {
         return match (true) {
             $expression instanceof Expr\Variable => $expression->name === 'this'
                 ? ($class !== null ? ['name' => $class] : null)
@@ -448,7 +460,7 @@ final class Types
         $key = strtolower($method);
         $found = [];
         $seen = [strtolower($own['name']) => true];
-        $pending = array_values(array_filter([$own['parent'] ?? null, ...($own['interfaces'] ?? [])]));
+        $pending = array_values(array_filter([$own['parent'] ?? null, ...($own['interfaces'] ?? []), ...($own['traits'] ?? [])]));
         while ($pending !== []) {
             $at = array_shift($pending);
             if (isset($seen[strtolower(ltrim($at, '\\'))])) {
@@ -459,10 +471,11 @@ final class Types
             if ($declared === null) {
                 continue;
             }
-            if (isset($declared['methods'][$key])) {
+            $binds = isset($declared['methods'][$key]) && (! ($declared['trait'] ?? false) || $declared['methods'][$key]['abstract']);
+            if ($binds) {
                 $found[] = ['symbol' => "{$declared['name']}::{$declared['methods'][$key]['name']}", 'origin' => $declared['file'] !== null ? 'project' : 'external'];
             }
-            array_push($pending, ...array_filter([$declared['parent'] ?? null, ...($declared['interfaces'] ?? [])]));
+            array_push($pending, ...array_filter([$declared['parent'] ?? null, ...($declared['interfaces'] ?? []), ...($declared['traits'] ?? [])]));
         }
 
         return $found;
@@ -614,7 +627,7 @@ final class Types
         $methods = [];
         foreach ($reflection->getMethods() as $method) {
             if ($method->getDeclaringClass()->getName() === $name) {
-                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), null), 'static' => $method->isStatic()];
+                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), null), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract()];
             }
         }
         $properties = [];
@@ -637,6 +650,7 @@ final class Types
             'parent' => $parent !== false ? $parent->getName() : null,
             'interfaces' => $reflection->getInterfaceNames(),
             'traits' => $reflection->getTraitNames(),
+            'trait' => $reflection->isTrait(),
             'methods' => $methods,
             'properties' => $properties,
             'constants' => $constants,
