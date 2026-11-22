@@ -62,5 +62,9 @@
   {
     "tag": "validation-response",
     "why": "A framework factory builds a validation response from field messages and has no parameter for the caught failure."
+  },
+  {
+    "tag": "called-by-convention",
+    "why": "A framework calls the method by a naming or registration convention with arguments it fixes, so the signature is not the project's to narrow."
   }
 ]

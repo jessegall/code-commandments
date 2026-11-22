@@ -2527,6 +2527,13 @@
       ],
       "tag": "validation-response",
       "why": "The constructor takes a validator, a response and an error bag and has no parameter for the caught failure."
+    },
+    {
+      "classes": [
+        "Illuminate\\Auth\\Access\\HandlesAuthorization"
+      ],
+      "tag": "called-by-convention",
+      "why": "A policy's public ability methods are called by the gate with the user and the model, whether they read them or not."
     }
   ],
   "identities": [

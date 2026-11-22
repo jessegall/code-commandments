@@ -421,6 +421,30 @@
           },
           false
         ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "none",
+            "$p.parent.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "private"
+            ]
+          ],
+          [
+            "proven",
+            [
+              "exemptedBy",
+              "called-by-convention",
+              "$owner"
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$p",
