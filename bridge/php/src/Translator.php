@@ -1325,7 +1325,7 @@ final class Translator
      */
     private function references(string $text, int $at): array
     {
-        preg_match_all('/@(?:see|link)\s+(\\\\?[A-Za-z_][\\\\\w]*)(?:::(\$?\w+))?(\(\))?(?=[\s.,;)}]|$)/', $text, $found, PREG_SET_ORDER);
+        preg_match_all('/@(?:see|link)\s+(\\\\?[A-Za-z_][\\\\\w]*)(?:::(\$?\w+))?(\(\))?(?=[\s,;)}]|\.(?!\w)|$)/', $text, $found, PREG_SET_ORDER);
         $enclosing = null;
         $enclosingParent = null;
         foreach ($this->typeSpans as [$start, $end, $symbol, $parent]) {
@@ -1338,24 +1338,33 @@ final class Translator
         foreach ($found as $one) {
             $written = $one[1];
             $member = isset($one[2]) && $one[2] !== '' ? ltrim($one[2], '$') : null;
-            $ofThis = ($one[3] ?? '') !== '' && ! str_contains($written, '\\') && $member === null && $enclosing !== null;
-            $class = match (true) {
-                $ofThis => $enclosing,
-                in_array(strtolower($written), ['self', 'static'], true) && $enclosing !== null => $enclosing,
-                strtolower($written) === 'parent' && $enclosingParent !== null => $enclosingParent,
-                default => $this->qualified($written),
+            $called = ($one[3] ?? '') !== '';
+            $bare = ! str_contains($written, '\\') && $member === null;
+            $readings = match (true) {
+                in_array(strtolower($written), ['self', 'static'], true) && $enclosing !== null => [[$enclosing, $member]],
+                strtolower($written) === 'parent' && $enclosingParent !== null => [[$enclosingParent, $member]],
+                default => array_values(array_filter([
+                    $bare && $called ? null : [$this->qualified($written), $member],
+                    ! $bare && ! str_starts_with($written, '\\') ? [$written, $member] : null,
+                    $bare && $enclosing !== null ? [$enclosing, $written] : null,
+                    $bare && $enclosingParent !== null ? [$enclosingParent, $written] : null,
+                ])),
             };
-            $member = $ofThis ? $written : $member;
-            $declared = $this->known?->declared($class);
-            $ref = ['text' => $written.($member !== null && ! $ofThis ? '::'.$member : '')];
-            $has = $declared !== null && ($member === null
-                || isset($declared['methods'][strtolower($member)])
-                || isset($declared['constants'][$member])
-                || isset($declared['properties'][$member]));
-            if ($has) {
-                $ref['symbol'] = $member === null ? $declared['name'] : $declared['name'].'::'.$member;
-            } else {
-                $ref['ownedHere'] = strtok($class, '\\') === strtok((string) $this->namespace, '\\');
+            $ref = ['text' => $written.($member !== null ? '::'.$member : '')];
+            foreach ($readings as [$class, $named]) {
+                $declared = $this->known?->declared($class);
+                if ($declared !== null && ($named === null
+                    || isset($declared['methods'][strtolower($named)])
+                    || isset($declared['constants'][$named])
+                    || isset($declared['properties'][$named]))) {
+                    $ref['symbol'] = $named === null ? $declared['name'] : $declared['name'].'::'.$named;
+                    break;
+                }
+            }
+            if (! isset($ref['symbol'])) {
+                $ref['ownedHere'] = $bare && $called && function_exists($written)
+                    ? false
+                    : strtok($readings[0][0] ?? $this->qualified($written), '\\') === strtok((string) $this->namespace, '\\');
             }
             $refs[] = $ref;
         }

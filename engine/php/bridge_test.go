@@ -346,6 +346,31 @@ class Ledger extends Book {
 	}
 }
 
+func TestADocReferenceIsReadAsAMemberOfItsTypeAFileOrAnAbsoluteName(t *testing.T) {
+	folder := written(t, map[string]string{"Accounts.php": `<?php
+namespace App\Users;
+class Accounts {
+    /**
+     * Mirrors {@see changeEmail} and {@link App\Users\Accounts::rename()}, as Accounts.php says, through {@link debug_backtrace()}.
+     */
+    public function updateEmail(): void {}
+    public function changeEmail(): void {}
+    public function rename(): void {}
+}
+`})
+	var read []string
+	for _, comment := range bridged(t, folder).Files[0].Comments {
+		for _, ref := range comment.Refs {
+			ownedElsewhere := ref.OwnedHere != nil && !*ref.OwnedHere
+			read = append(read, ref.Text+"="+ref.Symbol+map[bool]string{true: " (owned elsewhere)", false: ""}[ownedElsewhere])
+		}
+	}
+	wanted := []string{`changeEmail=App\Users\Accounts::changeEmail`, `App\Users\Accounts::rename=App\Users\Accounts::rename`, `debug_backtrace= (owned elsewhere)`}
+	if strings.Join(read, " | ") != strings.Join(wanted, " | ") {
+		t.Errorf("the doc references read as %q, not %q", read, wanted)
+	}
+}
+
 func TestACallToAClassTheAutoloaderLoadsByItsWrittenCaseIsResolved(t *testing.T) {
 	folder := written(t, map[string]string{
 		"vendor/autoload.php": `<?php
