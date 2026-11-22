@@ -58,20 +58,35 @@
         ]
       ],
       [
-        "laravel.named",
-        "$c",
-        "update"
+        "or",
+        [
+          "laravel.named",
+          "$c",
+          "update"
+        ],
+        [
+          "laravel.named",
+          "$c",
+          "save"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$m"
       ],
       [
         "not",
         [
           "isSelf",
-          "$c.callee.subject"
+          "$m.callee.subject"
         ]
       ],
       [
         "some",
-        "$c.arguments",
+        "$m.arguments",
         "a",
         [
           "and",
@@ -89,13 +104,10 @@
             "collection"
           ]
         ]
-      ]
-    ],
-    "having": [
-      "and",
+      ],
       [
         "laravel.receiverIs",
-        "$c",
+        "$m",
         "model"
       ],
       [
@@ -109,7 +121,16 @@
         ]
       ]
     ],
-    "emit": "$c"
+    "emit": "$c",
+    "let": [
+      [
+        "m",
+        [
+          "massWrite",
+          "$c"
+        ]
+      ]
+    ]
   },
   "definitions": {
     "intentionMethod": {
@@ -208,6 +229,55 @@
               ]
             ]
           ]
+        ]
+      ]
+    },
+    "massWrite": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        [
+          "laravel.named",
+          "$c",
+          "update"
+        ],
+        {
+          "true": "$c"
+        },
+        [
+          "case",
+          [
+            "and",
+            [
+              "laravel.named",
+              "$c",
+              "save"
+            ],
+            [
+              "=",
+              "$c.callee.subject.kind",
+              "call"
+            ],
+            [
+              "or",
+              [
+                "laravel.named",
+                "$c.callee.subject",
+                "fill"
+              ],
+              [
+                "laravel.named",
+                "$c.callee.subject",
+                "forceFill"
+              ]
+            ]
+          ],
+          {
+            "true": "$c.callee.subject"
+          },
+          null
         ]
       ]
     }
