@@ -74,59 +74,45 @@
         "c"
       ],
       "expr": [
-        "some",
+        "or",
         [
-          "filter",
+          "some",
           [
-            "ownDescendants",
-            "$c"
+            "filter",
+            [
+              "ownDescendants",
+              "$c"
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$x.callee.kind",
+                "access"
+              ]
+            ]
           ],
           "x",
           [
-            "and",
+            "or",
             [
-              "=",
-              "$x.kind",
-              "call"
-            ],
-            [
-              "=",
-              "$x.callee.kind",
-              "access"
-            ]
-          ]
-        ],
-        "x",
-        [
-          "or",
-          [
-            "and",
-            [
-              ">=",
+              "and",
               [
-                "count",
-                "$x.arguments"
-              ],
-              2
-            ],
-            [
-              "literalIs",
-              [
-                "at",
+                ">=",
                 [
-                  "map",
-                  "$x.arguments",
-                  "a",
-                  "$a.value"
+                  "count",
+                  "$x.arguments"
                 ],
-                0
+                2
               ],
-              "string"
-            ],
-            [
-              "!=",
               [
-                "literalValue",
+                "literalIs",
                 [
                   "at",
                   [
@@ -136,34 +122,149 @@
                     "$a.value"
                   ],
                   0
-                ]
+                ],
+                "string"
               ],
-              "id"
-            ]
-          ],
-          [
-            "and",
-            [
-              ">=",
               [
-                "count",
-                "$x.arguments"
-              ],
-              1
+                "!=",
+                [
+                  "literalValue",
+                  [
+                    "at",
+                    [
+                      "map",
+                      "$x.arguments",
+                      "a",
+                      "$a.value"
+                    ],
+                    0
+                  ]
+                ],
+                "id"
+              ]
             ],
             [
-              "=",
+              "and",
               [
-                "at",
+                ">=",
                 [
-                  "map",
-                  "$x.arguments",
-                  "a",
-                  "$a.value.member.name"
+                  "count",
+                  "$x.arguments"
                 ],
-                0
+                1
               ],
-              "class"
+              [
+                "=",
+                [
+                  "at",
+                  [
+                    "map",
+                    "$x.arguments",
+                    "a",
+                    "$a.value.member.name"
+                  ],
+                  0
+                ],
+                "class"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              [
+                "filter",
+                [
+                  "ownDescendants",
+                  "$c"
+                ],
+                "x",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$x.kind",
+                    "call"
+                  ],
+                  [
+                    "=",
+                    "$x.callee.kind",
+                    "access"
+                  ]
+                ]
+              ]
+            ],
+            3
+          ],
+          [
+            "none",
+            [
+              "filter",
+              [
+                "ownDescendants",
+                "$c"
+              ],
+              "x",
+              [
+                "and",
+                [
+                  "=",
+                  "$x.kind",
+                  "call"
+                ],
+                [
+                  "=",
+                  "$x.callee.kind",
+                  "access"
+                ]
+              ]
+            ],
+            "x",
+            [
+              "and",
+              [
+                ">=",
+                [
+                  "count",
+                  "$x.arguments"
+                ],
+                1
+              ],
+              [
+                "literalIs",
+                [
+                  "at",
+                  [
+                    "map",
+                    "$x.arguments",
+                    "a",
+                    "$a.value"
+                  ],
+                  0
+                ],
+                "string"
+              ],
+              [
+                "=",
+                [
+                  "literalValue",
+                  [
+                    "at",
+                    [
+                      "map",
+                      "$x.arguments",
+                      "a",
+                      "$a.value"
+                    ],
+                    0
+                  ]
+                ],
+                "id"
+              ]
             ]
           ]
         ]
