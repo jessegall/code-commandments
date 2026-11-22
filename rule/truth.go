@@ -289,6 +289,8 @@ func fileField(file *engine.File, name string) value {
 	switch name {
 	case "path":
 		return known(file.Path)
+	case "fromProject":
+		return known(file.FromProject())
 	case "language":
 		return known(string(file.Language()))
 	case "module":

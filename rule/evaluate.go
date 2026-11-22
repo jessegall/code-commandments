@@ -146,6 +146,7 @@ func (r Rule) AdviceFor(finding engine.Match) string {
 		return ""
 	}
 	advice := evaluation{definitions: asked.Definitions, site: finding, parameters: r.parameters(), codebase: finding.Codebase()}
+	advice.relations = rows{advice, finding.Codebase(), asked.Find.Relations, map[string][]value{}}.relationRows
 
 	return stringOf(advice.evaluate(*asked.Find.Advice, bindings{}.with(asked.Find.As, known(finding))))
 }

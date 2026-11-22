@@ -172,6 +172,42 @@ func TestNamespaceCycleFindsTheThinnerSideOfAMutualPair(t *testing.T) {
 	}))
 }
 
+func TestANamespaceCycleFindingNamesTheImportsThatPointBack(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for path, text := range map[string]string{
+		"src/A/Alpha.php": "<?php\nnamespace Shop\\A;\n\nuse Shop\\B\\One;\n\nclass Alpha\n{\n    public function run(One $one): void\n    {\n    }\n}\n",
+		"src/B/One.php":   "<?php\nnamespace Shop\\B;\n\nuse Shop\\A\\Alpha;\n\nclass One\n{\n    public function run(Alpha $alpha): void\n    {\n    }\n}\n",
+		"src/B/Two.php":   "<?php\nnamespace Shop\\B;\n\n\nuse Shop\\A\\Alpha;\n\nclass Two\n{\n    public function run(Alpha $alpha): void\n    {\n    }\n}\n",
+	} {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, path), []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	index := slices.IndexFunc(rules.All(), func(each rule.Detector) bool { return each.Sin().Definition().Name == "namespace-cycle" })
+	cycle := rules.All()[index].(rule.Rule)
+	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	codebase.Rooted(root)
+	found := cycle.Find(codebase)
+	if len(found) != 1 {
+		t.Fatalf("the rule found %d cycles, and 1 is right", len(found))
+	}
+	advice := cycle.AdviceFor(found[0])
+	for _, said := range []string{"The way back: Shop\\B imports Shop\\A at ", "src/B/One.php:4", "src/B/Two.php:5"} {
+		if !strings.Contains(advice, said) {
+			t.Errorf("the advice %q does not say %q", advice, said)
+		}
+	}
+}
+
 // The route table relation: each registration of a route verb with its actions, a class's method or an invokable
 // class, and nothing for a call that only shares a verb's name and registers no action.
 func TestRelationOfLaravelRouteRegistrations(t *testing.T) {

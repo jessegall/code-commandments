@@ -136,6 +136,125 @@
       {
         "emit": "$a.anchor"
       }
+    ],
+    "advice": [
+      "wayBack",
+      [
+        "cutImport",
+        "$a"
+      ]
     ]
+  },
+  "definitions": {
+    "cutImport": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "rowOf",
+        "imports",
+        [
+          "record",
+          "anchor",
+          "$a"
+        ]
+      ]
+    },
+    "importsBack": {
+      "args": [
+        "cut"
+      ],
+      "expr": [
+        "filter",
+        [
+          "rowsOf",
+          "imports",
+          [
+            "record",
+            "from",
+            [
+              "get",
+              "$cut",
+              "to"
+            ],
+            "to",
+            [
+              "get",
+              "$cut",
+              "from"
+            ]
+          ]
+        ],
+        "r",
+        [
+          "not",
+          [
+            "get",
+            "$r",
+            "test"
+          ]
+        ]
+      ]
+    },
+    "placeOf": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "concat",
+        "$n.file.fromProject",
+        ":",
+        [
+          "text",
+          "$n.line"
+        ]
+      ]
+    },
+    "wayBack": {
+      "args": [
+        "cut"
+      ],
+      "expr": [
+        "concat",
+        "The way back: ",
+        [
+          "get",
+          "$cut",
+          "to"
+        ],
+        " imports ",
+        [
+          "get",
+          "$cut",
+          "from"
+        ],
+        " at ",
+        [
+          "join",
+          [
+            "map",
+            [
+              "take",
+              [
+                "importsBack",
+                "$cut"
+              ],
+              2
+            ],
+            "r",
+            [
+              "placeOf",
+              [
+                "get",
+                "$r",
+                "anchor"
+              ]
+            ]
+          ],
+          ", "
+        ],
+        "."
+      ]
+    }
   }
 }
