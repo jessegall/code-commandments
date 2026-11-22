@@ -10,8 +10,8 @@
       "DataCollectionType"
     ],
     "skill": "php/spatie-data",
-    "description": "A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration",
-    "rule": "Never type a `Data` property as `DataCollection`. Type it `array` (preferred) or `Collection` and add `#[DataCollectionOf(X::class)]` — element typing drives hydration, nested validation, and clean TypeScript.",
+    "description": "A `Data` property is TYPED as `DataCollection` \u2014 it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration",
+    "rule": "Never type a `Data` property as `DataCollection`. Type it `array` (preferred) or `Collection` and add `#[DataCollectionOf(X::class)]` \u2014 element typing drives hydration, nested validation, and clean TypeScript.",
     "suggestion": "`#[DataCollectionOf(NodeData::class)] public readonly array $nodes;`, not `public readonly DataCollection $nodes;`.",
     "requires": {
       "name": "spatie/laravel-data",
@@ -33,7 +33,7 @@
             "m",
             [
               "=",
-              "$m.name",
+              "$m.refers",
               [
                 "identity",
                 "data-collection"
@@ -43,7 +43,7 @@
         },
         [
           "=",
-          "$t.name",
+          "$t.refers",
           [
             "identity",
             "data-collection"

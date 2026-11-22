@@ -22,16 +22,16 @@ def parse_basket_line(raw: str) -> BasketLine:
     return BasketLine(sku=sku.strip(), quantity=int(quantity))
 
 
-# @righteous DictReturnBag
 class Basket:
     def __init__(self, lines: list, owner: str) -> None:
         self.lines = lines
         self.owner = owner
 
     def to_json(self) -> dict:
+        # @righteous DictReturnBag
         return {"owner": self.owner, "lines": len(self.lines)}
 
 
-# @righteous DictReturnBag
 def download_headers(size: int, kind: str) -> dict:
+    # @righteous DictReturnBag
     return {"Content-Length": str(size), "Content-Type": kind}

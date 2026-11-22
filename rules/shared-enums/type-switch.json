@@ -70,19 +70,37 @@
         "or",
         [
           "=",
-          "$x.kind",
+          [
+            "tree.kindOf",
+            [
+              "inner",
+              "$x"
+            ]
+          ],
           "type-test"
         ],
         [
           "and",
           [
             "=",
-            "$x.kind",
+            [
+              "tree.kindOf",
+              [
+                "inner",
+                "$x"
+              ]
+            ],
             "pattern"
           ],
           [
             "=",
-            "$x.form",
+            [
+              "tree.formOf",
+              [
+                "inner",
+                "$x"
+              ]
+            ],
             "type"
           ]
         ]
@@ -94,10 +112,28 @@
       ],
       "expr": [
         "case",
-        "$x.kind",
+        [
+          "tree.kindOf",
+          [
+            "inner",
+            "$x"
+          ]
+        ],
         {
-          "type-test": "$x.testedType",
-          "pattern": "$x.constrainedType"
+          "type-test": [
+            "testedTypeOf",
+            [
+              "inner",
+              "$x"
+            ]
+          ],
+          "pattern": [
+            "constrainedOf",
+            [
+              "inner",
+              "$x"
+            ]
+          ]
         },
         null
       ]
@@ -109,9 +145,21 @@
       ],
       "expr": [
         "case",
-        "$x.kind",
+        [
+          "tree.kindOf",
+          [
+            "inner",
+            "$x"
+          ]
+        ],
         {
-          "type-test": "$x.subject",
+          "type-test": [
+            "subjectNodeOf",
+            [
+              "inner",
+              "$x"
+            ]
+          ],
           "pattern": "$b.subject"
         },
         null
@@ -175,6 +223,50 @@
           "$p.then"
         ]
       ]
+    },
+    "inner": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "pattern": [
+            "case",
+            "$x.form",
+            {
+              "value": "$x.value"
+            },
+            "$x"
+          ]
+        },
+        "$x"
+      ]
+    },
+    "testedTypeOf": {
+      "args": [
+        "y"
+      ],
+      "expr": "$y.testedType"
+    },
+    "constrainedOf": {
+      "args": [
+        "y"
+      ],
+      "expr": "$y.constrainedType"
+    },
+    "subjectNodeOf": {
+      "args": [
+        "y"
+      ],
+      "expr": "$y.subject"
+    },
+    "resolvedNameOf": {
+      "args": [
+        "y"
+      ],
+      "expr": "$y.resolved.name"
     }
   },
   "find": {
@@ -384,6 +476,131 @@
           ]
         },
         true
+      ],
+      [
+        "not",
+        [
+          "every",
+          [
+            "dispatchArms",
+            "$b"
+          ],
+          "a",
+          [
+            "=",
+            [
+              "tree.kindOf",
+              [
+                "get",
+                "$a",
+                "body"
+              ]
+            ],
+            "literal"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "every",
+          "$tests",
+          "t",
+          [
+            "proven",
+            [
+              "within",
+              [
+                "typeDeclaration",
+                [
+                  "resolvedNameOf",
+                  [
+                    "testedOf",
+                    "$t"
+                  ]
+                ]
+              ],
+              [
+                "enclosing",
+                "$b",
+                "type"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "dispatchArms",
+            "$b"
+          ],
+          "a",
+          [
+            "some",
+            [
+              "descendants",
+              [
+                "get",
+                "$a",
+                "body"
+              ]
+            ],
+            "n",
+            [
+              "and",
+              [
+                "=",
+                "$n.kind",
+                "assignment"
+              ],
+              [
+                "=",
+                "$n.mode",
+                "assign"
+              ],
+              [
+                "some",
+                "$n.targets",
+                "t",
+                [
+                  "tree.selfField",
+                  "$t"
+                ]
+              ],
+              [
+                "some",
+                "$n.values",
+                "v",
+                [
+                  "some",
+                  [
+                    "flatten",
+                    [
+                      "list",
+                      [
+                        "list",
+                        "$v"
+                      ],
+                      [
+                        "descendants",
+                        "$v"
+                      ]
+                    ]
+                  ],
+                  "y",
+                  [
+                    "=",
+                    "$y.kind",
+                    "access"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$b"

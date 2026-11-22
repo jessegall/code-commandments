@@ -170,39 +170,39 @@
           ],
           "d",
           [
-            "some",
-            "$d.declarators",
-            "x",
+            "and",
             [
-              "and",
+              "=",
+              "$d.parent.kind",
+              "declarator"
+            ],
+            [
+              "=",
+              "$d.parent.initializer.kind",
+              "call"
+            ],
+            [
+              "some",
+              "$d.parent.initializer.arguments",
+              "g",
               [
-                "=",
-                "$x.initializer.kind",
-                "call"
-              ],
-              [
-                "some",
-                "$x.initializer.arguments",
-                "g",
+                "and",
                 [
-                  "and",
+                  "=",
+                  "$g.label",
+                  "init"
+                ],
+                [
+                  "or",
                   [
                     "=",
-                    "$g.label",
-                    "init"
+                    "$g.value.value",
+                    "false"
                   ],
                   [
-                    "or",
-                    [
-                      "=",
-                      "$g.value.value",
-                      "false"
-                    ],
-                    [
-                      "=",
-                      "$g.value.value",
-                      false
-                    ]
+                    "=",
+                    "$g.value.value",
+                    false
                   ]
                 ]
               ]
@@ -232,8 +232,18 @@
           [
             "some",
             [
-              "ownDescendants",
-              "$q.condition"
+              "flatten",
+              [
+                "list",
+                [
+                  "list",
+                  "$q.condition"
+                ],
+                [
+                  "descendants",
+                  "$q.condition"
+                ]
+              ]
             ],
             "c",
             [

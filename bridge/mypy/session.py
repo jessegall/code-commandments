@@ -224,6 +224,7 @@ class TypedModule:
     enum_members: dict[str, list[str]] | None = None
     module_paths: dict[str, str] | None = None
     constants: dict[tuple[int, int], dict[str, object]] | None = None
+    instance_field_classes: frozenset[str] = frozenset()
 
 
 def described(typ: Type) -> ResolvedType | None:
@@ -303,7 +304,7 @@ def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule
         declared = member_declaration(member, types)
         if declared is not None:
             names.setdefault((end - len(member.name.encode()), end), declared)
-    return TypedModule(len(written), found, bound, names, obligations_of(state), enum_members_of(state), module_paths_of(state), constants)
+    return TypedModule(len(written), found, bound, names, obligations_of(state), enum_members_of(state), module_paths_of(state), constants, instance_field_classes_of(state))
 
 
 def module_paths_of(state: State) -> dict[str, str]:
@@ -322,6 +323,17 @@ def enum_members_of(state: State) -> dict[str, list[str]]:
         return {}
     return {symbol.node.fullname: list(symbol.node.enum_members) for symbol in state.tree.names.values()
             if isinstance(symbol.node, TypeInfo) and symbol.node.module_name == state.id and symbol.node.is_enum}
+
+
+def instance_field_classes_of(state: State) -> frozenset[str]:
+    """Every class the module declares whose annotated names mypy reads as per-instance fields: a dataclass, an
+    attrs class, a named tuple or a typed dict."""
+    if state.tree is None:
+        return frozenset()
+    return frozenset(symbol.node.fullname for symbol in state.tree.names.values()
+                     if isinstance(symbol.node, TypeInfo) and symbol.node.module_name == state.id
+                     and ("dataclass" in symbol.node.metadata or "attrs" in symbol.node.metadata
+                          or symbol.node.is_named_tuple or symbol.node.typeddict_type is not None))
 
 
 def obligations_of(state: State) -> dict[str, list[dict[str, str]]]:

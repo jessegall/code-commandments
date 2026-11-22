@@ -104,7 +104,7 @@ class VoucherTreeDirectory:
         self.credit[voucher] = earned
 
     def redeem(self, voucher: str, entries: list[tuple[str, int]]) -> None:
-        if self.credit[voucher] < 1:
+        if voucher not in self.credit:
             raise KeyError(voucher)
         entries.append((self.currency, self.credit.pop(voucher)))
 

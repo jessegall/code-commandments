@@ -886,6 +886,10 @@ final class Translator
             if ($expression instanceof Expr\FuncCall && $callee instanceof TreeNode && $callee->kind === 'reference' && ! isset($callee->facts['refers'])) {
                 $callee->facts['refers'] = $target['symbol'];
             }
+            $member = $callee instanceof TreeNode && $callee->kind === 'access' ? ($callee->parts['member'] ?? null) : null;
+            if ($member instanceof TreeNode && $member->kind === 'reference' && ! isset($member->facts['refers'])) {
+                $member->facts['refers'] = $target['symbol'];
+            }
         }
 
         return $node;

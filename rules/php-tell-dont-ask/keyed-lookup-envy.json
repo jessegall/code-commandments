@@ -164,6 +164,17 @@
                 "paramMember",
                 "$g.value"
               ]
+            ],
+            [
+              "or",
+              [
+                "tree.selfField",
+                "$x.callee.subject"
+              ],
+              [
+                "ownParameter",
+                "$x.callee.subject"
+              ]
             ]
           ]
         },

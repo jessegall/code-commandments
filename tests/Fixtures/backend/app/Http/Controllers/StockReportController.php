@@ -2,6 +2,7 @@
 
 namespace Shop\Http\Controllers;
 
+use JesseGall\CodeCommandments\Sins\Backend\ArrayReturnBag;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\BoundaryDuplicatedOperation;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -16,6 +17,7 @@ final class StockReportController
     }
 
     #[Righteous(BoundaryDuplicatedOperation::class)]
+    #[Sinful(ArrayReturnBag::class)]
     public function preview(StockReport $report, string $warehouse): array
     {
         return [

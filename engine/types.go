@@ -54,7 +54,24 @@ func (m Match) Types() (TypeSystem, bool) {
 }
 
 func Supertypes(types TypeSystem, symbol string) []string {
-	return append(types.Ancestors(symbol), types.Contracts(symbol)...)
+	above := append(types.Ancestors(symbol), types.Contracts(symbol)...)
+	using := append([]string{symbol}, types.Ancestors(symbol)...)
+	for len(using) > 0 {
+		owner := using[0]
+		using = using[1:]
+		declared, found := types.Declaration(owner)
+		if !found {
+			continue
+		}
+		for _, trait := range declared.Traits() {
+			if used := trait.Refers(); used != "" && !slices.Contains(above, used) {
+				above = append(above, used)
+				using = append(using, used)
+			}
+		}
+	}
+
+	return above
 }
 
 func TypeLacksMember(types TypeSystem, symbol string, providesMember func(string) bool) bool {

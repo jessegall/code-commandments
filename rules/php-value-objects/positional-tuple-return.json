@@ -36,9 +36,17 @@
             ],
             "x",
             [
-              "in",
-              "$x.kind",
-              "reference"
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "reference"
+              ],
+              [
+                "!=",
+                "$x.role",
+                "callee"
+              ]
             ]
           ],
           0

@@ -89,7 +89,7 @@ class ParcelTreeDirectory:
         self.arrival[shipment] = minute
 
     def notify(self, shipment: str, send) -> None:
-        if self.arrival[shipment] < 0:
+        if shipment not in self.arrival:
             raise KeyError(shipment)
         send(self.manifest, shipment, self.arrival[shipment])
 

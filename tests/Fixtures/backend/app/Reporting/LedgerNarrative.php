@@ -5,13 +5,40 @@ namespace Shop\Reporting;
 use JesseGall\CodeCommandments\Sins\Backend\TypeSwitch;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
-interface LedgerEntry {}
+interface LedgerEntry
+{
+    public function cents(): int;
+}
 
-final class Charge implements LedgerEntry {}
+final class Charge implements LedgerEntry
+{
+    public function __construct(private int $cents) {}
 
-final class Refund implements LedgerEntry {}
+    public function cents(): int
+    {
+        return $this->cents;
+    }
+}
 
-final class Adjustment implements LedgerEntry {}
+final class Refund implements LedgerEntry
+{
+    public function __construct(private int $cents) {}
+
+    public function cents(): int
+    {
+        return $this->cents;
+    }
+}
+
+final class Adjustment implements LedgerEntry
+{
+    public function __construct(private int $cents) {}
+
+    public function cents(): int
+    {
+        return $this->cents;
+    }
+}
 
 /**
  * Names a ledger entry for a statement. A `match (true)` over types is the same switch as a
@@ -23,9 +50,9 @@ final class LedgerNarrative
     public function describe(LedgerEntry $entry): string
     {
         return match (true) {
-            $entry instanceof Charge => 'charged to the account',
-            $entry instanceof Refund => 'returned to the customer',
-            $entry instanceof Adjustment => 'corrected by an operator',
+            $entry instanceof Charge => 'charged '.$entry->cents().' to the account',
+            $entry instanceof Refund => 'returned '.$entry->cents().' to the customer',
+            $entry instanceof Adjustment => 'adjusted '.$entry->cents().' by an operator',
             default => 'recorded',
         };
     }

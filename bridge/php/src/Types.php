@@ -546,13 +546,24 @@ final class Types
         return $type['name'] ?? null;
     }
 
+    private function builtIn(string $key): bool
+    {
+        foreach (['class_exists', 'interface_exists', 'trait_exists', 'enum_exists'] as $exists) {
+            if ($exists($key, false)) {
+                return (new \ReflectionClass($key))->isInternal();
+            }
+        }
+
+        return false;
+    }
+
     /**
      * A class as a judged file declares it, or as the autoloader loads it.
      */
     private function declaration(string $class): ?array
     {
         $key = strtolower(ltrim($class, '\\'));
-        if (! isset($this->classes[$key]) && $this->loads) {
+        if (! isset($this->classes[$key]) && ($this->loads || $this->builtIn($key))) {
             $this->classes[$key] = $this->reflected($key);
         }
         $declared = $this->classes[$key] ?? null;
@@ -613,7 +624,7 @@ final class Types
         ];
     }
 
-    private function reflectedType(?ReflectionType $type, string $class): ?array
+    private function reflectedType(?ReflectionType $type, ?string $class): ?array
     {
         if (! $type instanceof ReflectionNamedType) {
             return null;

@@ -94,7 +94,7 @@ export class TicketReferenceTreeDirectory {
     }
 
     settled(ticket: string, base: bigint): bigint {
-        if (this.charges[ticket] < 0n) {
+        if (!(ticket in this.charges)) {
             // @sin MessageAtThrow
             throw new RangeError('Tickets cannot accrue a negative charge')
         }

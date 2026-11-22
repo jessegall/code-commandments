@@ -195,11 +195,11 @@
       [
         "none",
         [
-          "ownDescendants",
+          "descendants",
           [
             "last",
             [
-              "ownAncestors",
+              "ancestors",
               "$m"
             ]
           ],

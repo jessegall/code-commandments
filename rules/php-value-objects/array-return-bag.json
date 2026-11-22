@@ -102,6 +102,222 @@
         },
         null
       ]
+    },
+    "notCallee": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$x.role",
+            "callee"
+          ]
+        ]
+      ]
+    },
+    "sourceRead": {
+      "args": [
+        "x",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "access"
+        ],
+        [
+          "notCallee",
+          "$x"
+        ],
+        [
+          "or",
+          [
+            "isSelf",
+            "$x.subject"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$x.subject.kind",
+              "reference"
+            ],
+            [
+              "=",
+              "$x.subject.binding.parent.kind",
+              "parameter"
+            ],
+            [
+              "=",
+              "$x.subject.binding.parent.parent",
+              "$f"
+            ]
+          ]
+        ]
+      ]
+    },
+    "reachesThrough": {
+      "args": [
+        "x",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "access"
+        ],
+        [
+          "notCallee",
+          "$x"
+        ],
+        [
+          "=",
+          "$x.subject.kind",
+          "access"
+        ],
+        [
+          "sourceRead",
+          "$x.subject",
+          "$f"
+        ],
+        [
+          "!=",
+          [
+            "tree.formOf",
+            [
+              "typeDeclaration",
+              "$x.subject.resolved.name"
+            ]
+          ],
+          "enum"
+        ]
+      ]
+    },
+    "askedWithInput": {
+      "args": [
+        "x",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "call"
+        ],
+        [
+          ">",
+          [
+            "count",
+            "$x.arguments"
+          ],
+          0
+        ],
+        [
+          "=",
+          "$x.callee.kind",
+          "access"
+        ],
+        [
+          "sourceRead",
+          "$x.callee.subject",
+          "$f"
+        ]
+      ]
+    },
+    "projected": {
+      "args": [
+        "v",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "some",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$v"
+              ],
+              [
+                "descendants",
+                "$v",
+                "access"
+              ]
+            ]
+          ],
+          "x",
+          [
+            "sourceRead",
+            "$x",
+            "$f"
+          ]
+        ],
+        [
+          "none",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$v"
+              ],
+              [
+                "descendants",
+                "$v",
+                "access"
+              ]
+            ]
+          ],
+          "x",
+          [
+            "reachesThrough",
+            "$x",
+            "$f"
+          ]
+        ],
+        [
+          "none",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$v"
+              ],
+              [
+                "descendants",
+                "$v",
+                "call"
+              ]
+            ]
+          ],
+          "x",
+          [
+            "askedWithInput",
+            "$x",
+            "$f"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -298,6 +514,63 @@
           "$e.expansion",
           "positional",
           "keyed"
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "array-return-contract",
+            "$owner"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "array-returning",
+            "$owner"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "every",
+            "$value.entries",
+            "e",
+            [
+              "projected",
+              "$e.value",
+              "$owner"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "stringKeys",
+            "$value"
+          ],
+          "k",
+          [
+            "not",
+            [
+              "matchesText",
+              "$k",
+              "^[A-Za-z_][A-Za-z0-9_]*$"
+            ]
+          ]
         ]
       ]
     ],

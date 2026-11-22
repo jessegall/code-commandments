@@ -94,7 +94,7 @@ public sealed class VoucherSettingsTreeRegistry
 
     public void Redeem(Guid serial, Action<decimal> post)
     {
-        if (this.credit[serial] <= 0m)
+        if (!this.credit.ContainsKey(serial))
         {
             throw new KeyNotFoundException();
         }

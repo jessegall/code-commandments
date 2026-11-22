@@ -5,11 +5,48 @@
   "provenance": "PHP's own date interface, which every date class implements (engine/php/spatie nativeCastTypes), and the magic method that answers any property read",
   "entries": [],
   "identities": [
-    {"name": "date-time", "type": "DateTimeInterface"},
-    {"name": "dynamic-member-reader", "type": "__get"},
-    {"name": "newline", "type": "PHP_EOL"},
-    {"name": "serialization-hook", "type": "__serialize"},
-    {"name": "serialization-hook", "type": "__unserialize"},
-    {"name": "serialization-hook", "type": "__set_state"}
+    {
+      "name": "date-time",
+      "type": "DateTimeInterface"
+    },
+    {
+      "name": "dynamic-member-reader",
+      "type": "__get"
+    },
+    {
+      "name": "newline",
+      "type": "PHP_EOL"
+    },
+    {
+      "name": "serialization-hook",
+      "type": "__serialize"
+    },
+    {
+      "name": "serialization-hook",
+      "type": "__unserialize"
+    },
+    {
+      "name": "serialization-hook",
+      "type": "__set_state"
+    },
+    {
+      "name": "date-time",
+      "type": "DateTime"
+    },
+    {
+      "name": "date-time",
+      "type": "DateTimeImmutable"
+    }
+  ],
+  "exemptions": [
+    {
+      "on": {
+        "JsonSerializable": [
+          "jsonSerialize"
+        ]
+      },
+      "tag": "contract-method",
+      "why": "A method PHP's JsonSerializable interface fixes: its name and its mixed return are the interface's."
+    }
   ]
 }

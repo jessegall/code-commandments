@@ -88,9 +88,9 @@ public sealed class CountedReceipts
         this.received[reference] = date;
     }
 
-    public void Retire(long reference, DateOnly onDate, TextWriter archive)
+    public void Retire(long reference, TextWriter archive)
     {
-        if (this.received[reference] > onDate)
+        if (!this.received.ContainsKey(reference))
         {
             throw new KeyNotFoundException();
         }

@@ -737,7 +737,7 @@ public sealed partial class ContractWriter
             AssignmentExpressionSyntax assignment => Assignment(assignment),
             BinaryExpressionSyntax binary => Binary(binary),
             PrefixUnaryExpressionSyntax prefix => Prefix(prefix),
-            PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven => New("unary", forgiven).Fact("operator", "assert-present").Holds("operand", Typed(Expression(forgiven.Operand), model.GetTypeInfo(forgiven.Operand).Type)),
+            PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven => New("unary", forgiven).Fact("operator", "assert-present").Holds("operand", Typed(Expression(forgiven.Operand), DeclaredType(forgiven.Operand))),
             PostfixUnaryExpressionSyntax postfix => New("assignment", postfix)
                 .Fact("mode", postfix.IsKind(SyntaxKind.PostIncrementExpression) ? "increment" : "decrement")
                 .HoldsAll("targets", [Expression(postfix.Operand)]),
@@ -1052,6 +1052,27 @@ public sealed partial class ContractWriter
         };
 
         // Types as written ------------------------------------------------------------------------------------------
+
+        private ITypeSymbol? DeclaredType(ExpressionSyntax operand)
+        {
+            var written = operand;
+            while (written is ParenthesizedExpressionSyntax parenthesized)
+            {
+                written = parenthesized.Expression;
+            }
+
+            return (model.GetSymbolInfo(written).Symbol switch
+            {
+                IFieldSymbol field => field.Type,
+                IPropertySymbol property => property.Type,
+                IParameterSymbol parameter => parameter.Type,
+                ILocalSymbol local => model.GetTypeInfo(written) is { Type: { TypeKind: not TypeKind.Error } held, Nullability.FlowState: var state }
+                    ? held.WithNullableAnnotation(state == NullableFlowState.MaybeNull ? NullableAnnotation.Annotated : NullableAnnotation.NotAnnotated)
+                    : local.Type,
+                IMethodSymbol method => method.ReturnType,
+                _ => null,
+            }) ?? model.GetTypeInfo(written).Type;
+        }
 
         private static ITypeSymbol? FlowTyped(TypeInfo info) => info.Type is { IsReferenceType: true, TypeKind: not TypeKind.Error } held && info.Nullability.Annotation != NullableAnnotation.None
             ? held.WithNullableAnnotation(info.Nullability.Annotation)

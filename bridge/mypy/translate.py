@@ -64,12 +64,15 @@ class Translator:
     def __init__(self, source: bytes, module: str, resolve, types: dict[tuple[int, int], ResolvedType],
                  targets: dict[tuple[int, int], dict[str, str]] | None = None, names: dict[tuple[int, int], str] | None = None,
                  obligations: dict[str, list[dict[str, str]]] | None = None, enum_members: dict[str, list[str]] | None = None,
-                 module_paths: dict[str, str] | None = None, constants: dict[tuple[int, int], dict[str, object]] | None = None) -> None:
+                 module_paths: dict[str, str] | None = None, constants: dict[tuple[int, int], dict[str, object]] | None = None,
+                 instance_field_classes: frozenset[str] = frozenset()) -> None:
         self.source = source
         self.obligations = obligations or {}
         self.enum_members = enum_members or {}
         self.module_paths = module_paths or {}
         self.constants = constants or {}
+        self.instance_field_classes = instance_field_classes
+        self.classes: list[str] = []
         self.targets = targets or {}
         self.names = names or {}
         self.module = module
@@ -199,14 +202,22 @@ class Translator:
 
     def stmt_Assign(self, statement: ast.Assign, scope, owner) -> Node:
         if owner == "class":
-            return shared(self.field(statement, statement.targets, None, statement.value, scope), True)
+            return shared(self.field(statement, statement.targets, None, statement.value, scope, self.attribute(statement, statement.targets, None)), True)
         return self.assigned(statement, self.new("assignment", *self.span(statement), mode="assign"),
                              [self.expression(target) for target in statement.targets], [self.expression(statement.value)])
 
+    def attribute(self, statement: ast.stmt, targets: list[ast.expr], annotation: ast.expr | None) -> Node:
+        written = annotation.value if isinstance(annotation, ast.Subscript) else annotation
+        final = written is not None and self.refers(written) == "typing.Final"
+        capitals = all(isinstance(target, ast.Name) and target.id.isupper() for target in targets)
+        return self.of("constant" if final or capitals else "field", statement)
+
     def stmt_AnnAssign(self, statement: ast.AnnAssign, scope, owner) -> Node:
         if owner == "class":
-            return shared(self.field(statement, [statement.target], statement.annotation, statement.value, scope),
-                          self.refers(statement.annotation.value if isinstance(statement.annotation, ast.Subscript) else statement.annotation) == "typing.ClassVar")
+            class_variable = self.refers(statement.annotation.value if isinstance(statement.annotation, ast.Subscript) else statement.annotation) == "typing.ClassVar"
+            class_value = statement.value is not None and bool(self.classes) and self.classes[-1] not in self.instance_field_classes
+            return shared(self.field(statement, [statement.target], statement.annotation, statement.value, scope,
+                                     self.attribute(statement, [statement.target], statement.annotation)), class_variable or class_value)
         if isinstance(statement.target, ast.Name):
             return self.field(statement, [statement.target], statement.annotation, statement.value, scope,
                               self.of("variable", statement, form="annotated"))
@@ -357,8 +368,10 @@ class Translator:
             node.parts["typeParameters"] = self.type_parameters(statement.type_params)
         declared_here, members_here = self.instance_fields, self.instance_members
         self.instance_fields, self.instance_members = instance_fields(statement, symbol), []
+        self.classes.append(symbol)
         node.parts["writtenMembers"] = [self.enum_case(each, symbol) if self.declares_case(each, members) else self.statement(each, inner, "class")
                                         for each in statement.body]
+        self.classes.pop()
         if self.instance_members:
             node.links["implicitMembers"] = self.instance_members
         self.instance_fields, self.instance_members = declared_here, members_here

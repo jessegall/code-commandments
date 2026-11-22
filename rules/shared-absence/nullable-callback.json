@@ -107,6 +107,24 @@
           [
             "=",
             "$x.kind",
+            "logical"
+          ],
+          [
+            "=",
+            "$x.operator",
+            "or"
+          ],
+          [
+            "tree.names",
+            "$x.left",
+            "$n"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
             "call"
           ],
           [
@@ -140,6 +158,110 @@
             "$p"
           ]
         ]
+      ]
+    },
+    "defaultsFrom": {
+      "args": [
+        "v",
+        "n"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "fallback"
+          ],
+          [
+            "tree.names",
+            "$v.subject",
+            "$n"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "logical"
+          ],
+          [
+            "=",
+            "$v.operator",
+            "or"
+          ],
+          [
+            "tree.names",
+            "$v.left",
+            "$n"
+          ]
+        ]
+      ]
+    },
+    "nameOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.name"
+    },
+    "aliasOf": {
+      "args": [
+        "a",
+        "n"
+      ],
+      "expr": [
+        "case",
+        "$a.kind",
+        {
+          "assignment": [
+            "case",
+            [
+              "defaultsFrom",
+              [
+                "at",
+                "$a.values",
+                0
+              ],
+              "$n"
+            ],
+            {
+              "true": [
+                "nameOf",
+                [
+                  "at",
+                  "$a.targets",
+                  0
+                ]
+              ]
+            },
+            ""
+          ],
+          "declarator": [
+            "case",
+            [
+              "and",
+              [
+                "exists",
+                "$a.initializer"
+              ],
+              [
+                "defaultsFrom",
+                "$a.initializer",
+                "$n"
+              ]
+            ],
+            {
+              "true": [
+                "nameOf",
+                "$a.binding"
+              ]
+            },
+            ""
+          ]
+        },
+        ""
       ]
     }
   },
@@ -190,6 +312,27 @@
           "ownDescendants",
           "$p.parent.body"
         ]
+      ],
+      [
+        "aliases",
+        [
+          "filter",
+          [
+            "map",
+            "$body",
+            "a",
+            [
+              "aliasOf",
+              "$a",
+              "$named"
+            ]
+          ],
+          "s",
+          [
+            "nonempty",
+            "$s"
+          ]
+        ]
       ]
     ],
     "having": [
@@ -223,6 +366,16 @@
                 "tree.names",
                 "$c.callee.subject",
                 "$named"
+              ]
+            ],
+            [
+              "some",
+              "$aliases",
+              "m",
+              [
+                "tree.names",
+                "$c.callee",
+                "$m"
               ]
             ]
           ]

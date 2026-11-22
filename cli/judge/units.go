@@ -65,6 +65,7 @@ func (c Command) judgeUnits(sources scan.Sources, rules []rule.Detector, options
 		}
 	}
 	progress.Finish()
+	engine.CountedParsed(files)
 
 	judgement.Findings = Twinned(judgement.Findings)
 	if files == 0 {

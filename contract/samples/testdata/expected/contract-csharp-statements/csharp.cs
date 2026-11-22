@@ -80,7 +80,7 @@ public static class Flow
         var no = !(total > 0);
         // @contract fact/unary/operator = "assert-present"
         // @contract fact/access/form = "instance"
-        // @contract fact/*/resolvedType on reference at 22 = {"kind":"keyword","name":"string","nullable":false}
+        // @contract fact/*/resolvedType on reference at 22 = {"kind":"keyword","name":"string","nullable":true}
         var length = name!.Length;
         // @contract fact/assignment/mode = "increment"
         // @contract fact/assignment/prefix = true

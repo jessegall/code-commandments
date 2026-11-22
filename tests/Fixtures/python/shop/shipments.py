@@ -21,6 +21,7 @@ class PackedOrder:
 
 
 # @fixed CoalescedLoopSubject
+# @sin FeatureEnvy
 def pack_order(order: PackedOrder, crate) -> int:
     packed = 0
     for line in order.lines:

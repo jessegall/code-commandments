@@ -14,6 +14,7 @@ public sealed class Member(string id, int points)
     // @righteous NamespaceCycle
     public Voucher Redeem(VoucherCatalog catalog) => catalog.Cheapest(points);
 
+    // @sin FeatureEnvy
     public IEnumerable<Voucher> Affordable(VoucherCatalog catalog) => catalog.All.Where(voucher => voucher.Cost <= points);
 
     public bool CanRedeem(Voucher voucher) => voucher.Cost <= points;

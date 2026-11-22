@@ -286,7 +286,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   (`and`, `or`). Its own kind: a `binary` would say both sides always run.
 - **`unary`**: `operand`. Fact `operator` (`not`, `negate`, `plus`, `bit-not`, `typeof`, `delete`, `void`,
   `reference-of`, `dereference`, `receive` for Go's `<-ch`, `assert-present` for C# and TypeScript's
-  `x!`, which only tells the checker the value is there). C#'s `typeof(T)` is a `typeof` whose operand is the
+  `x!`, which only tells the checker the value is there; its operand carries the type the value is declared with,
+  not the compiler's flow state where the `!` stands, since what `!` overrules is that declaration). C#'s `typeof(T)` is a `typeof` whose operand is the
   `type-expression` written.
 - **`fallback`**: `subject`, `replacement` (evaluated only when the trigger holds). Fact `trigger` (`null` for
   `??`, `falsy` for PHP's short ternary `a ?: b`).
@@ -561,8 +562,10 @@ evaluated once, at definition (`evaluated: "definition"`), so the shared rule ab
 without knowing Python.
 A class deriving `typing.Protocol` is a `type` of form `interface`. A name with a leading underscore (not a dunder)
 is `effective.visibility` private; a `staticmethod` or `classmethod` carries the modifier `static`.
-A class-body attribute is a `field` whose `effective.static` is true when every instance shares it (an
-unannotated assignment, or a `ClassVar`) and false when each instance holds its own (an annotation, a dataclass field).
+A class-body attribute is a `field`, or a `constant` when it is annotated `Final` or named in capitals; its
+`effective.static` is true when every instance shares it (an unannotated assignment, a `ClassVar`, or an annotated
+name given a value outside a dataclass, attrs class, named tuple or typed dict) and false when each instance holds its
+own (a bare annotation, a dataclass field).
 An instance attribute is declared by its first `self.x = ...` in `__init__` (for a name the class body does not declare):
 the member reference of that target is the one written node of the field, with symbol `module.Class.x`, and the class
 lists it in `implicitMembers`, as a promoted constructor parameter is listed elsewhere.

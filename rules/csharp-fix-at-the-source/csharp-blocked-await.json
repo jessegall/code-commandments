@@ -48,22 +48,28 @@
             {
               "true": [
                 "case",
-                "$x.callee.subject.kind",
-                {
-                  "call": [
-                    "case",
-                    [
-                      "=",
-                      "$x.callee.subject.callee.kind",
-                      "access"
-                    ],
-                    {
-                      "true": "$x.callee.subject.callee.subject"
-                    },
+                [
+                  "proven",
+                  [
+                    "isTask",
                     "$x.callee.subject"
                   ]
+                ],
+                {
+                  "true": "$x.callee.subject"
                 },
-                "$x.callee.subject"
+                [
+                  "case",
+                  [
+                    "=",
+                    "$x.callee.subject.callee.kind",
+                    "access"
+                  ],
+                  {
+                    "true": "$x.callee.subject.callee.subject"
+                  },
+                  "$x.callee.subject"
+                ]
               ]
             },
             null

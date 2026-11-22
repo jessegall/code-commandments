@@ -279,6 +279,54 @@
                 0
               ]
             ]
+          ],
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "tree.insideOf",
+                  "$i.condition"
+                ],
+                "c",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$c.kind",
+                    "comparison"
+                  ],
+                  [
+                    "=",
+                    "$c.operator",
+                    "not-in"
+                  ]
+                ]
+              ],
+              "c",
+              [
+                "map",
+                [
+                  "filter",
+                  "$c.operands",
+                  "n",
+                  [
+                    "nonempty",
+                    [
+                      "ownField",
+                      "$n"
+                    ]
+                  ]
+                ],
+                "n",
+                [
+                  "ownField",
+                  "$n"
+                ]
+              ]
+            ]
           ]
         ]
       ]

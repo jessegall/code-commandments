@@ -318,7 +318,6 @@ func (c Command) judge(options options, selected []rule.Detector, judged config.
 
 	judging := time.Now()
 	judgement := c.run(tasks, options, progress, parseSeconds, console)
-	judgingTook, work := time.Since(judging), engine.Since(counted)
 	judgement.Skipped = joined(judgement.Skipped, incomplete.Bridges...)
 	judgement.Skipped = joined(judgement.Skipped, readNothing(read, codebase)...)
 	csharpFiles := 0
@@ -333,6 +332,7 @@ func (c Command) judge(options options, selected []rule.Detector, judged config.
 		judgement.Skipped = joined(judgement.Skipped, projects.Skipped...)
 		csharpFiles = files
 	}
+	judgingTook, work := time.Since(judging), engine.Since(counted)
 
 	targets = targets.WithParsedFiles(codebase.Files())
 	judgement.Findings = keep(asWalked(outside(judgement.Findings, readOnly), sources.GivenOf()), options.exclude, targets, judged)

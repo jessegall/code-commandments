@@ -313,6 +313,22 @@
             "=",
             "$o.parent.parent.parent.kind",
             "argument"
+          ],
+          [
+            "in",
+            [
+              "typeCategory",
+              [
+                "typeOf",
+                "$o.parent.parent"
+              ]
+            ],
+            "list",
+            "set",
+            "map",
+            "iterator",
+            "tuple",
+            "array"
           ]
         ],
         [
@@ -370,6 +386,39 @@
                   ]
                 ]
               ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$o.role",
+            "callee"
+          ],
+          [
+            "=",
+            "$o.parent.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$o.parent.role",
+            "subject"
+          ],
+          [
+            "=",
+            "$o.parent.parent.role",
+            "callee"
+          ],
+          [
+            "some",
+            "$o.parent.parent.parent.arguments",
+            "g",
+            [
+              "=",
+              "$g.value.kind",
+              "function"
             ]
           ]
         ]
@@ -533,6 +582,76 @@
               ]
             ]
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$u.parent.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$u.role",
+            "subject"
+          ],
+          [
+            "some",
+            [
+              "take",
+              [
+                "ownAncestors",
+                "$u"
+              ],
+              6
+            ],
+            "c",
+            [
+              "and",
+              [
+                "=",
+                "$c.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$c.parent.kind",
+                "expression-statement"
+              ],
+              [
+                "not",
+                [
+                  "proven",
+                  [
+                    "=",
+                    "$c.target.symbol",
+                    "$f.symbol"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "none",
+            [
+              "ownAncestors",
+              "$u"
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "binary"
+              ],
+              [
+                "!=",
+                "$a.operator",
+                "concatenate"
+              ]
+            ]
+          ]
         ]
       ]
     },
@@ -604,15 +723,30 @@
           "$body",
           "n",
           [
-            "=",
+            "or",
             [
-              "tree.kindOf",
+              "=",
               [
-                "selfMember",
+                "tree.kindOf",
+                [
+                  "selfMember",
+                  "$n"
+                ]
+              ],
+              "field"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$n.kind",
+                "reference"
+              ],
+              [
+                "tree.selfField",
                 "$n"
               ]
-            ],
-            "field"
+            ]
           ]
         ]
       ]
@@ -697,31 +831,16 @@
             ]
           ],
           [
-            "and",
+            "some",
             [
-              ">=",
-              [
-                "count",
-                [
-                  "mine",
-                  "$r",
-                  "$envies"
-                ]
-              ],
-              2
+              "mine",
+              "$r",
+              "$envies"
             ],
+            "o",
             [
-              "some",
-              [
-                "mine",
-                "$r",
-                "$envies"
-              ],
-              "o",
-              [
-                "queries",
-                "$o"
-              ]
+              "queries",
+              "$o"
             ]
           ],
           [
