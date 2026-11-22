@@ -1432,7 +1432,7 @@ final class Translator
         if ($listed !== null) {
             return isset($listed['element']) ? ['element' => $this->documentedName($listed['element'])] + $listed : $listed;
         }
-        if (preg_match('/^(\\?[A-Za-z_][\\\w]*)<(.+)>$/s', $said, $generic) === 1) {
+        if (preg_match('/^(\\\\?[A-Za-z_][\\\\\w]*)<(.+)>$/s', $said, $generic) === 1) {
             $args = array_map(fn (string $arg): array => $this->documentedName(self::documentedElement($arg)), self::topLevel($generic[2], ','));
 
             return ['text' => $said, 'kind' => 'named', 'name' => $this->qualified($generic[1]), 'origin' => 'docblock', 'args' => $args, 'element' => $args[array_key_last($args)]];
