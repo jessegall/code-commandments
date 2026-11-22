@@ -81,6 +81,11 @@
               "assignable",
               "$b",
               "request"
+            ],
+            [
+              "assignable",
+              "$b",
+              "aggregate-root"
             ]
           ]
         ]

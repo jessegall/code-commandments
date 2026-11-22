@@ -15,6 +15,10 @@
         {
             "name": "spatie/laravel-data",
             "version": "4.23.0"
+        },
+        {
+            "name": "spatie/laravel-event-sourcing",
+            "version": "7.0.0"
         }
     ],
     "stubs": "dace5efa81510955349c11fac177a12648a31fbe8e9ed1d3fdc9dd4705531c35"

@@ -30,6 +30,10 @@
     {
       "name": "package-config-file",
       "type": "event-sourcing"
+    },
+    {
+      "name": "aggregate-root",
+      "type": "Spatie\\EventSourcing\\AggregateRoots\\AggregateRoot"
     }
   ]
 }
