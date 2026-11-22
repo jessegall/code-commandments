@@ -442,6 +442,18 @@ func TestRepeatedFolderPathReadsTheFolderAnInterpolatedPathSpells(t *testing.T) 
 	}), "app/Backup.php:7", "app/Prune.php:7", "app/Restore.php:7")
 }
 
+func TestRepeatedFolderPathMeetsAFolderWrittenWholeAndOnesAFileNameCompletes(t *testing.T) {
+	writer := func(class, path string) string {
+		return "<?php\nnamespace App;\nfinal class " + class + "\n{\n    public function path(string $name): string\n    {\n        return storage_path(" + path + ");\n    }\n}\n"
+	}
+	expect(t, "php", judged(t, "shared-duplication/repeated-folder-path.json", map[string]string{
+		"composer.lock":   `{"packages": [{"name": "laravel/framework", "version": "v11.0.0"}]}`,
+		"app/Ensure.php":  writer("Ensure", "'app/private/backups'"),
+		"app/Restore.php": writer("Restore", "'app/private/backups/restore_'.$name"),
+		"app/Record.php":  writer("Record", "\"app/private/backups/{$name}\""),
+	}), "app/Ensure.php:7", "app/Record.php:7", "app/Restore.php:7")
+}
+
 func TestUndeclaredMemberReadsTheMembersADocCommentDocuments(t *testing.T) {
 	found := judged(t, "rules/shared-dependencies/undeclared-member.json", map[string]string{"Ledger.php": `<?php
 namespace App;

@@ -363,16 +363,20 @@ func init() {
 				base, parts = append(base, parts[0].Written()), parts[1:]
 			}
 			var written []string
+			cut := false
 			for _, part := range parts {
 				text, read := writtenText(part)
 				if !read {
-					written = append(written, "")
+					written, cut = append(written, ""), true
 
 					break
 				}
 				written = append(written, text)
 			}
 			path := strings.Join(written, joined)
+			if cut && !strings.HasSuffix(path, "/") {
+				path = path[:strings.LastIndex(path, "/")+1]
+			}
 			if strings.HasPrefix(path, "/") && len(base) > 0 {
 				path = path[1:]
 			}
