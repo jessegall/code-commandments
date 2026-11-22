@@ -2,6 +2,7 @@
 
 namespace Shop\Realtime;
 
+use JesseGall\CodeCommandments\Sins\Backend\HandRolledWither;
 use JesseGall\CodeCommandments\Sins\Backend\BlankStringOnTheWire;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -17,6 +18,8 @@ final readonly class TillFeed
         public string $socket,
         public int $pollMs,
     ) {}
+
+    #[Sinful(HandRolledWither::class)]
 
     public function slowedTo(int $pollMs): self
     {

@@ -10,12 +10,12 @@ public enum Courier
 
 public static class CarrierLogos
 {
-    // @sin MatchDefaultReturnsNull
     public static string? LogoFor(Courier courier) => courier switch
     {
         Courier.Postal => "postal.svg",
         Courier.Express => "express.svg",
         Courier.Freight => "freight.svg",
+        // @sin MatchDefaultReturnsNull
         _ => null,
     };
 

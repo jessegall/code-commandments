@@ -16,12 +16,12 @@ class UnhandledCarrier(Exception):
 
 
 def label_size(carrier: LabelCarrier) -> str | None:
-    # @sin MatchWildcardReturnsNone
     match carrier:
         case LabelCarrier.POSTNL:
             return "A6"
         case LabelCarrier.DHL:
             return "A5"
+        # @sin MatchWildcardReturnsNone
         case _:
             return None
 

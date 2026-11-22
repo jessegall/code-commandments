@@ -2,6 +2,7 @@
 
 namespace Shop\Dispatch;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\FlagArgument;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -13,6 +14,7 @@ use Shop\Labels\PrintLog;
  */
 final class ShiftAnnouncer
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly PrintLog $log) {}
 
     /**

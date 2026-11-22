@@ -12,8 +12,8 @@
       "ArrayBagParameter"
     ],
     "skill": "php/value-objects",
-    "description": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => …, 'plan' => …]`): the method never defined the type its fields belong to.",
-    "rule": "A method of your own takes values and objects, never an `array` of named fields — the definition is at fault, not the caller filling it.",
+    "description": "A parameter declared `array` that callers fill with string-keyed records (`['mode' => \u2026, 'plan' => \u2026]`): the method never defined the type its fields belong to.",
+    "rule": "A method of your own takes values and objects, never an `array` of named fields \u2014 the definition is at fault, not the caller filling it.",
     "suggestion": "Type the parameter as a Spatie `Data` object or a final readonly value object, and have callers construct it.",
     "reporting": {
       "crossFile": true
@@ -61,7 +61,10 @@
       ],
       [
         "tree.looseRecord",
-        "$p.binding.resolved"
+        [
+          "typeOf",
+          "$p"
+        ]
       ]
     ],
     "let": [

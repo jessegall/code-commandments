@@ -16,71 +16,55 @@
       "python-mutable-value-object"
     ],
     "skill": "php/value-objects",
-    "description": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing.",
+    "description": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different \u2014 one changes without the other knowing.",
     "rule": "Make a value immutable: build it complete and derive a NEW one to change it; never write its fields after construction.",
-    "suggestion": "`readonly` on the class, and a `with…()`/named derivation that returns a new instance (PHP 8.5's `clone with`)."
+    "suggestion": "`readonly` on the class, and a `with\u2026()`/named derivation that returns a new instance (PHP 8.5's `clone with`)."
   },
   "definitions": {
-    "writes": {
+    "isEquals": {
       "args": [
-        "f"
+        "m"
       ],
       "expr": [
-        "filter",
+        "and",
         [
-          "ownDescendants",
-          "$f.body"
+          "=",
+          "$m.kind",
+          "function"
         ],
-        "a",
         [
-          "and",
+          "=",
           [
-            "=",
-            "$a.kind",
-            "assignment"
+            "tree.canon",
+            "$m.name"
           ],
-          [
-            "tree.selfField",
-            [
-              "at",
-              "$a.targets",
-              0
-            ]
-          ]
-        ]
-      ]
-    }
-  },
-  "find": {
-    "select": "function",
-    "as": "f",
-    "where": [
-      "tree.method",
-      "$f"
-    ],
-    "let": [
-      [
-        "owner",
+          "equals"
+        ],
         [
-          "enclosing",
-          "$f",
-          "type"
+          "=",
+          [
+            "count",
+            "$m.parameters"
+          ],
+          1
         ]
       ]
-    ],
-    "having": [
-      "and",
-      [
+    },
+    "valueType": {
+      "args": [
+        "f",
+        "o"
+      ],
+      "expr": [
         "or",
         [
-          "in",
-          "$owner.form",
-          "record",
-          "struct"
+          "=",
+          "$o.form",
+          "record"
         ],
         [
           "some",
-          "$owner.attributes",
+          "$o.attributes",
           "a",
           [
             "and",
@@ -108,7 +92,274 @@
               ]
             ]
           ]
+        ],
+        [
+          "some",
+          "$o.writtenMembers",
+          "m",
+          [
+            "isEquals",
+            "$m"
+          ]
+        ],
+        [
+          "and",
+          [
+            "exists",
+            "$f.receiver"
+          ],
+          [
+            "some",
+            [
+              "siblings",
+              "$f"
+            ],
+            "s",
+            [
+              "and",
+              [
+                "isEquals",
+                "$s"
+              ],
+              [
+                "exists",
+                "$s.receiver"
+              ],
+              [
+                "=",
+                [
+                  "receiverType",
+                  "$s"
+                ],
+                [
+                  "receiverType",
+                  "$f"
+                ]
+              ]
+            ]
+          ]
         ]
+      ]
+    },
+    "outsideInit": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "selfMember",
+              [
+                "at",
+                "$a.targets",
+                0
+              ]
+            ]
+          ],
+          "d",
+          [
+            "some",
+            "$d.declarators",
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.initializer.kind",
+                "call"
+              ],
+              [
+                "some",
+                "$x.initializer.arguments",
+                "g",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$g.label",
+                    "init"
+                  ],
+                  [
+                    "=",
+                    "$g.value.value",
+                    "false"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "memoised": {
+      "args": [
+        "a"
+      ],
+      "expr": [
+        "some",
+        [
+          "ancestors",
+          "$a"
+        ],
+        "q",
+        [
+          "and",
+          [
+            "=",
+            "$q.kind",
+            "if"
+          ],
+          [
+            "some",
+            [
+              "ownDescendants",
+              "$q.condition"
+            ],
+            "c",
+            [
+              "and",
+              [
+                "=",
+                "$c.kind",
+                "comparison"
+              ],
+              [
+                "some",
+                "$c.operands",
+                "o",
+                [
+                  "tree.nullish",
+                  "$o"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "writes": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "filter",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "a",
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "assignment"
+            ],
+            [
+              "!=",
+              "$a.mode",
+              "fallback"
+            ],
+            [
+              "exists",
+              [
+                "selfMember",
+                [
+                  "at",
+                  "$a.targets",
+                  0
+                ]
+              ]
+            ],
+            [
+              "outsideInit",
+              "$a"
+            ],
+            [
+              "not",
+              [
+                "memoised",
+                "$a"
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$a.callee.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$a.callee.member.name",
+              "__setattr__"
+            ],
+            [
+              "isSelf",
+              [
+                "at",
+                [
+                  "map",
+                  "$a.arguments",
+                  "g",
+                  "$g.value"
+                ],
+                0
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "receiverType": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "case",
+        "$m.receiver.declaredType.form",
+        {
+          "pointer": "$m.receiver.declaredType.element.refers"
+        },
+        "$m.receiver.declaredType.refers"
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "tree.method",
+      "$f"
+    ],
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$f",
+          "type"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "valueType",
+        "$f",
+        "$owner"
       ],
       [
         ">",

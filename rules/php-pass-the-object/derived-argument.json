@@ -16,8 +16,8 @@
       "python-derived-argument"
     ],
     "skill": "php/pass-the-object",
-    "description": "Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object.",
-    "rule": "Pass the object itself, not values derived from it — if a callee needs several pieces off one object, give it the object once and let it work out the rest.",
+    "description": "Passing the same object twice \u2014 once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) \u2014 when the callee could derive each piece itself from the one object.",
+    "rule": "Pass the object itself, not values derived from it \u2014 if a callee needs several pieces off one object, give it the object once and let it work out the rest.",
     "suggestion": "Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces.",
     "reporting": {
       "crossFile": true
@@ -35,6 +35,168 @@
         "$g.value"
       ]
     },
+    "subjectOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.subject"
+    },
+    "memberNameOf": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.member.name"
+    },
+    "textOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        "$t.kind",
+        {
+          "pointer": "$t.element.text"
+        },
+        "$t.text"
+      ]
+    },
+    "piece": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "access": "$x",
+          "call": [
+            "case",
+            [
+              "and",
+              [
+                "=",
+                "$x.callee.kind",
+                "access"
+              ],
+              [
+                "=",
+                [
+                  "count",
+                  "$x.arguments"
+                ],
+                0
+              ]
+            ],
+            {
+              "true": "$x.callee"
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "root4": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "reference": "$x"
+        },
+        null
+      ]
+    },
+    "root3": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "reference": "$x",
+          "access": [
+            "root4",
+            "$x.subject"
+          ]
+        },
+        null
+      ]
+    },
+    "root2": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "reference": "$x",
+          "access": [
+            "root3",
+            "$x.subject"
+          ]
+        },
+        null
+      ]
+    },
+    "rootOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "reference": "$x",
+          "access": [
+            "root2",
+            "$x.subject"
+          ]
+        },
+        null
+      ]
+    },
+    "pieceRoot": {
+      "args": [
+        "l",
+        "n"
+      ],
+      "expr": [
+        "rootOf",
+        [
+          "subjectOf",
+          [
+            "piece",
+            [
+              "at",
+              "$l",
+              "$n"
+            ]
+          ]
+        ]
+      ]
+    },
+    "pieceMember": {
+      "args": [
+        "l",
+        "n"
+      ],
+      "expr": [
+        "memberNameOf",
+        [
+          "piece",
+          [
+            "at",
+            "$l",
+            "$n"
+          ]
+        ]
+      ]
+    },
     "derived": {
       "args": [
         "handed",
@@ -43,20 +205,25 @@
       "expr": [
         "and",
         [
-          "=",
+          "exists",
           [
-            "kindAt",
-            "$handed",
-            "$n"
-          ],
-          "access"
+            "piece",
+            [
+              "at",
+              "$handed",
+              "$n"
+            ]
+          ]
         ],
         [
           "=",
           [
-            "subjectKindAt",
-            "$handed",
-            "$n"
+            "tree.kindOf",
+            [
+              "pieceRoot",
+              "$handed",
+              "$n"
+            ]
           ],
           "reference"
         ],
@@ -76,7 +243,7 @@
               [
                 "fingerprint",
                 [
-                  "subjectAt",
+                  "pieceRoot",
                   "$handed",
                   "$n"
                 ],
@@ -97,21 +264,32 @@
                   [
                     "and",
                     [
-                      "=",
-                      "$h.kind",
-                      "access"
+                      "exists",
+                      [
+                        "piece",
+                        "$h"
+                      ]
                     ],
                     [
                       "=",
                       [
                         "fingerprint",
-                        "$h.subject",
+                        [
+                          "rootOf",
+                          [
+                            "subjectOf",
+                            [
+                              "piece",
+                              "$h"
+                            ]
+                          ]
+                        ],
                         "exact"
                       ],
                       [
                         "fingerprint",
                         [
-                          "subjectAt",
+                          "pieceRoot",
                           "$handed",
                           "$n"
                         ],
@@ -121,69 +299,57 @@
                   ]
                 ],
                 "h",
-                "$h.member.name"
+                [
+                  "memberNameOf",
+                  [
+                    "piece",
+                    "$h"
+                  ]
+                ]
               ]
             ],
             3
           ]
         ]
       ]
-    },
-    "kindAt": {
-      "args": [
-        "l",
-        "n"
-      ],
-      "expr": [
-        "tree.kindOf",
-        [
-          "at",
-          "$l",
-          "$n"
-        ]
-      ]
-    },
-    "subjectKindAt": {
-      "args": [
-        "l",
-        "n"
-      ],
-      "expr": [
-        "tree.kindOf",
-        [
-          "subjectAt",
-          "$l",
-          "$n"
-        ]
-      ]
-    },
-    "subjectAt": {
-      "args": [
-        "l",
-        "n"
-      ],
-      "expr": [
-        "subjectOf",
-        [
-          "at",
-          "$l",
-          "$n"
-        ]
-      ]
-    },
-    "subjectOf": {
-      "args": [
-        "x"
-      ],
-      "expr": "$x.subject"
     }
   },
   "find": {
-    "select": "call",
+    "select": [
+      "call",
+      "construction"
+    ],
     "as": "c",
     "where": [
-      "not",
-      "$c.file.test"
+      "and",
+      [
+        "not",
+        "$c.file.test"
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "in",
+            "$c.callee.subject.form",
+            "self",
+            "static"
+          ],
+          [
+            "has",
+            [
+              "functionRole",
+              [
+                "enclosing",
+                "$c",
+                "function"
+              ]
+            ],
+            "named-constructor"
+          ]
+        ]
+      ]
     ],
     "let": [
       [
@@ -195,6 +361,13 @@
             "$c"
           ]
         ]
+      ],
+      [
+        "callee",
+        [
+          "declarationOf",
+          "$c"
+        ]
       ]
     ],
     "having": [
@@ -205,25 +378,132 @@
           "count",
           "$calls"
         ],
-        2
+        1
       ],
       [
         "some",
         "$c.arguments",
         "g",
         [
-          "every",
-          "$calls",
-          "o",
+          "and",
           [
-            "derived",
+            "every",
+            "$calls",
+            "o",
             [
-              "values",
-              "$o"
+              "and",
+              [
+                "derived",
+                [
+                  "values",
+                  "$o"
+                ],
+                [
+                  "position",
+                  "$g"
+                ]
+              ],
+              [
+                "=",
+                [
+                  "pieceMember",
+                  [
+                    "values",
+                    "$o"
+                  ],
+                  [
+                    "position",
+                    "$g"
+                  ]
+                ],
+                [
+                  "pieceMember",
+                  [
+                    "values",
+                    "$c"
+                  ],
+                  [
+                    "position",
+                    "$g"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "=",
+            [
+              "distinctCount",
+              [
+                "map",
+                "$calls",
+                "o",
+                [
+                  "textOf",
+                  [
+                    "typeOf",
+                    [
+                      "pieceRoot",
+                      [
+                        "values",
+                        "$o"
+                      ],
+                      [
+                        "position",
+                        "$g"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            1
+          ]
+        ]
+      ],
+      [
+        "none",
+        "$c.arguments",
+        "a",
+        [
+          "proven",
+          [
+            "and",
+            [
+              "=",
+              "$a.value.kind",
+              "reference"
             ],
             [
-              "position",
-              "$g"
+              "=",
+              [
+                "typeCategory",
+                [
+                  "typeOf",
+                  [
+                    "parameterOf",
+                    "$a"
+                  ]
+                ]
+              ],
+              "any"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "some",
+            "$callee.parameters",
+            "p",
+            [
+              "in",
+              "$p.collects",
+              "rest",
+              "keywords"
             ]
           ]
         ]

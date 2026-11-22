@@ -8,6 +8,7 @@ public sealed class Invoice(Order order)
 {
     public string Title => $"Invoice {order.Reference}";
 
+    // @sin FeatureEnvy
     // @sin DuplicateMethod
     public IReadOnlyList<string> Lines()
     {

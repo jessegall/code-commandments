@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field, replace
 
 
-# @sin MutableValueObject
 @dataclass
 class DeliveryAddress:
     street: str
@@ -16,6 +15,7 @@ class DeliveryAddress:
     def in_city(self, city: str) -> bool:
         return self.city.casefold() == city.casefold()
 
+    # @sin MutableValueObject
     def move(self, street: str, city: str) -> None:
         self.street = street
         self.city = city

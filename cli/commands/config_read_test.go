@@ -14,8 +14,9 @@ func TestConfigReadLeavesFrameworkWiringAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 	for file, source := range map[string]string{
-		"composer.json":                  `{"require":{"illuminate/support":"^12.0"}}`,
-		"vendor/composer/installed.json": `{"packages":[{"name":"illuminate/support","version":"v12.0.0"}]}`,
+		"composer.json":                  `{"require":{"laravel/framework":"^12.0","spatie/laravel-data":"^4.0"}}`,
+		"vendor/composer/installed.json": `{"packages":[{"name":"laravel/framework","version":"v12.0.0","replace":{"illuminate/support":"self.version"}},{"name":"spatie/laravel-data","version":"4.11.1"}]}`,
+		"composer.lock":                  `{"packages":[{"name":"laravel/framework","version":"v12.0.0"},{"name":"spatie/laravel-data","version":"4.11.1"}]}`,
 		"Wiring.php": `<?php
 namespace Illuminate\Database\Eloquent\Factories {
     abstract class Factory { abstract public function definition(): array; }

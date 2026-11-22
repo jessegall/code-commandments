@@ -30,13 +30,14 @@ func (c Config) Applied(list []rule.Detector) ([]rule.Detector, error) {
 
 	for _, detector := range list {
 		if file, ok := detector.(rule.Rule); ok {
-			var contracts []string
+			var contracts, registrars []string
 			layers := map[string][]string{}
 			for _, engine := range file.Engines() {
 				contracts = slices.AppendSeq(append(contracts, c.PublicContracts[engine]...), maps.Keys(c.ContractReasons[engine]))
+				registrars = append(registrars, c.ContractRegistrars[engine]...)
 				maps.Copy(layers, c.Layers(engine))
 			}
-			detector = file.WithLayers(layers).WithPublicContracts(contracts)
+			detector = file.WithLayers(layers).WithPublicContracts(contracts).WithContractRegistrars(registrars)
 		}
 		kept = append(kept, detector)
 	}

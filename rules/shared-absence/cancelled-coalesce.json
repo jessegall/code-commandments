@@ -22,26 +22,65 @@
     "suggestion": "Say both halves out loud (`name !== null && name !== ''`), or make the value always present where it is made so only one question is left."
   },
   "find": {
-    "select": "fallback",
+    "select": [
+      "fallback",
+      "logical",
+      "conditional",
+      "call"
+    ],
     "as": "f",
     "where": [
+      "=",
+      "$f.parent.kind",
+      "comparison"
+    ],
+    "let": [
+      [
+        "replacement",
+        [
+          "replacementOf",
+          "$f"
+        ]
+      ]
+    ],
+    "having": [
       "and",
       [
-        "=",
-        "$f.replacement.kind",
-        "literal"
+        "exists",
+        "$replacement"
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$replacement.kind",
+          "literal"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$replacement.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$replacement.form",
+            "static"
+          ]
+        ]
       ],
       [
         "not",
         [
           "tree.nullish",
-          "$f.replacement"
+          "$replacement"
         ]
       ],
       [
-        "=",
-        "$f.parent.kind",
-        "comparison"
+        "absenceChoice",
+        "$f",
+        "$replacement"
       ],
       [
         "every",
@@ -88,7 +127,7 @@
             ],
             [
               "fingerprint",
-              "$f.replacement",
+              "$replacement",
               "exact"
             ]
           ]
@@ -96,5 +135,102 @@
       ]
     ],
     "emit": "$f"
+  },
+  "definitions": {
+    "replacementOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "fallback": "$x.replacement",
+          "logical": [
+            "case",
+            [
+              "=",
+              "$x.operator",
+              "or"
+            ],
+            {
+              "true": "$x.right"
+            },
+            null
+          ],
+          "conditional": "$x.alternative",
+          "call": [
+            "case",
+            [
+              "hasEffect",
+              "$x",
+              "reads-with-default"
+            ],
+            {
+              "true": [
+                "tree.valueAt",
+                "$x",
+                1
+              ]
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "absenceChoice": {
+      "args": [
+        "x",
+        "r"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "conditional": [
+            "and",
+            [
+              "=",
+              "$x.condition.kind",
+              "comparison"
+            ],
+            [
+              "some",
+              "$x.condition.operands",
+              "o",
+              [
+                "tree.nullish",
+                "$o"
+              ]
+            ],
+            [
+              "some",
+              "$x.condition.operands",
+              "o",
+              [
+                "=",
+                [
+                  "fingerprint",
+                  "$o",
+                  "exact"
+                ],
+                [
+                  "fingerprint",
+                  "$x.consequent",
+                  "exact"
+                ]
+              ]
+            ]
+          ],
+          "logical": [
+            "!=",
+            "$r.literalKind",
+            "boolean"
+          ]
+        },
+        true
+      ]
+    }
   }
 }

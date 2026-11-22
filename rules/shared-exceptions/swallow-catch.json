@@ -114,7 +114,33 @@
         "case",
         "$site.kind",
         {
-          "handler": true,
+          "handler": [
+            "and",
+            [
+              "not",
+              [
+                "exists",
+                "$site.filter"
+              ]
+            ],
+            [
+              "or",
+              [
+                "catchesAll",
+                "$site"
+              ],
+              [
+                "some",
+                "$site.caughtTypes",
+                "t",
+                [
+                  "failureType",
+                  "$t",
+                  "generic"
+                ]
+              ]
+            ]
+          ],
           "if": [
             "case",
             "$site.condition.kind",

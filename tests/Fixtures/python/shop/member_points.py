@@ -7,6 +7,7 @@ class Member:
     points: int
 
 
+# @sin FeatureEnvy
 def redeem(member: Member, cost: int) -> str:
     # @sin DuplicatedBranchTail
     if member.points < cost:
@@ -19,6 +20,7 @@ def redeem(member: Member, cost: int) -> str:
     return result
 
 
+# @sin FeatureEnvy
 def expire(member: Member, lapsed: bool) -> Member:
     if not lapsed:
         return member
@@ -29,6 +31,7 @@ def expire(member: Member, lapsed: bool) -> Member:
 
 
 # @fixed UnreachableStatement
+# @sin FeatureEnvy
 def expire_lapsed(member: Member, lapsed: bool) -> Member:
     if not lapsed:
         return member

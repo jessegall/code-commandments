@@ -9,5 +9,6 @@ def set_quantity(line, quantity: int) -> None:
         raise ValueError(f"quantity must not be negative, got {quantity}")
     if not isinstance(quantity, int):
         # @righteous GenericException
+        # @sin MessageAtThrow
         raise TypeError("quantity must be an int")
     line.quantity = quantity

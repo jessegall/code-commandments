@@ -26,6 +26,11 @@
       "type": "list",
       "default": [],
       "description": "The types the project publishes as contracts, from configure's public contracts."
+    },
+    "contractRegistrars": {
+      "type": "list",
+      "default": [],
+      "description": "The methods a project registers its public contracts through, Class::method, from public_contract_registrars: an interface handed to one is a published contract."
     }
   },
   "definitions": {
@@ -34,6 +39,37 @@
         "n"
       ],
       "expr": "$n.file.module"
+    },
+    "registered": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownAncestors",
+          "$r"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "call"
+          ],
+          [
+            "has",
+            "$param.contractRegistrars",
+            [
+              "concat",
+              "$a.target.type",
+              "::",
+              "$a.target.name"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -70,50 +106,65 @@
           "$p",
           "$t.symbol"
         ]
+      ],
+      [
+        "none",
+        [
+          "referrers",
+          "$t"
+        ],
+        "r",
+        [
+          "proven",
+          [
+            "registered",
+            "$r"
+          ]
+        ]
       ]
     ],
     "let": [
       [
-        "implementing",
+        "concrete",
         [
           "filter",
           [
-            "map",
-            [
-              "filter",
-              [
-                "referrers",
-                "$t"
-              ],
-              "r",
-              [
-                "in",
-                "$r.role",
-                "interfaces",
-                "bases"
-              ]
-            ],
-            "r",
-            [
-              "enclosing",
-              "$r",
-              "type"
-            ]
+            "subtypes",
+            "$t"
           ],
           "i",
           [
-            "and",
+            "not",
             [
-              "exists",
-              "$i"
-            ],
+              "in",
+              "$i.form",
+              "interface",
+              "protocol"
+            ]
+          ]
+        ]
+      ],
+      [
+        "implementing",
+        [
+          "filter",
+          "$concrete",
+          "i",
+          [
+            "none",
+            "$concrete",
+            "j",
             [
-              "not",
+              "and",
               [
-                "in",
-                "$i.form",
-                "interface",
-                "protocol"
+                "!=",
+                "$j.symbol",
+                "$i.symbol"
+              ],
+              [
+                "isSubtype",
+                "$i",
+                "$j.symbol"
               ]
             ]
           ]
@@ -144,14 +195,28 @@
         "$implementing",
         "i",
         [
-          "=",
+          "or",
           [
-            "module",
-            "$i"
+            "withinModule",
+            [
+              "module",
+              "$i"
+            ],
+            [
+              "module",
+              "$t"
+            ]
           ],
           [
-            "module",
-            "$t"
+            "withinModule",
+            [
+              "module",
+              "$t"
+            ],
+            [
+              "module",
+              "$i"
+            ]
           ]
         ]
       ],
@@ -171,14 +236,28 @@
         ],
         "r",
         [
-          "=",
+          "or",
           [
-            "module",
-            "$r"
+            "withinModule",
+            [
+              "module",
+              "$r"
+            ],
+            [
+              "module",
+              "$t"
+            ]
           ],
           [
-            "module",
-            "$t"
+            "withinModule",
+            [
+              "module",
+              "$t"
+            ],
+            [
+              "module",
+              "$r"
+            ]
           ]
         ]
       ]

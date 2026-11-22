@@ -45,6 +45,243 @@
         },
         ""
       ]
+    },
+    "ownField": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$n.kind",
+            "access"
+          ],
+          [
+            "isSelf",
+            "$n.subject"
+          ]
+        ],
+        {
+          "true": "$n.member.name"
+        },
+        ""
+      ]
+    },
+    "initialized": {
+      "args": [
+        "i"
+      ],
+      "expr": [
+        "case",
+        "$i.initializer.kind",
+        {
+          "expression-statement": "$i.initializer.expression"
+        },
+        "$i.initializer"
+      ]
+    },
+    "absentOf": {
+      "args": [
+        "i"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "map",
+            [
+              "filter",
+              [
+                "flatten",
+                [
+                  "list",
+                  [
+                    "ownDescendants",
+                    "$i.initializer"
+                  ],
+                  [
+                    "tree.insideOf",
+                    "$i.condition"
+                  ]
+                ]
+              ],
+              "n",
+              [
+                "and",
+                [
+                  "=",
+                  "$n.kind",
+                  "index"
+                ],
+                [
+                  "nonempty",
+                  [
+                    "registryField",
+                    "$n"
+                  ]
+                ],
+                [
+                  "and",
+                  [
+                    "=",
+                    [
+                      "get",
+                      [
+                        "consumer",
+                        "$n"
+                      ],
+                      "use"
+                    ],
+                    "compared-to-nothing"
+                  ],
+                  [
+                    "in",
+                    "$n.parent.operator",
+                    "equal",
+                    "identical"
+                  ]
+                ]
+              ]
+            ],
+            "n",
+            [
+              "registryField",
+              "$n"
+            ]
+          ],
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "tree.insideOf",
+                  "$i.condition"
+                ],
+                "u",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$u.kind",
+                    "unary"
+                  ],
+                  [
+                    "=",
+                    "$u.operator",
+                    "not"
+                  ]
+                ]
+              ],
+              "u",
+              [
+                "map",
+                [
+                  "filter",
+                  [
+                    "ownDescendants",
+                    "$u"
+                  ],
+                  "n",
+                  [
+                    "nonempty",
+                    [
+                      "ownField",
+                      "$n"
+                    ]
+                  ]
+                ],
+                "n",
+                [
+                  "ownField",
+                  "$n"
+                ]
+              ]
+            ]
+          ],
+          [
+            "map",
+            [
+              "filter",
+              [
+                "list",
+                [
+                  "initialized",
+                  "$i"
+                ]
+              ],
+              "a",
+              [
+                "and",
+                [
+                  "=",
+                  "$a.kind",
+                  "assignment"
+                ],
+                [
+                  "nonempty",
+                  [
+                    "registryField",
+                    [
+                      "at",
+                      "$a.values",
+                      0
+                    ]
+                  ]
+                ],
+                [
+                  "some",
+                  [
+                    "tree.insideOf",
+                    "$i.condition"
+                  ],
+                  "u",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$u.kind",
+                      "unary"
+                    ],
+                    [
+                      "=",
+                      "$u.operator",
+                      "not"
+                    ],
+                    [
+                      "some",
+                      [
+                        "ownDescendants",
+                        "$u"
+                      ],
+                      "x",
+                      [
+                        "=",
+                        "$x.kind",
+                        "reference"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            "a",
+            [
+              "registryField",
+              [
+                "at",
+                "$a.values",
+                0
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -105,9 +342,9 @@
                     ]
                   ],
                   [
-                    "=",
+                    "!=",
                     "$g.key.kind",
-                    "reference"
+                    "literal"
                   ]
                 ]
               ]
@@ -127,36 +364,79 @@
       [
         "guarded",
         [
-          "map",
+          "flatten",
           [
-            "filter",
-            "$body",
-            "f",
+            "list",
             [
-              "and",
+              "map",
               [
-                "=",
-                "$f.kind",
-                "fallback"
-              ],
-              [
-                "=",
-                "$f.replacement.kind",
-                "throw"
-              ],
-              [
-                "nonempty",
+                "filter",
+                "$body",
+                "f",
                 [
-                  "registryField",
-                  "$f.subject"
+                  "and",
+                  [
+                    "=",
+                    "$f.kind",
+                    "fallback"
+                  ],
+                  [
+                    "=",
+                    "$f.replacement.kind",
+                    "throw"
+                  ],
+                  [
+                    "nonempty",
+                    [
+                      "registryField",
+                      "$f.subject"
+                    ]
+                  ]
+                ]
+              ],
+              "f",
+              [
+                "registryField",
+                "$f.subject"
+              ]
+            ],
+            [
+              "flatten",
+              [
+                "map",
+                [
+                  "filter",
+                  "$body",
+                  "i",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$i.kind",
+                      "if"
+                    ],
+                    [
+                      "some",
+                      [
+                        "ownDescendants",
+                        "$i.then"
+                      ],
+                      "x",
+                      [
+                        "=",
+                        "$x.kind",
+                        "throw"
+                      ]
+                    ]
+                  ]
+                ],
+                "i",
+                [
+                  "absentOf",
+                  "$i"
                 ]
               ]
             ]
-          ],
-          "f",
-          [
-            "registryField",
-            "$f.subject"
           ]
         ]
       ]

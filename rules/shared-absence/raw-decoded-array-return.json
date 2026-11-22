@@ -39,6 +39,26 @@
         "hasEffect",
         "$c",
         "decodes-untyped"
+      ],
+      [
+        "not",
+        [
+          "hasEffect",
+          [
+            "uncast",
+            [
+              "at",
+              [
+                "map",
+                "$c.arguments",
+                "a",
+                "$a.value"
+              ],
+              0
+            ]
+          ],
+          "encodes-to-text"
+        ]
       ]
     ],
     "let": [
@@ -54,10 +74,23 @@
     "having": [
       "and",
       [
-        "not",
+        "or",
         [
-          "exists",
-          "$function.returnType"
+          "not",
+          [
+            "exists",
+            "$function.returnType"
+          ]
+        ],
+        [
+          "not",
+          [
+            "exists",
+            [
+              "typeDeclaration",
+              "$function.returnType.resolved.name"
+            ]
+          ]
         ]
       ],
       [
@@ -66,5 +99,20 @@
       ]
     ],
     "emit": "$c"
+  },
+  "definitions": {
+    "uncast": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "cast": "$v.operand"
+        },
+        "$v"
+      ]
+    }
   }
 }

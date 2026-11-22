@@ -349,8 +349,10 @@ func init() {
 			first, second := operands[0], operands[1]
 			if left, isNode := nodeOf(first); isNode && left.Exists() {
 				if right, alsoNode := nodeOf(second); alsoNode && right.Exists() {
-					if bound, other := left.Node().Linked("binding"), right.Node().Linked("binding"); len(bound) == 1 && len(other) == 1 {
-						return truthValue(engine.TruthOf(left.Source() == right.Source() && bound[0] == other[0]))
+					if bound, boundKnown := bindingOf(left); boundKnown {
+						if other, otherKnown := bindingOf(right); otherKnown {
+							return truthValue(engine.TruthOf(left.Source() == right.Source() && bound == other))
+						}
 					}
 				}
 			}
@@ -864,6 +866,15 @@ func (e evaluation) supertypes(declared engine.Match) ([]string, bool) {
 					}
 				}
 			}
+			for _, id := range at.Node().Linked("satisfies") {
+				satisfied := at.Source().Match(id)
+				symbol := satisfied.Node().Symbol
+				if symbol == "" || slices.Contains(found, symbol) {
+					continue
+				}
+				found = append(found, symbol)
+				following = append(following, satisfied)
+			}
 		}
 		frontier = following
 	}
@@ -970,4 +981,15 @@ func (e evaluation) matchingRows(operands []value) ([]value, bool) {
 	}
 
 	return found, true
+}
+
+func bindingOf(site engine.Match) (int, bool) {
+	if site.Node().Kind == "binding" {
+		return site.Node().ID, true
+	}
+	if linked := site.Node().Linked("binding"); len(linked) == 1 {
+		return linked[0], true
+	}
+
+	return 0, false
 }

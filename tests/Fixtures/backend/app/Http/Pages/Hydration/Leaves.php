@@ -84,10 +84,10 @@ enum FulfilmentState: string
 /**
  * A stand-in date wrapper — short-named `Carbon`, so Spatie's built-in date cast applies.
  */
-final class Carbon
+final class Carbon extends \DateTimeImmutable
 {
     public static function parse(string $value): self
     {
-        return new self();
+        return new self($value);
     }
 }

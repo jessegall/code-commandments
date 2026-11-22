@@ -10,16 +10,15 @@ public static class Webhooks
 {
     public static string Parcel(JsonElement payload)
     {
-        // @sin DictionaryBag
         return payload.GetProperty("parcel").GetString() ??
         // @sin MessageAtThrow
         throw new JsonException("A carrier event names its parcel.");
     }
 
+    // @sin DictionaryBag
     public static string Status(IReadOnlyDictionary<string, string> fields)
     {
-        // @sin DictionaryBag
-        return Field(fields, "status");
+        return fields["status"] + ": " + fields["reason"];
     }
 
     // @righteous DictionaryBag

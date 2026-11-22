@@ -57,10 +57,9 @@
               "float"
             ],
             [
-              "in",
+              "=",
               "$x.value",
-              "0",
-              "0.0"
+              0
             ]
           ],
           [
@@ -71,9 +70,17 @@
               "boolean"
             ],
             [
-              "=",
-              "$x.value",
-              "false"
+              "or",
+              [
+                "=",
+                "$x.value",
+                "false"
+              ],
+              [
+                "=",
+                "$x.value",
+                false
+              ]
             ]
           ]
         ]
@@ -119,30 +126,121 @@
           "list"
         ]
       ]
+    },
+    "slot": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.parent.kind",
+        {
+          "argument": "$f.parent",
+          "cast": [
+            "case",
+            "$f.parent.parent.kind",
+            {
+              "argument": "$f.parent.parent"
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "defaulted": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.kind",
+        {
+          "fallback": "$f.replacement",
+          "logical": [
+            "case",
+            "$f.operator",
+            {
+              "or": "$f.right"
+            },
+            null
+          ],
+          "conditional": [
+            "case",
+            [
+              "absenceTested",
+              "$f.condition"
+            ],
+            {
+              "true": "$f.consequent"
+            },
+            "$f.alternative"
+          ]
+        },
+        null
+      ]
+    },
+    "absenceTested": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "comparison"
+        ],
+        [
+          "in",
+          "$c.operator",
+          "equal",
+          "identical"
+        ],
+        [
+          "or",
+          [
+            "tree.nullish",
+            [
+              "at",
+              "$c.operands",
+              0
+            ]
+          ],
+          [
+            "tree.nullish",
+            [
+              "at",
+              "$c.operands",
+              1
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
-    "select": "fallback",
+    "select": [
+      "fallback",
+      "logical",
+      "conditional"
+    ],
     "as": "f",
     "where": [
-      "and",
+      "emptyScalar",
       [
-        "emptyScalar",
-        "$f.replacement"
-      ],
-      [
-        "=",
-        "$f.parent.kind",
-        "argument"
-      ],
-      [
-        "in",
-        "$f.parent.parent.kind",
-        "call",
-        "construction"
+        "defaulted",
+        "$f"
       ]
     ],
     "let": [
+      [
+        "slot",
+        [
+          "slot",
+          "$f"
+        ]
+      ],
       [
         "parameter",
         [
@@ -151,36 +249,52 @@
             "parametersOf",
             [
               "declarationOf",
-              "$f.parent.parent"
+              "$slot.parent"
             ]
           ],
           [
             "position",
-            "$f.parent"
+            "$slot"
           ]
         ]
       ]
     ],
     "having": [
-      "or",
+      "and",
       [
-        "not",
-        [
-          "exists",
-          "$parameter.default"
-        ]
+        "exists",
+        "$slot"
       ],
       [
-        "!=",
+        "in",
+        "$slot.parent.kind",
+        "call",
+        "construction"
+      ],
+      [
+        "or",
         [
-          "fingerprint",
-          "$parameter.default",
-          "exact"
+          "not",
+          [
+            "exists",
+            "$parameter.default"
+          ]
         ],
         [
-          "fingerprint",
-          "$f.replacement",
-          "exact"
+          "!=",
+          [
+            "fingerprint",
+            "$parameter.default",
+            "exact"
+          ],
+          [
+            "fingerprint",
+            [
+              "defaulted",
+              "$f"
+            ],
+            "exact"
+          ]
         ]
       ]
     ],

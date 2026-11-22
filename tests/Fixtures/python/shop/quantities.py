@@ -8,7 +8,7 @@ class MissingQuantity(Exception):
         return cls(f"row {row.get('sku')} has no quantity")
 
 
-def stock_rows(rows: list, stock) -> None:
+def stock_rows(rows: list[dict], stock) -> None:
     for row in rows:
         # @sin CancelledCoalesce
         if row.get("qty", 0) == 0:
@@ -17,7 +17,7 @@ def stock_rows(rows: list, stock) -> None:
 
 
 # @fixed CancelledCoalesce
-def stock_counted(rows: list, stock) -> None:
+def stock_counted(rows: list[dict], stock) -> None:
     for row in rows:
         if "qty" not in row:
             raise MissingQuantity.in_row(row)

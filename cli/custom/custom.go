@@ -2,6 +2,7 @@
 package custom
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -39,6 +40,7 @@ type Project struct {
 	Rules      []rule.Rule
 	Unreadable []string
 	Refused    []string
+	RefusedSin []string
 	Classes    []string
 }
 
@@ -106,6 +108,7 @@ func Load(root string) Project {
 		name := strings.TrimSuffix(filepath.Base(each.Path), ".json")
 		if !slices.ContainsFunc(project.Rules, func(read rule.Rule) bool { return read.Name() == name }) {
 			project.Refused = append(project.Refused, name)
+			project.RefusedSin = append(project.RefusedSin, sinNamed(each.Text))
 		}
 	}
 
@@ -314,4 +317,17 @@ func frontMatter(text string) map[string]string {
 	}
 
 	return fields
+}
+
+// sinNamed is the sin a rule file names, read even when the file is refused, so its skill is not told the sin is
+// declared nowhere; empty when the file names none.
+func sinNamed(text []byte) string {
+	var written struct {
+		Sin struct {
+			Name string `json:"name"`
+		} `json:"sin"`
+	}
+	_ = json.Unmarshal(text, &written)
+
+	return written.Sin.Name
 }

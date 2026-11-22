@@ -63,6 +63,8 @@ func (p Project) declaredNames() []string {
 		declared = append(append(declared, own.Sin().Definition().Names()...), own.Name())
 	}
 
+	declared = append(declared, p.RefusedSin...)
+
 	for _, shipped := range rules.Sins() {
 		declared = append(declared, shipped.Definition().Names()...)
 	}

@@ -16,12 +16,12 @@ class UnhandledLevel(Exception):
 
 
 def channel(level: AlertLevel):
-    # @sin MatchWildcardReturnsNone
     match level:
         case AlertLevel.CRITICAL:
             return "sms"
         case AlertLevel.WARNING:
             return "email"
+        # @sin MatchWildcardReturnsNone
         case _:
             return
 

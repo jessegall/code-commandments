@@ -16,8 +16,8 @@
       "python-assembled-template"
     ],
     "skill": "php/templates",
-    "description": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it",
-    "rule": "State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies — never as a list of line fragments joined by a newline.",
+    "description": "A multi-line template assembled as an array of line fragments and joined with a newline \u2014 the output is unreadable in the source that emits it",
+    "rule": "State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies \u2014 never as a list of line fragments joined by a newline.",
     "suggestion": "A heredoc (`<<<PHP` / `<<<'PHP'`), with the computed part as one interpolation."
   },
   "find": {
@@ -32,105 +32,221 @@
       [
         "some",
         [
-          "flatten",
-          [
-            "list",
-            [
-              "map",
-              "$c.arguments",
-              "g",
-              "$g.value"
-            ],
-            [
-              "list",
-              "$c.callee.subject"
-            ]
-          ]
+          "fragments",
+          "$c"
         ],
         "x",
         [
-          "or",
-          [
-            "and",
-            [
-              "=",
-              "$x.kind",
-              "literal"
-            ],
-            [
-              "=",
-              "$x.literalKind",
-              "string"
-            ],
-            [
-              "=",
-              "$x.value",
-              "\n"
-            ]
-          ],
-          [
-            "and",
-            [
-              "=",
-              "$x.kind",
-              "reference"
-            ],
-            [
-              "=",
-              "$x.name",
-              "PHP_EOL"
-            ]
-          ]
+          "newline",
+          "$x"
         ]
       ],
       [
-        "some",
+        "or",
         [
-          "flatten",
+          "some",
           [
-            "list",
+            "map",
             [
-              "map",
-              "$c.arguments",
-              "g",
-              "$g.value"
+              "fragments",
+              "$c"
+            ],
+            "x",
+            [
+              "listOf",
+              "$x"
+            ]
+          ],
+          "k",
+          [
+            "and",
+            [
+              "exists",
+              "$k"
             ],
             [
-              "list",
-              "$c.callee.subject"
+              "=",
+              "$k.kind",
+              "collection"
+            ],
+            [
+              ">=",
+              [
+                "count",
+                "$k.entries"
+              ],
+              3
+            ],
+            [
+              ">=",
+              [
+                "count",
+                [
+                  "filter",
+                  "$k.entries",
+                  "e",
+                  [
+                    "spelledText",
+                    "$e.value"
+                  ]
+                ]
+              ],
+              2
             ]
           ]
         ],
-        "x",
+        [
+          ">=",
+          [
+            "count",
+            [
+              "filter",
+              "$c.arguments",
+              "g",
+              [
+                "spelledText",
+                "$g.value"
+              ]
+            ]
+          ],
+          3
+        ]
+      ]
+    ],
+    "emit": "$c"
+  },
+  "definitions": {
+    "newline": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
         [
           "and",
           [
             "=",
             "$x.kind",
-            "collection"
+            "literal"
           ],
           [
-            ">=",
+            "=",
+            "$x.literalKind",
+            "string"
+          ],
+          [
+            "=",
+            "$x.value",
+            "\n"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.constantValue.type",
+            "string"
+          ],
+          [
+            "=",
+            "$x.constantValue.value",
+            "\n"
+          ]
+        ],
+        [
+          "has",
+          [
+            "identities",
+            "newline"
+          ],
+          "$x.refers"
+        ],
+        [
+          "has",
+          [
+            "identities",
+            "newline"
+          ],
+          "$x.member.refers"
+        ]
+      ]
+    },
+    "heldValue": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "case",
+        "$b.parent.kind",
+        {
+          "declarator": "$b.parent.initializer",
+          "assignment": [
+            "at",
+            "$b.parent.values",
+            0
+          ]
+        },
+        null
+      ]
+    },
+    "listOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "collection": "$x",
+          "reference": [
+            "case",
             [
-              "count",
-              "$x.entries"
+              "exists",
+              "$x.binding"
             ],
-            3
+            {
+              "true": [
+                "heldValue",
+                "$x.binding"
+              ]
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "fragments": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "map",
+            "$c.arguments",
+            "g",
+            "$g.value"
           ],
           [
-            "every",
-            "$x.entries",
-            "e",
-            [
-              "in",
-              "$e.value.kind",
-              "literal",
-              "interpolation"
-            ]
+            "list",
+            "$c.callee.subject"
           ]
         ]
       ]
-    ],
-    "emit": "$c"
+    },
+    "spelledText": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "in",
+        "$x.kind",
+        "literal",
+        "interpolation"
+      ]
+    }
   }
 }

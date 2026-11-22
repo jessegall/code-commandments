@@ -2,6 +2,7 @@
 
 namespace Shop\Billing;
 
+use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
 use JesseGall\CodeCommandments\Sins\Backend\SideTableTrait;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -29,6 +30,7 @@ enum LedgerEntry: string
         return self::tryFrom(strtolower(trim($narrative))) ?? self::Adjustment;
     }
 
+    #[Sinful(EnumCaseOrChain::class)]
     public function signedAmount(int $pence): int
     {
         return $this === self::Refund || $this === self::Writeoff ? -$pence : $pence;

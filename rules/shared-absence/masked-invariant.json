@@ -16,10 +16,7 @@
     "skill": "shared/absence",
     "description": "Masking an optional field behind a literal hides a value the design requires",
     "rule": "Keep required state non-null, or pass it directly to the operation that uses it.",
-    "suggestion": "Remove the fallback by giving the value a certain type where it is set.",
-    "reporting": {
-      "crossFile": true
-    }
+    "suggestion": "Remove the fallback by giving the value a certain type where it is set."
   },
   "definitions": {
     "fieldNamed": {
@@ -188,9 +185,28 @@
         "$field"
       ],
       [
-        "=",
-        "$field.binding.resolved.nullable",
-        true
+        "or",
+        [
+          "=",
+          [
+            "coalesce",
+            "$field.binding.resolved.nullable",
+            "$read.resolved.nullable"
+          ],
+          true
+        ],
+        [
+          "isNullable",
+          [
+            "typeOf",
+            "$field.parent"
+          ]
+        ],
+        [
+          "=",
+          "$field.parent.optional",
+          true
+        ]
       ],
       [
         "assignedOutsideConstructor",

@@ -16,8 +16,8 @@ class Shipment:
     def tracking_url(self) -> str:
         return f"https://track.example/{self.carrier}/{self.number}"
 
+    # @sin HandRolledReplace
     def delivered(self) -> "Shipment":
-        # @sin HandRolledReplace
         return Shipment(self.number, self.carrier, self.weight, "delivered")
 
     # @fixed HandRolledReplace

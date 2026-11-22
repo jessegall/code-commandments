@@ -1,0 +1,11 @@
+{
+  "package": "defaults",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "each language's own way to read a value or fall back to a default, and to name an empty collection: Python dict.get, .NET Enumerable.Empty and Array.Empty",
+  "entries": [
+    {"type": "builtins.dict", "name": "get", "effect": "reads-with-default", "execution": "call"},
+    {"type": "global::System.Linq.Enumerable", "name": "Empty", "effect": "gives-empty-collection", "execution": "call"},
+    {"type": "global::System.Array", "name": "Empty", "effect": "gives-empty-collection", "execution": "call"}
+  ]
+}

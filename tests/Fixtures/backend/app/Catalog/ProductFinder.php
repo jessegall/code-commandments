@@ -24,12 +24,12 @@ final class ProductFinder
 
     public function nameFor(string $barcode): string
     {
-        return $this->byBarcode($barcode)?->name ?? 'Unknown product';
+        return $this->byBarcode($barcode)->name;
     }
 
     public function inStock(string $barcode): bool
     {
-        return $this->byBarcode($barcode) !== null;
+        return $this->byBarcode($barcode)->exists;
     }
 
     /**

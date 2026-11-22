@@ -50,6 +50,7 @@ func enqueueLabel(count int) int {
 }
 
 // @fixed FilledParameter
+// @sin FeatureEnvy
 func payCheckoutLabel(label checkoutLabel) checkoutLabel {
 	label.paid = true
 	return label

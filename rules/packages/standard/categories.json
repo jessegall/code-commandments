@@ -250,6 +250,14 @@
       "type": "builtins.object"
     },
     {
+      "name": "root-object",
+      "type": "builtins.object"
+    },
+    {
+      "name": "root-object",
+      "type": "global::System.Object"
+    },
+    {
       "name": "category-any",
       "type": "typing.Any"
     },
@@ -440,6 +448,58 @@
     {
       "name": "category-iterator",
       "type": "global::System.Collections.Generic.IEnumerable"
+    },
+    {
+      "name": "category-map",
+      "type": "typing.Mapping"
+    },
+    {
+      "name": "category-map",
+      "type": "collections.abc.Mapping"
+    },
+    {
+      "name": "category-map",
+      "type": "typing.MutableMapping"
+    },
+    {
+      "name": "category-map",
+      "type": "typing.Dict"
+    },
+    {
+      "name": "category-map",
+      "type": "global::System.Collections.Generic.IDictionary"
+    },
+    {
+      "name": "category-map",
+      "type": "global::System.Collections.Generic.IReadOnlyDictionary"
+    },
+    {
+      "name": "category-function",
+      "type": "global::System.Action"
+    },
+    {
+      "name": "category-function",
+      "type": "global::System.Func"
+    },
+    {
+      "name": "category-function",
+      "type": "\\Closure"
+    },
+    {
+      "name": "awaitable-task",
+      "type": "System.Threading.Tasks.Task"
+    },
+    {
+      "name": "awaitable-task",
+      "type": "global::System.Threading.Tasks.Task"
+    },
+    {
+      "name": "awaitable-task",
+      "type": "System.Threading.Tasks.ValueTask"
+    },
+    {
+      "name": "awaitable-task",
+      "type": "global::System.Threading.Tasks.ValueTask"
     }
   ]
 }

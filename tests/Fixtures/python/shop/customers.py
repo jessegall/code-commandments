@@ -4,7 +4,7 @@
 class Newsletter:
     # @sin DataClump
     def subscribe(self, name: str, email: str, phone: str, opt_in: bool) -> None:
-        self.list.add(email, name)
+        self.list.add(email, name, phone, opt_in)
 
 
 class Loyalty:

@@ -2,11 +2,61 @@
   "package": "decoding",
   "ecosystem": "standard",
   "versions": "",
-  "provenance": "each language's own JSON decoder, which returns an untyped value: PHP json_decode, Python json.loads and json.load, JavaScript JSON.parse",
+  "provenance": "each language's own JSON decoder, which returns an untyped value: PHP json_decode, Python json.loads and json.load, JavaScript JSON.parse, .NET JsonDocument.Parse and JsonNode.Parse; and the encoders that write a value as JSON text: PHP json_encode, Python json.dumps, JavaScript JSON.stringify",
   "entries": [
-    {"type": "", "name": "json_decode", "effect": "decodes-untyped", "execution": "call"},
-    {"type": "json", "name": "loads", "effect": "decodes-untyped", "execution": "call"},
-    {"type": "json", "name": "load", "effect": "decodes-untyped", "execution": "call"},
-    {"type": "JSON", "name": "parse", "effect": "decodes-untyped", "execution": "call"}
+    {
+      "type": "",
+      "name": "json_decode",
+      "effect": "decodes-untyped",
+      "execution": "call"
+    },
+    {
+      "type": "json",
+      "name": "loads",
+      "effect": "decodes-untyped",
+      "execution": "call"
+    },
+    {
+      "type": "json",
+      "name": "load",
+      "effect": "decodes-untyped",
+      "execution": "call"
+    },
+    {
+      "type": "JSON",
+      "name": "parse",
+      "effect": "decodes-untyped",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Text.Json.JsonDocument",
+      "name": "Parse",
+      "effect": "decodes-untyped",
+      "execution": "call"
+    },
+    {
+      "type": "global::System.Text.Json.Nodes.JsonNode",
+      "name": "Parse",
+      "effect": "decodes-untyped",
+      "execution": "call"
+    },
+    {
+      "type": "",
+      "name": "json_encode",
+      "effect": "encodes-to-text",
+      "execution": "call"
+    },
+    {
+      "type": "json",
+      "name": "dumps",
+      "effect": "encodes-to-text",
+      "execution": "call"
+    },
+    {
+      "type": "JSON",
+      "name": "stringify",
+      "effect": "encodes-to-text",
+      "execution": "call"
+    }
   ]
 }

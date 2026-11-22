@@ -46,12 +46,125 @@
         ],
         [
           "none",
+          "$d.modifiers",
+          "m",
+          [
+            "=",
+            "$m",
+            "readonly"
+          ]
+        ],
+        [
+          "none",
           "$d.attributes",
           "a",
           [
             "=",
             "$a.name",
             "dataclass"
+          ]
+        ]
+      ]
+    },
+    "supplierSymbol": {
+      "args": [
+        "p"
+      ],
+      "expr": [
+        "case",
+        "$p.declaredType.form",
+        {
+          "pointer": "$p.declaredType.element.refers",
+          "array": "$p.declaredType.element.refers"
+        },
+        "$p.declaredType.refers"
+      ]
+    },
+    "builtOfType": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        "$t.form",
+        {
+          "pointer": "$t.element.refers",
+          "array": "$t.element.refers"
+        },
+        "$t.refers"
+      ]
+    },
+    "builtSymbol": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.returnType.kind",
+        {
+          "tuple-type": [
+            "builtOfType",
+            [
+              "at",
+              [
+                "map",
+                "$f.returnType.elements",
+                "e",
+                "$e.type"
+              ],
+              0
+            ]
+          ]
+        },
+        [
+          "builtOfType",
+          "$f.returnType"
+        ]
+      ]
+    },
+    "constructs": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$f.form",
+          "constructor"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$f.form",
+            "function"
+          ],
+          [
+            "some",
+            [
+              "list",
+              [
+                "typeDeclaration",
+                [
+                  "builtSymbol",
+                  "$f"
+                ]
+              ]
+            ],
+            "t",
+            [
+              "and",
+              [
+                "exists",
+                "$t"
+              ],
+              [
+                "=",
+                "$t.file.module",
+                "$f.file.module"
+              ]
+            ]
           ]
         ]
       ]
@@ -72,9 +185,8 @@
         "function"
       ],
       [
-        "=",
-        "$p.parent.form",
-        "constructor"
+        "constructs",
+        "$p.parent"
       ]
     ],
     "let": [
@@ -82,7 +194,10 @@
         "supplier",
         [
           "typeDeclaration",
-          "$p.binding.resolved.name"
+          [
+            "supplierSymbol",
+            "$p"
+          ]
         ]
       ]
     ],

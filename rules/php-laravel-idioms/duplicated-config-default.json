@@ -10,9 +10,9 @@
       "DuplicatedConfigDefault"
     ],
     "skill": "php/laravel-idioms",
-    "description": "A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently",
+    "description": "A config key whose default is stated TWICE \u2014 once in the config file, again as the reader's inline fallback \u2014 two sources of truth that drift silently",
     "rule": "The config FILE owns the default. A reader asks for the value; it does not restate what the value should be when absent.",
-    "suggestion": "Drop the reader's fallback and let the config file answer — or delete the key from the file and let the reader's default be the one truth.",
+    "suggestion": "Drop the reader's fallback and let the config file answer \u2014 or delete the key from the file and let the reader's default be the one truth.",
     "requires": {
       "name": "illuminate/support",
       "ecosystem": "composer"
@@ -28,16 +28,6 @@
       {
         "where": [
           "and",
-          [
-            "=",
-            "$c.callee.kind",
-            "reference"
-          ],
-          [
-            "=",
-            "$c.callee.refers",
-            "config"
-          ],
           [
             ">=",
             [

@@ -43,9 +43,28 @@
         "$b.statements",
         "s",
         [
-          "!=",
-          "$s.kind",
-          "no-op"
+          "and",
+          [
+            "!=",
+            "$s.kind",
+            "no-op"
+          ],
+          [
+            "not",
+            [
+              "and",
+              [
+                "=",
+                "$s.kind",
+                "expression-statement"
+              ],
+              [
+                "=",
+                "$s.expression.kind",
+                "literal"
+              ]
+            ]
+          ]
         ]
       ]
     },
@@ -134,6 +153,194 @@
           ]
         ]
       ]
+    },
+    "table": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "r",
+          [
+            "=",
+            "$r.kind",
+            "return"
+          ]
+        ],
+        [
+          "every",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              "$f.body"
+            ],
+            "r",
+            [
+              "=",
+              "$r.kind",
+              "return"
+            ]
+          ],
+          "r",
+          [
+            "every",
+            "$r.values",
+            "v",
+            [
+              "=",
+              "$v.kind",
+              "literal"
+            ]
+          ]
+        ],
+        [
+          "none",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "d",
+          [
+            "and",
+            [
+              "in",
+              "$d.kind",
+              "call",
+              "construction"
+            ],
+            [
+              "none",
+              [
+                "ancestors",
+                "$d"
+              ],
+              "a",
+              [
+                "=",
+                "$a.kind",
+                "throw"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "declaration": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          ">",
+          [
+            "count",
+            [
+              "effective",
+              "$f.body"
+            ]
+          ],
+          0
+        ],
+        [
+          "every",
+          [
+            "effective",
+            "$f.body"
+          ],
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "expression-statement"
+            ],
+            [
+              "=",
+              "$s.expression.kind",
+              "call"
+            ],
+            [
+              ">",
+              [
+                "count",
+                "$s.expression.arguments"
+              ],
+              0
+            ],
+            [
+              "every",
+              "$s.expression.arguments",
+              "g",
+              [
+                "or",
+                [
+                  "in",
+                  "$g.value.kind",
+                  "literal",
+                  "collection"
+                ],
+                [
+                  "and",
+                  [
+                    "=",
+                    "$g.value.kind",
+                    "reference"
+                  ],
+                  [
+                    "not",
+                    [
+                      "exists",
+                      "$g.value.binding"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "buildsItsOwnType": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          "$f.parent.symbol"
+        ],
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "construction"
+            ],
+            [
+              "=",
+              "$x.type.refers",
+              "$f.parent.symbol"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -164,6 +371,18 @@
               "$f.obligations"
             ],
             0
+          ],
+          [
+            "table",
+            "$f"
+          ],
+          [
+            "declaration",
+            "$f"
+          ],
+          [
+            "buildsItsOwnType",
+            "$f"
           ]
         ]
       },

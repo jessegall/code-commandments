@@ -9,6 +9,7 @@ namespace Shop.Orders;
 // @sin BloatedDocblock
 public sealed class Checkout
 {
+    // @sin UselessPropertyHook
     public int Steps => 5;
 }
 
@@ -16,5 +17,6 @@ public sealed class Checkout
 // @fixed BloatedDocblock
 public sealed class PaymentStep
 {
+    // @sin UselessPropertyHook
     public int Attempts => 3;
 }

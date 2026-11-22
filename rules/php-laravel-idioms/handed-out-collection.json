@@ -16,9 +16,9 @@
       "python-handed-out-collection"
     ],
     "skill": "php/laravel-idioms",
-    "description": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
+    "description": "a getter whose whole body returns the class's own `Collection`, untouched \u2014 a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
     "rule": "A class keeps its own Collection: hand out something a caller cannot change, and give the class the methods callers were reaching in to use.",
-    "suggestion": "Return `$this->lines->collect()` or `$this->lines->all()` — a copy and a plain array, neither of which the caller can change on you — and add the methods the callers were doing by hand: `addLine()`, `totalFor()`, `without($line)`. A PHP array returned from a getter is already copied, which is why this is about a Collection and not about every getter."
+    "suggestion": "Return `$this->lines->collect()` or `$this->lines->all()` \u2014 a copy and a plain array, neither of which the caller can change on you \u2014 and add the methods the callers were doing by hand: `addLine()`, `totalFor()`, `without($line)`. A PHP array returned from a getter is already copied, which is why this is about a Collection and not about every getter."
   },
   "definitions": {
     "declaredTypeOf": {
@@ -29,46 +29,88 @@
     }
   },
   "find": {
-    "select": "return",
+    "select": [
+      "return",
+      "access"
+    ],
     "as": "r",
     "where": [
-      "and",
+      "or",
       [
-        "=",
+        "and",
         [
-          "count",
-          "$r.values"
+          "=",
+          "$r.kind",
+          "return"
         ],
-        1
+        [
+          "=",
+          [
+            "count",
+            "$r.values"
+          ],
+          1
+        ]
       ],
       [
-        "tree.selfField",
+        "and",
         [
-          "at",
-          "$r.values",
-          0
+          "=",
+          "$r.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$r.role",
+          "body"
+        ],
+        [
+          "=",
+          "$r.parent.kind",
+          "function"
         ]
       ]
     ],
     "let": [
       [
+        "held",
+        [
+          "case",
+          "$r.kind",
+          {
+            "return": [
+              "at",
+              "$r.values",
+              0
+            ]
+          },
+          "$r"
+        ]
+      ],
+      [
         "typed",
         [
           "declaredTypeOf",
-          [
-            "at",
-            "$r.values",
-            0
-          ]
+          "$held"
         ]
       ]
     ],
     "having": [
       "and",
       [
-        "!=",
-        "$typed.valueType",
-        true
+        "tree.selfField",
+        "$held"
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            "$typed.valueType",
+            true
+          ]
+        ]
       ],
       [
         "or",
@@ -84,6 +126,39 @@
           "Set",
           "Map",
           "Array"
+        ],
+        [
+          "proven",
+          [
+            "assignable",
+            "$held",
+            "collection"
+          ]
+        ],
+        [
+          "in",
+          [
+            "typeCategory",
+            "$typed"
+          ],
+          "set",
+          "map"
+        ],
+        [
+          "and",
+          [
+            "=",
+            [
+              "typeCategory",
+              "$typed"
+            ],
+            "list"
+          ],
+          [
+            "!=",
+            "$typed.name",
+            "array"
+          ]
         ]
       ],
       [
@@ -92,6 +167,14 @@
           "contains",
           "$typed.text",
           "readonly "
+        ]
+      ],
+      [
+        "not",
+        [
+          "contains",
+          "$typed.text",
+          "Readonly"
         ]
       ]
     ],

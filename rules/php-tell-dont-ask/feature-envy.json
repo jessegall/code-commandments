@@ -16,15 +16,15 @@
       "python-feature-envy"
     ],
     "skill": "php/tell-dont-ask",
-    "description": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
-    "rule": "Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.",
+    "description": "Exiled behaviour / feature envy \u2014 a method operating on ONE other owned object's internals that belongs ON that object",
+    "rule": "Behaviour belongs with its data \u2014 move a method that loops or queries one other owned object onto that object.",
     "suggestion": "Move the method onto the object (`$node->edges()`).",
     "reporting": {
       "crossFile": true
     }
   },
   "definitions": {
-    "envied": {
+    "reach": {
       "args": [
         "x"
       ],
@@ -43,16 +43,715 @@
         [
           "not",
           [
+            "isSelf",
+            "$x.subject"
+          ]
+        ]
+      ]
+    },
+    "typeName": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "coalesce",
+        "$r.resolved.name",
+        [
+          "first",
+          [
+            "map",
+            [
+              "tree.namedIn",
+              [
+                "tree.declaredTypeOf",
+                [
+                  "declarationOf",
+                  "$r"
+                ]
+              ]
+            ],
+            "t",
+            "$t.refers"
+          ]
+        ]
+      ]
+    },
+    "ownedType": {
+      "args": [
+        "r",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "typeDeclaration",
+            [
+              "typeName",
+              "$r"
+            ]
+          ]
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "sameSymbol",
+              [
+                "typeDeclaration",
+                [
+                  "typeName",
+                  "$r"
+                ]
+              ],
+              [
+                "enclosing",
+                "$f",
+                "type"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "local": {
+      "args": [
+        "d",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$d.kind",
+          "binding"
+        ],
+        [
+          "in",
+          "$d.parent.kind",
+          "parameter",
+          "loop",
+          "comprehension-clause"
+        ],
+        [
+          "within",
+          "$d",
+          "$f"
+        ]
+      ]
+    },
+    "envied": {
+      "args": [
+        "x",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "reach",
+          "$x"
+        ],
+        [
+          "local",
+          [
+            "declarationOf",
+            "$x.subject"
+          ],
+          "$f"
+        ],
+        [
+          "ownedType",
+          "$x.subject",
+          "$f"
+        ]
+      ]
+    },
+    "mine": {
+      "args": [
+        "r",
+        "envies"
+      ],
+      "expr": [
+        "filter",
+        "$envies",
+        "o",
+        [
+          "sameSymbol",
+          "$o.subject",
+          "$r.subject"
+        ]
+      ]
+    },
+    "ownReach": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$n.kind",
+          "access",
+          "reference"
+        ],
+        [
+          "!=",
+          "$n.role",
+          "member"
+        ],
+        [
+          "exists",
+          [
+            "selfMember",
+            "$n"
+          ]
+        ]
+      ]
+    },
+    "mutated": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$o.parent.kind",
+          "assignment"
+        ],
+        [
+          "=",
+          "$o.role",
+          "targets"
+        ]
+      ]
+    },
+    "iterates": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "in",
+            "$o.parent.kind",
+            "loop",
+            "comprehension-clause"
+          ],
+          [
+            "=",
+            "$o.role",
+            "iterable"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$o.parent.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$o.role",
+            "callee"
+          ],
+          [
+            "in",
+            "$o.parent.parent.kind",
+            "loop",
+            "comprehension-clause"
+          ],
+          [
+            "=",
+            "$o.parent.role",
+            "iterable"
+          ]
+        ]
+      ]
+    },
+    "digs": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$o.parent.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$o.role",
+          "subject"
+        ]
+      ]
+    },
+    "queries": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "digs",
+            "$o"
+          ],
+          [
+            "=",
+            "$o.parent.role",
+            "callee"
+          ],
+          [
+            "=",
+            "$o.parent.parent.parent.kind",
+            "argument"
+          ]
+        ],
+        [
+          "and",
+          [
+            "digs",
+            "$o"
+          ],
+          [
+            "some",
+            [
+              "take",
+              [
+                "ownAncestors",
+                "$o"
+              ],
+              4
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "call"
+              ],
+              [
+                "some",
+                "$a.arguments",
+                "g",
+                [
+                  "=",
+                  "$g.value.kind",
+                  "function"
+                ]
+              ],
+              [
+                "not",
+                [
+                  "some",
+                  "$a.arguments",
+                  "g",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$g.value.kind",
+                      "function"
+                    ],
+                    [
+                      "within",
+                      "$o",
+                      "$g.value"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "holder": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          "$o.parent.kind",
+          "call"
+        ],
+        {
+          "true": "$o.parent.parent"
+        },
+        "$o.parent"
+      ]
+    },
+    "container": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          "$h.kind",
+          "loop"
+        ],
+        {
+          "true": "$h"
+        },
+        "$h.parent"
+      ]
+    },
+    "elementOf": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "last",
+        "$h.bindings"
+      ]
+    },
+    "usesOf": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "filter",
+        [
+          "descendants",
+          [
+            "container",
+            "$h"
+          ]
+        ],
+        "u",
+        [
+          "and",
+          [
+            "=",
+            "$u.kind",
+            "reference"
+          ],
+          [
+            "sameSymbol",
+            "$u",
+            [
+              "elementOf",
+              "$h"
+            ]
+          ]
+        ]
+      ]
+    },
+    "told": {
+      "args": [
+        "u",
+        "f"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$u.parent.kind",
+          "interpolation"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$u.parent.kind",
+            "argument"
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "=",
+                "$u.parent.parent.target.symbol",
+                "$f.symbol"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$u.parent.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$u.role",
+            "subject"
+          ],
+          [
+            "=",
+            "$u.parent.role",
+            "callee"
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "=",
+                "$u.parent.parent.target.symbol",
+                "$f.symbol"
+              ]
+            ]
+          ],
+          [
+            "none",
+            [
+              "ownAncestors",
+              "$u"
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "binary"
+              ],
+              [
+                "!=",
+                "$a.operator",
+                "concatenate"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "passedOn": {
+      "args": [
+        "o",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "nonempty",
+          [
+            "usesOf",
+            [
+              "holder",
+              "$o"
+            ]
+          ]
+        ],
+        [
+          "every",
+          [
+            "usesOf",
+            [
+              "holder",
+              "$o"
+            ]
+          ],
+          "u",
+          [
+            "told",
+            "$u",
+            "$f"
+          ]
+        ]
+      ]
+    },
+    "walksWithState": {
+      "args": [
+        "f",
+        "body"
+      ],
+      "expr": [
+        "and",
+        [
+          "some",
+          "$body",
+          "c",
+          [
             "and",
             [
               "=",
-              "$x.parent.kind",
+              "$c.kind",
               "call"
             ],
             [
-              "=",
-              "$x.role",
-              "callee"
+              "proven",
+              [
+                "=",
+                "$c.target.symbol",
+                "$f.symbol"
+              ]
+            ]
+          ]
+        ],
+        [
+          "some",
+          "$body",
+          "n",
+          [
+            "=",
+            [
+              "tree.kindOf",
+              [
+                "selfMember",
+                "$n"
+              ]
+            ],
+            "field"
+          ]
+        ]
+      ]
+    },
+    "envyOf": {
+      "args": [
+        "r",
+        "envies",
+        "body",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          ">",
+          [
+            "count",
+            [
+              "mine",
+              "$r",
+              "$envies"
+            ]
+          ],
+          [
+            "count",
+            [
+              "filter",
+              "$body",
+              "n",
+              [
+                "ownReach",
+                "$n"
+              ]
+            ]
+          ]
+        ],
+        [
+          "or",
+          [
+            "some",
+            [
+              "mine",
+              "$r",
+              "$envies"
+            ],
+            "o",
+            [
+              "mutated",
+              "$o"
+            ]
+          ],
+          [
+            "some",
+            [
+              "mine",
+              "$r",
+              "$envies"
+            ],
+            "o",
+            [
+              "and",
+              [
+                "iterates",
+                "$o"
+              ],
+              [
+                "not",
+                [
+                  "passedOn",
+                  "$o",
+                  "$f"
+                ]
+              ],
+              [
+                "not",
+                [
+                  "walksWithState",
+                  "$f",
+                  "$body"
+                ]
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              ">=",
+              [
+                "count",
+                [
+                  "mine",
+                  "$r",
+                  "$envies"
+                ]
+              ],
+              2
+            ],
+            [
+              "some",
+              [
+                "mine",
+                "$r",
+                "$envies"
+              ],
+              "o",
+              [
+                "queries",
+                "$o"
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              ">=",
+              [
+                "distinctCount",
+                [
+                  "map",
+                  [
+                    "mine",
+                    "$r",
+                    "$envies"
+                  ],
+                  "o",
+                  "$o.member.name"
+                ]
+              ],
+              3
+            ],
+            [
+              "some",
+              [
+                "mine",
+                "$r",
+                "$envies"
+              ],
+              "o",
+              [
+                "digs",
+                "$o"
+              ]
             ]
           ]
         ]
@@ -65,32 +764,54 @@
     "where": [
       "and",
       [
+        "not",
+        "$f.file.test"
+      ],
+      [
         "!=",
         "$f.form",
         "constructor"
       ],
       [
-        "not",
-        "$f.file.test"
+        "tree.notOverriding",
+        "$f"
+      ],
+      [
+        "exists",
+        "$f.body"
       ]
     ],
     "let": [
       [
         "body",
         [
-          "ownDescendants",
-          "$f.body"
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$f.body"
+            ],
+            [
+              "descendants",
+              "$f.body"
+            ]
+          ]
         ]
       ],
       [
-        "reads",
+        "envies",
         [
           "filter",
           "$body",
           "x",
           [
-            "envied",
-            "$x"
+            "proven",
+            [
+              "envied",
+              "$x",
+              "$f"
+            ]
           ]
         ]
       ]
@@ -102,79 +823,37 @@
         "$body",
         "x",
         [
-          "tree.selfField",
-          "$x"
+          "proven",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "construction"
+            ],
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                [
+                  "typeName",
+                  "$x"
+                ]
+              ]
+            ]
+          ]
         ]
       ],
       [
         "some",
-        "$reads",
+        "$envies",
         "r",
         [
-          "and",
-          [
-            ">=",
-            [
-              "distinctCount",
-              [
-                "map",
-                [
-                  "filter",
-                  "$reads",
-                  "o",
-                  [
-                    "=",
-                    "$o.subject.name",
-                    "$r.subject.name"
-                  ]
-                ],
-                "o",
-                "$o.member.name"
-              ]
-            ],
-            3
-          ],
-          [
-            "some",
-            "$reads",
-            "o",
-            [
-              "and",
-              [
-                "=",
-                "$o.subject.name",
-                "$r.subject.name"
-              ],
-              [
-                "or",
-                [
-                  "=",
-                  "$o.parent.kind",
-                  "loop"
-                ],
-                [
-                  "and",
-                  [
-                    "=",
-                    "$o.parent.kind",
-                    "access"
-                  ],
-                  [
-                    "=",
-                    "$o.role",
-                    "subject"
-                  ]
-                ]
-              ]
-            ]
-          ],
-          [
-            "exists",
-            [
-              "declarationOf",
-              "$r.subject"
-            ]
-          ]
+          "envyOf",
+          "$r",
+          "$envies",
+          "$body",
+          "$f"
         ]
       ]
     ],

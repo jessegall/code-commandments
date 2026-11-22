@@ -3,12 +3,12 @@
 from dataclasses import dataclass, replace
 
 
-# @sin MutableValueObject
 @dataclass(frozen=True)
 class ShelfPrice:
     cents: int
     sku: str
 
+    # @sin MutableValueObject
     def discount(self, percent: int) -> None:
         object.__setattr__(self, "cents", self.cents * (100 - percent) // 100)
 

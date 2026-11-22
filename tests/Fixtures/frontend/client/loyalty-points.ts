@@ -13,6 +13,7 @@ export interface Member {
 
 export function bonus(member: Member): number {
     // @sin SubjectLadder
+    // @sin StringMatchMirrorsEnum
     if ('bronze' === member.tier) {
         return member.points
     } else if ('silver' === member.tier) {
@@ -27,6 +28,7 @@ export function bonus(member: Member): number {
     throw new Error('a member holds no tier')
 }
 
+// @sin FeatureEnvy
 export function redeem(member: Member, cost: number): string {
     // @sin DuplicatedBranchTail
     // @sin RedundantElse
@@ -39,6 +41,7 @@ export function redeem(member: Member, cost: number): string {
     }
 }
 
+// @sin FeatureEnvy
 export function expire(member: Member, lapsed: boolean): Member {
     if (!lapsed) {
         return member
@@ -50,6 +53,7 @@ export function expire(member: Member, lapsed: boolean): Member {
 }
 
 // @fixed UnreachableStatement
+// @sin FeatureEnvy
 export function expireLapsed(member: Member, lapsed: boolean): Member {
     if (!lapsed) {
         return member
@@ -59,6 +63,7 @@ export function expireLapsed(member: Member, lapsed: boolean): Member {
     return member
 }
 
+// @sin FeatureEnvy
 export function award(members: Member[], points: number): void {
     for (const member of members) {
         // @sin RedundantElse
@@ -84,6 +89,7 @@ export function settle(members: Member[]): number {
 }
 
 // @fixed LoopInvertedGuard
+// @sin FeatureEnvy
 export function settleNegative(members: Member[]): number {
     let settled = 0
     for (const member of members) {
@@ -110,6 +116,7 @@ export function audit(members: Member[]): number {
 }
 
 // @righteous RedundantElse
+// @sin FeatureEnvy
 export function describe(member: Member): string {
     if (member.points > 1000) {
         console.info(member.tier)

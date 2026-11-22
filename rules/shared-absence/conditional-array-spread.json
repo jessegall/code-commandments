@@ -44,22 +44,47 @@
           ]
         ],
         [
-          "exists",
-          "$x.resolved.element"
+          "and",
+          [
+            "not",
+            [
+              "tree.emptyCollection",
+              "$x"
+            ]
+          ],
+          [
+            "isCollection",
+            [
+              "typeOf",
+              "$x"
+            ]
+          ]
         ]
       ]
     }
   },
   "find": {
-    "select": "entry",
+    "select": [
+      "entry",
+      "argument"
+    ],
     "as": "e",
     "where": [
       "and",
       [
-        "in",
-        "$e.expansion",
-        "positional",
-        "keyed"
+        "or",
+        [
+          "in",
+          "$e.expansion",
+          "positional",
+          "keyed"
+        ],
+        [
+          "in",
+          "$e.spread",
+          "positional",
+          "keyed"
+        ]
       ],
       [
         "=",

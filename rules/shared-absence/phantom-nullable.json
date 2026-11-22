@@ -59,19 +59,57 @@
     }
   },
   "find": {
-    "select": "declarator",
+    "select": [
+      "declarator",
+      "parameter"
+    ],
     "as": "d",
     "where": [
-      "and",
+      "or",
       [
-        "=",
-        "$d.parent.kind",
-        "field"
+        "and",
+        [
+          "=",
+          "$d.kind",
+          "declarator"
+        ],
+        [
+          "=",
+          "$d.parent.kind",
+          "field"
+        ],
+        [
+          "isNullable",
+          [
+            "typeOf",
+            "$d.parent"
+          ]
+        ]
       ],
       [
-        "=",
-        "$d.binding.resolved.nullable",
-        true
+        "and",
+        [
+          "=",
+          "$d.kind",
+          "parameter"
+        ],
+        [
+          "some",
+          "$d.parent.parent.implicitMembers",
+          "m",
+          [
+            "=",
+            "$m",
+            "$d"
+          ]
+        ],
+        [
+          "isNullable",
+          [
+            "typeOf",
+            "$d"
+          ]
+        ]
       ]
     ],
     "let": [
@@ -207,6 +245,13 @@
         0
       ]
     ],
-    "emit": "$d.parent"
+    "emit": [
+      "case",
+      "$d.kind",
+      {
+        "declarator": "$d.parent"
+      },
+      "$d"
+    ]
   }
 }

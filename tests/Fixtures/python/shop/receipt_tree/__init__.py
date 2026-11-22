@@ -125,6 +125,7 @@ class ReceiptTreeBatch:
         self.stage = ReceiptTreeStage.SEALED
 
 
+# @sin NearDuplicateFunction
 def seal_receipt_tree(batch: ReceiptTreeBatch) -> None:
     # @sin GuardBesideTransition
     if batch.stage != ReceiptTreeStage.OPEN:

@@ -3,11 +3,11 @@
 # the export is read.
 
 
-# @sin ConstructorSideEffect
 class LedgerExport:
     def __init__(self, client, period: str) -> None:
         self.client = client
         self.period = period
+        # @sin ConstructorSideEffect
         client.warm(f"/ledger/{period}")
 
     def body(self) -> bytes:

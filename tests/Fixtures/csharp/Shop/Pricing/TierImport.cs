@@ -12,6 +12,7 @@ public static class TierImport
             "silver" => Tier.Silver,
             "gold" => Tier.Gold,
             "platinum" => Tier.Platinum,
+            // @sin MatchDefaultReturnsNull
             _ => null,
         };
 }

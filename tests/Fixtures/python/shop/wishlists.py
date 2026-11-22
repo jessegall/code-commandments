@@ -15,3 +15,6 @@ class Wishlist:
     def remove(self, sku: str) -> None:
         # a sku can be wished for twice; only the first goes
         self.skus.remove(sku)
+
+    def count(self) -> int:
+        return len(self.skus)

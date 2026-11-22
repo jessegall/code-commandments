@@ -861,7 +861,7 @@ func (w *writer) expression(expression ast.Expr) *contract.Node {
 		return node
 	}
 	if held.Type != nil {
-		node.Resolved = w.resolved(held.Type)
+		node.Resolved = w.resolved(commaOkValue(expression, held.Type))
 	}
 	if held.Value != nil && node.Kind != "literal" {
 		node.Own().ConstantValue = &contract.ConstantValue{Type: types.TypeString(held.Type, qualify), Value: quoted(constantOf(held.Value))}
@@ -1292,6 +1292,19 @@ func predeclared(name *ast.Ident, facts *types.Info) bool {
 
 func namesResults(signature *ast.FuncType) bool {
 	return signature.Results != nil && len(signature.Results.List) > 0 && len(signature.Results.List[0].Names) > 0
+}
+
+func commaOkValue(expression ast.Expr, held types.Type) types.Type {
+	pair, isTuple := held.(*types.Tuple)
+	if !isTuple || pair.Len() != 2 {
+		return held
+	}
+	switch ast.Unparen(expression).(type) {
+	case *ast.IndexExpr, *ast.TypeAssertExpr, *ast.UnaryExpr:
+		return pair.At(0).Type()
+	}
+
+	return held
 }
 
 func (w *writer) markCommaOk(targets, values []ast.Expr) {

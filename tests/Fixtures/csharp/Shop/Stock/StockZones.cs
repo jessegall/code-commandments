@@ -1,5 +1,6 @@
 namespace Shop.Stock;
 
+// @sin ConstClassEnum
 public static class Zone
 {
     public const string Chilled = "cold";

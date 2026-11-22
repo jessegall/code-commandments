@@ -7,6 +7,7 @@ public sealed class PackDesk
     private readonly ISlipPrinter printer;
 
     // @sin UnreadCollaborator
+    // @sin UnusedPrivateMember
     private readonly ICourier courier;
 
     public PackDesk(ISlipPrinter printer, ICourier courier)

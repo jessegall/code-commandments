@@ -55,6 +55,34 @@
             "$c.callee.subject.refers",
             "model"
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.subject.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$c.callee.subject.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$c.callee.subject.callee.form",
+            "static"
+          ],
+          [
+            "=",
+            "$c.callee.subject.callee.subject.kind",
+            "reference"
+          ],
+          [
+            "assignable",
+            "$c.callee.subject.callee.subject.refers",
+            "model"
+          ]
         ]
       ]
     }

@@ -2,19 +2,21 @@
 
 namespace Shop\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ModelMutationAtCallSite;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
-
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\CreateOrderRequest;
 use Shop\Models\Order;
 use Shop\Services\OrderService;
 
+
 class OrderController extends Controller
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly OrderService $orders) {}
 
     public function store(CreateOrderRequest $request): Order

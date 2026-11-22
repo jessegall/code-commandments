@@ -15,7 +15,7 @@
       "python-keyed-lookup-envy"
     ],
     "skill": "php/tell-dont-ask",
-    "description": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator",
+    "description": "Indirect feature envy \u2014 a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator",
     "rule": "Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.",
     "suggestion": "Move the lookup onto the object that owns the identity.",
     "reporting": {
@@ -39,18 +39,170 @@
         },
         null
       ]
+    },
+    "paramMember": {
+      "args": [
+        "k"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$k.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$k.subject.kind",
+          "reference"
+        ],
+        [
+          "ownParameter",
+          "$k.subject"
+        ],
+        [
+          "exists",
+          [
+            "declarationOf",
+            "$k"
+          ]
+        ],
+        [
+          "not",
+          [
+            "isSelf",
+            "$k.subject"
+          ]
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "=",
+              [
+                "tree.formOf",
+                [
+                  "typeDeclaration",
+                  "$k.resolved.name"
+                ]
+              ],
+              "enum"
+            ]
+          ]
+        ]
+      ]
+    },
+    "keyedBy": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "index": [
+            "and",
+            [
+              "paramMember",
+              "$x.key"
+            ],
+            [
+              "or",
+              [
+                "ownParameter",
+                "$x.subject"
+              ],
+              [
+                "and",
+                [
+                  "tree.selfField",
+                  "$x.subject"
+                ],
+                [
+                  "exists",
+                  [
+                    "typeDeclaration",
+                    "$x.resolved.name"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "call": [
+            "and",
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                "$x.resolved.name"
+              ]
+            ],
+            [
+              "not",
+              [
+                "isSelf",
+                "$x.callee.subject"
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "=",
+                  "$x.resolved.name",
+                  "$x.callee.subject.resolved.name"
+                ]
+              ]
+            ],
+            [
+              "some",
+              "$x.arguments",
+              "g",
+              [
+                "paramMember",
+                "$g.value"
+              ]
+            ]
+          ]
+        },
+        false
+      ]
+    },
+    "ownParameter": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.binding.parent.kind",
+          "parameter"
+        ],
+        [
+          "=",
+          [
+            "enclosing",
+            "$x.binding",
+            "function"
+          ],
+          [
+            "enclosing",
+            "$x",
+            "function"
+          ]
+        ]
+      ]
     }
   },
   "find": {
     "select": "function",
     "as": "f",
     "where": [
-      "=",
-      [
-        "count",
-        "$f.body.statements"
-      ],
-      1
+      "exists",
+      "$f.body.statements"
     ],
     "let": [
       [
@@ -58,9 +210,8 @@
         [
           "builtBy",
           [
-            "at",
-            "$f.body.statements",
-            0
+            "last",
+            "$f.body.statements"
           ]
         ]
       ]
@@ -68,30 +219,29 @@
     "having": [
       "and",
       [
-        "=",
-        "$looked.kind",
-        "index"
-      ],
-      [
-        "=",
-        "$looked.key.kind",
-        "access"
-      ],
-      [
-        "=",
-        "$looked.key.subject.kind",
-        "reference"
-      ],
-      [
-        "=",
-        "$looked.key.subject.binding.parent.kind",
-        "parameter"
-      ],
-      [
         "exists",
+        "$looked"
+      ],
+      [
+        "some",
         [
-          "declarationOf",
-          "$looked.key"
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$looked"
+            ],
+            [
+              "ownDescendants",
+              "$looked"
+            ]
+          ]
+        ],
+        "d",
+        [
+          "keyedBy",
+          "$d"
         ]
       ]
     ],

@@ -15,7 +15,7 @@
       "typescript-collection-mutated-while-iterated"
     ],
     "skill": "shared/flow",
-    "description": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException",
+    "description": "a `foreach` that adds to or removes from the very collection it walks \u2014 the enumerator reads a collection that moved under it, which throws InvalidOperationException",
     "rule": "Never change the collection a `foreach` walks while it walks it: decide inside the loop and change afterwards.",
     "suggestion": "Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`foreach (var item in items.ToList())`) when the change must happen as it goes."
   },
@@ -77,7 +77,7 @@
               "Values"
             ],
             [
-              "startsWith",
+              "contains",
               "$i.subject.resolved.name",
               "System.Collections.Generic."
             ]

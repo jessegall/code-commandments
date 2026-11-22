@@ -30,6 +30,7 @@ func Postage(parcel Parcel) int {
 }
 
 // Label names a parcel heavy or light on its last label.
+// @sin FeatureEnvy
 func Label(parcel Parcel) Parcel {
 	// @sin DuplicatedBranchTail
 	if parcel.Grams > 2000 {
@@ -48,6 +49,7 @@ func Label(parcel Parcel) Parcel {
 // @fixed DuplicatedBranchTail
 
 // LabelOnce labels by weight and settles the zone once, after the branches.
+// @sin FeatureEnvy
 func LabelOnce(parcel Parcel) Parcel {
 	if parcel.Grams > 2000 {
 		parcel.Labels = append(parcel.Labels, "heavy")
@@ -85,6 +87,7 @@ func Sorted(parcels []Parcel) int {
 // @righteous DuplicatedBranchTail
 
 // Weigh has no else, so the zone line after the if is not a tail every branch repeats.
+// @sin FeatureEnvy
 func Weigh(parcel Parcel) Parcel {
 	if parcel.Grams > 2000 {
 		parcel.Labels = append(parcel.Labels, "heavy")

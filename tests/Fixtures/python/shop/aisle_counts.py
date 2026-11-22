@@ -20,9 +20,9 @@ class AisleCounts:
     def total(self) -> int:
         return sum(self._counted.values())
 
-    # @sin HandedOutCollection
     @property
     def counted(self) -> dict[str, int]:
+        # @sin HandedOutCollection
         return self._counted
 
 

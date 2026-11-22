@@ -10,7 +10,6 @@ class Purchase:
 
 
 class RefundPolicy:
-    # @sin ComputedBooleanArgument
     def allows(self, expired: bool) -> bool:
         return not expired
 
@@ -24,6 +23,7 @@ class Desk:
         self.policy = policy
 
     def accept(self, purchase: Purchase) -> bool:
+        # @sin ComputedBooleanArgument
         return self.policy.allows(purchase.days_since > 30)
 
 
@@ -32,6 +32,7 @@ class Portal:
         self.policy = policy
 
     def offers(self, purchases: list[Purchase]) -> list[Purchase]:
+        # @sin ComputedBooleanArgument
         return [purchase for purchase in purchases if self.policy.allows(expired=purchase.days_since > 30)]
 
     # @fixed ComputedBooleanArgument

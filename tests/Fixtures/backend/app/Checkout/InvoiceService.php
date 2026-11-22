@@ -3,7 +3,6 @@
 namespace Shop\Checkout;
 
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
-use JesseGall\CodeCommandments\Sins\Backend\ArrayBagParameter;
 
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -17,7 +16,6 @@ final class InvoiceService
      * @param  array<string, int>  $breakdown
      */
     #[Sinful(ArrayBag::class)]
-    #[Sinful(ArrayBagParameter::class)]
     public function render(array $breakdown): string
     {
         return sprintf(

@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * author would reasonably assume they are wired to something.
  */
 #[Sinful(DeadConfigKey::class)]
-static fn (): null => null;
+static fn () => null;
 
 return [
 

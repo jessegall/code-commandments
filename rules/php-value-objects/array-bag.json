@@ -20,8 +20,8 @@
       "DictBag"
     ],
     "skill": "php/value-objects",
-    "description": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined.",
-    "rule": "Give a structured array a typed value object — never read a named field by string key off an `array` param.",
+    "description": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name \u2014 the type was never defined.",
+    "rule": "Give a structured array a typed value object \u2014 never read a named field by string key off an `array` param.",
     "suggestion": "A Spatie `Data` object built via `::from($array)`.",
     "reporting": {
       "crossFile": true
@@ -38,8 +38,88 @@
         "function"
       ],
       [
+        "not",
+        "$p.file.test"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$p.parent.form",
+          "closure",
+          "arrow",
+          "lambda"
+        ]
+      ],
+      [
+        "tree.notOverriding",
+        "$p.parent"
+      ],
+      [
+        "not",
+        [
+          "has",
+          [
+            "functionRole",
+            "$p.parent"
+          ],
+          "named-constructor"
+        ]
+      ],
+      [
+        "not",
+        [
+          "has",
+          [
+            "functionRole",
+            "$p.parent"
+          ],
+          "serialization-hook"
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            ">",
+            [
+              "count",
+              [
+                "tree.callsOf",
+                "$p.parent"
+              ]
+            ],
+            0
+          ],
+          [
+            "every",
+            [
+              "tree.callsOf",
+              "$p.parent"
+            ],
+            "c",
+            [
+              "has",
+              [
+                "functionRole",
+                [
+                  "enclosing",
+                  "$c",
+                  "function"
+                ]
+              ],
+              "serialization-hook"
+            ]
+          ]
+        ]
+      ],
+      [
         "tree.looseRecord",
-        "$p.binding.resolved"
+        [
+          "typeOf",
+          "$p"
+        ]
       ]
     ],
     "let": [
@@ -55,36 +135,93 @@
             ],
             "i",
             [
-              "and",
+              "or",
               [
-                "=",
-                "$i.kind",
-                "index"
+                "and",
+                [
+                  "=",
+                  "$i.kind",
+                  "index"
+                ],
+                [
+                  "=",
+                  "$i.subject.kind",
+                  "reference"
+                ],
+                [
+                  "=",
+                  "$i.subject.name",
+                  "$p.binding.name"
+                ],
+                [
+                  "=",
+                  "$i.key.kind",
+                  "literal"
+                ],
+                [
+                  "=",
+                  "$i.key.literalKind",
+                  "string"
+                ]
               ],
               [
-                "=",
-                "$i.subject.kind",
-                "reference"
-              ],
-              [
-                "=",
-                "$i.subject.name",
-                "$p.binding.name"
-              ],
-              [
-                "=",
-                "$i.key.kind",
-                "literal"
-              ],
-              [
-                "=",
-                "$i.key.literalKind",
-                "string"
+                "and",
+                [
+                  "=",
+                  "$i.kind",
+                  "call"
+                ],
+                [
+                  "=",
+                  "$i.callee.kind",
+                  "access"
+                ],
+                [
+                  "=",
+                  "$i.callee.subject.kind",
+                  "reference"
+                ],
+                [
+                  "=",
+                  "$i.callee.subject.name",
+                  "$p.binding.name"
+                ],
+                [
+                  "=",
+                  [
+                    "at",
+                    [
+                      "map",
+                      "$i.arguments",
+                      "g",
+                      "$g.value.literalKind"
+                    ],
+                    0
+                  ],
+                  "string"
+                ]
               ]
             ]
           ],
           "i",
-          "$i.key.value"
+          [
+            "case",
+            "$i.kind",
+            {
+              "index": "$i.key.value",
+              "call": [
+                "at",
+                [
+                  "map",
+                  "$i.arguments",
+                  "g",
+                  "$g.value.value"
+                ],
+                0
+              ]
+            },
+            null
+          ]
         ]
       ]
     ],

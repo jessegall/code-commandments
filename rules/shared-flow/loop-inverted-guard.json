@@ -141,6 +141,13 @@
           ]
         },
         false
+      ],
+      [
+        "not",
+        [
+          "exists",
+          "$b.initializer"
+        ]
       ]
     ],
     "emit": "$b"

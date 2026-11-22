@@ -15,6 +15,8 @@ public static class NotificationHeaders
 {
     public const string Tenant = "X-Tenant";
     public const string Trace = "X-Trace";
+
+    public static string Line(string tenant, string trace) => $"{Tenant}: {tenant}; {Trace}: {trace}";
 }
 
 public static class ChannelCosts

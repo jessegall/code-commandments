@@ -12,11 +12,11 @@ public sealed class TagReader(ITagStore store)
 {
     private string? last;
 
-    // @righteous NullForgiven
     public string Of(string id)
     {
         if (store.TryFind(id, out var tag))
         {
+            // @righteous NullForgiven
             return tag!.Trim();
         }
 
@@ -27,7 +27,6 @@ public sealed class TagReader(ITagStore store)
     {
         if (!store.TryFind(id, out var tag))
         {
-            // @sin NullForgiven
             return tag!.Trim();
         }
 

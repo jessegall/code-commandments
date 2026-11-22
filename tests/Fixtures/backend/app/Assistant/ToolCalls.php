@@ -3,7 +3,9 @@
 namespace Shop\Assistant;
 
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBagParameter;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
  * Asks the shop assistant's tools for what it needs: each tool takes arguments of its own, so the one array that
@@ -14,6 +16,7 @@ final class ToolCalls
     /**
      * @var list<array{tool: string, arguments: array<string, mixed>}>
      */
+    #[Sinful(UnusedPrivateMember::class)]
     private array $sent = [];
 
     public function openOrder(int $order): void

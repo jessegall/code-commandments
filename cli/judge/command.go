@@ -195,10 +195,17 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		if detector.Sin().Definition().Name != "lone-implementer-interface" {
 			continue
 		}
-		detectorEngine, _ := rule.EngineOf(detector)
-		reasons := project.ContractReasons[detectorEngine]
-		for _, name := range slices.Sorted(maps.Keys(reasons)) {
-			fmt.Fprintf(console.Err, "Public contract %s: %s\n", name, reasons[name])
+		var engines []catalog.Engine
+		if several, judgesSeveral := detector.(rule.Several); judgesSeveral {
+			engines = several.Engines()
+		} else if detectorEngine, known := rule.EngineOf(detector); known {
+			engines = []catalog.Engine{detectorEngine}
+		}
+		for _, engine := range engines {
+			reasons := project.ContractReasons[engine]
+			for _, name := range slices.Sorted(maps.Keys(reasons)) {
+				fmt.Fprintf(console.Err, "Public contract %s: %s\n", name, reasons[name])
+			}
 		}
 	}
 

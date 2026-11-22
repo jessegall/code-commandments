@@ -4,10 +4,10 @@ namespace Shop.Stock;
 // nobody declared, with its field names repeated as strings wherever it is read.
 public sealed class ImportRows
 {
+    // @sin DictionaryBag
     public int Units(IReadOnlyDictionary<string, string> row)
     {
-        // @sin DictionaryBag
-        return int.Parse(row["units"]) * 2;
+        return int.Parse(row["units"]) * int.Parse(row["pack"]);
     }
 
     // @fixed DictionaryBag

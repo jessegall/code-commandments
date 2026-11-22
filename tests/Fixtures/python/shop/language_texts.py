@@ -27,6 +27,7 @@ class LanguageTexts:
     # @righteous ImpossibleGuard
     def text_in(self, language: Language) -> str:
         if language is None:
+            # @sin MessageAtThrow
             raise ValueError("a language is wanted")
 
         return self.texts[language.code]

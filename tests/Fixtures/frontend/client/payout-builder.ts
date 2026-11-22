@@ -39,9 +39,13 @@ export function archiveReady(payout: { approved: boolean; cleared: boolean }): b
 }
 
 // @fixed RepeatedTypeGuard
+export function isDated(amount: unknown, date: unknown): date is Date {
+    return typeof amount === 'number' && date instanceof Date
+}
+
+// @fixed RepeatedTypeGuard
 export function validPayoutDate(cents: unknown, issued: unknown): Date | undefined {
-    const dateAndAmount = typeof cents === 'number' && issued instanceof Date
-    if (dateAndAmount) {
+    if (isDated(cents, issued)) {
         return issued
     }
 

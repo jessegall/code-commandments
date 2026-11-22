@@ -2,6 +2,7 @@
 
 namespace Shop\Legacy;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConstClassEnum;
 use JesseGall\CodeCommandments\Testing\Righteous;
 
 /**
@@ -10,7 +11,7 @@ use JesseGall\CodeCommandments\Testing\Righteous;
  * them, and no enum could carry a twenty-line query as a case. A rule about closed sets must leave
  * it alone (#505, #508).
  */
-#[Righteous]
+#[Righteous(ConstClassEnum::class)]
 final class ShopQueries
 {
     /**

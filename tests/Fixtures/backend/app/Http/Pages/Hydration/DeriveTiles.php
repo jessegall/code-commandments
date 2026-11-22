@@ -82,6 +82,6 @@ final class LabelStripBuilder
     {
         $chips = [StateChip::for(ShipState::Pending), StateChip::for(ShipState::Shipped)];
 
-        return LabelStrip::from(['labels' => array_map(static fn (StateChip $c): string => $c->label, $chips)]);
+        return LabelStrip::from(['labels' => array_map(static fn (StateChip $c) => $c->label, $chips)]);
     }
 }

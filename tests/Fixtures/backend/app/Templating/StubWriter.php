@@ -64,7 +64,7 @@ final class StubWriter
     #[Righteous(AssembledTemplate::class)]
     public function listing(array $names): string
     {
-        return implode("\n", array_map(static fn (string $name): string => "- {$name}", $names));
+        return implode("\n", array_map(static fn (string $name) => "- {$name}", $names));
     }
 
     /**

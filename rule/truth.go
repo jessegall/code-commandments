@@ -211,6 +211,9 @@ func fact(site engine.Match, name string) value {
 	if field.IsZero() && !site.Source().Knows(name) {
 		return unknown
 	}
+	if (field.Kind() == reflect.Pointer && field.IsNil()) || (field.Kind() == reflect.String && field.Len() == 0) {
+		return known(nil)
+	}
 
 	return plainOf(field)
 }
@@ -289,7 +292,7 @@ func fileField(file *engine.File, name string) value {
 	case "language":
 		return known(string(file.Language()))
 	case "module":
-		return known(file.Module)
+		return known(engine.FileModule(file))
 	case "test":
 		return known(file.Purpose() != engine.Ordinary)
 	case "purpose":

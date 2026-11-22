@@ -2,6 +2,7 @@
 
 namespace Shop\Kiosk;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\ConstructorSideEffect;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Support\FeatureGate;
@@ -15,6 +16,7 @@ final class KioskSettingsPanel
 {
     private readonly bool $skeletons;
 
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(FeatureGate $gate)
     {
         $gate->override('kiosk.skeletons', true);

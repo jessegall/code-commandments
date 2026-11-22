@@ -10,7 +10,6 @@ public enum Aisle
 
 public sealed class ShelfPlan(Aisle aisle)
 {
-    // @sin MatchDefaultReturnsNull
     // @sin BareStatePredicate
     public bool NeedsPower() => aisle switch
     {

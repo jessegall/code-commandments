@@ -10,9 +10,9 @@ public sealed record Quota(string CustomerId, int Allowed)
     // @righteous MutableValueObject
     public int Remaining => remaining ??= Allowed - used;
 
+    // @sin MutableValueObject
     public void Spend(int units)
     {
-        // @sin MutableValueObject
         this.used += units;
     }
 }

@@ -35,6 +35,11 @@ final class Temperature
         return round($this->degrees, 1) . '°' . $this->scale;
     }
 
+    public function equals(self $other): bool
+    {
+        return $this->reading() === $other->reading();
+    }
+
     public function belowFreezing(): bool
     {
         return $this->scale === 'C' ? $this->degrees < 0 : $this->degrees < 32;

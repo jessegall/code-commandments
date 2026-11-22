@@ -301,6 +301,13 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		}
 
 		return truthValue(site.ExemptedBy(tag))
+	case "identities":
+		named, isText := operand(0).held.(string)
+		if !isText {
+			return unknown
+		}
+
+		return known(texts(engine.PackageIdentitiesNamed(named)))
 	case "identity":
 		named, isText := operand(0).held.(string)
 		if !isText {
@@ -311,6 +318,17 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		}
 
 		return unknown
+	case "overriders":
+		site, isNode := nodeOf(operand(0))
+		if !isNode || !site.Exists() {
+			return unknown
+		}
+		var found []value
+		for _, each := range site.Overriders() {
+			found = append(found, known(each))
+		}
+
+		return known(found)
 	case "referrers":
 		site, isNode := nodeOf(operand(0))
 		if !isNode || !site.Exists() {
@@ -342,7 +360,7 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		}
 		declared := site.Codebase().Declarations(symbol)
 		if len(declared) == 0 {
-			return unknown
+			return known(nil)
 		}
 
 		return known(declared[0])
@@ -355,7 +373,7 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 			return known(nil)
 		}
 		for _, declared := range e.codebase.Declarations(symbol) {
-			if declared.Node().Kind == "type" {
+			if kind := declared.Node().Kind; kind == "type" || kind == "alias" {
 				return known(declared)
 			}
 		}
@@ -998,6 +1016,14 @@ func readNode(site engine.Match, segment string) value {
 	case "parent":
 		return known(site.Parent())
 	case "resolved":
+		if node.Resolved == nil && node.Kind == "function" && site.Child("returnType").Typed() != nil {
+			return known(&contract.Type{Text: "function", Kind: "function", Returns: site.Child("returnType").Typed(), Origin: "written"})
+		}
+		if node.Resolved == nil && node.Kind == "type-expression" {
+			if written := site.Typed(); written != nil {
+				return known(written)
+			}
+		}
 		if node.Resolved == nil {
 			return unknown
 		}

@@ -33,7 +33,7 @@ final class RosterBoard extends Data
 
     public function occupied(): int
     {
-        return count(array_filter($this->seats, static fn (Seat $seat): bool => $seat->taken));
+        return count(array_filter($this->seats, static fn (Seat $seat) => $seat->taken));
     }
 
     public function isFull(): bool

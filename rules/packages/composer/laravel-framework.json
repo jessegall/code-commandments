@@ -2497,6 +2497,10 @@
   ],
   "identities": [
     {
+      "name": "collection",
+      "type": "Illuminate\\Support\\Collection"
+    },
+    {
       "name": "model",
       "type": "Illuminate\\Database\\Eloquent\\Model"
     },
@@ -2547,6 +2551,150 @@
     {
       "name": "controller",
       "type": "Illuminate\\Routing\\Controller"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\App"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Artisan"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Auth"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Blade"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Broadcast"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Bus"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Cache"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Config"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Cookie"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Crypt"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Date"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\DB"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Event"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\File"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Gate"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Hash"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Http"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Lang"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Log"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Mail"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Notification"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Password"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Process"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Queue"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\RateLimiter"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Redirect"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Request"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Response"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Route"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Schema"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Session"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Storage"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\URL"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Validator"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\View"
+    },
+    {
+      "name": "facade",
+      "type": "Illuminate\\Support\\Facades\\Vite"
     }
   ]
 }

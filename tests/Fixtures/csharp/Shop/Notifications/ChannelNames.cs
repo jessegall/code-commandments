@@ -1,5 +1,6 @@
 namespace Shop.Notifications;
 
+// @sin ConstClassEnum
 public static class NotifyChannel
 {
     public const string Email = "email";

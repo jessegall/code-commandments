@@ -8,7 +8,6 @@ public sealed class InvoiceNumbers(int year)
     public string Next() => $"{year}-{++issued:D5}";
 
     // @sin MemberAfterMethod
-    // @sin MemberOutOfOrder
     private const string Prefix = "INV";
 
     public string Formatted() => $"{Prefix}/{Next()}";

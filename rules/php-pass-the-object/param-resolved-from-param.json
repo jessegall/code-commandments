@@ -16,63 +16,38 @@
       "python-param-resolved-from-param"
     ],
     "skill": "php/pass-the-object",
-    "description": "Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly.",
-    "rule": "Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.",
+    "description": "Unpacking the target out of a container parameter \u2014 a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly.",
+    "rule": "Demand the resolved object you need; don't take a container + key and unpack the target yourself \u2014 the caller resolves once and passes it.",
     "suggestion": "Take the resolved object as the param; resolve once in the caller.",
     "reporting": {
       "crossFile": true
     }
   },
-  "definitions": {
-    "named": {
-      "args": [
-        "x",
-        "n"
+  "find": {
+    "select": [
+      "index",
+      "call"
+    ],
+    "as": "r",
+    "where": [
+      "or",
+      [
+        "=",
+        "$r.kind",
+        "index"
       ],
-      "expr": [
+      [
         "and",
         [
           "=",
-          "$x.kind",
-          "reference"
+          "$r.kind",
+          "call"
         ],
         [
           "=",
-          "$x.name",
-          "$n"
+          "$r.callee.kind",
+          "access"
         ]
-      ]
-    }
-  },
-  "find": {
-    "select": "index",
-    "as": "i",
-    "where": [
-      "and",
-      [
-        "=",
-        "$i.subject.kind",
-        "reference"
-      ],
-      [
-        "=",
-        "$i.key.kind",
-        "reference"
-      ],
-      [
-        "!=",
-        "$i.subject.name",
-        "$i.key.name"
-      ],
-      [
-        "=",
-        "$i.subject.binding.parent.kind",
-        "parameter"
-      ],
-      [
-        "=",
-        "$i.key.binding.parent.kind",
-        "parameter"
       ]
     ],
     "let": [
@@ -80,8 +55,54 @@
         "function",
         [
           "enclosing",
-          "$i",
+          "$r",
           "function"
+        ]
+      ],
+      [
+        "container",
+        [
+          "case",
+          "$r.kind",
+          {
+            "index": "$r.subject",
+            "call": "$r.callee.subject"
+          },
+          null
+        ]
+      ],
+      [
+        "root",
+        [
+          "case",
+          "$container.kind",
+          {
+            "reference": "$container",
+            "access": "$container.subject"
+          },
+          null
+        ]
+      ],
+      [
+        "keys",
+        [
+          "case",
+          "$r.kind",
+          {
+            "index": [
+              "list",
+              "$r.key"
+            ],
+            "call": [
+              "map",
+              "$r.arguments",
+              "a",
+              "$a.value"
+            ]
+          },
+          [
+            "list"
+          ]
         ]
       ]
     ],
@@ -92,31 +113,112 @@
         "$function"
       ],
       [
+        "=",
+        "$root.kind",
+        "reference"
+      ],
+      [
+        "=",
+        "$root.binding.parent.kind",
+        "parameter"
+      ],
+      [
+        "=",
+        "$root.binding.parent.parent",
+        "$function"
+      ],
+      [
+        "some",
+        "$keys",
+        "k",
+        [
+          "and",
+          [
+            "=",
+            "$k.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$k.binding.parent.kind",
+            "parameter"
+          ],
+          [
+            "=",
+            "$k.binding.parent.parent",
+            "$function"
+          ],
+          [
+            "!=",
+            "$k.name",
+            "$root.name"
+          ]
+        ]
+      ],
+      [
+        "exists",
+        [
+          "typeDeclaration",
+          "$r.resolved.name"
+        ]
+      ],
+      [
+        "!=",
+        "$r.parent.kind",
+        "expression-statement"
+      ],
+      [
         "none",
         [
-          "ownDescendants",
-          "$function.body"
+          "descendants",
+          "$function.body",
+          "reference"
         ],
         "x",
         [
           "and",
           [
-            "named",
-            "$x",
-            "$i.subject.name"
+            "=",
+            "$x.name",
+            "$root.name"
           ],
           [
-            "!=",
+            "not",
             [
-              "fingerprint",
-              "$x.parent",
-              "exact"
-            ],
-            [
-              "fingerprint",
-              "$i",
-              "exact"
+              "within",
+              "$x",
+              "$r"
             ]
+          ]
+        ]
+      ],
+      [
+        "=",
+        [
+          "count",
+          [
+            "ownDescendants",
+            "$function.body",
+            "throw"
+          ]
+        ],
+        0
+      ],
+      [
+        "not",
+        [
+          "isSelf",
+          "$root"
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            "$r.resolved.name",
+            "$root.resolved.name"
           ]
         ]
       ]

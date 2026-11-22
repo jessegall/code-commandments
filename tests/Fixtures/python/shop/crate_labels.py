@@ -5,6 +5,7 @@ from shop.crate_registry import CrateRegistry
 
 
 class CrateLabels:
+    # @sin ConcreteCrossModuleDependency
     def __init__(self, registry: CrateRegistry) -> None:
         self.registry = registry
 

@@ -13,7 +13,7 @@ and calls inside are still read) or translates with a loss, and why.
 | `&^` | `binary` operator `bit-and-not` | the operator is not in the contract's list |
 | a defined type that is not a struct or interface (`type Celsius float64`) | `alias` with its `underlyingType` | version 5's `type` forms are struct and interface for Go |
 | `satisfies` across files | links only to interfaces declared in the same file | a link points at a node of the file it stands in |
-| a type or a function of a package outside the module, the standard library included (`big.Int`, `os.ReadFile`) | no `refers`, `target` or resolved type on it or on what it returns | the checker reads only the module's own packages; an outside package is an empty stub |
+| a type or a function of a package outside both the module and the standard library | no `refers`, `target` or resolved type on it or on what it returns | the checker reads the module's own packages and the standard library of the Go installation; any other package is an empty stub |
 
 ## Not owed
 

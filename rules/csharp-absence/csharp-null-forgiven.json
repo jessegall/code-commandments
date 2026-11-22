@@ -10,8 +10,8 @@
       "NullForgiven"
     ],
     "skill": "csharp/absence",
-    "description": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding",
-    "rule": "Never silence a nullable warning with `!` — decide the missing case where the value is created, or handle it here.",
+    "description": "The null-forgiving `!` on a value declared nullable \u2014 the compiler told the caller it may be null, and `!` silences it instead of deciding",
+    "rule": "Never silence a nullable warning with `!` \u2014 decide the missing case where the value is created, or handle it here.",
     "suggestion": "Make the value non-nullable at its source, throw a named exception where it must exist, handle the null branch, or narrow it honestly (`OfType<T>()`, a pattern, `TryGetValue`)."
   },
   "find": {
@@ -27,6 +27,88 @@
       [
         "not",
         "$u.file.test"
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$u.operand.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$u.operand.literalKind",
+            "null"
+          ]
+        ]
+      ],
+      [
+        "or",
+        [
+          "isNullable",
+          [
+            "typeOf",
+            "$u.operand"
+          ]
+        ],
+        [
+          "isUnknown",
+          [
+            "isNullable",
+            [
+              "typeOf",
+              "$u.operand"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "some",
+            [
+              "ancestors",
+              "$u"
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "argument"
+              ],
+              [
+                "some",
+                [
+                  "list",
+                  [
+                    "parameterOf",
+                    "$a"
+                  ]
+                ],
+                "q",
+                [
+                  "some",
+                  [
+                    "identities",
+                    "expression-tree"
+                  ],
+                  "x",
+                  [
+                    "startsWith",
+                    "$q.declaredType.refers",
+                    "$x"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$u"

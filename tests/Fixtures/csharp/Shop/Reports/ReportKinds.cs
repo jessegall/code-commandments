@@ -1,5 +1,6 @@
 namespace Shop.Reports;
 
+// @sin ConstClassEnum
 public static class ReportKind
 {
     public const string Daily = "daily";

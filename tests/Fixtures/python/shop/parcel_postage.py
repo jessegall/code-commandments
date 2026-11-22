@@ -8,6 +8,7 @@ class Parcel:
     labels: list[str] = field(default_factory=list)
 
 
+# @sin FeatureEnvy
 def label(parcel: Parcel) -> Parcel:
     # @sin DuplicatedBranchTail
     if parcel.grams > 2000:
@@ -35,6 +36,7 @@ def sorted_count(parcels: list[Parcel]) -> int:
 
 
 # @righteous DuplicatedBranchTail
+# @sin FeatureEnvy
 def weigh(parcel: Parcel) -> Parcel:
     if parcel.grams > 2000:
         parcel.labels.append("heavy")
@@ -56,6 +58,7 @@ def billed_postage_cents(grams: int, zone: int) -> int:
 
 
 # @righteous ReassignedParameter
+# @sin FeatureEnvy
 def rezone(parcel: Parcel, zone: int) -> Parcel:
     parcel.zone = max(zone, 1)
     return parcel

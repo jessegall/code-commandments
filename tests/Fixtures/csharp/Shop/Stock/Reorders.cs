@@ -3,10 +3,10 @@ namespace Shop.Stock;
 // Decides when a product needs ordering again.
 public sealed class ReorderPoint
 {
-    private static string series = "RP";
-
     // @righteous MemberOutOfOrder
     private const int MinimumLevel = 1;
+
+    private static string series = "RP";
 
     private readonly int dailySales;
 

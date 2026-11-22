@@ -26,6 +26,7 @@ public sealed class PostalCarrier(int grams, bool fragile)
 
 public sealed class CourierCarrier(int grams, bool fragile)
 {
+    // @sin UselessPropertyHook
     public string Name => "Courier";
 
     public Money Surcharge

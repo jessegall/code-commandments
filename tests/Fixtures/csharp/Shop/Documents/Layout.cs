@@ -8,9 +8,7 @@ public static class LineLayout
 {
     // @fixed DuplicateMethod
     public static IReadOnlyList<string> Describe(IEnumerable<OrderLine> lines) =>
-        lines.Where(line => line.Quantity > 0)
-            .Select(line => $"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}")
-            .ToList();
+        lines.Where(line => line.Ordered).Select(line => line.Row()).ToList();
 }
 
 public sealed class DeliveryNote(Order order)

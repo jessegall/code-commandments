@@ -542,7 +542,8 @@ joined by symbol id. An embedded field is a `field` whose `declarator` binds no 
 every interface of the module it implements, so a rule reads one relation in every language. Capitalisation is
 visibility and lands in `effective.visibility`. `panic(x)` where the compiler resolves `panic` to the builtin is a
 `throw` with `value` x; a shadowed `panic` is a call. Go's types come from `go/types` over the module's own
-packages; a type reached only through an import outside the module is unknown, never guessed. A file this
+packages and the standard library of the Go installation; a type reached only through any other import is unknown,
+never guessed. A file this
 platform does not build is written with its tree and no compiler facts.
 
 ## C#
@@ -556,6 +557,14 @@ type's `element` is what it enumerates, or a dictionary's value; a `string` hold
 A decorator is an `annotation`. An `except` binding is the handler's `binding`. A parameter's default is
 evaluated once, at definition (`evaluated: "definition"`), so the shared rule about mutable defaults reads it
 without knowing Python.
+A class deriving `typing.Protocol` is a `type` of form `interface`. A name with a leading underscore (not a dunder)
+is `effective.visibility` private; a `staticmethod` or `classmethod` carries the modifier `static`.
+A class-body attribute is a `field` whose `effective.static` is true when every instance shares it (an
+unannotated assignment, or a `ClassVar`) and false when each instance holds its own (an annotation, a dataclass field).
+An instance attribute is declared by its first `self.x = ...` in `__init__` (for a name the class body does not declare):
+the member reference of that target is the one written node of the field, with symbol `module.Class.x`, and the class
+lists it in `implicitMembers`, as a promoted constructor parameter is listed elsewhere.
+`type(x)(...)` and `x.__class__(...)` build an object of `x`'s class, so each is a `construction` whose resolved type is that class.
 
 ## Vue
 

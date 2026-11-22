@@ -209,16 +209,21 @@ type Skills func(slug string) (skill.Skill, bool)
 // OldFormat is a rule file written before commandments:neutral-rule/v2: the step it is first written with, when it has
 // one. A loader that knows the file's path names it in File.
 type OldFormat struct {
-	File string
-	Step string
+	File    string
+	Step    string
+	Line    int
+	Written string
 }
 
 func (e *OldFormat) Error() string {
 	if e.Step == "" {
 		return fmt.Sprintf("%s is written in the old rule format. Rewrite this rule using %s.", e.File, Format)
 	}
+	if e.Written == "" {
+		return fmt.Sprintf("%s:%d uses the old %s step. Rewrite this rule using %s: `commandments rule schema` lists the operators a step becomes.", e.File, e.Line, e.Step, Format)
+	}
 
-	return fmt.Sprintf("%s uses the old %s step. Rewrite this rule using %s.", e.File, e.Step, Format)
+	return fmt.Sprintf("%s:%d uses the old %s step. Rewrite this rule using %s, where it reads %s.", e.File, e.Line, e.Step, Format, e.Written)
 }
 
 // Parse reads one rule file alone and checks all of it before any of it runs. A rule calling another file's
@@ -489,8 +494,12 @@ func formatOf(name string, text []byte) error {
 
 	old := &OldFormat{File: name + ".json"}
 	for _, steps := range []json.RawMessage{written.Find.Where, written.Find.Reject} {
-		if step := firstStep(steps); step != "" {
+		if step, value := firstStep(steps); step != "" {
 			old.Step = step
+			old.Line = lineOf(text, steps, step)
+			if plain, isPlain := value.(string); isPlain {
+				old.Written = fmt.Sprintf(`["=", "$<the name its select binds>.%s", %q]`, step, plain)
+			}
 
 			break
 		}
@@ -499,24 +508,38 @@ func formatOf(name string, text []byte) error {
 	return old
 }
 
-// firstStep is the first key of the first step of an old where or reject list, such as redundantElse.
-func firstStep(steps json.RawMessage) string {
-	var list []json.RawMessage
+// firstStep is the first key of the first step of an old where or reject list, such as redundantElse, and its value.
+func firstStep(steps json.RawMessage) (string, any) {
+	var list []map[string]any
 	if json.Unmarshal(steps, &list) != nil || len(list) == 0 {
-		return ""
+		return "", nil
+	}
+	decoder := json.NewDecoder(bytes.NewReader(steps))
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return "", nil
+		}
+		if key, isKey := token.(string); isKey {
+			if value, found := list[0][key]; found {
+				return key, value
+			}
+		}
+	}
+}
+
+// lineOf is the line of a rule file where a step's key is first written inside the steps holding it.
+func lineOf(text []byte, steps json.RawMessage, step string) int {
+	start := bytes.Index(text, steps)
+	if start < 0 {
+		return 0
+	}
+	at := bytes.Index(text[start:], []byte(`"`+step+`"`))
+	if at < 0 {
+		return 0
 	}
 
-	decoder := json.NewDecoder(bytes.NewReader(list[0]))
-	if opened, err := decoder.Token(); err != nil || opened != json.Delim('{') {
-		return ""
-	}
-	key, err := decoder.Token()
-	if err != nil {
-		return ""
-	}
-	named, _ := key.(string)
-
-	return named
+	return bytes.Count(text[:start+at], []byte("\n")) + 1
 }
 
 func enginesOf(named engines) ([]catalog.Engine, error) {
@@ -567,6 +590,20 @@ func (r Rule) WithPublicContracts(symbols []string) Rule {
 			listed[at] = each
 		}
 		r, _ = r.WithParameter("publicContracts", listed)
+	}
+
+	return r
+}
+
+// WithContractRegistrars is the rule with the methods a project registers its public contracts through
+// (Class::method), set into its contractRegistrars parameter when it declares one.
+func (r Rule) WithContractRegistrars(methods []string) Rule {
+	if _, takes := r.read.Parameters["contractRegistrars"]; takes && len(methods) > 0 {
+		listed := make([]any, len(methods))
+		for at, each := range methods {
+			listed[at] = each
+		}
+		r, _ = r.WithParameter("contractRegistrars", listed)
 	}
 
 	return r

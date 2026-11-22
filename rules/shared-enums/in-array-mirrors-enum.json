@@ -83,8 +83,14 @@
               "c",
               [
                 "=",
-                "$c",
-                "$w"
+                [
+                  "tree.canon",
+                  "$c"
+                ],
+                [
+                  "tree.canon",
+                  "$w"
+                ]
               ]
             ]
           ]
@@ -173,6 +179,12 @@
           "collection": [
             "map",
             "$c.entries",
+            "e",
+            "$e.value"
+          ],
+          "construction": [
+            "map",
+            "$c.initializer.entries",
             "e",
             "$e.value"
           ]

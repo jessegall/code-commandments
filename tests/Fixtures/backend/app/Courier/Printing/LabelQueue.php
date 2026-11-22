@@ -4,6 +4,7 @@ namespace Shop\Courier\Printing;
 
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBagParameter;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -16,6 +17,7 @@ final class LabelQueue
     /**
      * @var list<string>
      */
+    #[Sinful(UnusedPrivateMember::class)]
     private array $spooled = [];
 
     #[Sinful(ArrayBagParameter::class)]
@@ -24,7 +26,6 @@ final class LabelQueue
         $this->spool($job);
     }
 
-    #[Sinful(ArrayBagParameter::class)]
     #[Sinful(ArrayBag::class)]
     private function spool(array $job): void
     {

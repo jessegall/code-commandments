@@ -5,8 +5,7 @@
     "python",
     "csharp",
     "typescript",
-    "vue",
-    "go"
+    "vue"
   ],
   "sin": {
     "name": "namespace-cycle",

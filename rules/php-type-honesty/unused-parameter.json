@@ -86,6 +86,11 @@
           "$p.modifiers"
         ],
         0
+      ],
+      [
+        "!=",
+        "$p.role",
+        "receiver"
       ]
     ],
     "having": [
@@ -186,6 +191,48 @@
             ],
             0
           ]
+        ],
+        [
+          "=",
+          "$owner.form",
+          "enum"
+        ],
+        [
+          "and",
+          [
+            "some",
+            "$owner.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "final"
+            ]
+          ],
+          [
+            "every",
+            "$owner.bases",
+            "b",
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                "$b.refers"
+              ]
+            ]
+          ],
+          [
+            "every",
+            "$owner.interfaces",
+            "b",
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                "$b.refers"
+              ]
+            ]
+          ]
         ]
       ],
       [
@@ -208,6 +255,41 @@
             "compact",
             "func_get_args",
             "get_defined_vars"
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "referrers",
+          "$p.parent"
+        ],
+        "u",
+        [
+          "and",
+          [
+            "not",
+            [
+              "in",
+              "$u.kind",
+              "call",
+              "construction"
+            ]
+          ],
+          [
+            "not",
+            [
+              "=",
+              [
+                "case",
+                "$u.parent.kind",
+                {
+                  "access": "$u.parent.role"
+                },
+                "$u.role"
+              ],
+              "callee"
+            ]
           ]
         ]
       ]

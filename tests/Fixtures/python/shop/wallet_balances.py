@@ -3,7 +3,6 @@
 from dataclasses import dataclass, replace
 
 
-# @sin MutableValueObject
 @dataclass
 class Balance:
     cents: int
@@ -16,6 +15,7 @@ class Balance:
         whole, rest = divmod(self.cents, 100)
         return f"{self.currency} {whole}.{rest:02d}"
 
+    # @sin MutableValueObject
     def deposit(self, cents: int) -> None:
         self.cents += cents
 

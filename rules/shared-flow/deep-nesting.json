@@ -44,7 +44,9 @@
               "$n"
             ]
           ],
-          "loop": true
+          "loop": true,
+          "dispatch": true,
+          "select": true
         },
         false
       ]
@@ -108,12 +110,35 @@
           ]
         ]
       ]
+    },
+    "counted": {
+      "args": [
+        "s",
+        "a"
+      ],
+      "expr": [
+        "case",
+        "$s.file.language",
+        {
+          "php": [
+            "=",
+            "$a.kind",
+            "if"
+          ]
+        },
+        [
+          "choice",
+          "$a"
+        ]
+      ]
     }
   },
   "find": {
     "select": [
       "if",
-      "loop"
+      "loop",
+      "dispatch",
+      "select"
     ],
     "as": "s",
     "where": [
@@ -144,19 +169,9 @@
             ],
             "a",
             [
-              "case",
-              "$s.file.language",
-              {
-                "php": [
-                  "=",
-                  "$a.kind",
-                  "if"
-                ]
-              },
-              [
-                "choice",
-                "$a"
-              ]
+              "counted",
+              "$s",
+              "$a"
             ]
           ]
         ]
@@ -170,22 +185,34 @@
         "$limit"
       ],
       [
-        "case",
-        "$s.file.language",
-        {
-          "php": [
-            "=",
-            "$s.kind",
-            "if"
-          ]
-        },
-        true
-      ],
-      [
-        "not",
+        "or",
         [
-          "onlyLeaves",
-          "$s"
+          "not",
+          [
+            "onlyLeaves",
+            "$s"
+          ]
+        ],
+        [
+          "none",
+          [
+            "ownAncestors",
+            "$s"
+          ],
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "loop"
+            ],
+            [
+              "counted",
+              "$s",
+              "$a"
+            ]
+          ]
         ]
       ]
     ],

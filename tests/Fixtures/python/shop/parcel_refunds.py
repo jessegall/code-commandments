@@ -14,6 +14,7 @@ class Shelf:
     fresh: int = 0
 
 
+# @sin FeatureEnvy
 def restock(item: ParcelReturn, shelf: Shelf, log: list[str]) -> None:
     # @sin DuplicatedBranchTail
     if item.opened:
@@ -35,6 +36,7 @@ def refund(item: ParcelReturn) -> int:
 
 
 # @fixed DuplicatedBranchTail
+# @sin FeatureEnvy
 def restock_once(item: ParcelReturn, shelf: Shelf, log: list[str]) -> None:
     if item.opened:
         shelf.seconds += 1

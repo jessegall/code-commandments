@@ -45,16 +45,43 @@
             "field"
           ],
           [
-            "some",
-            "$m.modifiers",
-            "x",
+            "or",
             [
-              "in",
-              "$x",
-              "static",
-              "const",
-              "readonly",
-              "final"
+              "some",
+              "$m.modifiers",
+              "x",
+              [
+                "in",
+                "$x",
+                "static",
+                "const",
+                "readonly",
+                "final"
+              ]
+            ],
+            [
+              "and",
+              [
+                "not",
+                [
+                  "exists",
+                  "$m.declaredType"
+                ]
+              ],
+              [
+                "every",
+                "$m.declarators",
+                "d",
+                [
+                  "in",
+                  [
+                    "caseStyle",
+                    "$d.binding.name"
+                  ],
+                  "screaming-snake",
+                  "upper"
+                ]
+              ]
             ]
           ]
         ]
@@ -79,7 +106,24 @@
             "in",
             "$d.initializer.literalKind",
             "string",
-            "integer"
+            "integer",
+            "float"
+          ],
+          [
+            "not",
+            [
+              "and",
+              [
+                "=",
+                "$d.initializer.literalKind",
+                "string"
+              ],
+              [
+                "contains",
+                "$d.initializer.value",
+                "\n"
+              ]
+            ]
           ]
         ]
       ]
@@ -100,12 +144,34 @@
         "class",
         "object",
         "struct"
+      ],
+      [
+        "every",
+        "$t.bases",
+        "b",
+        [
+          "has",
+          [
+            "identities",
+            "root-object"
+          ],
+          "$b.refers"
+        ]
       ]
     ],
     "let": [
       [
         "members",
-        "$t.writtenMembers"
+        [
+          "filter",
+          "$t.writtenMembers",
+          "m",
+          [
+            "!=",
+            "$m.kind",
+            "expression-statement"
+          ]
+        ]
       ]
     ],
     "having": [

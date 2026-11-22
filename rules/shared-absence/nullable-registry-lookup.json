@@ -51,54 +51,196 @@
               "$o"
             ]
           ]
-        ]
-      ]
-    }
-  },
-  "find": {
-    "select": "index",
-    "as": "i",
-    "where": [
-      "and",
-      [
-        "tree.selfField",
-        "$i.subject"
-      ],
-      [
-        "or",
+        ],
         [
-          "and",
-          [
-            "=",
-            "$i.parent.kind",
-            "return"
-          ],
-          [
-            "=",
-            "$i.file.language",
-            "typescript"
-          ]
+          "in",
+          "$c.parent.kind",
+          "return",
+          "collection",
+          "entry"
         ],
         [
           "and",
           [
             "=",
-            "$i.parent.kind",
-            "fallback"
+            "$c.parent.kind",
+            "assignment"
           ],
           [
+            "some",
+            [
+              "ownDescendants",
+              [
+                "enclosing",
+                "$c",
+                "function"
+              ]
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "comparison"
+              ],
+              [
+                "some",
+                "$x.operands",
+                "o",
+                [
+                  "tree.nullish",
+                  "$o"
+                ]
+              ],
+              [
+                "some",
+                "$x.operands",
+                "o",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$o.kind",
+                    "reference"
+                  ],
+                  [
+                    "=",
+                    "$o.name",
+                    [
+                      "get",
+                      [
+                        "at",
+                        "$c.parent.targets",
+                        0
+                      ],
+                      "name"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "index",
+      "call"
+    ],
+    "as": "r",
+    "where": [
+      "or",
+      [
+        "and",
+        [
+          "=",
+          "$r.kind",
+          "index"
+        ],
+        [
+          "tree.selfField",
+          "$r.subject"
+        ],
+        [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "return"
+            ],
+            [
+              "=",
+              [
+                "typeCategory",
+                [
+                  "typeOf",
+                  "$r.subject"
+                ]
+              ],
+              "map"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "fallback"
+            ],
+            [
+              "=",
+              "$r.role",
+              "subject"
+            ],
+            [
+              "tree.nullish",
+              "$r.parent.replacement"
+            ],
+            [
+              "=",
+              "$r.parent.parent.kind",
+              "return"
+            ]
+          ]
+        ]
+      ],
+      [
+        "and",
+        [
+          "=",
+          "$r.kind",
+          "call"
+        ],
+        [
+          "exists",
+          [
+            "keyedStoreRead",
+            "$r"
+          ]
+        ],
+        [
+          "tree.selfField",
+          [
+            "get",
+            [
+              "keyedStoreRead",
+              "$r"
+            ],
+            "store"
+          ]
+        ],
+        [
+          "=",
+          "$r.parent.kind",
+          "return"
+        ],
+        [
+          "or",
+          [
             "=",
-            "$i.role",
-            "subject"
+            [
+              "count",
+              "$r.arguments"
+            ],
+            1
           ],
           [
             "tree.nullish",
-            "$i.parent.replacement"
-          ],
-          [
-            "=",
-            "$i.parent.parent.kind",
-            "return"
+            [
+              "at",
+              [
+                "map",
+                "$r.arguments",
+                "a",
+                "$a.value"
+              ],
+              1
+            ]
           ]
         ]
       ]
@@ -108,7 +250,7 @@
         "function",
         [
           "enclosing",
-          "$i",
+          "$r",
           "function"
         ]
       ],
@@ -139,31 +281,28 @@
     "having": [
       "and",
       [
-        "and",
+        "tree.notOverriding",
+        "$function"
+      ],
+      [
+        "or",
         [
-          "tree.notOverriding",
-          "$function"
+          "=",
+          [
+            "count",
+            "$callers"
+          ],
+          0
         ],
         [
-          "or",
+          "some",
+          "$callers",
+          "c",
           [
-            "=",
+            "not",
             [
-              "count",
-              "$callers"
-            ],
-            0
-          ],
-          [
-            "some",
-            "$callers",
-            "c",
-            [
-              "not",
-              [
-                "handles",
-                "$c"
-              ]
+              "handles",
+              "$c"
             ]
           ]
         ]
@@ -176,19 +315,19 @@
             "ownDescendants",
             "$function"
           ],
-          "r",
+          "r2",
           [
             "and",
             [
               "=",
-              "$r.kind",
+              "$r2.kind",
               "return"
             ],
             [
               "some",
               [
                 "ownAncestors",
-                "$r"
+                "$r2"
               ],
               "a",
               [
@@ -199,8 +338,33 @@
             ]
           ]
         ]
+      ],
+      [
+        "=",
+        [
+          "count",
+          [
+            "ownDescendants",
+            "$function",
+            "throw"
+          ]
+        ],
+        0
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "not",
+            [
+              "isNullable",
+              "$function.returnType.resolved"
+            ]
+          ]
+        ]
       ]
     ],
-    "emit": "$i"
+    "emit": "$r"
   }
 }

@@ -10,7 +10,7 @@
       "BlockedAwait"
     ],
     "skill": "csharp/fix-at-the-source",
-    "description": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
+    "description": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task \u2014 the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
     "rule": "Work in flight is awaited, never blocked on: `await` it, and make the caller async too, however far up that goes.",
     "suggestion": "Write `await` and mark the method `async`, then follow the callers: the breadth of that change IS the problem surfacing, and stopping it with `.Result` at one boundary is what buries the deadlock until load finds it."
   },
@@ -77,27 +77,12 @@
         "x"
       ],
       "expr": [
-        "or",
+        "has",
         [
-          "=",
-          "$x.resolved.name",
-          "System.Threading.Tasks.Task"
+          "identities",
+          "awaitable-task"
         ],
-        [
-          "startsWith",
-          "$x.resolved.name",
-          "System.Threading.Tasks.Task<"
-        ],
-        [
-          "=",
-          "$x.resolved.name",
-          "System.Threading.Tasks.ValueTask"
-        ],
-        [
-          "startsWith",
-          "$x.resolved.name",
-          "System.Threading.Tasks.ValueTask<"
-        ]
+        "$x.resolved.name"
       ]
     }
   },
@@ -185,6 +170,20 @@
               "completed-task"
             ]
           ]
+        ]
+      ],
+      [
+        "none",
+        "$method.obligations",
+        "o",
+        [
+          "=",
+          [
+            "get",
+            "$o",
+            "origin"
+          ],
+          "external"
         ]
       ]
     ],

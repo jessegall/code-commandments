@@ -106,8 +106,10 @@ var operators = map[string]operator{
 	"reportable":      {operands: []valueType{node}, gives: truth, says: "whether a finding on the node can be reported: it is in code the project can change"},
 	"proven":          {operands: []valueType{truth}, gives: truth, says: "true only when the truth is proven true: an unknown reads as false, for an exclusion that must not hide what it cannot prove"},
 	"exemptedBy":      {operands: []valueType{text, node}, gives: truth, says: "whether a library the project holds excuses the node under the exemption tag named, by its resolved symbol"},
+	"identities":      {operands: []valueType{text}, gives: list, says: "every type or member name the libraries list under the identity given; empty when none does"},
 	"identity":        {operands: []valueType{text}, gives: text, says: "the type a library names by the identity given, such as \"option\"; unknown when no library names it"},
 	"referrers":       {operands: []valueType{node}, gives: list, says: "every node in the program that refers to the declaration: its calls and reads"},
+	"overriders":      {operands: []valueType{node}, gives: list, says: "every function in the program whose obligations name the function: the members that override or implement it"},
 	"declarationOf":   {operands: []valueType{node}, gives: node, says: "the declaration a call's target, a reference or an access's member resolves to, or the local binding a name is linked to; unknown when neither is known"},
 	"typeDeclaration": {operands: []valueType{text}, gives: node, says: "the project's declaration of the type a symbol or resolved name names; none when the project declares no such type"},
 	"position":        {operands: []valueType{node}, gives: number, says: "the node's place among the nodes in the same role of its parent, counted from 0"},
@@ -149,7 +151,7 @@ var operators = map[string]operator{
 	"encloses":        {operands: []valueType{text, text}, gives: truth, says: "whether the first module holds the second: the second goes on from the first past a separator"},
 	"lexLess":         {operands: []valueType{text, text}, gives: truth, says: "whether the first text sorts before the second"},
 	"syntaxWeight":    {operands: []valueType{node}, gives: number, says: "how many nodes a subtree holds, no-op statements left out"},
-	"hasEffect":       {operands: []valueType{node, text}, gives: truth, says: "whether the library a call's resolved target belongs to states the effect named for it, at the version the project's lock file holds; unknown when the target or the version is. The effects are those the package files under rules/packages state: executes-query, database-read, deferred-query, mutates-receiver, iterates-receiver, builds-mutable, fresh-every-call, live-view, tests-membership, decodes-untyped, cast-result-type, blocks-thread, blocks-on-task, completed-task and runs-on-thread"},
+	"hasEffect":       {operands: []valueType{node, text}, gives: truth, says: "whether the library a call's resolved target belongs to states the effect named for it, at the version the project's lock file holds; unknown when the target or the version is. The effects are those the package files under rules/packages state: executes-query, database-read, deferred-query, mutates-receiver, iterates-receiver, builds-mutable, fresh-every-call, live-view, tests-membership, decodes-untyped, cast-result-type, blocks-thread, blocks-on-task, completed-task, runs-on-thread, reads-with-default, reads-key and gives-empty-collection"},
 }
 
 // operatorNames is the rule language's operators, in the order a reference lists them.

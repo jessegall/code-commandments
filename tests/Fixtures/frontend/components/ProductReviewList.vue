@@ -7,7 +7,6 @@ defineProps<{ productId: number }>();
     <!-- @sin DuplicateElement -->
     <article class="review-card">
       <header class="review-head">
-        <Avatar class="size-8" />
         <strong class="review-author">Verified buyer</strong>
       </header>
       <p class="review-body">Exactly as described, shipped fast.</p>
@@ -16,7 +15,6 @@ defineProps<{ productId: number }>();
     <!-- @sin DuplicateElement -->
     <article class="review-card">
       <header class="review-head">
-        <Avatar class="size-8" />
         <strong class="review-author">Verified buyer</strong>
       </header>
       <p class="review-body">Exactly as described, shipped fast.</p>

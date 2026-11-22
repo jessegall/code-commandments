@@ -16,13 +16,15 @@ class UnhandledMethod(Exception):
 
 
 class CheckoutView:
-    def shows_card_icon(self, method: PaymentMethod) -> bool:
-        # @sin MatchWildcardReturnsNone
+    def shows_card_icon(self, method: PaymentMethod) -> bool | None:
         match method:
-            case PaymentMethod.CARD | PaymentMethod.IDEAL:
+            case PaymentMethod.CARD:
                 return True
+            case PaymentMethod.IDEAL:
+                return True
+            # @sin MatchWildcardReturnsNone
             case _:
-                return False
+                return None
 
     # @fixed MatchWildcardReturnsNone
     def shows_card_icon_for(self, method: PaymentMethod) -> bool:

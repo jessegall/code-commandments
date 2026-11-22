@@ -31,22 +31,63 @@
         "$f.returnType"
       ],
       [
-        "in",
+        "!=",
         "$f.body.kind",
-        "construction",
-        "literal"
+        "block"
+      ]
+    ],
+    "let": [
+      [
+        "written",
+        [
+          "case",
+          "$f.returnType.form",
+          {
+            "keyword": "$f.returnType.name",
+            "named": "$f.returnType.refers"
+          },
+          ""
+        ]
+      ],
+      [
+        "inferred",
+        [
+          "case",
+          "$f.body.resolved.kind",
+          {
+            "keyword": "$f.body.resolved.name",
+            "named": "$f.body.resolved.name",
+            "array": "array"
+          },
+          ""
+        ]
       ]
     ],
     "having": [
-      "and",
+      "or",
       [
-        "nonempty",
-        "$f.body.resolved.text"
+        "and",
+        [
+          "nonempty",
+          "$f.body.resolved.text"
+        ],
+        [
+          "=",
+          "$f.body.resolved.text",
+          "$f.resolved.returns.text"
+        ]
       ],
       [
-        "=",
-        "$f.body.resolved.text",
-        "$f.resolved.returns.text"
+        "and",
+        [
+          "nonempty",
+          "$written"
+        ],
+        [
+          "=",
+          "$written",
+          "$inferred"
+        ]
       ]
     ],
     "emit": "$f"

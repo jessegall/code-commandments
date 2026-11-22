@@ -61,10 +61,127 @@
           ]
         ]
       ]
+    },
+    "typeTested": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$x.kind",
+          "type-test"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "pattern"
+          ],
+          [
+            "=",
+            "$x.form",
+            "type"
+          ]
+        ]
+      ]
+    },
+    "testedOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "type-test": "$x.testedType",
+          "pattern": "$x.constrainedType"
+        },
+        null
+      ]
+    },
+    "subjectOf": {
+      "args": [
+        "x",
+        "b"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "type-test": "$x.subject",
+          "pattern": "$b.subject"
+        },
+        null
+      ]
+    },
+    "declaredOwner": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "or",
+        [
+          "exists",
+          [
+            "typeDeclaration",
+            "$s.resolved.name"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$s.resolved.kind",
+            "union"
+          ],
+          [
+            "every",
+            [
+              "typeMembers",
+              "$s.resolved"
+            ],
+            "m",
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                "$m.name"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "guardRung": {
+      "args": [
+        "p"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$p.kind",
+          "if"
+        ],
+        [
+          "typeTested",
+          "$p.condition"
+        ],
+        [
+          "completes",
+          "$p.then"
+        ]
+      ]
     }
   },
   "find": {
-    "select": "if",
+    "select": [
+      "if",
+      "dispatch"
+    ],
     "as": "b",
     "where": [
       "and",
@@ -85,27 +202,107 @@
         ]
       ],
       [
-        "=",
-        "$b.condition.kind",
-        "type-test"
+        "not",
+        [
+          "guardRung",
+          [
+            "previous",
+            "$b"
+          ]
+        ]
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$b.kind",
+          "dispatch"
+        ],
+        [
+          "typeTested",
+          "$b.condition"
+        ]
       ]
     ],
     "let": [
       [
-        "rungs",
+        "tests",
         [
-          "filter",
+          "case",
+          "$b.kind",
+          {
+            "if": [
+              "map",
+              [
+                "filter",
+                [
+                  "flatten",
+                  [
+                    "list",
+                    [
+                      "follow",
+                      "$b",
+                      "else",
+                      "if"
+                    ],
+                    [
+                      "filter",
+                      [
+                        "after",
+                        "$b"
+                      ],
+                      "s",
+                      [
+                        "and",
+                        [
+                          "=",
+                          "$s.kind",
+                          "if"
+                        ],
+                        [
+                          "typeTested",
+                          "$s.condition"
+                        ]
+                      ]
+                    ]
+                  ]
+                ],
+                "r",
+                [
+                  "typeTested",
+                  "$r.condition"
+                ]
+              ],
+              "r",
+              "$r.condition"
+            ],
+            "dispatch": [
+              "flatten",
+              [
+                "map",
+                [
+                  "dispatchArms",
+                  "$b"
+                ],
+                "a",
+                [
+                  "filter",
+                  [
+                    "get",
+                    "$a",
+                    "tests"
+                  ],
+                  "t",
+                  [
+                    "typeTested",
+                    "$t"
+                  ]
+                ]
+              ]
+            ]
+          },
           [
-            "follow",
-            "$b",
-            "else",
-            "if"
-          ],
-          "r",
-          [
-            "=",
-            "$r.condition.kind",
-            "type-test"
+            "list"
           ]
         ]
       ]
@@ -118,11 +315,14 @@
           "distinctCount",
           [
             "map",
-            "$rungs",
-            "r",
+            "$tests",
+            "t",
             [
               "fingerprint",
-              "$r.condition.testedType",
+              [
+                "testedOf",
+                "$t"
+              ],
               "exact"
             ]
           ]
@@ -135,11 +335,15 @@
           "distinctCount",
           [
             "map",
-            "$rungs",
-            "r",
+            "$tests",
+            "t",
             [
               "fingerprint",
-              "$r.condition.subject",
+              [
+                "subjectOf",
+                "$t",
+                "$b"
+              ],
               "exact"
             ]
           ]
@@ -147,16 +351,39 @@
         1
       ],
       [
-        "not",
+        "declaredOwner",
         [
-          "every",
-          "$rungs",
-          "r",
+          "subjectOf",
           [
-            "constructsOnReturn",
-            "$r.then"
-          ]
+            "first",
+            "$tests"
+          ],
+          "$b"
         ]
+      ],
+      [
+        "case",
+        "$b.kind",
+        {
+          "if": [
+            "not",
+            [
+              "every",
+              [
+                "follow",
+                "$b",
+                "else",
+                "if"
+              ],
+              "r",
+              [
+                "constructsOnReturn",
+                "$r.then"
+              ]
+            ]
+          ]
+        },
+        true
       ]
     ],
     "emit": "$b"

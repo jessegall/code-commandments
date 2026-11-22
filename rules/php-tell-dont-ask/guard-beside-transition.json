@@ -67,6 +67,25 @@
           "and",
           [
             "=",
+            [
+              "tree.kindOf",
+              [
+                "declarationOf",
+                "$x"
+              ]
+            ],
+            "constant"
+          ],
+          [
+            "=",
+            "$x.resolved.kind",
+            "named"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
             "$x.kind",
             "access"
           ],
@@ -81,10 +100,139 @@
             ],
             "enum"
           ]
+        ],
+        [
+          "and",
+          [
+            "exists",
+            "$x.constantValue"
+          ],
+          [
+            "=",
+            "$x.resolved.kind",
+            "named"
+          ]
         ]
       ]
     },
     "compared": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        "$c.kind",
+        {
+          "logical": [
+            "case",
+            [
+              "and",
+              [
+                "=",
+                "$c.operator",
+                "or"
+              ],
+              [
+                "every",
+                [
+                  "leaves",
+                  "$c",
+                  "logical"
+                ],
+                "l",
+                [
+                  "exists",
+                  [
+                    "comparedLeaf",
+                    "$l"
+                  ]
+                ]
+              ],
+              [
+                "=",
+                [
+                  "distinctCount",
+                  [
+                    "map",
+                    [
+                      "leaves",
+                      "$c",
+                      "logical"
+                    ],
+                    "l",
+                    [
+                      "fingerprint",
+                      [
+                        "comparedLeaf",
+                        "$l"
+                      ],
+                      "exact"
+                    ]
+                  ]
+                ],
+                1
+              ]
+            ],
+            {
+              "true": [
+                "comparedLeaf",
+                [
+                  "first",
+                  [
+                    "leaves",
+                    "$c",
+                    "logical"
+                  ]
+                ]
+              ]
+            },
+            null
+          ]
+        },
+        [
+          "comparedLeaf",
+          "$c"
+        ]
+      ]
+    },
+    "calls": {
+      "args": [
+        "c",
+        "r"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "call"
+        ],
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "!=",
+          "$c.callee.nullConditional",
+          true
+        ],
+        [
+          "=",
+          [
+            "fingerprint",
+            "$c.callee.subject",
+            "exact"
+          ],
+          [
+            "fingerprint",
+            "$r",
+            "exact"
+          ]
+        ]
+      ]
+    },
+    "comparedLeaf": {
       "args": [
         "c"
       ],
@@ -141,6 +289,16 @@
                     true
                   ],
                   [
+                    "not",
+                    [
+                      "proven",
+                      [
+                        "stateCase",
+                        "$o"
+                      ]
+                    ]
+                  ],
+                  [
                     "some",
                     "$c.operands",
                     "s",
@@ -158,43 +316,6 @@
           ]
         },
         null
-      ]
-    },
-    "calls": {
-      "args": [
-        "c",
-        "r"
-      ],
-      "expr": [
-        "and",
-        [
-          "=",
-          "$c.kind",
-          "call"
-        ],
-        [
-          "=",
-          "$c.callee.kind",
-          "access"
-        ],
-        [
-          "!=",
-          "$c.callee.nullConditional",
-          true
-        ],
-        [
-          "=",
-          [
-            "fingerprint",
-            "$c.callee.subject",
-            "exact"
-          ],
-          [
-            "fingerprint",
-            "$r",
-            "exact"
-          ]
-        ]
       ]
     }
   },

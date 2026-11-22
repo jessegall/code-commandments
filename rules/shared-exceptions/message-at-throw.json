@@ -20,22 +20,15 @@
   "definitions": {
     "writes": {
       "args": [
-        "m"
+        "m",
+        "d"
       ],
       "expr": [
         "or",
         [
-          "and",
-          [
-            "=",
-            "$m.kind",
-            "literal"
-          ],
-          [
-            "=",
-            "$m.literalKind",
-            "string"
-          ]
+          "messageText",
+          "$m",
+          "$d"
         ],
         [
           "=",
@@ -72,14 +65,9 @@
                 0
               ],
               [
-                "=",
-                "$g.value.kind",
-                "literal"
-              ],
-              [
-                "=",
-                "$g.value.literalKind",
-                "string"
+                "messageText",
+                "$g.value",
+                "$d"
               ]
             ]
           ]
@@ -106,17 +94,9 @@
             [
               "or",
               [
-                "and",
-                [
-                  "=",
-                  "$p.kind",
-                  "literal"
-                ],
-                [
-                  "=",
-                  "$p.literalKind",
-                  "string"
-                ]
+                "messageText",
+                "$p",
+                "$d"
               ],
               [
                 "=",
@@ -152,7 +132,8 @@
           [
             "firstValue",
             "$t.value"
-          ]
+          ],
+          "$t.value"
         ]
       ]
     },
@@ -174,6 +155,43 @@
         "a"
       ],
       "expr": "$a.value"
+    },
+    "messageText": {
+      "args": [
+        "m",
+        "d"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$m.kind",
+          "literal"
+        ],
+        [
+          "=",
+          "$m.literalKind",
+          "string"
+        ],
+        [
+          "or",
+          [
+            "contains",
+            "$m.value",
+            " "
+          ],
+          [
+            "not",
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                "$d.type.refers"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {

@@ -21,7 +21,7 @@ final class ExportStateLoader
         $state = new ExportState();
         $this->fillCounts($state, $run);
 
-        return $state;
+        return $state->rows === 0 ? new ExportState() : $state;
     }
 
     #[Sinful(FilledParameter::class)]

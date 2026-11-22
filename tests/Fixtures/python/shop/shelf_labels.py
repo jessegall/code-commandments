@@ -19,8 +19,8 @@ class AisleLabel:
     def __init__(self, sku: str, price_cents: int) -> None:
         self.sku = sku
         self.price_cents = price_cents
-        self.printed = 0
+        self.reprints = 0
 
     def reload(self, price_cents: int) -> None:
         self.price_cents = price_cents
-        self.printed += 1
+        self.reprints += 1

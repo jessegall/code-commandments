@@ -88,6 +88,17 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "hasEffect",
+            "$c",
+            "mutates-receiver"
+          ]
+        ]
       ]
     ],
     "emit": "$c"

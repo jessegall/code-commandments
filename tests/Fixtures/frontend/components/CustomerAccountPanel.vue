@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { Customer, CustomerOrder } from '@/types';
+import type { Customer } from '@/types';
+
+interface CustomerOrder {
+  reference: string;
+}
 
 defineProps<{ customer: Customer; orders: CustomerOrder[] }>();
 </script>

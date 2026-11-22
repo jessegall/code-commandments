@@ -110,19 +110,62 @@
         "x"
       ],
       "expr": [
-        "and",
+        "or",
         [
-          "=",
-          "$x.kind",
-          "collection"
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "collection"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$x.entries"
+            ],
+            0
+          ]
         ],
         [
-          "=",
+          "and",
           [
-            "count",
-            "$x.entries"
+            "=",
+            "$x.kind",
+            "construction"
           ],
-          0
+          [
+            "=",
+            [
+              "count",
+              "$x.arguments"
+            ],
+            0
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$x.initializer.entries"
+            ],
+            0
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "call"
+          ],
+          [
+            "proven",
+            [
+              "hasEffect",
+              "$x",
+              "gives-empty-collection"
+            ]
+          ]
         ]
       ]
     },
@@ -165,7 +208,10 @@
         "or",
         [
           "=",
-          "$t.kind",
+          [
+            "typeCategory",
+            "$t"
+          ],
           "map"
         ],
         [
@@ -331,15 +377,85 @@
         "x"
       ],
       "expr": [
-        "and",
+        "or",
         [
-          "=",
-          "$x.kind",
-          "access"
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "access"
+          ],
+          [
+            "isSelf",
+            "$x.subject"
+          ]
         ],
         [
-          "isSelf",
-          "$x.subject"
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "reference"
+          ],
+          [
+            "exists",
+            [
+              "declarationOf",
+              "$x"
+            ]
+          ],
+          [
+            "in",
+            [
+              "tree.kindOf",
+              [
+                "declarationOf",
+                "$x"
+              ]
+            ],
+            "binding",
+            "field",
+            "declarator",
+            "parameter"
+          ],
+          [
+            "exists",
+            [
+              "enclosing",
+              "$x",
+              "type"
+            ]
+          ],
+          [
+            "not",
+            [
+              "exists",
+              [
+                "enclosing",
+                [
+                  "declarationOf",
+                  "$x"
+                ],
+                "function"
+              ]
+            ]
+          ],
+          [
+            "=",
+            [
+              "enclosing",
+              [
+                "declarationOf",
+                "$x"
+              ],
+              "type"
+            ],
+            [
+              "enclosing",
+              "$x",
+              "type"
+            ]
+          ]
         ]
       ]
     },

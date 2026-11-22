@@ -11,8 +11,11 @@ func (m Match) Constructed() Match {
 }
 
 func (m Match) Referrers() []Match {
-	if m.node == nil || m.node.Facts == nil || m.node.Symbol == "" {
+	if m.node == nil {
 		return nil
+	}
+	if m.node.Facts == nil || m.node.Symbol == "" {
+		return linkedReaders(m.file.Codebase())[m.node]
 	}
 
 	found := referrers(m.file.Codebase())[m.node.Symbol]
@@ -139,6 +142,50 @@ func referrers(c *Codebase) map[string][]Match {
 						continue
 					}
 					index[symbol] = append(index[symbol], Match{node: node, file: file})
+				}
+			}
+		}
+
+		return index
+	})
+}
+
+func linkedReaders(c *Codebase) map[*contract.Node][]Match {
+	return Analysis(c, "reads linked to a binding", func(c *Codebase) map[*contract.Node][]Match {
+		index := map[*contract.Node][]Match{}
+		for _, file := range c.files {
+			for _, node := range file.Nodes() {
+				for _, id := range node.Linked("binding") {
+					if bound := file.Match(id).node; bound != nil && bound != node {
+						index[bound] = append(index[bound], Match{node: node, file: file})
+					}
+				}
+			}
+		}
+
+		return index
+	})
+}
+
+// Overriders are the functions whose obligations name this function's symbol: the members that override or implement it.
+func (m Match) Overriders() []Match {
+	if m.node == nil || m.node.Symbol == "" {
+		return nil
+	}
+
+	return overridersBySymbol(m.file.Codebase())[BareSymbol(m.node.Symbol)]
+}
+
+func overridersBySymbol(c *Codebase) map[string][]Match {
+	return Analysis(c, "functions by the symbols they override", func(c *Codebase) map[string][]Match {
+		index := map[string][]Match{}
+		for _, file := range c.files {
+			for _, node := range file.Nodes() {
+				if node.Facts == nil {
+					continue
+				}
+				for _, obligation := range node.Obligations {
+					index[BareSymbol(obligation.Symbol)] = append(index[BareSymbol(obligation.Symbol)], Match{node: node, file: file})
 				}
 			}
 		}

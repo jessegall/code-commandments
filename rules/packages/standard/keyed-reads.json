@@ -1,0 +1,13 @@
+{
+  "package": "keyed-reads",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "each language's own keyed read that answers absence on a miss: JavaScript Map.get, Python dict.get and Mapping.get, .NET CollectionExtensions.GetValueOrDefault",
+  "entries": [
+    {"type": "Map", "name": "get", "effect": "reads-key", "execution": "call"},
+    {"type": "ReadonlyMap", "name": "get", "effect": "reads-key", "execution": "call"},
+    {"type": "builtins.dict", "name": "get", "effect": "reads-key", "execution": "call"},
+    {"type": "typing.Mapping", "name": "get", "effect": "reads-key", "execution": "call"},
+    {"type": "global::System.Collections.Generic.CollectionExtensions", "name": "GetValueOrDefault", "effect": "reads-key", "execution": "call"}
+  ]
+}

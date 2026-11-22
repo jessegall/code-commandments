@@ -31,37 +31,58 @@
       "expr": [
         "and",
         [
-          "=",
+          "in",
           "$v.kind",
-          "call"
-        ],
-        [
-          "=",
-          [
-            "count",
-            "$v.arguments"
-          ],
-          1
+          "call",
+          "cast",
+          "construction"
         ],
         [
           "scalar",
           "$v.resolved"
         ],
         [
-          "not",
+          "exists",
           [
-            "scalar",
-            [
-              "typeOfFirst",
-              "$v"
-            ]
+            "source",
+            "$v"
           ]
         ],
         [
-          "exists",
+          "!=",
           [
-            "typeOfFirst",
-            "$v"
+            "tree.kindOf",
+            [
+              "source",
+              "$v"
+            ]
+          ],
+          "literal"
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "and",
+              [
+                "=",
+                "$v.callee.kind",
+                "access"
+              ],
+              [
+                "!=",
+                "$v.callee.form",
+                "static"
+              ],
+              [
+                "exists",
+                [
+                  "typeDeclaration",
+                  "$v.target.type"
+                ]
+              ]
+            ]
           ]
         ]
       ]
@@ -71,34 +92,16 @@
         "t"
       ],
       "expr": [
-        "or",
+        "in",
         [
-          "=",
-          "$t.kind",
-          "keyword"
-        ],
-        [
-          "tree.boolean",
+          "typeCategory",
           "$t"
-        ]
-      ]
-    },
-    "typeOfFirst": {
-      "args": [
-        "v"
-      ],
-      "expr": [
-        "resolvedOf",
-        [
-          "at",
-          [
-            "map",
-            "$v.arguments",
-            "g",
-            "$g.value"
-          ],
-          0
-        ]
+        ],
+        "text",
+        "integer",
+        "float",
+        "boolean",
+        "bytes"
       ]
     },
     "resolvedOf": {
@@ -120,9 +123,84 @@
         ],
         [
           "=",
-          "$a.target.symbol",
-          "$b.target.symbol"
+          [
+            "conversionKey",
+            "$a"
+          ],
+          [
+            "conversionKey",
+            "$b"
+          ]
         ]
+      ]
+    },
+    "source": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "call": [
+            "callSource",
+            "$v"
+          ],
+          "construction": [
+            "callSource",
+            "$v"
+          ],
+          "cast": "$v.operand"
+        },
+        null
+      ]
+    },
+    "conversionKey": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "call": "$v.target.symbol",
+          "cast": [
+            "concat",
+            "cast:",
+            "$v.resolved.text"
+          ],
+          "construction": "$v.target.symbol"
+        },
+        null
+      ]
+    },
+    "callSource": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        [
+          "=",
+          [
+            "count",
+            "$v.arguments"
+          ],
+          1
+        ],
+        {
+          "true": [
+            "at",
+            [
+              "map",
+              "$v.arguments",
+              "g",
+              "$g.value"
+            ],
+            0
+          ]
+        },
+        "$v.callee.subject"
       ]
     }
   },

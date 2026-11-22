@@ -6,6 +6,7 @@ public sealed class PackingSlip(Order order)
 {
     public bool IsEmpty => order.Lines.Count == 0;
 
+    // @sin FeatureEnvy
     // @sin DuplicateMethod
     public IReadOnlyList<string> Rows()
     {

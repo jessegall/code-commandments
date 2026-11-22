@@ -2,11 +2,13 @@
 
 namespace Shop\Http\Pages;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ConstructorOrchestration;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\InjectedServiceNotHidden;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ServiceLocationInPageObject;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\ReportRequest;
 use Spatie\LaravelData\Attributes\Computed;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
@@ -42,6 +44,7 @@ final class ReportPage extends Data
     #[DataCollectionOf(StatCard::class)]
     public array|Lazy $statistics { get => Lazy::closure(fn () => []); }
 
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(
         #[Hidden]
         #[FromContainer(ReportRequest::class)]

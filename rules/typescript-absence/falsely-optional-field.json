@@ -10,9 +10,9 @@
       "FalselyOptionalField"
     ],
     "skill": "typescript/absence",
-    "description": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
+    "description": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared \u2014 it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
     "rule": "Do not declare a field optional when it always has a value: drop the `?` and the `| null`, and the defences downstream go with them.",
-    "suggestion": "Declare it as its plain type — the initialiser already proves it is total."
+    "suggestion": "Declare it as its plain type \u2014 the initialiser already proves it is total."
   },
   "definitions": {
     "optionalField": {
@@ -20,14 +20,9 @@
         "d"
       ],
       "expr": [
-        "some",
-        "$d.parent.modifiers",
-        "m",
-        [
-          "=",
-          "$m",
-          "optional"
-        ]
+        "=",
+        "$d.parent.optional",
+        true
       ]
     }
   },

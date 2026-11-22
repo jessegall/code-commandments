@@ -2,6 +2,7 @@
 
 namespace Shop\Catalog;
 
+use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualHydrationLoop;
 
 use JesseGall\CodeCommandments\Testing\Fixed;
@@ -57,6 +58,7 @@ final class ProductImportMapper
      * @param  array<int, array<string, mixed>>  $rows
      * @return array<int, ProductData>
      */
+    #[Sinful(SwallowCatch::class)]
     public function tolerant(array $rows): array
     {
         $products = [];

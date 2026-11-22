@@ -7,7 +7,7 @@ class TallyBoard:
 
     def count(self, line: str) -> None:
         # @sin MutableStaticState
-        self.counts.update({line: self.counts.get(line, 0) + 1})
+        self.counts[line] = self.counts.get(line, 0) + 1
 
     def counted(self, line: str) -> int:
         return self.counts.get(line, 0)

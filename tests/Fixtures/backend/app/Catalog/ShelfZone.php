@@ -40,6 +40,6 @@ enum ShelfZone: string
 
     public static function walkedInOrder(): array
     {
-        return array_map(static fn (self $zone): string => $zone->signWriting(), self::cases());
+        return array_map(static fn (self $zone) => $zone->signWriting(), self::cases());
     }
 }

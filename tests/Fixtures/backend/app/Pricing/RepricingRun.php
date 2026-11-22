@@ -2,8 +2,9 @@
 
 namespace Shop\Pricing;
 
-use JesseGall\CodeCommandments\Sins\Backend\ScratchStateRestore;
 
+use JesseGall\CodeCommandments\Sins\Backend\ScratchStateRestore;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
@@ -19,6 +20,7 @@ final class RepricingRun
     /**
      * @var list<string>
      */
+    #[Sinful(UnusedPrivateMember::class)]
     private array $trail = [];
 
     #[Sinful(ScratchStateRestore::class)]

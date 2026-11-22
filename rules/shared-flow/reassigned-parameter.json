@@ -56,9 +56,13 @@
         "parameter"
       ],
       [
-        "!=",
-        "$target.binding.parent.passing",
-        "reference"
+        "not",
+        [
+          "in",
+          "$target.binding.parent.passing",
+          "reference",
+          "out"
+        ]
       ]
     ],
     "emit": "$a"

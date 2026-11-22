@@ -15,8 +15,8 @@
       "python-member-after-method"
     ],
     "skill": "php/class-layout",
-    "description": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it.",
-    "rule": "Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom."
+    "description": "A trait use, constant, property, property hook, or enum case declared below a method \u2014 so the reader only meets that state after seeing the behaviour that uses it.",
+    "rule": "Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor \u2014 never between two methods or appended at the bottom."
   },
   "definitions": {
     "rank": {
@@ -126,34 +126,44 @@
             "field": [
               "case",
               [
-                "and",
-                [
-                  "some",
-                  "$m.modifiers",
-                  "x",
-                  [
-                    "=",
-                    "$x",
-                    "static"
-                  ]
-                ],
-                [
-                  "some",
-                  "$m.modifiers",
-                  "x",
-                  [
-                    "in",
-                    "$x",
-                    "readonly",
-                    "const",
-                    "final"
-                  ]
-                ]
+                "nonempty",
+                "$m.hooks"
               ],
               {
-                "true": 1
+                "true": 3
               },
-              2
+              [
+                "case",
+                [
+                  "and",
+                  [
+                    "some",
+                    "$m.modifiers",
+                    "x",
+                    [
+                      "=",
+                      "$x",
+                      "static"
+                    ]
+                  ],
+                  [
+                    "some",
+                    "$m.modifiers",
+                    "x",
+                    [
+                      "in",
+                      "$x",
+                      "readonly",
+                      "const",
+                      "final"
+                    ]
+                  ]
+                ],
+                {
+                  "true": 1
+                },
+                2
+              ]
             ],
             "function": 3
           },
@@ -170,9 +180,69 @@
     ],
     "as": "m",
     "where": [
-      "=",
-      "$m.parent.kind",
-      "type"
+      "and",
+      [
+        "=",
+        "$m.parent.kind",
+        "type"
+      ],
+      [
+        "!=",
+        "$m.parent.form",
+        "interface"
+      ],
+      [
+        "not",
+        [
+          "some",
+          "$m.declarators",
+          "d",
+          [
+            "matchesText",
+            "$d.binding.name",
+            "^__.+__$"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          "$m.declarators",
+          "d",
+          [
+            "and",
+            [
+              "=",
+              "$d.initializer.kind",
+              "call"
+            ],
+            [
+              "some",
+              "$d.initializer.arguments",
+              "a",
+              [
+                "some",
+                "$m.parent.writtenMembers",
+                "w",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$w.kind",
+                    "function"
+                  ],
+                  [
+                    "=",
+                    "$w.symbol",
+                    "$a.value.refers"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
     ],
     "let": [
       [
@@ -215,6 +285,11 @@
         ">",
         "$mine",
         0
+      ],
+      [
+        "<",
+        "$mine",
+        "$methods"
       ],
       [
         "some",

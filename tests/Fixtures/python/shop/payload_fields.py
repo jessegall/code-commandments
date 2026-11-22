@@ -7,12 +7,10 @@ def text_of(raw: dict, *keys) -> str:
         value = raw.get(key)
         if value:
             return str(value)
-    # @sin InventedDefault
     return ""
 
 
 def summary(payload: dict) -> str:
-    # @sin DictBag
     return f"{text_of(payload, 'number')}: {text_of(payload, 'customer', 'email')}"
 
 

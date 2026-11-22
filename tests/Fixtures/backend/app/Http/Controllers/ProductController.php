@@ -2,10 +2,10 @@
 
 namespace Shop\Http\Controllers;
 
-use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
-
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Http\Requests\CreateProductRequest;
@@ -13,8 +13,10 @@ use Shop\Http\Requests\SearchProductRequest;
 use Shop\Models\Product;
 use Shop\Repositories\ProductRepository;
 
+
 class ProductController extends Controller
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly ProductRepository $products) {}
 
     public function show(int $id): Product

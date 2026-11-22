@@ -18,7 +18,7 @@ from mypy.find_sources import InvalidSourceList, create_source_list
 from mypy.modulefinder import BuildSource
 from mypy.build import BuildResult, State
 from mypy.errors import CompileError
-from mypy.nodes import GDEF, CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, NameExpr, OverloadedFuncDef, RefExpr, TypeInfo, Var
+from mypy.nodes import GDEF, MDEF, CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, NameExpr, OverloadedFuncDef, RefExpr, TypeInfo, Var
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
 from mypy.types import AnyType, FunctionLike, Instance, LiteralType, NoneType, ProperType, TupleType, Type, TypeVarType, UnionType, get_proper_type
@@ -193,6 +193,7 @@ class ResolvedType:
     kind: str = "opaque"
     name: str | None = None
     members: tuple["ResolvedType", ...] | None = None
+    value: str | bool | None = None
 
     def to_json(self) -> dict[str, object]:
         """The type as the contract writes it: named for its class when it has one, opaque otherwise."""
@@ -203,6 +204,7 @@ class ResolvedType:
             ("nullable", self.nullable),
             ("constructs", self.constructs),
             ("members", [member.to_json() for member in self.members] if self.members is not None else None),
+            ("value", self.value),
             ("origin", "compiler"),
         )
         return {key: value for key, value in pairs if value is not None}
@@ -237,7 +239,7 @@ def described(typ: Type) -> ResolvedType | None:
         present = others[0] if len(others) == 1 else proper
     instance_of = present.type.fullname if isinstance(present, Instance) else None
     constructs = present.type_object().fullname if isinstance(present, FunctionLike) and present.is_type_obj() else None
-    kind, name, members = "opaque", None, None
+    kind, name, members, value = "opaque", None, None, None
     match present:
         case NoneType():
             kind, name, nullable = "keyword", "None", True
@@ -246,7 +248,7 @@ def described(typ: Type) -> ResolvedType | None:
         case TupleType():
             kind, members = "tuple", present.items
         case LiteralType():
-            kind = "literal"
+            kind, value = "literal", present.value if isinstance(present.value, (str, bool)) else str(present.value)
         case TypeVarType():
             kind, name = "parameter", present.name
         case FunctionLike() if constructs is None:
@@ -254,7 +256,7 @@ def described(typ: Type) -> ResolvedType | None:
     described_members = None if members is None else tuple(member for member in map(described, members) if member is not None)
     if described_members is not None and len(described_members) < len(members):
         kind, described_members = "opaque", None
-    return ResolvedType(str(typ), nullable, instance_of, constructs, kind, name, described_members)
+    return ResolvedType(str(typ), nullable, instance_of, constructs, kind, name, described_members, value)
 
 
 def states(graph: dict[str, State], wanted: set[str]) -> dict[str, State]:
@@ -284,7 +286,7 @@ def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule
             bound[span] = target
     names: dict[tuple[int, int], str] = {}
     for name in (e for e in get_subexpressions(state.tree) if isinstance(e, NameExpr)) if state.tree is not None else []:
-        if name.kind != GDEF or not name.fullname or name.line < 1 or name.end_line is None or name.end_column is None or name.end_line > len(starts):
+        if name.kind not in (GDEF, MDEF) or not name.fullname or name.line < 1 or name.end_line is None or name.end_column is None or name.end_line > len(starts):
             continue
         names.setdefault((starts[name.line - 1] + name.column, starts[name.end_line - 1] + name.end_column), name.fullname)
     constants: dict[tuple[int, int], dict[str, object]] = {}
@@ -370,6 +372,8 @@ def target_of(call: CallExpr, types: dict[Expression, Type]) -> dict[str, str] |
         receiver = get_proper_type(types[callee.expr])
         if isinstance(receiver, Instance):
             node = receiver.type.get_method(callee.name)
+        elif isinstance(receiver, FunctionLike) and receiver.is_type_obj():
+            node = receiver.type_object().get_method(callee.name)
     if isinstance(node, Decorator):
         node = node.func
     if isinstance(node, TypeInfo):

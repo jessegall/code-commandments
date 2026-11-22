@@ -10,6 +10,7 @@ public sealed class ShelfCode(string aisle, int slot)
     {
         var parts = written.Split('-', 2);
 
+        // @sin ManufacturedFakeFill
         return new ShelfCode(parts[0], parts.Length > 1 ? int.Parse(parts[1]) : 0);
     }
 }

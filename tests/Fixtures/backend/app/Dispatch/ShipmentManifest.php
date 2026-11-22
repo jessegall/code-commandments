@@ -31,7 +31,7 @@ final class ShipmentManifest
         $queued = $this->queued;
 
         foreach ($queued as $shipment) {
-            foreach ($shipment['pieces'] ?? [] as $piece) {
+            foreach ($shipment['pieces'] as $piece) {
                 $weight += $piece;
             }
         }

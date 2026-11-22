@@ -10,9 +10,9 @@
       "DataToArrayRoundtrip"
     ],
     "skill": "php/spatie-data-hydration",
-    "description": "A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build",
+    "description": "A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it \u2014 build \u2192 array \u2192 build",
     "rule": "Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.",
-    "suggestion": "Drop the `->toArray()` — the nested-`Data` / `#[DataCollectionOf]` slot takes the object as-is.",
+    "suggestion": "Drop the `->toArray()` \u2014 the nested-`Data` / `#[DataCollectionOf]` slot takes the object as-is.",
     "requires": {
       "name": "spatie/laravel-data",
       "ecosystem": "composer"
@@ -43,15 +43,150 @@
         "spatie.isData",
         [
           "typeDeclaration",
-          "$c.callee.subject.resolved.name"
+          [
+            "receiverClass",
+            "$c"
+          ]
         ]
       ],
       [
-        "spatie.fits",
+        "fitsSlot",
         "$c",
-        "$c.callee.subject.resolved.name"
+        [
+          "receiverClass",
+          "$c"
+        ]
       ]
     ],
     "emit": "$c"
+  },
+  "definitions": {
+    "receiverClass": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        [
+          "spatie.isFrom",
+          "$c.callee.subject"
+        ],
+        {
+          "true": "$c.callee.subject.callee.subject.refers"
+        },
+        [
+          "case",
+          [
+            "=",
+            "$c.callee.subject.kind",
+            "fallback"
+          ],
+          {
+            "true": [
+              "at",
+              [
+                "filter",
+                [
+                  "list",
+                  "$c.callee.subject.subject.resolved.name",
+                  "$c.callee.subject.replacement.resolved.name"
+                ],
+                "n",
+                [
+                  "nonempty",
+                  "$n"
+                ]
+              ],
+              0
+            ]
+          },
+          "$c.callee.subject.resolved.name"
+        ]
+      ]
+    },
+    "carrier": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$x.role",
+            "body"
+          ],
+          [
+            "=",
+            "$x.parent.kind",
+            "function"
+          ],
+          [
+            "=",
+            "$x.parent.parent.kind",
+            "argument"
+          ]
+        ],
+        {
+          "true": "$x.parent.parent.parent"
+        },
+        "$x"
+      ]
+    },
+    "fitsSlot": {
+      "args": [
+        "x",
+        "class"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "spatie.slotOf",
+            [
+              "carrier",
+              "$x"
+            ]
+          ]
+        ],
+        [
+          "=",
+          [
+            "spatie.inList",
+            "$x"
+          ],
+          [
+            "spatie.isCollectionSlot",
+            [
+              "spatie.slotOf",
+              [
+                "carrier",
+                "$x"
+              ]
+            ]
+          ]
+        ],
+        [
+          "nonempty",
+          "$class"
+        ],
+        [
+          "=",
+          [
+            "spatie.slotElementType",
+            [
+              "spatie.slotOf",
+              [
+                "carrier",
+                "$x"
+              ]
+            ]
+          ],
+          "$class"
+        ]
+      ]
+    }
   }
 }

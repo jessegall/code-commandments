@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from typing import Any
 
 
+# @sin DictBag
 def label(parcel: dict[str, Any]) -> str:
-    # @sin DictBag
     return f"{parcel['recipient']}\n{parcel['street']}\n{parcel['postcode']} {parcel['city']}"
 
 

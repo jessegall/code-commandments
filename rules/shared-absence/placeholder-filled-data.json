@@ -28,42 +28,218 @@
         "x"
       ],
       "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$x.literalKind",
+            "string"
+          ],
+          [
+            "=",
+            "$x.value",
+            ""
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "access"
+          ],
+          [
+            "has",
+            [
+              "identities",
+              "empty-text"
+            ],
+            "$x.member.refers"
+          ]
+        ]
+      ]
+    },
+    "requiredText": {
+      "args": [
+        "t"
+      ],
+      "expr": [
         "and",
         [
-          "=",
-          "$x.kind",
-          "literal"
+          "not",
+          [
+            "isNullable",
+            "$t"
+          ]
         ],
         [
           "=",
-          "$x.literalKind",
-          "string"
-        ],
+          [
+            "typeCategory",
+            "$t"
+          ],
+          "text"
+        ]
+      ]
+    },
+    "slotOf": {
+      "args": [
+        "c",
+        "a"
+      ],
+      "expr": [
+        "case",
         [
-          "=",
-          "$x.value",
-          ""
+          "exists",
+          "$a.label"
+        ],
+        {
+          "true": [
+            "fieldType",
+            [
+              "typeOf",
+              "$c"
+            ],
+            "$a.label"
+          ]
+        },
+        [
+          "get",
+          [
+            "at",
+            [
+              "fieldsOf",
+              [
+                "typeOf",
+                "$c"
+              ]
+            ],
+            [
+              "position",
+              "$a"
+            ]
+          ],
+          "type"
         ]
       ]
     }
   },
   "find": {
-    "select": "construction",
+    "select": [
+      "construction",
+      "collection"
+    ],
     "as": "c",
     "where": [
+      "not",
+      "$c.file.test"
+    ],
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$c",
+          "type"
+        ]
+      ]
+    ],
+    "having": [
       "and",
       [
-        "not",
-        "$c.file.test"
+        "!=",
+        "$owner.symbol",
+        "$c.resolved.name"
       ],
       [
-        "some",
-        "$c.arguments",
-        "a",
-        [
-          "blank",
-          "$a.value"
-        ]
+        "case",
+        "$c.kind",
+        {
+          "construction": [
+            "or",
+            [
+              "some",
+              "$c.arguments",
+              "a",
+              [
+                "and",
+                [
+                  "blank",
+                  "$a.value"
+                ],
+                [
+                  "requiredText",
+                  [
+                    "slotOf",
+                    "$c",
+                    "$a"
+                  ]
+                ]
+              ]
+            ],
+            [
+              "some",
+              "$c.initializer.entries",
+              "e",
+              [
+                "and",
+                [
+                  "blank",
+                  "$e.value"
+                ],
+                [
+                  "requiredText",
+                  [
+                    "fieldType",
+                    [
+                      "typeOf",
+                      "$c"
+                    ],
+                    "$e.key.name"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "collection": [
+            "and",
+            [
+              "!=",
+              "$c.resolved.kind",
+              "object"
+            ],
+            [
+              "some",
+              "$c.entries",
+              "e",
+              [
+                "and",
+                [
+                  "blank",
+                  "$e.value"
+                ],
+                [
+                  "requiredText",
+                  [
+                    "fieldType",
+                    [
+                      "typeOf",
+                      "$c"
+                    ],
+                    "$e.key.name"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        },
+        false
       ]
     ],
     "emit": "$c"

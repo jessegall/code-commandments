@@ -16,7 +16,7 @@
     ],
     "skill": "php/pass-the-object",
     "description": "A parameter that's just true/false, computed by every caller from the same object it could be given instead.",
-    "rule": "Take the SUBJECT and ask it — never a bool every caller derives from that same object.",
+    "rule": "Take the SUBJECT and ask it \u2014 never a bool every caller derives from that same object.",
     "suggestion": "swap the flags for the object the callers already hold: `CornerInset::for($editor)`",
     "reporting": {
       "crossFile": true
@@ -34,6 +34,22 @@
         "$g.value"
       ]
     },
+    "derived": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "in",
+        "$x.kind",
+        "access",
+        "call",
+        "comparison",
+        "logical",
+        "unary",
+        "conditional",
+        "binary"
+      ]
+    },
     "computed": {
       "args": [
         "handed",
@@ -46,31 +62,12 @@
           "$positions",
           "n",
           [
-            "in",
+            "derived",
             [
-              "kindAt",
+              "at",
               "$handed",
               "$n"
-            ],
-            "access",
-            "call"
-          ]
-        ],
-        [
-          "every",
-          "$positions",
-          "n",
-          [
-            "=",
-            [
-              "tree.kindOf",
-              [
-                "rootAt",
-                "$handed",
-                "$n"
-              ]
-            ],
-            "reference"
+            ]
           ]
         ],
         [
@@ -78,17 +75,24 @@
           [
             "distinctCount",
             [
-              "map",
-              "$positions",
-              "n",
+              "flatten",
               [
-                "fingerprint",
+                "map",
+                "$positions",
+                "n",
                 [
-                  "rootAt",
-                  "$handed",
-                  "$n"
-                ],
-                "exact"
+                  "map",
+                  [
+                    "booleanParts",
+                    [
+                      "at",
+                      "$handed",
+                      "$n"
+                    ]
+                  ],
+                  "r",
+                  "$r.name"
+                ]
               ]
             ]
           ],
@@ -96,81 +100,51 @@
         ]
       ]
     },
-    "rootAt": {
-      "args": [
-        "l",
-        "n"
-      ],
-      "expr": [
-        "rootOf",
-        [
-          "at",
-          "$l",
-          "$n"
-        ]
-      ]
-    },
-    "rootOf": {
+    "booleanParts": {
       "args": [
         "x"
       ],
       "expr": [
-        "case",
-        "$x.kind",
-        {
-          "access": "$x.subject",
-          "call": "$x.callee.subject"
-        },
-        null
-      ]
-    },
-    "kindAt": {
-      "args": [
-        "l",
-        "n"
-      ],
-      "expr": [
-        "tree.kindOf",
+        "filter",
         [
-          "at",
-          "$l",
-          "$n"
+          "descendants",
+          "$x",
+          "reference"
+        ],
+        "r",
+        [
+          "not",
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$r.role",
+                "member"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$r.role",
+                "callee"
+              ]
+            ]
+          ]
         ]
       ]
-    },
-    "subjectKindAt": {
-      "args": [
-        "l",
-        "n"
-      ],
-      "expr": [
-        "tree.kindOf",
-        [
-          "subjectAt",
-          "$l",
-          "$n"
-        ]
-      ]
-    },
-    "subjectAt": {
-      "args": [
-        "l",
-        "n"
-      ],
-      "expr": [
-        "subjectOf",
-        [
-          "at",
-          "$l",
-          "$n"
-        ]
-      ]
-    },
-    "subjectOf": {
-      "args": [
-        "x"
-      ],
-      "expr": "$x.subject"
     }
   },
   "find": {
@@ -205,7 +179,7 @@
             "p",
             [
               "tree.boolean",
-              "$p.binding.resolved"
+              "$p.declaredType"
             ]
           ],
           "p",
@@ -232,7 +206,7 @@
           "count",
           "$positions"
         ],
-        2
+        1
       ],
       [
         "every",

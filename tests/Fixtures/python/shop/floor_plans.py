@@ -23,6 +23,7 @@ def relabel(plan: FloorPlan, bay_code: str, label: str) -> None:
 
 
 # @fixed ParamResolvedFromParam
+# @sin FeatureEnvy
 def relabel_bay(bay: Bay, label: str) -> None:
     bay.label = label.upper()
 

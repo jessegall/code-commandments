@@ -144,11 +144,29 @@
             "logical"
           ],
           [
-            "in",
-            "$l.parent.kind",
-            "if",
-            "loop",
-            "return"
+            "or",
+            [
+              "in",
+              "$l.parent.kind",
+              "if",
+              "loop",
+              "return",
+              "conditional",
+              "comprehension-clause"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$l.parent.kind",
+                "function"
+              ],
+              [
+                "=",
+                "$l.role",
+                "body"
+              ]
+            ]
           ],
           [
             "substantive",
@@ -172,7 +190,7 @@
               [
                 "fingerprint",
                 "$p",
-                "exact"
+                "inlined"
               ]
             ]
           ]

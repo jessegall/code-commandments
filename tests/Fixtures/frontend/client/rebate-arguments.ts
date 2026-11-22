@@ -65,6 +65,7 @@ export function recordClosedRebate(statement: string[], code: string): void {
 }
 
 // @sin FilledParameter
+// @sin FeatureEnvy
 function issuePreparedCredit(claim: RebateClaim): void {
     if (claim.cents > 0n) {
         claim.issued = true

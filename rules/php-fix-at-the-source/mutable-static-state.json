@@ -16,30 +16,9 @@
       "python-mutable-static-state"
     ],
     "skill": "php/fix-at-the-source",
-    "description": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
+    "description": "A write to a static property \u2014 really a global variable with a namespace attached \u2014 where whichever write happens last wins, so the order code runs in changes the result.",
     "rule": "Hold changing state on an INSTANCE someone owns and passes; never write a static property.",
     "suggestion": "Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down."
-  },
-  "definitions": {
-    "fieldOf": {
-      "args": [
-        "d"
-      ],
-      "expr": [
-        "modifiersOf",
-        [
-          "enclosing",
-          "$d",
-          "field"
-        ]
-      ]
-    },
-    "modifiersOf": {
-      "args": [
-        "f"
-      ],
-      "expr": "$f.modifiers"
-    }
   },
   "find": {
     "select": "assignment",
@@ -54,53 +33,180 @@
     ],
     "let": [
       [
+        "fn",
+        [
+          "enclosing",
+          "$a",
+          "function"
+        ]
+      ],
+      [
+        "target",
+        [
+          "at",
+          "$a.targets",
+          0
+        ]
+      ],
+      [
+        "root",
+        [
+          "case",
+          "$target.kind",
+          {
+            "index": "$target.subject"
+          },
+          "$target"
+        ]
+      ],
+      [
         "declared",
         [
           "declarationOf",
-          [
-            "at",
-            "$a.targets",
-            0
-          ]
+          "$root"
+        ]
+      ],
+      [
+        "field",
+        [
+          "enclosing",
+          "$declared",
+          "field"
         ]
       ]
     ],
     "having": [
-      "or",
+      "and",
       [
-        "some",
+        "=",
         [
-          "fieldOf",
-          "$declared"
+          "count",
+          "$fn.obligations"
         ],
-        "m",
-        [
-          "=",
-          "$m",
-          "static"
-        ]
+        0
       ],
       [
-        "and",
+        "or",
         [
-          "not",
+          "=",
+          "$field.effective.static",
+          true
+        ],
+        [
+          "some",
+          "$field.modifiers",
+          "m",
+          [
+            "=",
+            "$m",
+            "static"
+          ]
+        ],
+        [
+          "and",
           [
             "exists",
+            "$declared"
+          ],
+          [
+            "not",
             [
-              "enclosing",
-              "$declared",
-              "function"
+              "exists",
+              [
+                "enclosing",
+                "$declared",
+                "function"
+              ]
+            ]
+          ],
+          [
+            "not",
+            [
+              "exists",
+              [
+                "enclosing",
+                "$declared",
+                "type"
+              ]
             ]
           ]
         ],
         [
-          "not",
+          "some",
           [
-            "exists",
+            "ownDescendants",
+            "$fn.body"
+          ],
+          "s",
+          [
+            "and",
             [
-              "enclosing",
-              "$declared",
-              "type"
+              "=",
+              "$s.kind",
+              "scope-declaration"
+            ],
+            [
+              "=",
+              "$s.form",
+              "global"
+            ],
+            [
+              "some",
+              "$s.bindings",
+              "b",
+              [
+                "=",
+                "$b.name",
+                "$target.name"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$a.mode",
+            "assign"
+          ],
+          [
+            "some",
+            [
+              "ownAncestors",
+              "$a"
+            ],
+            "g",
+            [
+              "and",
+              [
+                "=",
+                "$g.kind",
+                "if"
+              ],
+              [
+                "some",
+                [
+                  "descendants",
+                  "$g.condition"
+                ],
+                "y",
+                [
+                  "tree.names",
+                  "$y",
+                  [
+                    "case",
+                    "$root.kind",
+                    {
+                      "access": "$root.member.name",
+                      "reference": "$root.name"
+                    },
+                    ""
+                  ]
+                ]
+              ]
             ]
           ]
         ]

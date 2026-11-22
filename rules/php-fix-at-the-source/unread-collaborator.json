@@ -16,7 +16,7 @@
       "python-unread-collaborator"
     ],
     "skill": "php/fix-at-the-source",
-    "description": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
+    "description": "a collaborator promoted into a private field by the constructor and never read anywhere in the class \u2014 the class asks for something it does not use, and only a search of the whole type says so",
     "rule": "A constructor asks for what the class uses, and nothing more: a collaborator no method reads is removed, along with what the callers pass.",
     "suggestion": "Delete the parameter and the field, then follow the callers: whatever they built or resolved only to hand it over goes too. If the class is meant to use it and does not, that is the bug the empty field is pointing at.",
     "reporting": {
@@ -24,34 +24,239 @@
     }
   },
   "find": {
-    "select": "declarator",
+    "select": [
+      "declarator",
+      "parameter",
+      "reference"
+    ],
     "as": "d",
     "where": [
-      "and",
+      "case",
+      "$d.kind",
+      {
+        "declarator": [
+          "and",
+          [
+            "=",
+            "$d.parent.kind",
+            "field"
+          ],
+          [
+            "in",
+            "$d.parent.effective.visibility",
+            "private",
+            "package"
+          ]
+        ],
+        "parameter": [
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$d.parent.kind",
+              "function"
+            ],
+            [
+              "=",
+              "$d.parent.form",
+              "constructor"
+            ],
+            [
+              "some",
+              "$d.modifiers",
+              "m",
+              [
+                "=",
+                "$m",
+                "private"
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$d.parent.kind",
+              "type"
+            ],
+            [
+              "in",
+              "$d.parent.form",
+              "class",
+              "struct"
+            ]
+          ]
+        ],
+        "reference": [
+          "and",
+          [
+            "nonempty",
+            "$d.symbol"
+          ],
+          [
+            "in",
+            "$d.effective.visibility",
+            "private",
+            "package"
+          ]
+        ]
+      },
+      false
+    ],
+    "let": [
       [
-        "=",
-        "$d.parent.kind",
-        "field"
-      ],
-      [
-        "exists",
+        "declared",
         [
-          "typeDeclaration",
-          "$d.binding.resolved.name"
+          "case",
+          "$d.kind",
+          {
+            "declarator": "$d.parent.declaredType",
+            "parameter": "$d.declaredType"
+          },
+          null
         ]
       ]
     ],
     "having": [
-      "=",
+      "and",
       [
-        "count",
+        "or",
         [
-          "referrers",
-          "$d.binding"
+          "some",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$declared"
+              ],
+              [
+                "ownDescendants",
+                "$declared"
+              ]
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "=",
+              "$t.kind",
+              "type-expression"
+            ],
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                "$t.refers"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$d.kind",
+            "reference"
+          ],
+          [
+            "exists",
+            [
+              "typeDeclaration",
+              "$d.parent.resolved.name"
+            ]
+          ]
         ]
       ],
-      0
+      [
+        "=",
+        [
+          "count",
+          [
+            "filter",
+            [
+              "referrers",
+              [
+                "case",
+                "$d.kind",
+                {
+                  "reference": "$d"
+                },
+                "$d.binding"
+              ]
+            ],
+            "r",
+            [
+              "not",
+              [
+                "writtenOnly",
+                "$r"
+              ]
+            ]
+          ]
+        ],
+        0
+      ]
     ],
     "emit": "$d"
+  },
+  "definitions": {
+    "writtenOnly": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$r.role",
+            "targets"
+          ],
+          [
+            "=",
+            "$r.parent.kind",
+            "assignment"
+          ],
+          [
+            "=",
+            "$r.parent.mode",
+            "assign"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$r.role",
+            "member"
+          ],
+          [
+            "=",
+            "$r.parent.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$r.parent.role",
+            "targets"
+          ],
+          [
+            "=",
+            "$r.parent.parent.kind",
+            "assignment"
+          ],
+          [
+            "=",
+            "$r.parent.parent.mode",
+            "assign"
+          ]
+        ]
+      ]
+    }
   }
 }

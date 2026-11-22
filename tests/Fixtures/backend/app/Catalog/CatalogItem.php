@@ -2,11 +2,14 @@
 
 namespace Shop\Catalog;
 
+use JesseGall\CodeCommandments\Testing\Sinful;
+use JesseGall\CodeCommandments\Sins\Backend\BlankStringDefault;
 use JesseGall\CodeCommandments\Sins\Backend\KeyedLookupEnvy;
 use JesseGall\CodeCommandments\Testing\Fixed;
 
 final class CatalogItem
 {
+    #[Sinful(BlankStringDefault::class)]
     public string $code = '';
 
     /**

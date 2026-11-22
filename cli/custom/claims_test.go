@@ -87,3 +87,20 @@ func TestANameInProseIsNoClaim(t *testing.T) {
 		t.Errorf("a name written in prose was read as a rule the skill says fires: %v", warnings)
 	}
 }
+
+func TestASkillWhoseRuleIsRefusedIsNotAlsoWarnedAbout(t *testing.T) {
+	const honest = "---\nname: No raw SQL\ndescription: x\n---\n\n## When it fires\n\n- **`raw-sql`** - a query at a call site.\n"
+	const old = `{"engine":"php","sin":{"name":"raw-sql","skill":"no-raw-sql"},"find":{"select":"call","where":[{"name":"query"}]}}`
+
+	loaded := Load(project(t, map[string]string{
+		"RawSqlDetector.json":        old,
+		"skills/no-raw-sql/SKILL.md": honest,
+	}))
+
+	if len(loaded.Refused) != 1 {
+		t.Fatalf("the old rule was not refused: %v", loaded.Refused)
+	}
+	if warnings := loaded.ClaimWarnings(); len(warnings) != 0 {
+		t.Errorf("a skill whose rule is refused is warned about as well, though the refusal already says why: %v", warnings)
+	}
+}

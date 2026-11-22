@@ -23,21 +23,148 @@
     "suggestion": "Handle the expected cases explicitly and signal an unexpected value."
   },
   "definitions": {
-    "nullLiteral": {
+    "absent": {
       "args": [
         "x"
       ],
       "expr": [
-        "and",
+        "or",
         [
-          "=",
-          "$x.kind",
-          "literal"
+          "tree.nullish",
+          "$x"
         ],
         [
-          "=",
-          "$x.literalKind",
-          "null"
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "default-value"
+          ],
+          [
+            "=",
+            "$x.resolved.nullable",
+            true
+          ]
+        ]
+      ]
+    },
+    "results": {
+      "args": [
+        "body"
+      ],
+      "expr": [
+        "case",
+        "$body.kind",
+        {
+          "block": [
+            "flatten",
+            [
+              "map",
+              [
+                "ownDescendants",
+                "$body",
+                "return"
+              ],
+              "s",
+              "$s.values"
+            ]
+          ]
+        },
+        [
+          "list",
+          "$body"
+        ]
+      ]
+    },
+    "answersAbsent": {
+      "args": [
+        "body"
+      ],
+      "expr": [
+        "case",
+        "$body.kind",
+        {
+          "block": [
+            "and",
+            [
+              "=",
+              [
+                "count",
+                "$body.statements"
+              ],
+              1
+            ],
+            [
+              "some",
+              "$body.statements",
+              "s",
+              [
+                "and",
+                [
+                  "=",
+                  "$s.kind",
+                  "return"
+                ],
+                [
+                  "or",
+                  [
+                    "=",
+                    [
+                      "count",
+                      "$s.values"
+                    ],
+                    0
+                  ],
+                  [
+                    "some",
+                    "$s.values",
+                    "v",
+                    [
+                      "absent",
+                      "$v"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        },
+        [
+          "absent",
+          "$body"
+        ]
+      ]
+    },
+    "admitsAbsence": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "some",
+        [
+          "results",
+          "$o.body"
+        ],
+        "v",
+        [
+          "or",
+          [
+            "absent",
+            "$v"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$v.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$v.resolved.nullable",
+              true
+            ]
+          ]
         ]
       ]
     }
@@ -46,50 +173,58 @@
     "select": "arm",
     "as": "a",
     "where": [
-      "=",
-      "$a.default",
-      true
+      "and",
+      [
+        "=",
+        "$a.default",
+        true
+      ],
+      [
+        "exists",
+        "$a.parent.subject"
+      ],
+      [
+        "!=",
+        "$a.parent.subject.literalKind",
+        "boolean"
+      ]
     ],
-    "having": [
-      "case",
-      "$a.body.kind",
-      {
-        "block": [
-          "and",
+    "let": [
+      [
+        "handled",
+        [
+          "filter",
+          "$a.parent.arms",
+          "o",
           [
-            "=",
-            [
-              "count",
-              "$a.body.statements"
-            ],
-            1
-          ],
-          [
-            "some",
-            "$a.body.statements",
-            "s",
-            [
-              "and",
-              [
-                "=",
-                "$s.kind",
-                "return"
-              ],
-              [
-                "some",
-                "$s.values",
-                "v",
-                [
-                  "nullLiteral",
-                  "$v"
-                ]
-              ]
-            ]
+            "!=",
+            "$o.default",
+            true
           ]
         ]
-      },
+      ]
+    ],
+    "having": [
+      "and",
       [
-        "nullLiteral",
+        ">=",
+        [
+          "count",
+          "$handled"
+        ],
+        2
+      ],
+      [
+        "none",
+        "$handled",
+        "o",
+        [
+          "admitsAbsence",
+          "$o"
+        ]
+      ],
+      [
+        "answersAbsent",
         "$a.body"
       ]
     ],

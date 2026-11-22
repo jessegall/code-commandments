@@ -23,6 +23,45 @@
     }
   },
   "definitions": {
+    "typeTest": {
+      "args": [
+        "p"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$p.kind",
+          "type-test"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$p.kind",
+            "comparison"
+          ],
+          [
+            "some",
+            "$p.operands",
+            "o",
+            [
+              "and",
+              [
+                "=",
+                "$o.kind",
+                "unary"
+              ],
+              [
+                "=",
+                "$o.operator",
+                "typeof"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
     "narrows": {
       "args": [
         "l"
@@ -40,9 +79,8 @@
             ],
             "p",
             [
-              "=",
-              "$p.kind",
-              "type-test"
+              "typeTest",
+              "$p"
             ]
           ]
         ],
@@ -66,13 +104,6 @@
             "!=",
             "$l.parent.kind",
             "logical"
-          ],
-          [
-            "in",
-            "$l.parent.kind",
-            "if",
-            "loop",
-            "return"
           ],
           [
             "narrows",

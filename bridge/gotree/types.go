@@ -3,13 +3,17 @@ package gotree
 import (
 	"github.com/jessegall/code-commandments/walk"
 	"go/ast"
+	"go/build"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
+	"os"
 	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -56,6 +60,12 @@ func (c *checker) Import(path string) (*types.Package, error) {
 		}
 	}
 	if !mine {
+		if held, read := standardPackage(path); read {
+			c.checked[path] = held
+
+			return held, nil
+		}
+
 		return stub(path), nil
 	}
 
@@ -391,4 +401,62 @@ func (c *checker) readBy(one Package, held *types.Package) []string {
 	slices.Sort(reads)
 
 	return slices.Compact(reads)
+}
+
+// standardLibrary checks the standard library's packages from the sources of the Go installation the machine has,
+// once a process, for every run that imports them.
+type standardLibrary struct {
+	mutex    sync.Mutex
+	importer types.Importer
+	read     map[string]*types.Package
+}
+
+var standard = sync.OnceValue(func() *standardLibrary {
+	return &standardLibrary{importer: importer.ForCompiler(token.NewFileSet(), "source", nil), read: map[string]*types.Package{}}
+})
+
+func standardPackage(path string) (*types.Package, bool) {
+	if !isStandard(path) || build.Default.GOROOT == "" {
+		return nil, false
+	}
+	library := standard()
+	library.mutex.Lock()
+	defer library.mutex.Unlock()
+	if held, read := library.read[path]; read {
+		return held, held != nil
+	}
+	held, err := library.importer.Import(path)
+	if err != nil {
+		held = nil
+	}
+	library.read[path] = held
+
+	return held, held != nil
+}
+
+func isStandard(path string) bool {
+	first, _, _ := strings.Cut(path, "/")
+
+	return path != "C" && !strings.Contains(first, ".")
+}
+
+func standardPackagesRead() int {
+	library := standard()
+	library.mutex.Lock()
+	defer library.mutex.Unlock()
+
+	return len(library.read)
+}
+
+func standardVersion() string {
+	if build.Default.GOROOT == "" {
+		return "none"
+	}
+	written, err := os.ReadFile(filepath.Join(build.Default.GOROOT, "VERSION"))
+	if err != nil {
+		return build.Default.GOROOT
+	}
+	first, _, _ := strings.Cut(string(written), "\n")
+
+	return first
 }

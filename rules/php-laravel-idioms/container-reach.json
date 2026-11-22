@@ -222,24 +222,32 @@
         "$t.writtenMembers",
         "m",
         [
-          "and",
+          "or",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ],
+            [
+              "=",
+              "$m.form",
+              "constructor"
+            ],
+            [
+              ">",
+              [
+                "count",
+                "$m.parameters"
+              ],
+              0
+            ]
+          ],
           [
             "=",
             "$m.kind",
-            "function"
-          ],
-          [
-            "=",
-            "$m.form",
-            "constructor"
-          ],
-          [
-            ">",
-            [
-              "count",
-              "$m.parameters"
-            ],
-            0
+            "parameter"
           ]
         ]
       ]

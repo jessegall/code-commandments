@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { Order, OrderEvent } from '@/types';
+import type { Order } from '@/types';
+
+interface OrderEvent {
+  label: string;
+}
 
 defineProps<{ order: Order; history: OrderEvent[]; notes: string[] }>();
 </script>

@@ -68,6 +68,7 @@ type ReturnShelf struct {
 }
 
 // Refund pays a return out, refusing a parcel with nothing to pay.
+// @sin FeatureEnvy
 func Refund(item Return) (int, error) {
 	if item.Cents <= 0 {
 		return 0, errors.New("nothing to refund")

@@ -17,8 +17,8 @@ class PriceRule:
         discounted = round(base * (1 - self.rate))
         return max(discounted, 0)
 
+    # @sin HandRolledReplace
     def rerated(self, factor: float) -> "PriceRule":
-        # @sin HandRolledReplace
         return type(self)(self.sku, min(self.rate * factor, 0.9), self.starts, self.ends)
 
     # @fixed HandRolledReplace

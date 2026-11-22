@@ -1,5 +1,6 @@
 namespace Shop.Returns;
 
+// @sin NamespaceCycle
 using Shop.Warranty;
 
 public sealed record Claim(string Serial, DateOnly Bought, string Fault);

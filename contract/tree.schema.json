@@ -2197,7 +2197,7 @@
       "provenance": "parser"
     },
     "namedResults": {
-      "provenance": "compiler"
+      "provenance": "parser"
     },
     "nullConditional": {
       "provenance": "parser"

@@ -78,7 +78,12 @@ func Roslyn(roots ...string) ([]string, error) {
 
 // RoslynIdentity names the C# bridge by the program that runs it, so a release that ships the same bridge keeps every
 // C# line, and one that ships a new bridge reads C# afresh.
-var RoslynIdentity = sync.OnceValue(func() string {
+var RoslynIdentity = sync.OnceValue(roslynIdentity)
+
+func roslynIdentity() string {
+	if os.Getenv(roslynVariable) == "docker" {
+		return RoslynImage()
+	}
 	command, err := Roslyn()
 	if err != nil {
 		return Build()
@@ -90,7 +95,7 @@ var RoslynIdentity = sync.OnceValue(func() string {
 	sum := sha256.Sum256(program)
 
 	return hex.EncodeToString(sum[:])
-})
+}
 
 // FetchRoslyn fetches the C# bridge this release ships, unless a bridge of one's own is named, and says what it fetched.
 func FetchRoslyn() (string, error) {

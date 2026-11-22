@@ -44,6 +44,25 @@
         "case",
         "$d.kind",
         {
+          "binding": [
+            "case",
+            "$d.parent.kind",
+            {
+              "declarator": [
+                "writtenLiteral",
+                "$d.parent.initializer"
+              ],
+              "assignment": [
+                "writtenLiteral",
+                [
+                  "at",
+                  "$d.parent.values",
+                  0
+                ]
+              ]
+            },
+            null
+          ],
           "declarator": [
             "writtenLiteral",
             "$d.initializer"

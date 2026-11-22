@@ -85,6 +85,10 @@ public sealed partial class ContractWriter
             IEnumerable<ITypeSymbol> arguments = [];
             switch (type)
             {
+                case IErrorTypeSymbol error:
+                    described["kind"] = "opaque";
+                    described["text"] = error.Name is { Length: > 0 } name ? name : "?";
+                    break;
                 case ITypeParameterSymbol parameter:
                     described["kind"] = "parameter";
                     described["name"] = parameter.Name;
@@ -372,7 +376,14 @@ public sealed partial class ContractWriter
 
             if (arrow is not null)
             {
-                hooks.Add(New("function", arrow).Fact("name", identifier.ValueText).Fact("form", "get").Holds("body", Expression(arrow.Expression)));
+                var getter = declared is IPropertySymbol { GetMethod: { } get } ? get : null;
+                hooks.Add(New("function", arrow)
+                    .Fact("name", identifier.ValueText)
+                    .Fact("symbol", getter is null ? null : Spelled(getter))
+                    .Fact("form", "get")
+                    .Fact("modifiers", Modifiers(property.Modifiers))
+                    .Fact("obligations", Obligations(getter))
+                    .Holds("body", Expression(arrow.Expression)));
             }
 
             foreach (var accessor in property.AccessorList?.Accessors ?? default)
@@ -464,6 +475,12 @@ public sealed partial class ContractWriter
             .Select(modifier => modifier.Text)
             .ToList();
 
+        private string? PositionalProperty(ParameterSyntax parameter) =>
+            parameter.Parent?.Parent is RecordDeclarationSyntax && model.GetDeclaredSymbol(parameter) is IParameterSymbol declared
+                && declared.ContainingType?.GetMembers(declared.Name).OfType<IPropertySymbol>().FirstOrDefault() is { } property
+                ? Spelled(property)
+                : null;
+
         private TreeNode Parameter(ParameterSyntax parameter)
         {
             var modifiers = parameter.Modifiers;
@@ -474,7 +491,7 @@ public sealed partial class ContractWriter
                 .Fact("collects", modifiers.Any(SyntaxKind.ParamsKeyword) ? "rest" : null)
                 .HoldsAll("attributes", Attributes(parameter.AttributeLists))
                 .Holds("declaredType", parameter.Type is null ? null : TypeExpression(parameter.Type))
-                .Holds("binding", Binding(parameter.Identifier))
+                .Holds("binding", Binding(parameter.Identifier).Fact("symbol", PositionalProperty(parameter)))
                 .Holds("default", parameter.Default is null ? null : Expression(parameter.Default.Value));
         }
 
@@ -615,7 +632,9 @@ public sealed partial class ContractWriter
                     switch (label)
                     {
                         case CaseSwitchLabelSyntax @case:
-                            patterns.Add(New("pattern", @case.Value).Fact("form", "value").Holds("value", Expression(@case.Value)));
+                            patterns.Add(@case.Value is TypeSyntax named && model.GetSymbolInfo(named).Symbol is ITypeSymbol
+                                ? New("pattern", named).Fact("form", "type").Holds("constrainedType", TypeExpression(named))
+                                : New("pattern", @case.Value).Fact("form", "value").Holds("value", Expression(@case.Value)));
                             break;
                         case CasePatternSwitchLabelSyntax @case:
                             patterns.Add(Pattern(@case.Pattern));
@@ -649,7 +668,7 @@ public sealed partial class ContractWriter
         {
             var node = model.GetSymbolInfo(expression).Symbol is INamespaceOrTypeSymbol
                 ? Translated(expression)
-                : Typed(Translated(expression), model.GetTypeInfo(expression).Type);
+                : Typed(Translated(expression), FlowTyped(model.GetTypeInfo(expression)));
 
             if (expression is IdentifierNameSyntax or MemberAccessExpressionSyntax && model.GetConstantValue(expression) is { HasValue: true } constant)
             {
@@ -761,7 +780,7 @@ public sealed partial class ContractWriter
             var refers = named switch
             {
                 INamedTypeSymbol type => Remembered(type),
-                IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol when named.Locations.Any(location => location.IsInSource) => Spelled(named),
+                IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol => Spelled(named),
                 _ => null,
             };
 
@@ -844,6 +863,7 @@ public sealed partial class ContractWriter
             .Fact("form", form)
             .HoldsAll("entries", elements.Select(element => element switch
             {
+                AssignmentExpressionSyntax { RawKind: (int)SyntaxKind.SimpleAssignmentExpression, Left: ImplicitElementAccessSyntax { ArgumentList.Arguments.Count: 1 } indexed } keyed when form == "object" => New("entry", keyed).Holds("key", Expression(indexed.ArgumentList.Arguments[0].Expression)).Holds("value", Expression(keyed.Right)),
                 AssignmentExpressionSyntax { RawKind: (int)SyntaxKind.SimpleAssignmentExpression } named when form == "object" => New("entry", named).Holds("key", Expression(named.Left)).Holds("value", Expression(named.Right)),
                 InitializerExpressionSyntax { Expressions.Count: 2 } pair when element.IsKind(SyntaxKind.ComplexElementInitializerExpression) => New("entry", pair).Holds("key", Expression(pair.Expressions[0])).Holds("value", Expression(pair.Expressions[1])),
                 _ => New("entry", element).Holds("value", Expression(element)),
@@ -964,9 +984,30 @@ public sealed partial class ContractWriter
                 TypePatternSyntax typed => New("type-test", test).Fact("form", "is").Fact("negated", negated).Holds("subject", Expression(test.Expression)).Holds("testedType", TypeExpression(typed.Type)),
                 ConstantPatternSyntax { Expression: TypeSyntax named } when model.GetSymbolInfo(named).Symbol is ITypeSymbol =>
                     New("type-test", test).Fact("form", "is").Fact("negated", negated).Holds("subject", Expression(test.Expression)).Holds("testedType", TypeExpression(named)),
+                _ when OfConstants(pattern) => ConstantTest(test, pattern, negated),
                 _ => Unsupported(test, "is-pattern"),
             };
         }
+
+        private bool OfConstants(PatternSyntax pattern) => pattern switch
+        {
+            ParenthesizedPatternSyntax parenthesized => OfConstants(parenthesized.Pattern),
+            ConstantPatternSyntax { Expression: TypeSyntax named } when model.GetSymbolInfo(named).Symbol is ITypeSymbol => false,
+            ConstantPatternSyntax => true,
+            BinaryPatternSyntax binary => OfConstants(binary.Left) && OfConstants(binary.Right),
+            _ => false,
+        };
+
+        private TreeNode ConstantTest(IsPatternExpressionSyntax test, PatternSyntax pattern, bool negated) => pattern switch
+        {
+            ParenthesizedPatternSyntax parenthesized => ConstantTest(test, parenthesized.Pattern, negated),
+            ConstantPatternSyntax constant => Comparison(test, negated ? "not-equal" : "equal", Expression(test.Expression), Expression(constant.Expression)),
+            BinaryPatternSyntax binary => New("logical", test)
+                .Fact("operator", binary.IsKind(SyntaxKind.OrPattern) != negated ? "or" : "and")
+                .Holds("left", ConstantTest(test, binary.Left, negated))
+                .Holds("right", ConstantTest(test, binary.Right, negated)),
+            _ => Unsupported(test, "is-pattern"),
+        };
 
         // Patterns --------------------------------------------------------------------------------------------------
 
@@ -1009,7 +1050,16 @@ public sealed partial class ContractWriter
 
         // Types as written ------------------------------------------------------------------------------------------
 
-        private TreeNode TypeExpression(TypeSyntax type) => Typed(WrittenType(type), type.IsVar ? null : model.GetTypeInfo(type).Type);
+        private static ITypeSymbol? FlowTyped(TypeInfo info) => info.Type is { IsReferenceType: true, TypeKind: not TypeKind.Error } held && info.Nullability.Annotation != NullableAnnotation.None
+            ? held.WithNullableAnnotation(info.Nullability.Annotation)
+            : info.Type;
+
+        private TreeNode TypeExpression(TypeSyntax type) => Typed(WrittenType(type), type switch
+        {
+            { IsVar: true } => null,
+            NullableTypeSyntax nullable when model.GetTypeInfo(nullable.ElementType).Type is { IsReferenceType: true, TypeKind: not TypeKind.Error } element => element.WithNullableAnnotation(NullableAnnotation.Annotated),
+            _ => model.GetTypeInfo(type).Type,
+        });
 
         private TreeNode WrittenType(TypeSyntax type) => type switch
         {

@@ -2,6 +2,8 @@
 
 namespace Shop\Diagnostics;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
+use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Telemetry\Meter;
 
 /**
@@ -9,6 +11,7 @@ use Shop\Telemetry\Meter;
  */
 final class DiagnosticReport
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly Meter $meter) {}
 
     public function line(): string

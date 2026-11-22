@@ -34,7 +34,29 @@
         "map",
         [
           "filter",
-          "$l",
+          [
+            "flatten",
+            [
+              "map",
+              "$l",
+              "p",
+              [
+                "flatten",
+                [
+                  "list",
+                  [
+                    "list",
+                    "$p"
+                  ],
+                  [
+                    "descendants",
+                    "$p",
+                    "literal"
+                  ]
+                ]
+              ]
+            ]
+          ],
           "x",
           [
             "and",
@@ -84,8 +106,14 @@
               "c",
               [
                 "=",
-                "$c",
-                "$w"
+                [
+                  "tree.canon",
+                  "$c"
+                ],
+                [
+                  "tree.canon",
+                  "$w"
+                ]
               ]
             ]
           ]
@@ -197,33 +225,55 @@
       ]
     ],
     "having": [
-      "mirrors",
+      "and",
       [
-        "case",
-        "$d.kind",
-        {
-          "dispatch": [
-            "armTexts",
-            "$d"
-          ]
-        },
+        "mirrors",
         [
-          "flatten",
+          "case",
+          "$d.kind",
+          {
+            "dispatch": [
+              "armTexts",
+              "$d"
+            ]
+          },
           [
-            "map",
+            "flatten",
             [
-              "follow",
-              "$d",
-              "else",
-              "if"
-            ],
-            "r",
-            [
-              "texts",
+              "map",
               [
-                "comparedIn",
-                "$r.condition"
+                "follow",
+                "$d",
+                "else",
+                "if"
+              ],
+              "r",
+              [
+                "texts",
+                [
+                  "comparedIn",
+                  "$r.condition"
+                ]
               ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "and",
+            [
+              "=",
+              "$d.subject.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$d.subject.member.name",
+              "value"
             ]
           ]
         ]

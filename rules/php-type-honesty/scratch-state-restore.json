@@ -15,7 +15,7 @@
       "python-scratch-state-restore"
     ],
     "skill": "php/type-honesty",
-    "description": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input",
+    "description": "Scratch state on `$this` \u2014 a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; \u2026 $this->scope = $prev`), the field really a per-call input",
     "rule": "Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state."
   },
   "definitions": {
@@ -24,6 +24,32 @@
         "x"
       ],
       "expr": "$x.member.name"
+    },
+    "nameOfNode": {
+      "args": [
+        "x"
+      ],
+      "expr": "$x.name"
+    },
+    "savedName": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "declarator": "$d.binding.name"
+        },
+        [
+          "nameOfNode",
+          [
+            "at",
+            "$d.targets",
+            0
+          ]
+        ]
+      ]
     },
     "restores": {
       "args": [
@@ -58,16 +84,81 @@
           "$n"
         ]
       ]
+    },
+    "savedFrom": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "declarator": "$d.initializer"
+        },
+        [
+          "at",
+          "$d.values",
+          0
+        ]
+      ]
     }
   },
   "find": {
-    "select": "declarator",
+    "select": [
+      "declarator",
+      "assignment"
+    ],
     "as": "d",
     "where": [
       "and",
       [
-        "tree.selfField",
-        "$d.initializer"
+        "case",
+        "$d.kind",
+        {
+          "declarator": [
+            "tree.selfField",
+            "$d.initializer"
+          ],
+          "assignment": [
+            "and",
+            [
+              "in",
+              "$d.mode",
+              "assign",
+              "define"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$d.targets"
+              ],
+              1
+            ],
+            [
+              "in",
+              [
+                "tree.kindOf",
+                [
+                  "at",
+                  "$d.targets",
+                  0
+                ]
+              ],
+              "reference",
+              "binding"
+            ],
+            [
+              "tree.selfField",
+              [
+                "at",
+                "$d.values",
+                0
+              ]
+            ]
+          ]
+        },
+        false
       ],
       [
         "exists",
@@ -81,11 +172,20 @@
     "let": [
       [
         "field",
-        "$d.initializer.member.name"
+        [
+          "memberOf",
+          [
+            "savedFrom",
+            "$d"
+          ]
+        ]
       ],
       [
         "saved",
-        "$d.binding.name"
+        [
+          "savedName",
+          "$d"
+        ]
       ],
       [
         "assigned",
@@ -164,6 +264,71 @@
                 "restores",
                 "$w",
                 "$saved"
+              ]
+            ]
+          ]
+        ],
+        [
+          "not",
+          [
+            "some",
+            [
+              "ownDescendants",
+              [
+                "enclosing",
+                "$d",
+                "function"
+              ]
+            ],
+            "x",
+            [
+              "and",
+              [
+                ">",
+                "$x.line",
+                "$d.line"
+              ],
+              [
+                "<",
+                "$x.line",
+                "$back.line"
+              ],
+              [
+                "or",
+                [
+                  "=",
+                  "$x.kind",
+                  "yield"
+                ],
+                [
+                  "and",
+                  [
+                    "=",
+                    "$x.kind",
+                    "call"
+                  ],
+                  [
+                    "=",
+                    "$x.callee.kind",
+                    "reference"
+                  ],
+                  [
+                    "some",
+                    [
+                      "list",
+                      [
+                        "declarationOf",
+                        "$x.callee"
+                      ]
+                    ],
+                    "q",
+                    [
+                      "=",
+                      "$q.parent.kind",
+                      "parameter"
+                    ]
+                  ]
+                ]
               ]
             ]
           ]

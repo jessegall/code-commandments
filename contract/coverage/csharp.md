@@ -9,7 +9,7 @@ and calls inside are still read) or translates with a loss, and why.
 | `fixed`, `stackalloc`, `checked(...)`, `sizeof`, `typeof`, `nameof` as written | `unsupported` | no kind; the names inside are still read |
 | a query expression (`from … select`) | `unsupported` | no kind for a query |
 | a range `a..b`, an index from the end `^1` | `unsupported` | no kind for a range |
-| `x is` with a recursive, relational or list pattern | `unsupported`, construct `is-pattern` | only `is null`, `is not null`, `is T` and `is T t` are translated |
+| `x is` with a recursive, relational or list pattern | `unsupported`, construct `is-pattern` | `is null`, `is T`, `is T t` and an `is` over constants (`is "a" or "b"`, read as the comparisons it means) are translated |
 | a using declaration `using var x = …;` | `variable` form `using` | its release at the end of the scope is not a `resource-scope` yet |
 | an indexer's parameters | absent | the indexer is a `field` named `this`; its parameters are not written |
 | a type parameter's constraints | absent | `where T : …` clauses are not joined to their `type-parameter` |

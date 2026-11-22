@@ -187,6 +187,7 @@ func (c Command) trace(in *cli.Input, root string, console cli.Console) (int, er
 	if folder, set := in.Option("within"); set {
 		within = folder
 	}
+	traced = configuredIn(within, traced)
 
 	var languages []source.Language
 	for _, judged := range traced.Engines() {
@@ -219,6 +220,24 @@ func (c Command) trace(in *cli.Input, root string, console cli.Console) (int, er
 	}
 
 	return 0, nil
+}
+
+func configuredIn(folder string, traced rule.Rule) rule.Rule {
+	configured, err := config.Load(folder)
+	if err != nil {
+		return traced
+	}
+	enabled, err := configured.Enabled(config.Everything)
+	if err != nil {
+		return traced
+	}
+	for _, each := range enabled {
+		if tuned, isRule := each.(rule.Rule); isRule && tuned.Name() == traced.Name() {
+			return tuned
+		}
+	}
+
+	return traced
 }
 
 func linesAsked(in *cli.Input) (int, int, bool) {

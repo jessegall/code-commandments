@@ -4,6 +4,7 @@ from shop.slot_board import SlotBoard
 
 
 class SlotNotices:
+    # @sin ConcreteCrossModuleDependency
     def __init__(self, board: SlotBoard) -> None:
         self.board = board
 

@@ -37,21 +37,50 @@
           "$c.entries",
           "e",
           [
-            "and",
+            "or",
             [
-              "=",
-              "$e.key.kind",
-              "literal"
+              "and",
+              [
+                "=",
+                "$e.key.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$e.key.literalKind",
+                "string"
+              ]
             ],
             [
-              "=",
-              "$e.key.literalKind",
-              "string"
+              "and",
+              [
+                "=",
+                "$c.form",
+                "object"
+              ],
+              [
+                "=",
+                "$e.key.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$e.key.form",
+                "name"
+              ]
             ]
           ]
         ],
         "e",
-        "$e.key.value"
+        [
+          "case",
+          "$e.key.kind",
+          {
+            "literal": "$e.key.value",
+            "reference": "$e.key.name"
+          },
+          ""
+        ]
       ]
     },
     "kindOf": {
@@ -59,39 +88,114 @@
         "t"
       ],
       "expr": "$t.kind"
+    },
+    "bagOf": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        "$v.kind",
+        {
+          "collection": "$v",
+          "construction": "$v.initializer"
+        },
+        null
+      ]
     }
   },
   "find": {
-    "select": "return",
+    "select": [
+      "return",
+      "function"
+    ],
     "as": "r",
     "where": [
-      "=",
-      [
-        "count",
-        "$r.values"
-      ],
-      1
+      "case",
+      "$r.kind",
+      {
+        "return": [
+          "=",
+          [
+            "count",
+            "$r.values"
+          ],
+          1
+        ],
+        "function": [
+          "and",
+          [
+            "in",
+            "$r.form",
+            "function",
+            "method"
+          ],
+          [
+            "exists",
+            "$r.body"
+          ],
+          [
+            "!=",
+            "$r.body.kind",
+            "block"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$r.obligations"
+            ],
+            0
+          ]
+        ]
+      },
+      false
     ],
     "let": [
       [
-        "value",
+        "owner",
         [
-          "at",
-          "$r.values",
-          0
+          "case",
+          "$r.kind",
+          {
+            "function": "$r"
+          },
+          [
+            "enclosing",
+            "$r",
+            "function"
+          ]
         ]
       ],
       [
-        "function",
+        "value",
         [
-          "enclosing",
-          "$r",
-          "function"
+          "bagOf",
+          [
+            "case",
+            "$r.kind",
+            {
+              "return": [
+                "at",
+                "$r.values",
+                0
+              ]
+            },
+            "$r.body"
+          ]
         ]
       ]
     ],
     "having": [
       "and",
+      [
+        "exists",
+        "$owner"
+      ],
+      [
+        "exists",
+        "$value"
+      ],
       [
         "=",
         "$value.kind",
@@ -114,12 +218,12 @@
           "not",
           [
             "exists",
-            "$function.returnType"
+            "$owner.returnType"
           ]
         ],
         [
           "tree.looseRecord",
-          "$function.resolved.returns"
+          "$owner.resolved.returns"
         ]
       ],
       [
@@ -127,22 +231,73 @@
         [
           "and",
           [
+            "exists",
+            "$owner.returnType"
+          ],
+          [
             "=",
-            "$function.resolved.returns.kind",
+            "$owner.resolved.returns.kind",
             "map"
           ],
           [
             "=",
             [
-              "kindOf",
+              "tree.kindOf",
               [
                 "at",
-                "$function.resolved.returns.args",
+                "$owner.resolved.returns.args",
                 1
               ]
             ],
             "named"
           ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$owner.form",
+          "closure",
+          "arrow",
+          "lambda"
+        ]
+      ],
+      [
+        "tree.notOverriding",
+        "$owner"
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "contract-method",
+            "$owner"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "boundary",
+            "$owner"
+          ]
+        ]
+      ],
+      [
+        "none",
+        "$value.entries",
+        "e",
+        [
+          "in",
+          "$e.expansion",
+          "positional",
+          "keyed"
         ]
       ]
     ],

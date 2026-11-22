@@ -16,7 +16,6 @@ final class ZoneResolver
     /**
      * @return array<int, string>
      */
-    #[Sinful(MatchDefaultReturnsNull::class)]
     public function rates(string $country): array
     {
         return match ($country) {

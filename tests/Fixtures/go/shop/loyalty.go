@@ -29,6 +29,7 @@ func Bonus(member Member) int {
 }
 
 // Redeem spends points, or says why it cannot.
+// @sin FeatureEnvy
 func Redeem(member Member, cost int) (Member, string) {
 	// @sin DuplicatedBranchTail
 	// @sin RedundantElse
@@ -41,6 +42,7 @@ func Redeem(member Member, cost int) (Member, string) {
 }
 
 // Expire clears a member's points once they lapse.
+// @sin FeatureEnvy
 func Expire(member Member, lapsed bool) Member {
 	if !lapsed {
 		return member
@@ -56,6 +58,7 @@ func Expire(member Member, lapsed bool) Member {
 // @fixed UnreachableStatement
 
 // ExpireLapsed clears a lapsed member's points with nothing written after it leaves.
+// @sin FeatureEnvy
 func ExpireLapsed(member Member, lapsed bool) Member {
 	if !lapsed {
 		return member
@@ -68,6 +71,7 @@ func ExpireLapsed(member Member, lapsed bool) Member {
 // @righteous UnreachableStatement
 
 // Settle jumps to a label below its return, so the code after the return still runs.
+// @sin FeatureEnvy
 func Settle(member Member) Member {
 	if member.Points < 0 {
 		goto reset

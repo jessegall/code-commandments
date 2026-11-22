@@ -9,6 +9,7 @@ class Line:
         self.promotion = promotion
 
 
+# @sin FeatureEnvy
 def price(line: Line) -> int:
     # @sin RedundantElse
     if line.promotion is not None:
@@ -19,6 +20,7 @@ def price(line: Line) -> int:
 
 
 # @fixed RedundantElse
+# @sin FeatureEnvy
 def price_of(line: Line) -> int:
     if line.promotion is not None:
         return line.promotion.apply(line.unit_price) * line.quantity

@@ -38,7 +38,7 @@ final class ShipmentWire
             'tracking' => $this->tracking->toWire(),
             'legs' => $this->legs === null
                 ? null
-                : array_map(static fn (self $leg): array => $leg->toWire(), $this->legs),
+                : array_map(static fn (self $leg) => $leg->toWire(), $this->legs),
         ];
     }
 

@@ -2,10 +2,8 @@
 # decision needs one.
 
 
+# @sin DictBag
 def discounted(price: int, rule: dict) -> int:
-    # @sin DictBag
     if rule.get("kind") == "percent":
-        # @sin DictBag
         return price - price * rule.get("amount") // 100
-    # @sin DictBag
     return price - rule.get("amount")

@@ -3,6 +3,7 @@
 namespace Shop\Fulfillment\Branches;
 
 use JesseGall\CodeCommandments\Sins\Backend\DuplicatedBranchTail;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /**
@@ -13,6 +14,7 @@ final class StockSweep
     /**
      * @var array<string, int>
      */
+    #[Sinful(UnusedPrivateMember::class)]
     private array $stamped = [];
 
     /**

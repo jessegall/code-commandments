@@ -1044,7 +1044,7 @@ final class Translator
         return match ($name) {
             'true', 'false' => $this->of('literal', $fetch, ['literalKind' => 'boolean'])->with('value', $name === 'true'),
             'null' => $this->of('literal', $fetch, ['literalKind' => 'null']),
-            default => $this->of('reference', $fetch, ['name' => $fetch->name->toString(), 'form' => 'name']),
+            default => $this->of('reference', $fetch, ['name' => $fetch->name->toString(), 'form' => 'name', 'refers' => ltrim($fetch->name->toString(), '\\')]),
         };
     }
 

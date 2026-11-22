@@ -22,18 +22,69 @@
     }
   },
   "definitions": {
-    "private": {
+    "hidden": {
       "args": [
         "m"
       ],
       "expr": [
-        "some",
-        "$m.modifiers",
-        "x",
+        "or",
         [
-          "=",
-          "$x",
-          "private"
+          "some",
+          "$m.modifiers",
+          "x",
+          [
+            "=",
+            "$x",
+            "private"
+          ]
+        ],
+        [
+          "in",
+          "$m.effective.visibility",
+          "private",
+          "package"
+        ]
+      ]
+    },
+    "overwritten": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$r",
+            "assignment",
+            "function"
+          ]
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "assignment"
+          ],
+          [
+            "in",
+            "$a.mode",
+            "assign",
+            "define"
+          ],
+          [
+            "some",
+            "$a.targets",
+            "t",
+            [
+              "within",
+              "$r",
+              "$t"
+            ]
+          ]
         ]
       ]
     }
@@ -51,7 +102,7 @@
         "function": [
           "and",
           [
-            "private",
+            "hidden",
             "$m"
           ],
           [
@@ -68,11 +119,18 @@
             0
           ],
           [
-            "exists",
+            "or",
             [
-              "enclosing",
-              "$m",
-              "type"
+              "exists",
+              [
+                "enclosing",
+                "$m",
+                "type"
+              ]
+            ],
+            [
+              "exists",
+              "$m.receiver"
             ]
           ]
         ],
@@ -84,30 +142,76 @@
             "field"
           ],
           [
-            "private",
-            "$m.parent"
+            "some",
+            "$m.parent.modifiers",
+            "x",
+            [
+              "=",
+              "$x",
+              "private"
+            ]
           ]
         ]
       },
       false
     ],
-    "having": [
-      "=",
+    "let": [
       [
-        "count",
+        "named",
         [
-          "referrers",
-          [
-            "case",
-            "$m.kind",
-            {
-              "declarator": "$m.binding"
-            },
-            "$m"
-          ]
+          "case",
+          "$m.kind",
+          {
+            "declarator": "$m.binding"
+          },
+          "$m"
         ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        [
+          "count",
+          [
+            "filter",
+            [
+              "referrers",
+              "$named"
+            ],
+            "r",
+            [
+              "not",
+              [
+                "overwritten",
+                "$r"
+              ]
+            ]
+          ]
+        ],
+        0
       ],
-      0
+      [
+        "none",
+        [
+          "ownDescendants",
+          [
+            "last",
+            [
+              "ownAncestors",
+              "$m"
+            ]
+          ],
+          "literal"
+        ],
+        "l",
+        [
+          "=",
+          "$l.value",
+          "$named.name"
+        ]
+      ]
     ],
     "emit": "$m"
   }

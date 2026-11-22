@@ -1,5 +1,26 @@
 <script setup lang="ts">
-import type { Storefront } from '@/types';
+interface StoreLink {
+  id: string;
+  label: string;
+}
+
+interface StatLine {
+  shown: string;
+}
+
+interface Storefront {
+  name: string;
+  open: boolean;
+  campaign: { theme: string; title: string; subtitle: string };
+  links: StoreLink[];
+  featured: { product: { name: string } };
+  featuredPrice: string;
+  hours: string;
+  location: string;
+  rating: number;
+  stats: Record<string, StatLine>;
+  [field: string]: unknown;
+}
 
 defineProps<{ storefront: Storefront }>();
 </script>

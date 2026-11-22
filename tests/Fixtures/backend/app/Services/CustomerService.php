@@ -25,17 +25,11 @@ final class CustomerService
     #[Sinful(FacadeCall::class)]
     public function greeting(Request $request): string
     {
-        $customer = $this->find($request->input('email'));
-
-        if ($customer === null) {
-            return 'Hello, guest';
-        }
-
-        return 'Hello, ' . Cache::get('name:' . $customer->id, $customer->name);
+        return 'Hello, ' . Cache::get('name:' . $this->find($request->input('email'))->id, 'guest');
     }
 
     public function isRegistered(string $email): bool
     {
-        return $this->find($email) !== null;
+        return $this->find($email)->exists;
     }
 }

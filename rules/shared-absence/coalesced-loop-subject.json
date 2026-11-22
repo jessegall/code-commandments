@@ -20,7 +20,12 @@
     "suggestion": "Handle missing input before iteration or require a collection."
   },
   "find": {
-    "select": "fallback",
+    "select": [
+      "fallback",
+      "logical",
+      "conditional",
+      "call"
+    ],
     "as": "f",
     "where": [
       "and",
@@ -35,48 +40,163 @@
         "loop"
       ],
       [
+        "case",
+        "$f.kind",
+        {
+          "logical": [
+            "=",
+            "$f.operator",
+            "or"
+          ],
+          "call": [
+            "proven",
+            [
+              "hasEffect",
+              "$f",
+              "reads-with-default"
+            ]
+          ]
+        },
+        true
+      ]
+    ],
+    "let": [
+      [
+        "heads",
+        [
+          "case",
+          "$f.kind",
+          {
+            "fallback": [
+              "map",
+              [
+                "follow",
+                "$f",
+                "replacement",
+                "fallback"
+              ],
+              "g",
+              "$g.subject"
+            ],
+            "logical": [
+              "list",
+              "$f.left"
+            ],
+            "conditional": [
+              "list",
+              "$f.consequent"
+            ],
+            "call": [
+              "list",
+              "$f.callee.subject"
+            ]
+          },
+          [
+            "list"
+          ]
+        ]
+      ],
+      [
+        "tail",
+        [
+          "case",
+          "$f.kind",
+          {
+            "fallback": [
+              "last",
+              [
+                "map",
+                [
+                  "follow",
+                  "$f",
+                  "replacement",
+                  "fallback"
+                ],
+                "g",
+                "$g.replacement"
+              ]
+            ],
+            "logical": "$f.right",
+            "conditional": "$f.alternative",
+            "call": [
+              "tree.valueAt",
+              "$f",
+              1
+            ]
+          },
+          null
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
         "tree.emptyCollection",
-        "$f.replacement"
+        "$tail"
       ],
       [
         "some",
+        "$heads",
+        "h",
         [
-          "tree.insideOf",
-          "$f.subject"
-        ],
-        "r",
-        [
-          "and",
+          "or",
           [
-            "=",
-            "$r.kind",
-            "reference"
-          ],
-          [
-            "or",
+            "proven",
             [
-              "=",
+              "isNullable",
               [
-                "fingerprint",
-                "$r",
-                "exact"
-              ],
-              [
-                "fingerprint",
-                "$f.subject",
-                "exact"
+                "typeOf",
+                "$h"
               ]
-            ],
-            [
-              "=",
-              "$r.role",
-              "subject"
             ]
           ],
           [
-            "=",
-            "$r.binding.parent.kind",
-            "parameter"
+            "some",
+            [
+              "tree.insideOf",
+              "$h"
+            ],
+            "r",
+            [
+              "and",
+              [
+                "=",
+                "$r.kind",
+                "reference"
+              ],
+              [
+                "not",
+                [
+                  "isSelf",
+                  "$r"
+                ]
+              ],
+              [
+                "exists",
+                "$r.binding"
+              ],
+              [
+                "or",
+                [
+                  "=",
+                  [
+                    "fingerprint",
+                    "$r",
+                    "exact"
+                  ],
+                  [
+                    "fingerprint",
+                    "$h",
+                    "exact"
+                  ]
+                ],
+                [
+                  "=",
+                  "$r.role",
+                  "subject"
+                ]
+              ]
+            ]
           ]
         ]
       ]

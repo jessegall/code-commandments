@@ -73,9 +73,11 @@
     "where": [
       "and",
       [
-        "=",
-        "$f.resolved.returns.nullable",
-        true
+        "isNullable",
+        [
+          "typeOf",
+          "$f"
+        ]
       ],
       [
         "tree.notOverriding",

@@ -24,29 +24,19 @@
         "t"
       ],
       "expr": [
-        "or",
+        "some",
+        [
+          "typeMembers",
+          "$t"
+        ],
+        "m",
         [
           "=",
-          "$t.kind",
-          "function"
-        ],
-        [
-          "and",
           [
-            "=",
-            "$t.kind",
-            "union"
+            "typeCategory",
+            "$m"
           ],
-          [
-            "some",
-            "$t.members",
-            "m",
-            [
-              "=",
-              "$m.kind",
-              "function"
-            ]
-          ]
+          "function"
         ]
       ]
     },
@@ -131,6 +121,26 @@
           ]
         ]
       ]
+    },
+    "admitsAbsence": {
+      "args": [
+        "p"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$p.optional",
+          true
+        ],
+        [
+          "isNullable",
+          [
+            "typeOf",
+            "$p"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -144,13 +154,15 @@
         "function"
       ],
       [
-        "=",
-        "$p.binding.resolved.nullable",
-        true
+        "admitsAbsence",
+        "$p"
       ],
       [
         "callable",
-        "$p.binding.resolved"
+        [
+          "typeOf",
+          "$p"
+        ]
       ],
       [
         "or",
@@ -194,9 +206,25 @@
             "call"
           ],
           [
-            "tree.names",
-            "$c.callee",
-            "$named"
+            "or",
+            [
+              "tree.names",
+              "$c.callee",
+              "$named"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$c.callee.kind",
+                "fallback"
+              ],
+              [
+                "tree.names",
+                "$c.callee.subject",
+                "$named"
+              ]
+            ]
           ]
         ]
       ],

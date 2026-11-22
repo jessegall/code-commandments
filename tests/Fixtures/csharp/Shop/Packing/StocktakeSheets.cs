@@ -6,6 +6,7 @@ namespace Shop.Packing;
 public sealed class StocktakeSheets
 {
     // @sin UnreadCollaborator
+    // @sin UnusedPrivateMember
     private readonly ITakeLedger ledger;
 
     private readonly IReadOnlyDictionary<string, int> expected;

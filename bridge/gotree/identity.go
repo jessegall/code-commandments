@@ -8,7 +8,7 @@ import (
 )
 
 var Identity = sync.OnceValue(func() string {
-	digest := sha256.Sum256([]byte(runtime.Version() + "\x00" + sourceDigest()))
+	digest := sha256.Sum256([]byte(runtime.Version() + "\x00" + standardVersion() + "\x00" + sourceDigest()))
 
 	return "go-" + hex.EncodeToString(digest[:8])
 })

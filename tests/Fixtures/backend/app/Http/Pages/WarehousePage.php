@@ -33,6 +33,6 @@ final class WarehousePage extends Data
         $totals = $this->sales->totals();
         $this->summary = $totals->summary();
         $this->home = $totals->homeLink();
-        $this->movers = Lazy::closure(fn (): array => $this->sales->movers());
+        $this->movers = Lazy::closure(fn () => $this->sales->movers());
     }
 }

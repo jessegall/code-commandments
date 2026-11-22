@@ -5,6 +5,7 @@ namespace Shop.Notifications;
 
 public sealed class DeliveredMail(string customer)
 {
+    // @sin UselessPropertyHook
     public string Subject => "Your order has arrived";
 
     // @sin NearDuplicateMethod

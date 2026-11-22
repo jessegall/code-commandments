@@ -3,6 +3,8 @@ package engine
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"path"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -37,7 +39,7 @@ type Fingerprinting struct {
 }
 
 // FingerprintModes are the modes a fingerprint is taken in.
-var FingerprintModes = []string{"exact", "normalized", "renamed", "shape", "calls", "signature", "text"}
+var FingerprintModes = []string{"exact", "normalized", "renamed", "inlined", "shape", "calls", "signature", "text"}
 
 // FingerprintAs is the subtree's fingerprint taken as asked, and whether it can be: not where a node the parser
 // recovered from or could not translate lies inside, nor for calls whose target, or a signature whose type, the
@@ -99,10 +101,17 @@ type fingerprintWalk struct {
 	numbered  map[int]int
 	recovered bool
 	entered   bool
+	standsAs  *string
 }
 
 // role is the node's role in its parent, left out for the subtree's own root: where a subtree sits is not what it is.
 func (w *fingerprintWalk) role(node *contract.Node) string {
+	if w.standsAs != nil {
+		role := *w.standsAs
+		w.standsAs = nil
+
+		return role
+	}
 	if !w.entered {
 		w.entered = true
 
@@ -139,19 +148,26 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 		out.WriteByte(')')
 
 		return
-	case node.Kind == "literal" && (normalize || w.how.LiteralKinds):
-		out.WriteString("(literal|" + node.LiteralKind + ")")
+	case (node.Kind == "literal" || node.Kind == "text") && (normalize || w.how.LiteralKinds):
+		out.WriteString("(" + node.Kind + "|" + node.LiteralKind + ")")
 
 		return
-	case node.Kind == "literal" && node.Value != nil:
+	case (node.Kind == "literal" || node.Kind == "text") && node.Value != nil:
 		written, _ := node.Value.MarshalJSON()
-		out.WriteString("(literal|" + node.LiteralKind + "|" + string(written) + ")")
+		out.WriteString("(" + node.Kind + "|" + node.LiteralKind + "|" + string(written) + ")")
 
 		return
-	case node.Kind == "reference" && normalize && role != "callee":
+	case node.Kind == "reference" && normalize && !namesTheCalled(m, role):
 		out.WriteString("(reference)")
 
 		return
+	case w.how.Mode == "inlined" && node.Kind == "reference" && len(node.Linked("binding")) == 1:
+		if value, once := m.assignedOnce(node.Linked("binding")[0]); once {
+			w.standsAs = &role
+			w.write(out, value)
+
+			return
+		}
 	case w.how.Mode == "renamed" && node.Kind == "binding":
 		out.WriteString("(binding|" + role + "|v" + w.number(node.ID) + ")")
 
@@ -165,7 +181,7 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 	if !normalize || !node.Is("declaration") {
 		out.WriteString("|" + node.Name)
 	}
-	out.WriteString("|" + node.Operator + "|" + node.Form + "|" + strings.Join(node.Modifiers, " "))
+	out.WriteString("|" + node.Operator + "|" + node.Form + "|" + strings.Join(node.Modifiers, " ") + "|" + flagsOf(node))
 	if w.how.Commutative && slices.Contains(orderFree, node.Operator) {
 		var children []string
 		for _, child := range m.statedChildren() {
@@ -182,6 +198,60 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 		}
 	}
 	out.WriteByte(')')
+}
+
+// assignedOnce is the value a local is given when its function gives it exactly one, so a guard written through it
+// reads as the guard written out.
+func (m Match) assignedOnce(binding int) (Match, bool) {
+	var given []Match
+	for _, held := range m.EnclosingFunction().Descendants() {
+		node := held.Node()
+		switch {
+		case node.ID == binding && node.InRole() == "binding" && held.Parent().Node().Kind == "declarator":
+			if value := held.Parent().Child("value"); value.Exists() {
+				given = append(given, value)
+			}
+		case node.Kind == "assignment" && (node.Mode == "assign" || node.Mode == "define"):
+			targets, values := held.ChildrenIn("targets"), held.ChildrenIn("values")
+			for at, target := range targets {
+				named := target.Node().ID == binding || slices.Contains(target.Node().Linked("binding"), binding)
+				if named && len(values) == len(targets) {
+					given = append(given, values[at])
+				} else if named {
+					return Match{}, false
+				}
+			}
+		case node.Kind == "assignment" && slices.ContainsFunc(held.ChildrenIn("targets"), func(target Match) bool {
+			return target.Node().ID == binding || slices.Contains(target.Node().Linked("binding"), binding)
+		}):
+			return Match{}, false
+		}
+	}
+	if len(given) != 1 {
+		return Match{}, false
+	}
+
+	return given[0], true
+}
+
+func flagsOf(node *contract.Node) string {
+	var flags []string
+	for _, flag := range []struct {
+		set  bool
+		name string
+	}{{node.Async, "async"}, {node.Generator, "generator"}, {node.Delegates, "delegates"}, {node.NullConditional, "null-conditional"}, {node.Negated, "negated"}, {node.Prefix, "prefix"}} {
+		if flag.set {
+			flags = append(flags, flag.name)
+		}
+	}
+
+	return strings.Join(flags, " ")
+}
+
+func namesTheCalled(m Match, role string) bool {
+	parent := m.Parent().Node()
+
+	return role == "callee" || (role == "member" && parent != nil && parent.InRole() == "callee")
 }
 
 // number is a local binding's place among the bindings the subtree names, counted in the order each first appears.
@@ -345,26 +415,39 @@ func ResolvedImports(codebase *Codebase) []ResolvedImport {
 		byPath := map[string]string{}
 		modules := map[string]bool{}
 		for _, file := range codebase.Files() {
-			if !file.dependency && file.Module != "" {
-				byPath[file.Path] = file.Module
-				modules[file.Module] = true
+			if module := FileModule(file); !file.dependency && module != "" {
+				byPath[file.Path] = module
+				modules[module] = true
 			}
 		}
 		var resolved []ResolvedImport
 		for _, file := range codebase.Files() {
-			if file.dependency || file.Module == "" {
+			if file.dependency || FileModule(file) == "" {
 				continue
 			}
 			for _, node := range file.OfKind("import") {
 				at := Match{node: node, file: file}
 				for _, to := range codebase.reached(at, byPath, modules) {
-					resolved = append(resolved, ResolvedImport{At: at, From: file.Module, To: to})
+					resolved = append(resolved, ResolvedImport{At: at, From: FileModule(file), To: to})
 				}
 			}
 		}
 
 		return resolved
 	})
+}
+
+// FileModule is the module a file is, or its folder in a language that names no modules, so a file's imports relate
+// namespaces in every language.
+func FileModule(file *File) string {
+	if file.Module != "" {
+		return file.Module
+	}
+	if folder := path.Dir(filepath.ToSlash(file.FromProject())); folder != "." {
+		return folder
+	}
+
+	return ""
 }
 
 func (c *Codebase) reached(imported Match, byPath map[string]string, modules map[string]bool) []string {

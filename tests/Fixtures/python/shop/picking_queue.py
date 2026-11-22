@@ -14,6 +14,5 @@ class PickingQueue:
         return self
 
     # @righteous NarratedCommand
-    def starts_in(self, zone: str) -> "PickingQueue":
-        self.zone = zone
-        return self
+    def starts_in(self, zone: str) -> bool:
+        return self.zone == zone

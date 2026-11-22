@@ -3,6 +3,7 @@
 namespace Shop\Checkout\Branches;
 
 use JesseGall\CodeCommandments\Sins\Backend\DuplicatedBranchTail;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedPrivateMember;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -15,6 +16,7 @@ final class RefundDesk
     /**
      * @var list<string>
      */
+    #[Sinful(UnusedPrivateMember::class)]
     private array $log = [];
 
     #[Sinful(DuplicatedBranchTail::class)]

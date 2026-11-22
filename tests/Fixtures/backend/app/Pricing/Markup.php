@@ -24,6 +24,11 @@ final class Markup
     {
         return (int) round($cents * (1 + $this->percentage / 100));
     }
+
+    public function equals(self $other): bool
+    {
+        return $this->appliedTo(100) === $other->appliedTo(100);
+    }
 }
 
 /**

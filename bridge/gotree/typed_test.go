@@ -186,19 +186,32 @@ func TestANameSaysWhatItRefersTo(t *testing.T) {
 	}
 }
 
-func TestATypeOutsideTheModuleIsUnknownRatherThanWrong(t *testing.T) {
+func TestAStandardLibraryTypeIsKnown(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "outside.go")
 
-	for _, node := range file.Nodes() {
-		if node.Resolved == nil {
-			continue
-		}
-		if node.Resolved.Text == "net/http.ResponseWriter" {
-			t.Errorf("a type from outside the module was resolved as %q", node.Resolved.Text)
-		}
-	}
+	typeNamed(t, file, "net/http.ResponseWriter")
 	if file.Resolver == nil || !file.Resolver.Ran {
 		t.Error("the file says no resolver ran on it, though its own package was checked")
+	}
+}
+
+func TestATypeOutsideTheModuleAndTheStandardLibraryIsUnknownRatherThanWrong(t *testing.T) {
+	root := module(t, map[string]string{
+		"go.mod":         "module example.com/shop\n",
+		"cart/ledger.go": "package cart\n\nimport \"github.com/acme/ledger\"\n\nfunc Book(entry ledger.Entry) { entry.Post() }\n",
+	})
+	var written bytes.Buffer
+	if err := gotree.Write(&written, []string{root}, nil); err != nil {
+		t.Fatalf("the bridge wrote nothing: %v", err)
+	}
+	stream, err := contract.ReadAll(bytes.NewReader(written.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, node := range fileNamed(t, stream, "ledger.go").Nodes() {
+		if node.Resolved != nil && node.Resolved.Text == "github.com/acme/ledger.Entry" {
+			t.Errorf("a type of a package nobody read was resolved as %q", node.Resolved.Text)
+		}
 	}
 }
 
@@ -277,5 +290,17 @@ func TestTheWholeModuleAlwaysWritesTheSameStream(t *testing.T) {
 	}
 	if !bytes.Equal(once.Bytes(), again.Bytes()) {
 		t.Error("two runs over the same module wrote two different streams")
+	}
+}
+
+func TestTheStandardLibraryIsReadOnceAProcess(t *testing.T) {
+	typedStream(t)
+	read := gotree.StandardPackagesRead()
+	if read == 0 {
+		t.Fatal("net/http was imported, yet no package of the standard library was read")
+	}
+	typedStream(t)
+	if again := gotree.StandardPackagesRead(); again != read {
+		t.Errorf("a second run read the standard library again: %d packages, then %d", read, again)
 	}
 }

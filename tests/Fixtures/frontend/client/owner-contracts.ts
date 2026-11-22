@@ -60,6 +60,7 @@ export class ReceiptHistory {
     }
 
     tag(key: string): string | undefined {
+        // @sin NullableRegistryLookup
         return this.tags[key]
     }
 }
@@ -90,8 +91,12 @@ export class DispatchReceipt {
     }
 }
 
+interface DiscountShape {
+    cents: number
+}
+
 // @righteous RedundantArrowReturnType
-export const stableDiscount = (price: number): number | undefined => price > 0 ? price : undefined
+export const stableDiscount = (cents: number): DiscountShape => ({ cents })
 
 // @fixed RedundantArrowReturnType
 export const netDiscount = (price: number) => price - 1

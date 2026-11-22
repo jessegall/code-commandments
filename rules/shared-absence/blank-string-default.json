@@ -17,10 +17,7 @@
     "skill": "shared/absence",
     "description": "A blank string default stands for a missing required value",
     "rule": "Require the text or give absence its own type.",
-    "suggestion": "Require the text or give absence its own type.",
-    "reporting": {
-      "crossFile": true
-    }
+    "suggestion": "Require the text or give absence its own type."
   },
   "definitions": {
     "blank": {
@@ -28,21 +25,53 @@
         "x"
       ],
       "expr": [
-        "and",
+        "or",
         [
-          "=",
-          "$x.kind",
-          "literal"
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$x.literalKind",
+            "string"
+          ],
+          [
+            "=",
+            "$x.value",
+            ""
+          ]
         ],
         [
-          "=",
-          "$x.literalKind",
-          "string"
+          "and",
+          [
+            "=",
+            "$x.constantValue.type",
+            "string"
+          ],
+          [
+            "=",
+            "$x.constantValue.value",
+            ""
+          ]
         ],
         [
-          "=",
-          "$x.value",
-          ""
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "access"
+          ],
+          [
+            "has",
+            [
+              "identities",
+              "empty-text"
+            ],
+            "$x.member.refers"
+          ]
         ]
       ]
     },
@@ -52,90 +81,82 @@
         "n"
       ],
       "expr": [
-        "or",
+        "and",
         [
-          "and",
-          [
-            "in",
-            "$x.kind",
-            "if",
-            "loop",
-            "conditional"
-          ],
-          [
-            "tree.names",
-            "$x.condition",
-            "$n"
-          ]
+          "tree.names",
+          "$x",
+          "$n"
         ],
         [
-          "and",
+          "some",
           [
-            "=",
-            "$x.kind",
-            "comparison"
+            "ownAncestors",
+            "$x"
           ],
-          [
-            "=",
-            [
-              "count",
-              "$x.operands"
-            ],
-            2
-          ],
-          [
-            "every",
-            "$x.operators",
-            "o",
-            [
-              "in",
-              "$o",
-              "equal",
-              "not-equal",
-              "identical",
-              "not-identical"
-            ]
-          ],
+          "a",
           [
             "or",
             [
               "and",
               [
-                "tree.names",
-                [
-                  "at",
-                  "$x.operands",
-                  0
-                ],
-                "$n"
+                "in",
+                "$a.kind",
+                "if",
+                "loop",
+                "conditional"
               ],
               [
-                "blank",
+                "within",
+                "$x",
+                "$a.condition"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "comparison"
+              ],
+              [
+                "some",
+                "$a.operands",
+                "o",
                 [
-                  "at",
-                  "$x.operands",
-                  1
+                  "blank",
+                  "$o"
                 ]
               ]
             ],
             [
               "and",
               [
-                "tree.names",
-                [
-                  "at",
-                  "$x.operands",
-                  1
-                ],
-                "$n"
+                "=",
+                "$a.kind",
+                "unary"
               ],
               [
-                "blank",
-                [
-                  "at",
-                  "$x.operands",
-                  0
-                ]
+                "=",
+                "$a.operator",
+                "not"
+              ],
+              [
+                "within",
+                "$x",
+                "$a.operand"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "fallback"
+              ],
+              [
+                "within",
+                "$x",
+                "$a.subject"
               ]
             ]
           ]
@@ -180,24 +201,34 @@
       [
         "read",
         [
-          "case",
-          "$d.kind",
-          {
-            "parameter": [
-              "ownDescendants",
-              "$d.parent.body"
-            ]
-          },
+          "flatten",
           [
-            "flatten",
+            "list",
             [
-              "map",
-              "$d.parent.parent.writtenMembers",
-              "m",
+              "case",
+              "$d.kind",
+              {
+                "parameter": [
+                  "ownDescendants",
+                  "$d.parent.body"
+                ]
+              },
               [
-                "ownDescendants",
-                "$m.body"
+                "flatten",
+                [
+                  "map",
+                  "$d.parent.parent.writtenMembers",
+                  "m",
+                  [
+                    "ownDescendants",
+                    "$m.body"
+                  ]
+                ]
               ]
+            ],
+            [
+              "referrers",
+              "$d.binding"
             ]
           ]
         ]

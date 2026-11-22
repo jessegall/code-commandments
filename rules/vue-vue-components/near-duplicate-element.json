@@ -10,7 +10,7 @@
       "NearDuplicateElement"
     ],
     "skill": "vue/vue-components",
-    "description": "Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates",
+    "description": "Markup with one skeleton repeated 2+ times \u2014 the same tags, attributes and nesting binding different data \u2014 within a template, across components, or as two components' whole templates",
     "rule": "Extract markup that repeats with different data into one component, and pass what differs as props.",
     "suggestion": "Make the shared skeleton a component; each place that repeated it renders the component with its own data.",
     "reporting": {
@@ -20,7 +20,7 @@
   "parameters": {
     "elements": {
       "type": "number",
-      "default": 6,
+      "default": 7,
       "description": "How many elements a block holds at least before a near copy of it counts."
     }
   },

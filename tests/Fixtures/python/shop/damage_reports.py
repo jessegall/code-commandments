@@ -27,6 +27,6 @@ class DamageReport:
 
         return heading + "\n" + "\n".join(sorted(self._notes))
 
-    # @sin HandedOutCollection
     def aisles(self) -> set[str]:
+        # @sin HandedOutCollection
         return self._aisles

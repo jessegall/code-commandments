@@ -14,6 +14,7 @@ func printShelfLabel(labels <-chan string, print func(string) error) (*string, e
 	return &label, nil
 }
 
+// @sin NearDuplicateFunction
 func printForOrder(order string, print func() error) error {
 	if err := print(); err != nil {
 		// @sin WrappingWithoutCause
@@ -24,6 +25,7 @@ func printForOrder(order string, print func() error) error {
 }
 
 // @fixed WrappingWithoutCause
+// @sin NearDuplicateFunction
 func printWithCause(order string, print func() error) error {
 	if err := print(); err != nil {
 		return fmt.Errorf("order %s label: %w", order, err)

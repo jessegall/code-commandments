@@ -10,7 +10,6 @@ class ShelfProduct:
 
 
 class StockBadge:
-    # @sin ComputedBooleanArgument
     def colour(self, low: bool, discontinued: bool) -> str:
         if discontinued:
             return "grey"
@@ -28,10 +27,12 @@ class StockBadge:
 
 
 def shelf_badge(product: ShelfProduct, badge: StockBadge) -> str:
+    # @sin ComputedBooleanArgument
     return badge.colour(product.stock < 5, product.retired)
 
 
 def search_badge(product: ShelfProduct, badge: StockBadge) -> str:
+    # @sin ComputedBooleanArgument
     return badge.colour(low=product.stock < 5, discontinued=product.retired)
 
 

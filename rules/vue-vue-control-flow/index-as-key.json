@@ -89,9 +89,12 @@
       [
         "not",
         [
-          "=",
-          "$loop.iterable.resolved.element.kind",
-          "keyword"
+          "proven",
+          [
+            "=",
+            "$loop.iterable.resolved.element.kind",
+            "keyword"
+          ]
         ]
       ]
     ],

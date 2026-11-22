@@ -3,10 +3,10 @@
 # collaborator for something and keeping it, and a class calling its own helper.
 
 
-# @sin ConstructorSideEffect
 class ReceiptPrinter:
     def __init__(self, device) -> None:
         self.device = device
+        # @sin ConstructorSideEffect
         self.device.open()
 
     def print(self, lines: list) -> None:

@@ -10,9 +10,9 @@
       "ConstantProperty"
     ],
     "skill": "python/type-honesty",
-    "description": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one.",
+    "description": "an `@property` whose body never reads `self` \u2014 `return \"box\"` \u2014 a stored value made to look like a computed one.",
     "rule": "A `@property` must derive from the object; a value it never reads `self` for is a class attribute.",
-    "suggestion": "`kind = \"box\"` on the class — or a `ClassVar` — and the property goes."
+    "suggestion": "`kind = \"box\"` on the class \u2014 or a `ClassVar` \u2014 and the property goes."
   },
   "find": {
     "select": "function",
@@ -40,13 +40,16 @@
           "count",
           "$f.parameters"
         ],
-        1
+        0
       ],
       [
         "=",
         [
           "count",
-          "$f.body.statements"
+          [
+            "statementsOf",
+            "$f"
+          ]
         ],
         1
       ],
@@ -56,7 +59,10 @@
           "tree.kindOf",
           [
             "at",
-            "$f.body.statements",
+            [
+              "statementsOf",
+              "$f"
+            ],
             0
           ]
         ],
@@ -76,7 +82,10 @@
         "first",
         [
           "at",
-          "$f.body.statements",
+          [
+            "statementsOf",
+            "$f"
+          ],
           0
         ]
       ],
@@ -113,12 +122,27 @@
         ],
         "x",
         [
-          "in",
-          "$x.kind",
-          "reference",
-          "call",
-          "access",
-          "index"
+          "or",
+          [
+            "in",
+            "$x.kind",
+            "call",
+            "access",
+            "index"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "reference"
+            ],
+            [
+              "!=",
+              "$x.role",
+              "callee"
+            ]
+          ]
         ]
       ],
       [
@@ -152,22 +176,46 @@
         [
           "count",
           [
-            "filter",
-            [
-              "referrers",
-              "$f"
-            ],
-            "r",
-            [
-              "=",
-              "$r.role",
-              "overrides"
-            ]
+            "overriders",
+            "$f"
           ]
         ],
         0
       ]
     ],
     "emit": "$f"
+  },
+  "definitions": {
+    "statementsOf": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "filter",
+        "$f.body.statements",
+        "s",
+        [
+          "not",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "expression-statement"
+            ],
+            [
+              "=",
+              "$s.expression.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$s.expression.literalKind",
+              "string"
+            ]
+          ]
+        ]
+      ]
+    }
   }
 }

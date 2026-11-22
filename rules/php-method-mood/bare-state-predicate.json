@@ -16,9 +16,9 @@
       "python-bare-state-predicate"
     ],
     "skill": "php/method-mood",
-    "description": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs",
-    "rule": "A `bool` answering about the object itself wears a question: `isBound()`, `isSpinning()`, `hasParent()`, `awaitsAnswer()`. (A predicate that takes what it compares against — `contains(\\$item)`, `matches(\\$name)` — is already a sentence and stays as it is.)",
-    "suggestion": "make it a question: `is…`, `has…`, `can…`, `awaits…`",
+    "description": "A `bool` about the object's own state named as a bare verb \u2014 `binds()`, `spins()` \u2014 where a question belongs",
+    "rule": "A `bool` answering about the object itself wears a question: `isBound()`, `isSpinning()`, `hasParent()`, `awaitsAnswer()`. (A predicate that takes what it compares against \u2014 `contains(\\$item)`, `matches(\\$name)` \u2014 is already a sentence and stays as it is.)",
+    "suggestion": "make it a question: `is\u2026`, `has\u2026`, `can\u2026`, `awaits\u2026`",
     "reporting": {
       "crossFile": true
     }
@@ -41,10 +41,55 @@
         0
       ],
       [
-        "in",
-        "$f.resolved.returns.name",
-        "bool",
-        "boolean"
+        "or",
+        [
+          "=",
+          [
+            "typeCategory",
+            [
+              "typeOf",
+              "$f"
+            ]
+          ],
+          "boolean"
+        ],
+        [
+          "some",
+          [
+            "siblings",
+            "$f"
+          ],
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "field"
+            ],
+            [
+              "some",
+              "$m.hooks",
+              "h",
+              [
+                "=",
+                "$h",
+                "$f"
+              ]
+            ],
+            [
+              "=",
+              [
+                "typeCategory",
+                [
+                  "typeOf",
+                  "$m"
+                ]
+              ],
+              "boolean"
+            ]
+          ]
+        ]
       ],
       [
         "reads",

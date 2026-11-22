@@ -12,7 +12,6 @@ public static class BucketFormats
 {
     public static string? FormatFor(Granularity granularity)
     {
-        // @sin MatchDefaultReturnsNull
         switch (granularity)
         {
             case Granularity.Hourly:
@@ -21,6 +20,7 @@ public static class BucketFormats
                 return "dd MMM";
             case Granularity.Monthly:
                 return "MMM yyyy";
+            // @sin MatchDefaultReturnsNull
             default:
                 return default;
         }

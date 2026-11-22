@@ -38,15 +38,16 @@
           "comparison": [
             "case",
             [
-              "in",
-              "$c.right.kind",
-              "literal",
-              "access"
+              "proven",
+              [
+                "isConstant",
+                "$c.left"
+              ]
             ],
             {
-              "true": "$c.left"
+              "true": "$c.right"
             },
-            "$c.right"
+            "$c.left"
           ]
         },
         "$c"

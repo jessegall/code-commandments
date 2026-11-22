@@ -234,9 +234,9 @@ export class Translator {
                 .holds('returnType', node.type && this.type(node.type))
         }
         if (ts.isTupleTypeNode(node)) {
-            return this.new('tuple-type', node).holdsAll('elements', node.elements.map((element) => ts.isNamedTupleMember(element)
+            return this.resolvedAs(this.new('tuple-type', node).holdsAll('elements', node.elements.map((element) => ts.isNamedTupleMember(element)
                 ? this.new('tuple-element', element).fact('label', element.name.text).holds('type', this.type(element.type))
-                : this.new('tuple-element', element).holds('type', this.type(element))))
+                : this.new('tuple-element', element).holds('type', this.type(element)))), node)
         }
         if (ts.isTypeQueryNode(node) || ts.isTypeReferenceNode(node)) return this.new('type-expression', node).fact('form', 'named')
 
@@ -645,7 +645,7 @@ export class Translator {
         }
         if (operator === ts.SyntaxKind.InstanceOfKeyword) {
             return this.new('type-test', node).fact('form', 'instanceof').holds('subject', this.expression(node.left))
-                .holds('testedType', this.new('type-expression', node.right).fact('form', 'named').fact('refers', this.checker ? this.refersOf(node.right) : undefined))
+                .holds('testedType', this.new('type-expression', node.right).fact('form', 'named').fact('name', node.right.getText(this.sourceFile)).fact('refers', this.checker ? this.refersOf(node.right) : undefined))
         }
         if (BINARIES.has(operator)) return this.new('binary', node).fact('operator', BINARIES.get(operator)).holds('left', this.expression(node.left)).holds('right', this.expression(node.right))
 

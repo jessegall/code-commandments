@@ -17,8 +17,8 @@ class Profile:
     def reachable_by_sms(self) -> bool:
         return self.phone.startswith("+31")
 
+    # @sin HandRolledReplace
     def with_email(self, email: str) -> "Profile":
-        # @sin HandRolledReplace
         return Profile(name=self.name, email=email, phone=self.phone, newsletter=self.newsletter)
 
     # @fixed HandRolledReplace

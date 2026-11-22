@@ -10,8 +10,8 @@ class NoteBoard:
     def pin(self, note: str) -> None:
         self._notes.append(note)
 
-    # @sin HandedOutCollection
     def notes(self) -> list[str]:
+        # @sin HandedOutCollection
         return self._notes
 
 

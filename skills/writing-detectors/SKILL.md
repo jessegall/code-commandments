@@ -182,11 +182,12 @@ judged.
 | `get` | value, text | value | a record's field by its name; none when it has no such field |
 | `groupItems` | list, name, value | list | the items grouped by the key the body gives, each group a record of key and items, in the order each key first appears; unknown when a key is |
 | `has` | list, value | truth | whether a list holds a value equal to the one given |
-| `hasEffect` | node, text | truth | whether the library a call's resolved target belongs to states the effect named for it, at the version the project's lock file holds; unknown when the target or the version is. The effects are those the package files under rules/packages state: executes-query, database-read, deferred-query, mutates-receiver, iterates-receiver, builds-mutable, fresh-every-call, live-view, tests-membership, decodes-untyped, cast-result-type, blocks-thread, blocks-on-task, completed-task and runs-on-thread |
+| `hasEffect` | node, text | truth | whether the library a call's resolved target belongs to states the effect named for it, at the version the project's lock file holds; unknown when the target or the version is. The effects are those the package files under rules/packages state: executes-query, database-read, deferred-query, mutates-receiver, iterates-receiver, builds-mutable, fresh-every-call, live-view, tests-membership, decodes-untyped, cast-result-type, blocks-thread, blocks-on-task, completed-task, runs-on-thread, reads-with-default, reads-key and gives-empty-collection |
 | `hasField` | value, text | truth | whether a type has the field named |
 | `hasRow` | text, value | truth | whether one of the find's relations holds a row whose fields equal a record's |
 | `hasStartingWith` | list, text | truth | whether a list holds a text that begins with the one given |
 | `height` | node | number | how many nodes lie on the longest path down from the node to a leaf, the node included |
+| `identities` | text | list | every type or member name the libraries list under the identity given; empty when none does |
 | `identity` | text | text | the type a library names by the identity given, such as "option"; unknown when no library names it |
 | `in` | value, value, … | truth | whether the first value equals any of the values written after it; for a list held in a value, use has |
 | `inCycle` | list, value | truth | whether a value lies on a cycle of the edges |
@@ -242,6 +243,7 @@ judged.
 | `or` | truth, truth, … | truth | true when one operand is true; false when every operand is false; unknown otherwise |
 | `origin` | value | text | where a node's declaration lies: project, library or unknown |
 | `originRank` | value | number | how much a type's origin is to be trusted: compiler 4, written 3, attribute 2, documented 1, inferred 0 |
+| `overriders` | node | list | every function in the program whose obligations name the function: the members that override or implement it |
 | `ownAncestors` | node | list | every node above the node, nearest first, up to the function it is written in |
 | `ownDescendants` | node, text | list | every node under the node, leaving out what a function, type or comprehension written inside it holds, only those of the kind or category named when one is; empty for no node, unknown for a node the parser recovered from |
 | `pair` | value, value | list | the two values as one, to compare or sort together |

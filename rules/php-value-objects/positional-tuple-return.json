@@ -15,7 +15,7 @@
       "python-positional-tuple-return"
     ],
     "skill": "php/value-objects",
-    "description": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position",
+    "description": "Returning a positional TUPLE \u2014 `return [$node, $key, $inputs, $outputs]` \u2014 bundling independent values as a keyless list the caller destructures by position",
     "rule": "Return a typed object, not a positional tuple `[$a, $b, $c]` the caller destructures by position.",
     "suggestion": "A small `readonly` result object."
   },
@@ -135,7 +135,13 @@
           "and",
           [
             "=",
-            "$s.resolved.returns.kind",
+            [
+              "typeCategory",
+              [
+                "typeOf",
+                "$s"
+              ]
+            ],
             "tuple"
           ],
           [
@@ -145,6 +151,15 @@
               "$s.obligations"
             ],
             0
+          ],
+          [
+            "none",
+            "$s.returnType.elements",
+            "e",
+            [
+              "exists",
+              "$e.label"
+            ]
           ]
         ]
       },
@@ -175,7 +190,13 @@
           {
             "function": [
               "map",
-              "$s.resolved.returns.members",
+              [
+                "typeMembers",
+                [
+                  "typeOf",
+                  "$s"
+                ]
+              ],
               "m",
               "$m.text"
             ]
@@ -214,9 +235,13 @@
                 ]
               ],
               [
-                "=",
-                "$e.expansion",
-                "none"
+                "not",
+                [
+                  "in",
+                  "$e.expansion",
+                  "positional",
+                  "keyed"
+                ]
               ]
             ]
           ],

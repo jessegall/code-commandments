@@ -2,6 +2,7 @@ namespace Shop.Stock;
 
 public sealed class StorageAisle
 {
+    // @sin BlankStringDefault
     public string Code { get; init; } = "";
 
     public int FreeSlots { get; set; }

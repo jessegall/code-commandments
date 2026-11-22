@@ -14,10 +14,11 @@ import (
 // What a reference may read past a node's roles, links and facts: the node's own properties, then a file's, a span's
 // and a resolved type's.
 var (
-	nodeProperties = []string{"kind", "role", "file", "span", "line", "parent", "resolved", "target"}
-	fileProperties = []string{"path", "language", "module", "test", "purpose", "errors", "publishedBy", "frozen"}
-	spanProperties = []string{"start", "end", "line", "endLine", "column", "endColumn"}
-	typeProperties = []string{"text", "kind", "name", "args", "members", "fields", "parameters", "returns", "value", "nullable", "valueType", "element", "constructs", "origin"}
+	nodeProperties      = []string{"kind", "role", "file", "span", "line", "parent", "resolved", "target"}
+	fileProperties      = []string{"path", "language", "module", "test", "purpose", "errors", "publishedBy", "frozen"}
+	spanProperties      = []string{"start", "end", "line", "endLine", "column", "endColumn"}
+	effectiveProperties = []string{"visibility", "static", "abstract", "final", "readonly"}
+	typeProperties      = []string{"text", "kind", "name", "args", "members", "fields", "parameters", "returns", "value", "nullable", "valueType", "element", "constructs", "origin"}
 )
 
 var plainName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
@@ -304,6 +305,11 @@ func readable(reference []string, kinds []string, at string) error {
 				return fmt.Errorf("%s: %s: a span has no %q, only %s", at, written, segment, strings.Join(spanProperties, ", "))
 			}
 			within = "value"
+		case "effective":
+			if !slices.Contains(effectiveProperties, segment) {
+				return fmt.Errorf("%s: %s: what a language makes of a declaration has no %q, only %s", at, written, segment, strings.Join(effectiveProperties, ", "))
+			}
+			within = "value"
 		case "type":
 			if !slices.Contains(typeProperties, segment) {
 				return fmt.Errorf("%s: %s: a resolved type has no %q%s", at, written, segment, didYouMean(segment, typeProperties))
@@ -326,7 +332,7 @@ func readable(reference []string, kinds []string, at string) error {
 			if err := holds(segment, possible, written, at); err != nil {
 				return err
 			}
-			within = map[string]string{"file": "file", "span": "span", "resolved": "type", "kind": "value", "role": "value", "line": "value"}[segment]
+			within = map[string]string{"file": "file", "span": "span", "resolved": "type", "effective": "effective", "kind": "value", "role": "value", "line": "value"}[segment]
 			if within == "" {
 				within = "node"
 			}

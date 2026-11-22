@@ -2,6 +2,7 @@
 
 namespace Shop\Catalog;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\UnreadCollaborator;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Shelving\SlugText;
@@ -14,6 +15,7 @@ use Shop\Shelving\SlugText;
 final class ProductSlugger
 {
     #[Sinful(UnreadCollaborator::class)]
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly SlugText $slugs) {}
 
     public function slugFor(string $name, int $id): string

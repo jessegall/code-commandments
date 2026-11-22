@@ -2,6 +2,7 @@
 
 namespace Shop\Dispatch;
 
+use JesseGall\CodeCommandments\Sins\Backend\ConcreteCrossModuleDependency;
 use JesseGall\CodeCommandments\Sins\Backend\FlagArgument;
 use JesseGall\CodeCommandments\Sins\Backend\NarratedCommand;
 use JesseGall\CodeCommandments\Sins\Backend\RestatedComment;
@@ -13,6 +14,7 @@ use Shop\Labels\PrintLog;
  */
 final class RunSheetExporter
 {
+    #[Sinful(ConcreteCrossModuleDependency::class)]
     public function __construct(private readonly PrintLog $log) {}
 
     /**

@@ -45,10 +45,49 @@
           "enum-case": [
             "list",
             "$m.name"
+          ],
+          "parameter": [
+            "list",
+            "$m.binding.name"
           ]
         },
         [
           "list"
+        ]
+      ]
+    },
+    "membersOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "flatten",
+            [
+              "map",
+              "$t.writtenMembers",
+              "m",
+              [
+                "namesOf",
+                "$m"
+              ]
+            ]
+          ],
+          [
+            "flatten",
+            [
+              "map",
+              "$t.implicitMembers",
+              "m",
+              [
+                "namesOf",
+                "$m"
+              ]
+            ]
+          ]
         ]
       ]
     }
@@ -126,22 +165,87 @@
       [
         "none",
         [
-          "flatten",
-          [
-            "map",
-            "$declared.writtenMembers",
-            "m",
-            [
-              "namesOf",
-              "$m"
-            ]
-          ]
+          "membersOf",
+          "$declared"
         ],
         "n",
         [
           "=",
           "$n",
           "$a.member.name"
+        ]
+      ],
+      [
+        "none",
+        "$declared.writtenMembers",
+        "m",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "function"
+          ],
+          [
+            "has",
+            [
+              "identities",
+              "dynamic-member-reader"
+            ],
+            "$m.name"
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "pathConditions",
+          "$a"
+        ],
+        "c",
+        [
+          "proven",
+          [
+            "some",
+            [
+              "list",
+              [
+                "testsType",
+                [
+                  "get",
+                  "$c",
+                  "condition"
+                ]
+              ]
+            ],
+            "t",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "get",
+                  "$c",
+                  "holds"
+                ],
+                [
+                  "not",
+                  "$t.negated"
+                ]
+              ],
+              [
+                "=",
+                [
+                  "declarationOf",
+                  "$t.subject"
+                ],
+                [
+                  "declarationOf",
+                  "$a.subject"
+                ]
+              ]
+            ]
+          ]
         ]
       ],
       [

@@ -4,5 +4,5 @@ namespace Shop.Pricing;
 public sealed record PromotionRule(string Code, decimal PercentOff)
 {
     // @sin BareStatePredicate
-    public bool Publishes { get; init; }
+    public bool Publishes => PercentOff > 0;
 }

@@ -158,21 +158,69 @@
         "logical"
       ],
       [
-        "in",
-        "$l.parent.kind",
-        "if",
-        "loop"
-      ],
-      [
-        "=",
-        "$l.role",
-        "condition"
+        "or",
+        [
+          "and",
+          [
+            "in",
+            "$l.parent.kind",
+            "if",
+            "loop"
+          ],
+          [
+            "=",
+            "$l.role",
+            "condition"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$l.parent.kind",
+            "directive"
+          ],
+          [
+            "in",
+            "$l.parent.name",
+            "if",
+            "else-if",
+            "show"
+          ],
+          [
+            "=",
+            "$l.role",
+            "value"
+          ]
+        ]
       ],
       [
         "nonempty",
         [
           "ownAncestors",
           "$l"
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "and",
+            [
+              "=",
+              "$l.parent.kind",
+              "if"
+            ],
+            [
+              "is",
+              [
+                "last",
+                "$l.parent.then.statements"
+              ],
+              "exit"
+            ]
+          ]
         ]
       ]
     ],

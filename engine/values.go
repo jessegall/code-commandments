@@ -20,7 +20,7 @@ func (m Match) CodeWords() []string {
 }
 
 func (m Match) spelledWords() []string {
-	words := []string{m.Name()}
+	words := append(m.constructWords(), m.Name())
 	if text, ok := m.Text(); ok {
 		words = append(words, text)
 	}
@@ -31,6 +31,45 @@ func (m Match) spelledWords() []string {
 	}
 
 	return words
+}
+
+func (m Match) constructWords() []string {
+	if m.node == nil {
+		return nil
+	}
+	switch m.node.Kind {
+	case "loop":
+		if m.node.Form == "while" || m.node.Form == "do-while" {
+			return prose.ConditionalLoop.Words()
+		}
+
+		return prose.Loop.Words()
+	case "assignment":
+		if m.node.Mode == "compound" || m.node.Mode == "increment" {
+			return prose.Accumulation.Words()
+		}
+
+		return prose.Assignment.Words()
+	}
+
+	return constructOfKind[m.node.Kind].Words()
+}
+
+var constructOfKind = map[string]prose.Construct{
+	"if":             prose.Condition,
+	"conditional":    prose.Condition,
+	"dispatch":       prose.Branch,
+	"arm":            prose.Branch,
+	"return":         prose.Return,
+	"break":          prose.Break,
+	"continue":       prose.Continue,
+	"throw":          prose.Failure,
+	"try":            prose.Attempt,
+	"handler":        prose.Recovery,
+	"variable":       prose.Assignment,
+	"construction":   prose.Creation,
+	"import":         prose.Import,
+	"resource-scope": prose.Scope,
 }
 
 func (m Match) Value() *contract.Value {

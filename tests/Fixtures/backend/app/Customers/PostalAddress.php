@@ -31,6 +31,11 @@ final class PostalAddress
         return "{$this->line}, {$this->postcode} {$this->city}, {$this->country}";
     }
 
+    public function equals(self $other): bool
+    {
+        return $this->oneLine() === $other->oneLine();
+    }
+
     public function isDomestic(): bool
     {
         return $this->country === 'NL';

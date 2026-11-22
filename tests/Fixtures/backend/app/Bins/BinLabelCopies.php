@@ -2,6 +2,7 @@
 
 namespace Shop\Bins;
 
+use JesseGall\CodeCommandments\Sins\Backend\LoneImplementerInterface;
 use JesseGall\CodeCommandments\Sins\Backend\UndeclaredMember;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -12,6 +13,7 @@ interface BinLabel
 }
 
 #[Fixed(UndeclaredMember::class)]
+#[Sinful(LoneImplementerInterface::class)]
 interface ScannableBinLabel extends BinLabel
 {
     public string $barcode { get; }

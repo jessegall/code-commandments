@@ -2,10 +2,10 @@
 # built. Below it, the FIX: the registry told by whoever decided to install the plugin.
 
 
-# @sin ConstructorSideEffect
 class CardPlugin:
     def __init__(self, registry, fee: float) -> None:
         self.fee = fee
+        # @sin ConstructorSideEffect
         registry.add("card", self)
 
     def charge(self, amount: float) -> float:

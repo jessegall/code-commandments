@@ -21,6 +21,6 @@ final class PriceCalculator
         $gross = $cents * $quantity;
         $withVat = $gross + (int) ($gross * $this->vatPercent / 100);
 
-        return ($round ?? static fn (int $value): int => $value)($withVat);
+        return ($round ?? static fn (int $value) => $value)($withVat);
     }
 }

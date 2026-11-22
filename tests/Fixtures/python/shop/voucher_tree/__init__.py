@@ -151,6 +151,7 @@ class VoucherTreeBatch:
         self.stage = VoucherTreeStage.SEALED
 
 
+# @sin NearDuplicateFunction
 def seal_voucher_tree(batch: VoucherTreeBatch) -> None:
     # @sin GuardBesideTransition
     if batch.stage != VoucherTreeStage.OPEN:

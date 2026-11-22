@@ -20,12 +20,31 @@
     "suggestion": "An `if` with each side as its own body, and no `else` at all when one side did nothing."
   },
   "find": {
-    "select": "conditional",
+    "select": [
+      "conditional",
+      "fallback"
+    ],
     "as": "c",
     "where": [
-      "=",
-      "$c.parent.kind",
-      "expression-statement"
+      "and",
+      [
+        "=",
+        "$c.parent.kind",
+        "expression-statement"
+      ],
+      [
+        "or",
+        [
+          "=",
+          "$c.kind",
+          "conditional"
+        ],
+        [
+          "=",
+          "$c.trigger",
+          "falsy"
+        ]
+      ]
     ],
     "emit": "$c"
   }

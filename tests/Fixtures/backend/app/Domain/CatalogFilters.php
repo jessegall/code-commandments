@@ -6,8 +6,8 @@ use JesseGall\CodeCommandments\Sins\Backend\ConditionalArraySpread;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
 /*
- * Builds a query-parameter bag by merging a conditional fragment — `array_merge($base, $cond ? [...] : [])`.
- * The `array_merge` + ternary-into-empty is the same "include when set" smell.
+ * Builds a query-parameter bag by spreading a conditional fragment: `[...($cond ? [...] : [])]`.
+ * The spread of a ternary into an empty array is the "include when set" smell.
  */
 final class CatalogFilters
 {
@@ -33,6 +33,6 @@ final class CatalogFilters
     #[Sinful(ConditionalArraySpread::class)]
     public function toSortedQuery(string $sort): array
     {
-        return array_merge(['sort' => $sort], $this->brand === null ? [] : ['brand' => $this->brand]);
+        return ['sort' => $sort, ...($this->brand === null ? [] : ['brand' => $this->brand])];
     }
 }

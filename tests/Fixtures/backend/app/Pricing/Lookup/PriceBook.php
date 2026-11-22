@@ -105,6 +105,6 @@ final class Quote
 
     public function totalOf(array $lines): int
     {
-        return array_sum(array_map(fn (array $line): int => $this->sheet->priceOf($line[0], $line[1]), $lines));
+        return array_sum(array_map(fn (array $line) => $this->sheet->priceOf($line[0], $line[1]), $lines));
     }
 }

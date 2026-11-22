@@ -1,11 +1,11 @@
 namespace Shop.Orders;
 
+// @sin NamespaceCycle
 using Shop.Pricing;
 
 // Works out an order's total after its promotion.
 public sealed class Discounting(int subtotal)
 {
-    // @sin NamespaceCycle
     public int Total(Promotion promotion)
     {
         // @sin TypeSwitch

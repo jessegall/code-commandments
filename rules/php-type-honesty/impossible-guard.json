@@ -14,7 +14,7 @@
       "python-impossible-guard"
     ],
     "skill": "php/type-honesty",
-    "description": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing",
+    "description": "`if ($order === null)` where `$order` is typed `Order`, with no `?` \u2014 one of the two is wrong, and both are worth knowing",
     "rule": "A guard answers a question the type leaves open: if the type says the value is there, delete the guard; if the value really can be missing, say so in the type.",
     "suggestion": "Delete the check when the type is right. When callers really do pass null, type the parameter `?Order` and let the reader see it, then decide absence once where the value is born.",
     "reporting": {
@@ -126,7 +126,9 @@
           "in",
           "$o",
           "identical",
-          "not-identical"
+          "not-identical",
+          "equal",
+          "not-equal"
         ]
       ],
       [

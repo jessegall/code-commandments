@@ -161,6 +161,7 @@ export function billedPostageCents(grams: number, zone: number): number {
 }
 
 // @righteous ReassignedParameter
+// @sin FeatureEnvy
 export function rezone(parcel: Parcel, zone: number): Parcel {
     parcel.zone = Math.max(zone, 1)
 

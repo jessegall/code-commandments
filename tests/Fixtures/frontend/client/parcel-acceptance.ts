@@ -5,9 +5,11 @@ export function settle(cents: number): number {
         return 0
         // @sin UnreachableStatement
         return -1
-        // @righteous UnreachableStatement
-        cents = 1
     }
+
+    // @righteous UnreachableStatement
+    // @sin ReassignedParameter
+    cents = 1
 
     return cents
 }

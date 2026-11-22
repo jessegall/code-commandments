@@ -255,6 +255,10 @@ func isNullable(resolved *contract.Type) engine.Truth {
 		return engine.True
 	case resolved.Nullable != nil:
 		return engine.False
+	case resolved.Origin == "written" && resolved.Kind == "keyword":
+		return engine.False
+	case resolved.Kind == "union" && len(resolved.Members) > 0 && !slices.ContainsFunc(resolved.Members, func(member *contract.Type) bool { return member == nil || isNullable(member) != engine.False }):
+		return engine.False
 	}
 
 	return engine.Unknown
@@ -275,6 +279,8 @@ func typeMembers(resolved *contract.Type) []*contract.Type {
 		return flat
 	case "nullable":
 		return []*contract.Type{resolved.Element, {Kind: "keyword", Name: "null", Text: "null"}}
+	case "tuple":
+		return resolved.Members
 	}
 
 	return []*contract.Type{resolved}
@@ -402,6 +408,7 @@ func functionRoles(site engine.Match) value {
 	returned := site.Child("returnType").Typed()
 	add("constructor", node.Form == "constructor")
 	add("named-constructor", node.Form != "constructor" && slices.Contains(node.Modifiers, "static") && owner.Exists() && returned != nil && returned.Name == owner.Node().Symbol)
+	add("serialization-hook", slices.Contains(engine.PackageIdentitiesNamed("serialization-hook"), node.Name))
 	add("getter", node.Form == "get")
 	add("setter", node.Form == "set")
 	add("override", len(node.Obligations) > 0)

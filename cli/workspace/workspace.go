@@ -107,6 +107,15 @@ func SettingsRoot(dir string) string {
 	if project == "" {
 		return dir
 	}
+	checkout := git.Root(dir)
+	absolute, _ := filepath.Abs(dir)
+	for at := absolute; checkout != "" && at != checkout && strings.HasPrefix(at, checkout+string(filepath.Separator)); at = filepath.Dir(at) {
+		if _, err := os.Stat(JSONConfig(at)); err == nil {
+			nested, _ := filepath.Rel(checkout, at)
+
+			return filepath.Join(project, nested)
+		}
+	}
 
 	return project
 }

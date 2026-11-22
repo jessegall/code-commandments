@@ -74,6 +74,7 @@ export function releaseCard(record: Map<string, number>, label: string): void {
 }
 
 // @sin FilledParameter
+// @sin FeatureEnvy
 function registerSignature(held: Signatory): void {
     held.registered = !held.expired
 }

@@ -37,7 +37,7 @@ func TestLoaderNamesAnOldFormatFileByItsPath(t *testing.T) {
 	library := Load([]Source{old}, anySkill)
 	var format *OldFormat
 	if len(library.Problems) != 1 || !errors.As(library.Problems[0], &format) ||
-		library.Problems[0].Error() != ".commandments/custom/Guard.json uses the old redundantElse step. Rewrite this rule using commandments:neutral-rule/v2." {
+		library.Problems[0].Error() != ".commandments/custom/Guard.json:1 uses the old redundantElse step. Rewrite this rule using commandments:neutral-rule/v2: `commandments rule schema` lists the operators a step becomes." {
 		t.Errorf("the loader said %v", library.Problems)
 	}
 }

@@ -1,6 +1,7 @@
 // @example NamespaceCycle bad
 namespace Shop.Loyalty;
 
+// @sin NamespaceCycle
 using Shop.Rewards;
 
 // A loyalty member spends points on rewards; rewards reaches back for the member below.

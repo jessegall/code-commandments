@@ -1,0 +1,21 @@
+{
+  "package": "dotnet",
+  "ecosystem": "standard",
+  "versions": "",
+  "provenance": "the .NET base library's own named newline, named empty string and expression trees",
+  "entries": [],
+  "identities": [
+    {
+      "name": "newline",
+      "type": "global::System.Environment.NewLine"
+    },
+    {
+      "name": "empty-text",
+      "type": "global::System.String.Empty"
+    },
+    {
+      "name": "expression-tree",
+      "type": "global::System.Linq.Expressions.Expression"
+    }
+  ]
+}

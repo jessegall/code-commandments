@@ -57,3 +57,11 @@ Route::get('/stock/{warehouse}/preview', [\Shop\Http\Controllers\StockReportCont
 Route::prefix('gift-cards')->name('gift-cards.')->group(function () {
     Route::get('/{card}/statement', fn (string $card) => $card)->name('statement');
 });
+
+// The duplicated actions: each pair runs the same steps under two routes.
+Route::post('/admin/reports/export', [\Shop\Http\Controllers\DuplicateActions\ReportExportController::class, 'build']);
+Route::post('/analytics/export', [\Shop\Http\Controllers\DuplicateActions\AnalyticsExportController::class, 'build']);
+Route::post('/notify/email', [\Shop\Http\Controllers\DuplicateActions\EmailNotifyController::class, 'deliver']);
+Route::post('/notify/sms', [\Shop\Http\Controllers\DuplicateActions\SmsNotifyController::class, 'deliver']);
+Route::post('/admin/sync', [\Shop\Http\Controllers\DuplicateActions\AdminSyncController::class, 'pull']);
+Route::post('/webhooks/sync', [\Shop\Http\Controllers\DuplicateActions\WebhookSyncController::class, 'pull']);

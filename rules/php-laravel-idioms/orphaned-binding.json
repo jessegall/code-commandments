@@ -12,7 +12,7 @@
       "csharp-orphaned-binding"
     ],
     "skill": "php/laravel-idioms",
-    "description": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor",
+    "description": "A container binding whose abstract nothing ever resolves \u2014 dead wiring that reads as load-bearing and survives every refactor",
     "rule": "Wiring is code: a binding exists to answer a resolve. When the last consumer goes, the binding goes with it.",
     "suggestion": "Delete the registration (and the implementation it names, if that is dead too).",
     "requires": {
@@ -294,6 +294,30 @@
           ]
         ]
       ]
+    },
+    "sameRegistration": {
+      "args": [
+        "a",
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "binding",
+          "$a"
+        ],
+        [
+          "=",
+          [
+            "abstractOf",
+            "$a"
+          ],
+          [
+            "abstractOf",
+            "$c"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -365,13 +389,14 @@
               [
                 "none",
                 [
-                  "ownAncestors",
+                  "ancestors",
                   "$r"
                 ],
                 "a",
                 [
-                  "binding",
-                  "$a"
+                  "sameRegistration",
+                  "$a",
+                  "$c"
                 ]
               ],
               [
@@ -381,6 +406,16 @@
                   "$r.parent.kind",
                   "import-binding",
                   "import"
+                ]
+              ],
+              [
+                "not",
+                [
+                  "in",
+                  "$r.role",
+                  "bases",
+                  "interfaces",
+                  "mixins"
                 ]
               ],
               [
@@ -395,6 +430,18 @@
                 ]
               ]
             ]
+          ],
+          "csharp": [
+            "none",
+            [
+              "referrers",
+              "$declared"
+            ],
+            "r",
+            [
+              "csReached",
+              "$r"
+            ]
           ]
         },
         [
@@ -405,8 +452,49 @@
           ],
           "r",
           [
-            "csReached",
-            "$r"
+            "and",
+            [
+              "none",
+              [
+                "ancestors",
+                "$r"
+              ],
+              "a",
+              [
+                "binding",
+                "$a"
+              ]
+            ],
+            [
+              "not",
+              [
+                "in",
+                "$r.parent.kind",
+                "import-binding",
+                "import"
+              ]
+            ],
+            [
+              "not",
+              [
+                "in",
+                "$r.role",
+                "bases",
+                "interfaces",
+                "mixins"
+              ]
+            ],
+            [
+              "or",
+              [
+                "not",
+                "$r.file.test"
+              ],
+              [
+                "resolvedInTest",
+                "$r"
+              ]
+            ]
           ]
         ]
       ]

@@ -9,7 +9,6 @@ public static class Backfills
     {
         var overdue = stuck.Where(order => order.Stage == Stage.Packed && packedOn[order.Id].AddDays(14) < today);
 
-        // @sin RepeatedNamedCall
         return overdue.Select(order => order with { Stage = Stage.Shipped, Note = "on its way" }).ToList();
     }
 }

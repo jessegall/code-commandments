@@ -13,4 +13,8 @@ public sealed class Order(string reference, IReadOnlyList<OrderLine> lines)
 public sealed record OrderLine(string Sku, int Quantity, Money UnitPrice)
 {
     public Money Subtotal => UnitPrice with { Cents = UnitPrice.Cents * Quantity };
+
+    public bool Ordered => Quantity > 0;
+
+    public string Row() => $"{Quantity} x {Sku}: {Subtotal.Cents / 100m:0.00}";
 }

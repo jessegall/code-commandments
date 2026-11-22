@@ -55,6 +55,7 @@ export function freightStatusOf(value: FreightArgument): string {
 }
 
 // @sin FilledParameter
+// @sin FeatureEnvy
 function freightFill(value: FreightArgument): void {
     value.packed = true
 }

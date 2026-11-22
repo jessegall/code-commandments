@@ -4,7 +4,7 @@ namespace Shop\Warranty;
 
 use JesseGall\CodeCommandments\Sins\Backend\NamespaceCycle;
 use JesseGall\CodeCommandments\Testing\Fixed;
-use JesseGall\CodeCommandments\Testing\Sinful;
+// @sin NamespaceCycle
 use Shop\Claims\Claim;
 
 /**
@@ -27,7 +27,6 @@ final class WarrantyPolicy
      * Claims reads the policy from two places; this is the single arrow pointing back, and it is
      * what stops the warranty terms from being read, tested, or reused without the claims desk.
      */
-    #[Sinful(NamespaceCycle::class)]
     public function firstClaim(): Claim
     {
         return new Claim($this->months);

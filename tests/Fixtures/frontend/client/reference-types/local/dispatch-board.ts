@@ -47,6 +47,10 @@ export class CounterList {
     defer(route: Uint8Array): void {
         this.received.unshift(route)
     }
+
+    size(): number {
+        return this.received.length
+    }
 }
 
 // @sin MiddleMan

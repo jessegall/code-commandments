@@ -38,6 +38,7 @@ export function restock(item: ParcelReturn, shelf: Map<string, number>, log: str
     }
 }
 
+// @sin FeatureEnvy
 export function refund(item: ParcelReturn): number {
     if (item.cents <= 0) {
         // @sin GenericException
@@ -50,6 +51,7 @@ export function refund(item: ParcelReturn): number {
     return item.cents
 }
 
+// @sin FeatureEnvy
 export function payable(item: ParcelReturn): boolean {
     // @sin RedundantElse
     if (item.cents <= 0) {

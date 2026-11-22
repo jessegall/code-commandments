@@ -9,7 +9,6 @@ public sealed class Handover(List<string> scanLog)
     {
         scanLog.Add($"{courier} scanned {order.Id}");
 
-        // @sin RepeatedNamedCall
         var shipped = order with { Note = "on its way", Stage = Stage.Shipped };
 
         if (scanLog.Count > 100)

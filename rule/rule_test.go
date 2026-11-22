@@ -54,7 +54,32 @@ func TestParseRefusesAnOldFormatFileNamingItsStep(t *testing.T) {
 		t.Fatalf("an old file is refused with %v", err)
 	}
 	format.File = ".commandments/custom/Guard.json"
-	if wanted := ".commandments/custom/Guard.json uses the old redundantElse step. Rewrite this rule using commandments:neutral-rule/v2."; format.Error() != wanted {
+	if wanted := ".commandments/custom/Guard.json:1 uses the old redundantElse step. Rewrite this rule using commandments:neutral-rule/v2: `commandments rule schema` lists the operators a step becomes."; format.Error() != wanted {
+		t.Errorf("the refusal reads %q", format.Error())
+	}
+}
+
+func TestAnOldScaffoldIsRefusedAtItsStepsLineWithTheStepsNewForm(t *testing.T) {
+	scaffolded := []byte(`{
+    "$schema": "../rule.schema.json",
+    "engine": "php",
+    "find": {
+        "reject": [],
+        "select": "call",
+        "where": [
+            {
+                "name": "TODO-the-call-this-rule-flags"
+            }
+        ]
+    },
+    "sin": {"name": "no-raw-sql", "skill": "no-raw-sql"}
+}`)
+	_, err := Parse("NoRawSqlDetector", scaffolded, anySkill)
+	var format *OldFormat
+	if !errors.As(err, &format) {
+		t.Fatalf("an old scaffold is refused with %v", err)
+	}
+	if wanted := `NoRawSqlDetector.json:9 uses the old name step. Rewrite this rule using commandments:neutral-rule/v2, where it reads ["=", "$<the name its select binds>.name", "TODO-the-call-this-rule-flags"].`; format.Error() != wanted {
 		t.Errorf("the refusal reads %q", format.Error())
 	}
 }

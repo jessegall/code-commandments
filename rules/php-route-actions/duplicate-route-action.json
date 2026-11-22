@@ -10,8 +10,8 @@
       "DuplicateRouteAction"
     ],
     "skill": "php/route-actions",
-    "description": "Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice",
-    "rule": "One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.",
+    "description": "Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) \u2014 the same entry point twice",
+    "rule": "One operation, one entry point \u2014 collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.",
     "suggestion": "Delete the duplicate action and point its route at the surviving one (or a redirect).",
     "requires": {
       "name": "illuminate/support",
@@ -48,7 +48,7 @@
             [
               "fingerprint",
               "$a.value",
-              "exact"
+              "renamed"
             ]
           ],
           ","

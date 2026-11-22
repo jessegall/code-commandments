@@ -78,6 +78,8 @@ class Translator:
         self.scopes: list[Scope] = []
         self.joined: set[tuple[int, int]] = set()
         self.table: list[dict[str, object]] = []
+        self.instance_fields: dict[tuple[int, int], str] = {}
+        self.instance_members: list[Node] = []
         self.starts = [0, *(at + 1 for at, byte in enumerate(source) if byte == 0x0A)]
         self.modules: set[str] = set()
         self.docstrings: list[tuple[ast.Constant, Node]] = []
@@ -197,13 +199,14 @@ class Translator:
 
     def stmt_Assign(self, statement: ast.Assign, scope, owner) -> Node:
         if owner == "class":
-            return self.field(statement, statement.targets, None, statement.value, scope)
+            return shared(self.field(statement, statement.targets, None, statement.value, scope), True)
         return self.assigned(statement, self.new("assignment", *self.span(statement), mode="assign"),
                              [self.expression(target) for target in statement.targets], [self.expression(statement.value)])
 
     def stmt_AnnAssign(self, statement: ast.AnnAssign, scope, owner) -> Node:
         if owner == "class":
-            return self.field(statement, [statement.target], statement.annotation, statement.value, scope)
+            return shared(self.field(statement, [statement.target], statement.annotation, statement.value, scope),
+                          self.refers(statement.annotation.value if isinstance(statement.annotation, ast.Subscript) else statement.annotation) == "typing.ClassVar")
         if isinstance(statement.target, ast.Name):
             return self.field(statement, [statement.target], statement.annotation, statement.value, scope,
                               self.of("variable", statement, form="annotated"))
@@ -341,8 +344,9 @@ class Translator:
         start = self.decorated(statement)
         symbol = ".".join([self.module, *scope, statement.name])
         members = self.enum_members.get(symbol)
+        protocol = any(self.refers(base.value if isinstance(base, ast.Subscript) else base) == "typing.Protocol" for base in statement.bases)
         node = self.new("type", start, self.span(statement)[1], name=statement.name, symbol=symbol,
-                        form="enum" if members is not None else "class")
+                        form="enum" if members is not None else "interface" if protocol else "class")
         inner = [*scope, statement.name]
         node.parts = {}
         if statement.bases:
@@ -351,8 +355,13 @@ class Translator:
             node.parts["attributes"] = [self.annotation(each) for each in statement.decorator_list]
         if statement.type_params:
             node.parts["typeParameters"] = self.type_parameters(statement.type_params)
+        declared_here, members_here = self.instance_fields, self.instance_members
+        self.instance_fields, self.instance_members = instance_fields(statement, symbol), []
         node.parts["writtenMembers"] = [self.enum_case(each, symbol) if self.declares_case(each, members) else self.statement(each, inner, "class")
                                         for each in statement.body]
+        if self.instance_members:
+            node.links["implicitMembers"] = self.instance_members
+        self.instance_fields, self.instance_members = declared_here, members_here
         self.document(statement, node)
         return node
 
@@ -424,6 +433,10 @@ class Translator:
         obligations = self.obligations.get(".".join([self.module, *scope, statement.name]))
         if obligations and owner == "class":
             node.facts["obligations"] = obligations
+        node.facts["effective"] = {"visibility": visibility_of(statement.name)}
+        if owner == "class" and self.belongs_to_the_class(statement):
+            node.facts["modifiers"] = ["static"]
+            node.facts["effective"]["static"] = True
         node.parts = {}
         if statement.decorator_list:
             node.parts["attributes"] = [self.annotation(each) for each in statement.decorator_list]
@@ -549,6 +562,10 @@ class Translator:
         if is_union(annotation):
             node = self.of("type-expression", annotation, form="union")
             node.parts = {"members": [self.type(member) for member in self.union(annotation)]}
+            return node
+        if isinstance(annotation, ast.Subscript) and self.refers(annotation.value) == "typing.Optional":
+            node = self.of("type-expression", annotation, form="nullable")
+            node.parts = {"element": self.type(annotation.slice)}
             return node
         if isinstance(annotation, ast.Subscript):
             node = self.named_type(annotation, self.refers(annotation.value))
@@ -690,8 +707,23 @@ class Translator:
         end = node.end
         member = self.new("reference", end - len(expression.attr.encode()), end, name=expression.attr, form="name",
                           refers=self.names.get((end - len(expression.attr.encode()), end)))
+        declared = self.instance_fields.get((expression.lineno, expression.col_offset))
+        if declared is not None:
+            member.facts["symbol"] = declared
+            member.facts["effective"] = {"visibility": visibility_of(expression.attr)}
+            member.facts.pop("refers", None)
+            self.instance_members.append(member)
         node.parts = {"subject": self.expression(expression.value), "member": member}
         return node
+
+    def builds_its_own_class(self, callee: ast.expr) -> bool:
+        """Whether a callee is the class of an object: `type(x)` with one argument, or `x.__class__`."""
+        if isinstance(callee, ast.Attribute):
+            return callee.attr == "__class__"
+        if isinstance(callee, ast.Call) and len(callee.args) == 1 and not callee.keywords:
+            builtin = self.named(callee.func)
+            return builtin is not None and builtin.fullname == "builtins.type"
+        return False
 
     def expr_Subscript(self, expression: ast.Subscript) -> Node:
         node = self.of("index", expression)
@@ -706,13 +738,19 @@ class Translator:
             node = self.of("cast", expression, form="assertion")
             node.parts = {"operand": self.expression(expression.args[1]), "targetType": self.type(expression.args[0])}
             return node
-        construction = named is not None and named.is_class
+        construction = (named is not None and named.is_class) or self.builds_its_own_class(expression.func)
         node = self.of("construction" if construction else "call", expression)
         node.parts = {"callee": self.expression(expression.func), "arguments": self.arguments(expression)}
         target = self.targets.get(self.span(expression))
         if target is not None:
             node.facts["target"] = target
         return node
+
+    def belongs_to_the_class(self, statement: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        """Whether a method is called on the class rather than an instance: a `staticmethod` or a `classmethod`."""
+        return self.is_static(statement) or any(
+            self.refers(each) == "builtins.classmethod" or (isinstance(each, ast.Name) and each.id == "classmethod")
+            for each in statement.decorator_list)
 
     def is_static(self, statement: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         """Whether a method is a `staticmethod`, so it takes no `self` or `cls`."""
@@ -1120,3 +1158,35 @@ def assigned_names(function: ast.AST) -> set[str]:
 def global_names(function: ast.AST) -> set[str]:
     """The names a function declares global: read there, they name the module's, never a scope around it."""
     return {name for node in ast.walk(function) if isinstance(node, ast.Global) for name in node.names}
+
+
+def visibility_of(name: str) -> str:
+    """Python's convention for who may use a name: a leading underscore keeps it private, a dunder is the language's own."""
+    if name.startswith("_") and not (name.startswith("__") and name.endswith("__")):
+        return "private"
+    return "public"
+
+
+def shared(field: Node, static: bool) -> Node:
+    """A class-body attribute every instance shares, or one each instance holds (a dataclass field, an annotation)."""
+    field.facts["effective"] = {"static": static}
+    return field
+
+
+def instance_fields(statement: ast.ClassDef, owner: str) -> dict[tuple[int, int], str]:
+    """The instance attributes a class's `__init__` declares: the first `self.x = ...` of each name the class body does
+    not declare, by the position of its target, with the symbol of the field it declares."""
+    in_body = {target.id for each in statement.body if isinstance(each, (ast.Assign, ast.AnnAssign))
+               for target in (each.targets if isinstance(each, ast.Assign) else [each.target]) if isinstance(target, ast.Name)}
+    found: dict[tuple[int, int], str] = {}
+    for each in statement.body:
+        if not isinstance(each, (ast.FunctionDef, ast.AsyncFunctionDef)) or each.name != "__init__" or not each.args.args:
+            continue
+        own = each.args.args[0].arg
+        for written in ast.walk(each):
+            targets = written.targets if isinstance(written, ast.Assign) else [written.target] if isinstance(written, ast.AnnAssign) else []
+            for target in targets:
+                if (isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == own
+                        and target.attr not in in_body and f"{owner}.{target.attr}" not in found.values()):
+                    found[(target.lineno, target.col_offset)] = f"{owner}.{target.attr}"
+    return found

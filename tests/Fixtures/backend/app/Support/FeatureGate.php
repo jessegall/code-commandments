@@ -5,7 +5,6 @@ namespace Shop\Support;
 use JesseGall\CodeCommandments\Sins\Backend\BareStatePredicate;
 use JesseGall\CodeCommandments\Sins\Backend\InlineDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\RedundantArrowReturnType;
-use JesseGall\CodeCommandments\Sins\Backend\MatchDefaultReturnsNull;
 
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -60,7 +59,6 @@ final class FeatureGate
         return $this->environment === 'production';
     }
 
-    #[Sinful(MatchDefaultReturnsNull::class)]
     public function enabled(string $flag): bool
     {
         return match ($flag) {
