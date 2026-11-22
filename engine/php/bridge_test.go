@@ -371,6 +371,31 @@ class Accounts {
 	}
 }
 
+func TestAMethodOverridingATraitMethodItsParentUsesIsBoundAndOneReplacingItsOwnTraitIsNot(t *testing.T) {
+	folder := written(t, map[string]string{"Tables.php": `<?php
+namespace App;
+trait InteractsWithTable { public function reorderTable(array $order): void {} }
+class RelationManager { use InteractsWithTable; }
+class AchievementsManager extends RelationManager { public function reorderTable(array $order): void {} }
+trait Sorts { public function sort(array $rows): array { return $rows; } }
+class Board { use Sorts; public function sort(array $rows): array { return $rows; } }
+`})
+	obligations := map[string][]string{}
+	for _, node := range bridged(t, folder).Files[0].Nodes() {
+		if node.Kind == "function" && node.Facts != nil && node.Symbol != "" {
+			for _, each := range node.Obligations {
+				obligations[node.Symbol] = append(obligations[node.Symbol], each.Symbol)
+			}
+		}
+	}
+	if got := obligations[`App\AchievementsManager::reorderTable`]; !slices.Equal(got, []string{`App\InteractsWithTable::reorderTable`}) {
+		t.Errorf("an override of the trait method its parent uses is bound by %v, not by the trait's method", got)
+	}
+	if got := obligations[`App\Board::sort`]; len(got) != 0 {
+		t.Errorf("a method replacing its own trait's method is bound by %v", got)
+	}
+}
+
 func TestACallToAClassTheAutoloaderLoadsByItsWrittenCaseIsResolved(t *testing.T) {
 	folder := written(t, map[string]string{
 		"vendor/autoload.php": `<?php

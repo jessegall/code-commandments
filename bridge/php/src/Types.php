@@ -503,7 +503,8 @@ final class Types
 
     /**
      * Every declaration a method of the class overrides or implements, up its parents and interfaces: `Base::run`, and
-     * whether the project declares it. An ancestor that cannot be read adds none.
+     * whether the project declares it. A trait's concrete method binds when an ancestor uses the trait, never the
+     * class's own trait, which its method replaces freely. An ancestor that cannot be read adds none.
      *
      * @return list<array{symbol: string, origin: string}>
      */
@@ -516,9 +517,12 @@ final class Types
         $key = strtolower($method);
         $found = [];
         $seen = [strtolower($own['name']) => true];
-        $pending = array_values(array_filter([$own['parent'] ?? null, ...($own['interfaces'] ?? []), ...($own['traits'] ?? [])]));
+        $pending = array_map(static fn (string $name): array => [$name, true], array_values(array_filter([$own['parent'] ?? null, ...($own['interfaces'] ?? [])])));
+        foreach ($own['traits'] ?? [] as $trait) {
+            $pending[] = [$trait, false];
+        }
         while ($pending !== []) {
-            $at = array_shift($pending);
+            [$at, $ofAnAncestor] = array_shift($pending);
             if (isset($seen[strtolower(ltrim($at, '\\'))])) {
                 continue;
             }
@@ -527,11 +531,16 @@ final class Types
             if ($declared === null) {
                 continue;
             }
-            $binds = isset($declared['methods'][$key]) && (! ($declared['trait'] ?? false) || $declared['methods'][$key]['abstract']);
+            $binds = isset($declared['methods'][$key]) && ($ofAnAncestor || ! ($declared['trait'] ?? false) || $declared['methods'][$key]['abstract']);
             if ($binds) {
                 $found[] = ['symbol' => "{$declared['name']}::{$declared['methods'][$key]['name']}", 'origin' => $declared['file'] !== null ? 'project' : 'external'];
             }
-            array_push($pending, ...array_filter([$declared['parent'] ?? null, ...($declared['interfaces'] ?? []), ...($declared['traits'] ?? [])]));
+            foreach (array_filter([$declared['parent'] ?? null, ...($declared['interfaces'] ?? [])]) as $above) {
+                $pending[] = [$above, true];
+            }
+            foreach ($declared['traits'] ?? [] as $trait) {
+                $pending[] = [$trait, $ofAnAncestor];
+            }
         }
 
         return $found;
