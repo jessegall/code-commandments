@@ -34,8 +34,8 @@ var filler = []string{
 }
 
 var strawman = []phrase{
-	{pattern: words(`(?:intentionally|deliberately)\b[^.]{0,24}\b(?:not|never|no|empty|incomplete|omitted|unused)`), notBefore: goesOnToExplain},
-	{pattern: words(`(?:not|never)\b[^.]{0,40}\bon purpose`), notBefore: givesReason},
+	{pattern: words(`(?:intentionally|deliberately)\b[^.]{0,24}\b(?:not|never|no|empty|incomplete|omitted|unused)`), notBefore: goesOnToExplain, explainedAround: true},
+	{pattern: words(`(?:not|never)\b[^.]{0,40}\bon purpose`), notBefore: givesReason, explainedAround: true},
 	{pattern: words(`(?:is|are|'?s|'?re)\s+not\s+(?:in\s+this|here)`), notAfter: relativeClause, notBefore: anothersContents},
 	{pattern: words(`not\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)`), notAfter: relativeClause, notBefore: anothersContents},
 }
@@ -46,16 +46,18 @@ var (
 	mistakeAsVerb    = endsWith(`not|never|can|could|may|might|must|will|would|should|to|do|does|did`)
 	endsPhrase       = regexp.MustCompile(`^(?:\s*(?:[^\w\s]|$)|\s+(?:` + strings.Join(filler, "|") + `)\b)`)
 	anothersContents = regexp.MustCompile(`^\s+\w+'s`)
-	givesReason      = regexp.MustCompile(`(?i)^\s*,?\s+(?:as|because|since)\b`)
-	goesOnToExplain  = regexp.MustCompile(`(?is)^[^.]*?(?:—|–|\s-\s|\b(?:because|since|so that|otherwise)\b|\.\s+\p{Lu})`)
+	givesReason      = regexp.MustCompile(`(?i)^\s*,?\s+(?:as|because|since|to)\b`)
+	goesOnToExplain  = regexp.MustCompile(`(?is)^[^.]*?(?:—|–|:|\(|\s-\s|,\s*so\b|\b(?:because|since|so that|otherwise)\b|\.\s+\p{Lu})`)
+	sentenceBreak    = regexp.MustCompile(`[.!?]\s+\p{Lu}`)
 	relativeClause   = endsWith(`that|which|who`)
 )
 
 // phrase is a pattern, and what must not stand right before or right after a match of it for the match to count.
 type phrase struct {
-	pattern   *regexp.Regexp
-	notAfter  *regexp.Regexp
-	notBefore *regexp.Regexp
+	pattern         *regexp.Regexp
+	notAfter        *regexp.Regexp
+	notBefore       *regexp.Regexp
+	explainedAround bool
 }
 
 func words(pattern string) *regexp.Regexp {
@@ -67,6 +69,9 @@ func endsWith(alternatives string) *regexp.Regexp {
 }
 
 func (p phrase) starts(text string) []int {
+	if p.explainedAround && sentenceBreak.MatchString(text) {
+		return nil
+	}
 	var starts []int
 	for _, match := range p.pattern.FindAllStringIndex(text, -1) {
 		if p.notAfter != nil && p.notAfter.MatchString(text[:match[0]]) {

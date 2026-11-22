@@ -1007,8 +1007,8 @@ final class Translator
             ], ['form' => 'instanceof']),
             $expression instanceof Expr\Cast => $this->cast($expression),
             $expression instanceof Expr\Match_ => $this->matchExpression($expression),
-            $expression instanceof Expr\Isset_ => $this->construct('isset', $expression, $expression->vars),
-            $expression instanceof Expr\Empty_ => $this->construct('empty', $expression, [$expression->expr]),
+            $expression instanceof Expr\Isset_ => $this->construct('isset', $expression, $expression->vars, 'presence'),
+            $expression instanceof Expr\Empty_ => $this->construct('empty', $expression, [$expression->expr], 'presence'),
             $expression instanceof Expr\Exit_ => $this->construct('exit', $expression, $expression->expr !== null ? [$expression->expr] : []),
             $expression instanceof Expr\Print_ => $this->construct('print', $expression, [$expression->expr]),
             $expression instanceof Expr\Clone_ => $this->construct('clone', $expression, [$expression->expr]),
@@ -1161,10 +1161,10 @@ final class Translator
      *
      * @param  list<Expr>  $values
      */
-    private function construct(string $keyword, Node $node, array $values): TreeNode
+    private function construct(string $keyword, Node $node, array $values, ?string $presenceForm = null): TreeNode
     {
         $start = $this->start($node);
-        $made = $this->made('call', $start, $node instanceof Stmt ? $this->end($node) - 1 : $this->end($node));
+        $made = $this->made('call', $start, $node instanceof Stmt ? $this->end($node) - 1 : $this->end($node), ['form' => $presenceForm]);
         $made->parts = [
             'callee' => $this->made('reference', $start, $start + strlen($keyword), ['name' => $keyword, 'form' => 'name']),
             'arguments' => array_map(function (Expr $value): TreeNode {

@@ -26,6 +26,19 @@ final class BrandColumn
         return $this->brandIds[$typed] ?? null;
     }
 
+    public function isKnown(string $typed): bool
+    {
+        $id = $this->knownId($typed);
+
+        return ! empty($id);
+    }
+
+    #[Righteous(NullableRegistryLookup::class)]
+    private function knownId(string $typed): ?string
+    {
+        return $this->brandIds[strtolower($typed)] ?? null;
+    }
+
     private function labelled(?string $id, string $typed): string
     {
         return $id === null ? "unknown brand {$typed}" : "brand {$id}";

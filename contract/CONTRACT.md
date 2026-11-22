@@ -262,7 +262,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`call`**: `callee` (the expression called: a `reference`, or an `access` for a method), `typeArguments[]`,
   `arguments[]`. Facts `nullConditional`
   (`?->`, `?.()`), `target`. A language construct that behaves as a function (`isset`, `empty`, `echo`,
-  `print`, `unset`) is a call whose callee refers to the language's own symbol for it. PHP's pipe
+  `print`, `unset`) is a call whose callee refers to the language's own symbol for it; one that asks whether a value
+  is there (PHP's `isset` and `empty`) has `form` `presence`. PHP's pipe
   `value |> callable` is the call `callable(value)`: the callable its callee, the value its one argument.
 - **`construction`**: `type?` (the type written after `new`, or an anonymous class's `type`), `callee?` (a
   call of a class: Python `Money(...)`, which the compiler resolves to a construction; its type arguments are the

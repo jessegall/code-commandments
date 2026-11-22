@@ -271,33 +271,69 @@
           "$slot.parent"
         ],
         [
+          "readsIntoLookup",
+          "$parameter.parent",
+          "$parameter.binding.name"
+        ],
+        [
           "some",
           [
-            "descendants",
-            "$parameter.parent.body"
+            "overriders",
+            "$parameter.parent"
           ],
-          "x",
+          "m",
           [
-            "and",
+            "readsIntoLookup",
+            "$m",
             [
-              "=",
-              "$x.kind",
-              "reference"
-            ],
-            [
-              "=",
-              "$x.name",
-              "$parameter.binding.name"
-            ],
-            [
-              "=",
-              "$x.parent.kind",
-              "argument"
-            ],
-            [
-              "looksUp",
-              "$x.parent.parent"
+              "at",
+              [
+                "map",
+                "$m.parameters",
+                "q",
+                "$q.binding.name"
+              ],
+              [
+                "position",
+                "$slot"
+              ]
             ]
+          ]
+        ]
+      ]
+    },
+    "readsIntoLookup": {
+      "args": [
+        "fn",
+        "name"
+      ],
+      "expr": [
+        "some",
+        [
+          "descendants",
+          "$fn.body"
+        ],
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$x.name",
+            "$name"
+          ],
+          [
+            "=",
+            "$x.parent.kind",
+            "argument"
+          ],
+          [
+            "looksUp",
+            "$x.parent.parent"
           ]
         ]
       ]

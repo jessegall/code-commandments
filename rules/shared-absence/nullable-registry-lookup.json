@@ -84,34 +84,71 @@
               [
                 "and",
                 [
-                  "=",
-                  "$x.kind",
-                  "comparison"
-                ],
-                [
-                  "some",
-                  "$x.operands",
-                  "o",
-                  [
-                    "tree.nullish",
-                    "$o"
-                  ]
-                ],
-                [
-                  "some",
-                  "$x.operands",
-                  "o",
+                  "or",
                   [
                     "and",
                     [
                       "=",
-                      "$o.kind",
-                      "reference"
+                      "$x.kind",
+                      "comparison"
+                    ],
+                    [
+                      "some",
+                      "$x.operands",
+                      "o",
+                      [
+                        "tree.nullish",
+                        "$o"
+                      ]
+                    ],
+                    [
+                      "some",
+                      "$x.operands",
+                      "o",
+                      [
+                        "and",
+                        [
+                          "=",
+                          "$o.kind",
+                          "reference"
+                        ],
+                        [
+                          "=",
+                          "$o.name",
+                          "$t.name"
+                        ]
+                      ]
+                    ]
+                  ],
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$x.kind",
+                      "call"
                     ],
                     [
                       "=",
-                      "$o.name",
-                      "$t.name"
+                      "$x.form",
+                      "presence"
+                    ],
+                    [
+                      "some",
+                      "$x.arguments",
+                      "g",
+                      [
+                        "and",
+                        [
+                          "=",
+                          "$g.value.kind",
+                          "reference"
+                        ],
+                        [
+                          "=",
+                          "$g.value.name",
+                          "$t.name"
+                        ]
+                      ]
                     ]
                   ]
                 ],
@@ -171,6 +208,11 @@
               ]
             ]
           ]
+        ],
+        [
+          "=",
+          "$c.parent.parent.form",
+          "presence"
         ]
       ]
     },

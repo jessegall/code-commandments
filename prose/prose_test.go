@@ -53,6 +53,9 @@ func TestAStrawmanIsToldFromARuntimeCondition(t *testing.T) {
 		"The index is deliberately not unique. A replayed run walks the workflow again.":       false,
 		"Deliberately not invented — a fabricated testimonial is a lie about a business.":      false,
 		"Deletes rows from log_action that are not in this temporary table.":                   false,
+		"The tag is deliberately not in the key: a board renders it as a div or a button.":     false,
+		"A cold cache may be warm next request. It is deliberately not refreshed here.":        false,
+		"Deliberately not cached (the rates change by the minute).":                            false,
 	} {
 		if DefendsAgainstStrawman(text) != defends {
 			t.Errorf("%q defends against a strawman: %v", text, !defends)
