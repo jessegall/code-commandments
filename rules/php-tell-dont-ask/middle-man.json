@@ -15,7 +15,7 @@
     ],
     "skill": "php/tell-dont-ask",
     "description": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.",
-    "rule": "A class earns its place by doing something; one that only forwards every call to one collaborator is a middle man — let callers talk to that collaborator.",
+    "rule": "A class earns its place by doing something; one that only forwards every call to one collaborator is a middle man \u2014 let callers talk to that collaborator.",
     "suggestion": "Inject the collaborator where the middle man is used and delete the class, or move real behaviour into it.",
     "reporting": {
       "crossFile": true
@@ -216,7 +216,14 @@
         "methods",
         [
           "filter",
-          "$t.writtenMembers",
+          [
+            "flatten",
+            [
+              "list",
+              "$t.writtenMembers",
+              "$t.implicitMembers"
+            ]
+          ],
           "m",
           [
             "and",

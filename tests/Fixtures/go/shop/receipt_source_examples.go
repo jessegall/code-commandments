@@ -64,7 +64,6 @@ func (reader receiptReader) Sequence() int {
 }
 
 type retainedReceipt struct {
-	// @righteous PhantomNullable
 	active *VerifiedReceipt
 }
 

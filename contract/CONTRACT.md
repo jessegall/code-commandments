@@ -539,7 +539,7 @@ never read as returning nothing.
 ## Go
 
 Go declares a method outside its type: a `function` with a `receiver` belongs to the type its receiver names,
-joined by symbol id. An embedded field is a `field` whose `declarator` binds no name of its own, only a
+joined by symbol id, and a method written in the same file as its type is listed in that type's `implicitMembers`. An embedded field is a `field` whose `declarator` binds no name of its own, only a
 `declaredType`. Several results are a function's `returnType` of kind `tuple-type`, and a named result is a
 `tuple-element` with a `label`. Interfaces are satisfied implicitly: the compiler links a type's `satisfies[]` to
 every interface of the module it implements, so a rule reads one relation in every language. Capitalisation is

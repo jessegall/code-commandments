@@ -52,6 +52,7 @@ const Limit int = 3
 // @label valueB binding 28
 type Box[T Number] struct{ value T }
 
+// @contract link/type/implicitMembers -> [readFn, closeFn]
 type File struct{}
 
 // @contract role/function/receiver -> recvF
@@ -63,8 +64,11 @@ type File struct{}
 // @label retS type-expression 20
 // @contract role/function/body -> bodyF
 // @label bodyF block
+// @label readFn function
 func (File) Read() string { return "" }
-func (File) Close()       {}
+
+// @label closeFn function
+func (File) Close() {}
 
 // @contract kind/function
 // @contract role/function/typeParameters -> [sumT]

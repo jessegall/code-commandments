@@ -5,7 +5,6 @@ import "encoding/json"
 type BillingResult struct{ Memo string }
 
 type BillingState struct {
-	// @sin PhantomNullable
 	Active *BillingResult
 }
 

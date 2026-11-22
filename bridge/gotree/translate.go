@@ -17,6 +17,7 @@ import (
 // and are left out when the package was not checked.
 type writer struct {
 	fset       *token.FileSet
+	methods    []receiverMethod
 	source     []byte
 	facts      *types.Info
 	module     string
@@ -37,6 +38,12 @@ type pendingLink struct {
 	name string
 	to   []*contract.Node
 	list bool
+}
+
+// receiverMethod is a method the file writes, kept with the type its receiver names to list it among that type's members.
+type receiverMethod struct {
+	node  *contract.Node
+	owner *types.TypeName
 }
 
 // declaredType is a type the file declares, kept to link what it satisfies once every declaration is read.
@@ -194,6 +201,7 @@ func (w *writer) file(parsed *ast.File) *contract.Node {
 	holdAll(module, "imports", imports)
 	holdAll(module, "declarations", declarations)
 	w.satisfies()
+	w.members()
 
 	return holdAll(root, "modules", []*contract.Node{module})
 }
@@ -390,9 +398,46 @@ func (w *writer) function(declared *ast.FuncDecl) *contract.Node {
 	holdAll(node, "typeParameters", w.typeParameters(declared.Type.TypeParams))
 	if receiver != nil && w.facts != nil {
 		node.Own().Obligations = w.obligations(declared.Name)
+		if owner := receiverType(w.facts, declared.Name); owner != nil {
+			w.methods = append(w.methods, receiverMethod{node: node, owner: owner})
+		}
 	}
 
 	return node
+}
+
+func receiverType(facts *types.Info, name *ast.Ident) *types.TypeName {
+	method, isFunc := facts.Defs[name].(*types.Func)
+	if !isFunc {
+		return nil
+	}
+	held := method.Type().(*types.Signature).Recv()
+	if held == nil {
+		return nil
+	}
+	owned := held.Type()
+	if pointer, isPointer := owned.(*types.Pointer); isPointer {
+		owned = pointer.Elem()
+	}
+	if named, isNamed := owned.(*types.Named); isNamed {
+		return named.Obj()
+	}
+
+	return nil
+}
+
+func (w *writer) members() {
+	for _, declared := range w.declared {
+		var methods []*contract.Node
+		for _, each := range w.methods {
+			if each.owner == declared.object {
+				methods = append(methods, each.node)
+			}
+		}
+		if len(methods) > 0 {
+			w.link(declared.node, "implicitMembers", methods, true)
+		}
+	}
 }
 
 func (w *writer) obligations(name *ast.Ident) []contract.Obligation {

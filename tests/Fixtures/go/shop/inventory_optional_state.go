@@ -8,7 +8,6 @@ type InventoryResult struct {
 }
 
 type InventoryState struct {
-	// @sin PhantomNullable
 	Active      *InventoryResult
 	Reserve     int
 	Lot         string

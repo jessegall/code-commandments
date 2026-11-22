@@ -8,7 +8,6 @@ import (
 type DispatchResult struct{ Code string }
 
 type DispatchState struct {
-	// @sin PhantomNullable
 	Active    *DispatchResult
 	LoadOrder []string
 }

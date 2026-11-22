@@ -425,16 +425,42 @@ func ResolvedImports(codebase *Codebase) []ResolvedImport {
 			if file.dependency || FileModule(file) == "" {
 				continue
 			}
+			from := FileModule(file)
+			var reached []string
 			for _, node := range file.OfKind("import") {
 				at := Match{node: node, file: file}
 				for _, to := range codebase.reached(at, byPath, modules) {
-					resolved = append(resolved, ResolvedImport{At: at, From: FileModule(file), To: to})
+					resolved = append(resolved, ResolvedImport{At: at, From: from, To: to})
+					reached = append(reached, to)
 				}
 			}
+			resolved = append(resolved, codebase.writtenInFull(file, from, reached, byPath)...)
 		}
 
 		return resolved
 	})
+}
+
+func (c *Codebase) writtenInFull(file *File, from string, reached []string, byPath map[string]string) []ResolvedImport {
+	var found []ResolvedImport
+	for _, kind := range []string{"type-expression", "reference"} {
+		for _, node := range file.OfKind(kind) {
+			if node.Refers == "" {
+				continue
+			}
+			for _, declaration := range c.Declarations(node.Refers) {
+				to := byPath[declaration.File()]
+				if to == "" || Within(to, from) || Within(from, to) || slices.ContainsFunc(reached, func(each string) bool { return Within(to, each) || Within(each, to) }) {
+					continue
+				}
+				found = append(found, ResolvedImport{At: Match{node: node, file: file}, From: from, To: to})
+
+				break
+			}
+		}
+	}
+
+	return found
 }
 
 // FileModule is the module a file is, or its folder in a language that names no modules, so a file's imports relate

@@ -128,7 +128,6 @@ and calls inside are still read) or translates with a loss, and why.
 | `kind/default-value` | C# |
 | `role/default-value/writtenType` | C# |
 | `link/field/hooks` | no hooks or promoted parameters (an embedded field's methods are not written nodes) |
-| `link/type/implicitMembers` | no hooks or promoted parameters (an embedded field's methods are not written nodes) |
 | `role/construction/arguments` | a Go composite literal has a `type` and an `initializer`, not arguments or a callee |
 | `role/construction/callee` | a Go composite literal has a `type` and an `initializer`, not arguments or a callee |
 | `role/function/captures` | closures capture without a list |

@@ -2,7 +2,6 @@
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
     "csharp",
-    "go",
     "php",
     "python"
   ],
@@ -125,7 +124,14 @@
             "flatten",
             [
               "map",
-              "$d.parent.parent.writtenMembers",
+              [
+                "flatten",
+                [
+                  "list",
+                  "$d.parent.parent.writtenMembers",
+                  "$d.parent.parent.implicitMembers"
+                ]
+              ],
               "m",
               [
                 "ownDescendants",

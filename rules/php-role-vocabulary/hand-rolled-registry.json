@@ -352,7 +352,14 @@
           "flatten",
           [
             "map",
-            "$t.writtenMembers",
+            [
+              "flatten",
+              [
+                "list",
+                "$t.writtenMembers",
+                "$t.implicitMembers"
+              ]
+            ],
             "m",
             [
               "ownDescendants",
