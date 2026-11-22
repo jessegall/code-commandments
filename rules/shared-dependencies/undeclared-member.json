@@ -144,6 +144,55 @@
           "typeDeclaration",
           "$a.subject.resolved.name"
         ]
+      ],
+      [
+        "supers",
+        [
+          "map",
+          [
+            "knownSupertypes",
+            "$declared"
+          ],
+          "s",
+          [
+            "typeDeclaration",
+            "$s"
+          ]
+        ]
+      ],
+      [
+        "chain",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$declared"
+            ],
+            "$supers"
+          ]
+        ]
+      ],
+      [
+        "mixinDecls",
+        [
+          "flatten",
+          [
+            "map",
+            "$chain",
+            "d",
+            [
+              "map",
+              "$d.mixins",
+              "m",
+              [
+                "typeDeclaration",
+                "$m.refers"
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "having": [
@@ -153,64 +202,119 @@
         "$declared"
       ],
       [
-        "=",
-        [
-          "count",
-          "$declared.bases"
-        ],
-        0
+        "!=",
+        "$declared.form",
+        "trait"
       ],
       [
-        "=",
-        [
-          "count",
-          "$declared.mixins"
-        ],
-        0
+        "!=",
+        "$declared.form",
+        "enum"
       ],
       [
-        "not",
+        "every",
+        [
+          "knownSupertypes",
+          "$declared"
+        ],
+        "s",
+        [
+          "exists",
+          [
+            "typeDeclaration",
+            "$s"
+          ]
+        ]
+      ],
+      [
+        "every",
+        "$chain",
+        "d",
+        [
+          "every",
+          "$d.mixins",
+          "m",
+          [
+            "exists",
+            [
+              "typeDeclaration",
+              "$m.refers"
+            ]
+          ]
+        ]
+      ],
+      [
+        "none",
+        "$chain",
+        "d",
         [
           "proven",
           [
             "exemptedBy",
             "dynamic-members",
-            "$declared"
+            "$d"
           ]
         ]
       ],
       [
         "none",
         [
-          "membersOf",
-          "$declared"
+          "flatten",
+          [
+            "list",
+            "$chain",
+            "$mixinDecls"
+          ]
+        ],
+        "d",
+        [
+          "some",
+          "$d.writtenMembers",
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ],
+            [
+              "has",
+              [
+                "identities",
+                "dynamic-member-reader"
+              ],
+              "$m.name"
+            ]
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "flatten",
+          [
+            "map",
+            [
+              "flatten",
+              [
+                "list",
+                "$chain",
+                "$mixinDecls"
+              ]
+            ],
+            "d",
+            [
+              "membersOf",
+              "$d"
+            ]
+          ]
         ],
         "n",
         [
           "=",
           "$n",
           "$a.member.name"
-        ]
-      ],
-      [
-        "none",
-        "$declared.writtenMembers",
-        "m",
-        [
-          "and",
-          [
-            "=",
-            "$m.kind",
-            "function"
-          ],
-          [
-            "has",
-            [
-              "identities",
-              "dynamic-member-reader"
-            ],
-            "$m.name"
-          ]
         ]
       ],
       [
@@ -271,11 +375,26 @@
           "flatten",
           [
             "map",
-            "$declared.writtenMembers",
-            "m",
             [
-              "ownDescendants",
-              "$m.body"
+              "flatten",
+              [
+                "list",
+                "$chain",
+                "$mixinDecls"
+              ]
+            ],
+            "d",
+            [
+              "flatten",
+              [
+                "map",
+                "$d.writtenMembers",
+                "m",
+                [
+                  "ownDescendants",
+                  "$m.body"
+                ]
+              ]
             ]
           ]
         ],

@@ -1,0 +1,13 @@
+{
+  "package": "spatie/laravel-ray",
+  "ecosystem": "composer",
+  "versions": ">=1",
+  "provenance": "the published config file of the package: its keys are read by the package, not by the application",
+  "entries": [],
+  "identities": [
+    {
+      "name": "package-config-file",
+      "type": "ray"
+    }
+  ]
+}

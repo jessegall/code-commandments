@@ -71,28 +71,39 @@
             "access"
           ],
           [
-            "in",
-            "$x.member.name",
-            "value",
-            "name"
-          ],
-          [
             "or",
             [
-              "=",
+              "and",
               [
-                "tree.formOf",
-                [
-                  "typeDeclaration",
-                  "$x.subject.resolved.name"
-                ]
+                "in",
+                "$x.member.name",
+                "value",
+                "name"
               ],
-              "enum"
+              [
+                "=",
+                [
+                  "tree.formOf",
+                  [
+                    "typeDeclaration",
+                    "$x.subject.resolved.name"
+                  ]
+                ],
+                "enum"
+              ]
             ],
             [
-              "=",
-              "$x.resolved.kind",
-              "keyword"
+              "and",
+              [
+                "=",
+                "$x.member.name",
+                "value"
+              ],
+              [
+                "=",
+                "$x.resolved.kind",
+                "keyword"
+              ]
             ]
           ]
         ]

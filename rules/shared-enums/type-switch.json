@@ -62,6 +62,45 @@
         ]
       ]
     },
+    "literalOnReturn": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "count",
+            "$b.statements"
+          ],
+          1
+        ],
+        [
+          "some",
+          "$b.statements",
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "return"
+            ],
+            [
+              "some",
+              "$s.values",
+              "v",
+              [
+                "=",
+                "$v.kind",
+                "literal"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
     "typeTested": {
       "args": [
         "x"
@@ -267,6 +306,59 @@
         "y"
       ],
       "expr": "$y.resolved.name"
+    },
+    "mapsSubject": {
+      "args": [
+        "x",
+        "s"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$x.kind",
+          "construction"
+        ],
+        [
+          "=",
+          [
+            "fingerprint",
+            "$x",
+            "exact"
+          ],
+          [
+            "fingerprint",
+            "$s",
+            "exact"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "call"
+          ],
+          [
+            "some",
+            "$x.arguments",
+            "g",
+            [
+              "=",
+              [
+                "fingerprint",
+                "$g.value",
+                "exact"
+              ],
+              [
+                "fingerprint",
+                "$s",
+                "exact"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -397,6 +489,58 @@
             "list"
           ]
         ]
+      ],
+      [
+        "rungs",
+        [
+          "case",
+          "$b.kind",
+          {
+            "if": [
+              "filter",
+              [
+                "flatten",
+                [
+                  "list",
+                  [
+                    "follow",
+                    "$b",
+                    "else",
+                    "if"
+                  ],
+                  [
+                    "filter",
+                    [
+                      "after",
+                      "$b"
+                    ],
+                    "s",
+                    [
+                      "and",
+                      [
+                        "=",
+                        "$s.kind",
+                        "if"
+                      ],
+                      [
+                        "typeTested",
+                        "$s.condition"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              "r",
+              [
+                "typeTested",
+                "$r.condition"
+              ]
+            ]
+          },
+          [
+            "list"
+          ]
+        ]
       ]
     ],
     "having": [
@@ -443,14 +587,42 @@
         1
       ],
       [
-        "declaredOwner",
+        "or",
         [
-          "subjectOf",
+          "declaredOwner",
           [
-            "first",
-            "$tests"
-          ],
-          "$b"
+            "subjectOf",
+            [
+              "first",
+              "$tests"
+            ],
+            "$b"
+          ]
+        ],
+        [
+          "every",
+          "$tests",
+          "t",
+          [
+            "proven",
+            [
+              "=",
+              [
+                "tree.formOf",
+                [
+                  "typeDeclaration",
+                  [
+                    "resolvedNameOf",
+                    [
+                      "testedOf",
+                      "$t"
+                    ]
+                  ]
+                ]
+              ],
+              "class"
+            ]
+          ]
         ]
       ],
       [
@@ -470,6 +642,25 @@
               "r",
               [
                 "constructsOnReturn",
+                "$r.then"
+              ]
+            ]
+          ]
+        },
+        true
+      ],
+      [
+        "case",
+        "$b.kind",
+        {
+          "if": [
+            "not",
+            [
+              "every",
+              "$rungs",
+              "r",
+              [
+                "literalOnReturn",
                 "$r.then"
               ]
             ]
@@ -510,16 +701,20 @@
           ],
           "a",
           [
-            "=",
+            "mapsSubject",
             [
-              "tree.kindOf",
-              [
-                "get",
-                "$a",
-                "body"
-              ]
+              "get",
+              "$a",
+              "body"
             ],
-            "construction"
+            [
+              "subjectOf",
+              [
+                "first",
+                "$tests"
+              ],
+              "$b"
+            ]
           ]
         ]
       ],

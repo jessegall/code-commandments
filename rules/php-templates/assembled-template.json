@@ -24,8 +24,9 @@
     "select": "call",
     "as": "c",
     "where": [
-      "not",
-      "$c.file.test"
+      "=",
+      "$c.kind",
+      "call"
     ],
     "having": [
       "and",

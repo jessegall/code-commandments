@@ -92,6 +92,61 @@
               "$receiver.name"
             ]
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$receiver.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$receiver.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$receiver.callee.subject.kind",
+            "access"
+          ],
+          [
+            "isSelf",
+            "$receiver.callee.subject.subject"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$receiver.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$receiver.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$receiver.callee.subject.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$receiver.callee.subject.form",
+            "name"
+          ],
+          [
+            "some",
+            "$constructor.parameters",
+            "p",
+            [
+              "=",
+              "$p.binding.name",
+              "$receiver.callee.subject.name"
+            ]
+          ]
         ]
       ],
       [
@@ -118,6 +173,27 @@
             "builtHere",
             "$constructor",
             "$receiver.member.name"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$receiver.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$receiver.callee.subject.kind",
+            "access"
+          ],
+          [
+            "builtHere",
+            "$constructor",
+            "$receiver.callee.subject.member.name"
           ]
         ]
       ]

@@ -15,8 +15,8 @@
       "python-member-after-method"
     ],
     "skill": "php/class-layout",
-    "description": "A trait use, constant, property, property hook, or enum case declared below a method \u2014 so the reader only meets that state after seeing the behaviour that uses it.",
-    "rule": "Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor \u2014 never between two methods or appended at the bottom."
+    "description": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it.",
+    "rule": "Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom."
   },
   "definitions": {
     "rank": {
@@ -187,9 +187,28 @@
         "type"
       ],
       [
-        "!=",
-        "$m.parent.form",
-        "interface"
+        "or",
+        [
+          "!=",
+          "$m.parent.form",
+          "interface"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "field"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$m.hooks"
+            ],
+            0
+          ]
+        ]
       ],
       [
         "not",

@@ -61,6 +61,42 @@
           },
           ""
         ]
+      ],
+      [
+        "writtenMembers",
+        [
+          "sort",
+          [
+            "map",
+            [
+              "typeMembers",
+              [
+                "typeOf",
+                "$f"
+              ]
+            ],
+            "m",
+            "$m.name"
+          ]
+        ]
+      ],
+      [
+        "inferredMembers",
+        [
+          "sort",
+          [
+            "map",
+            [
+              "typeMembers",
+              [
+                "typeOf",
+                "$f.body"
+              ]
+            ],
+            "m",
+            "$m.name"
+          ]
+        ]
       ]
     ],
     "having": [
@@ -87,6 +123,28 @@
           "=",
           "$written",
           "$inferred"
+        ]
+      ],
+      [
+        "and",
+        [
+          "in",
+          "$f.returnType.form",
+          "union",
+          "nullable"
+        ],
+        [
+          ">",
+          [
+            "count",
+            "$writtenMembers"
+          ],
+          1
+        ],
+        [
+          "=",
+          "$writtenMembers",
+          "$inferredMembers"
         ]
       ]
     ],

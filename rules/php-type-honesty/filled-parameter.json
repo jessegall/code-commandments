@@ -78,31 +78,58 @@
           ],
           "x",
           [
-            "and",
+            "or",
             [
-              "=",
-              "$x.kind",
-              "access"
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$x.member.name",
+                "$m"
+              ],
+              [
+                "=",
+                "$x.subject.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$x.subject.name",
+                "$v.name"
+              ],
+              [
+                ">",
+                "$x.line",
+                "$c.line"
+              ]
             ],
             [
-              "=",
-              "$x.member.name",
-              "$m"
-            ],
-            [
-              "=",
-              "$x.subject.kind",
-              "reference"
-            ],
-            [
-              "=",
-              "$x.subject.name",
-              "$v.name"
-            ],
-            [
-              ">",
-              "$x.line",
-              "$c.line"
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$x.name",
+                "$v.name"
+              ],
+              [
+                "in",
+                "$x.parent.kind",
+                "return",
+                "argument"
+              ],
+              [
+                ">",
+                "$x.line",
+                "$c.line"
+              ]
             ]
           ]
         ]

@@ -18,6 +18,10 @@
     {
       "name": "stored-event",
       "type": "Spatie\\EventSourcing\\StoredEvents\\ShouldBeStored"
+    },
+    {
+      "name": "package-config-file",
+      "type": "event-sourcing"
     }
   ]
 }

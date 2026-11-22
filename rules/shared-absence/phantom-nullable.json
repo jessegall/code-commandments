@@ -352,7 +352,11 @@
         "as": "c"
       },
       "derefs": {
-        "from": "access",
+        "from": [
+          "unionAll",
+          "access",
+          "index"
+        ],
         "as": "a",
         "pipeline": [
           {
@@ -646,9 +650,10 @@
           [
             "and",
             [
-              "=",
+              "in",
               "$x.parent.kind",
-              "access"
+              "access",
+              "index"
             ],
             [
               "=",

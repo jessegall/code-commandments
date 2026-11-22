@@ -3058,6 +3058,10 @@
     {
       "name": "path-helper",
       "type": "lang_path"
+    },
+    {
+      "name": "castable-value",
+      "type": "Illuminate\\Contracts\\Database\\Eloquent\\Castable"
     }
   ],
   "forwards": [

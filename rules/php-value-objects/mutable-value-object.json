@@ -111,6 +111,11 @@
           ]
         ],
         [
+          "assignable",
+          "$o",
+          "castable-value"
+        ],
+        [
           "and",
           [
             "exists",

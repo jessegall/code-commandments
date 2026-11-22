@@ -178,6 +178,19 @@
           [
             "=",
             "$l.parent.kind",
+            "conditional"
+          ],
+          [
+            "=",
+            "$l.role",
+            "condition"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$l.parent.kind",
             "directive"
           ],
           [

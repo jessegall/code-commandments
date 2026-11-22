@@ -206,6 +206,38 @@
         ]
       ]
     },
+    "normalises": {
+      "args": [
+        "x",
+        "n"
+      ],
+      "expr": [
+        "or",
+        [
+          "defaultsFrom",
+          "$x",
+          "$n"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "conditional"
+          ],
+          [
+            "tree.names",
+            "$x.condition",
+            "$n"
+          ],
+          [
+            "tree.names",
+            "$x.consequent",
+            "$n"
+          ]
+        ]
+      ]
+    },
     "admitsAbsence": {
       "args": [
         "p"
@@ -428,6 +460,16 @@
               "$c",
               "$m"
             ]
+          ]
+        ],
+        [
+          "some",
+          "$body",
+          "x",
+          [
+            "normalises",
+            "$x",
+            "$named"
           ]
         ]
       ],

@@ -45,13 +45,10 @@
           ]
         ],
         [
-          "none",
-          "$d.modifiers",
-          "m",
+          "not",
           [
-            "=",
-            "$m",
-            "readonly"
+            "readonlyValue",
+            "$d"
           ]
         ],
         [
@@ -181,6 +178,65 @@
                 "=",
                 "$t.file.module",
                 "$f.file.module"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "readonlyValue": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "and",
+        [
+          "some",
+          "$d.modifiers",
+          "m",
+          [
+            "=",
+            "$m",
+            "readonly"
+          ]
+        ],
+        [
+          "or",
+          [
+            "in",
+            "$d.form",
+            "struct",
+            "record"
+          ],
+          [
+            "and",
+            [
+              "every",
+              "$d.implicitMembers",
+              "p",
+              [
+                "=",
+                "$p.effective.visibility",
+                "public"
+              ]
+            ],
+            [
+              "every",
+              [
+                "filter",
+                "$d.writtenMembers",
+                "m",
+                [
+                  "=",
+                  "$m.kind",
+                  "field"
+                ]
+              ],
+              "m",
+              [
+                "=",
+                "$m.effective.visibility",
+                "public"
               ]
             ]
           ]
