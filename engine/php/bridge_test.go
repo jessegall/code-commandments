@@ -430,9 +430,9 @@ spl_autoload_register(function (string $class): void {
     require __DIR__.'/src/'.str_replace('\\', '/', $class).'.php';
 });
 `,
-		"vendor/src/Framework/Query.php": "<?php\nnamespace Framework;\nclass Query {\n    /** @return $this */\n    public function where(string $column) {}\n    public function first(): ?object { return null; }\n}\n",
+		"vendor/src/Framework/Query.php":  "<?php\nnamespace Framework;\nclass Query {\n    /** @return $this */\n    public function where(string $column) {}\n    public function first(): ?object { return null; }\n}\n",
 		"vendor/src/Framework/Record.php": "<?php\nnamespace Framework;\nabstract class Record {\n    /** @return \\Framework\\Query<static> */\n    public static function query() {}\n}\n",
-		"app/Order.php": "<?php\nnamespace App;\nuse Framework\\Record;\nfinal class Order extends Record {}\nfinal class Orders { public function open(): ?object { return Order::query()->where('open')->first(); } }\n",
+		"app/Order.php":                   "<?php\nnamespace App;\nuse Framework\\Record;\nfinal class Order extends Record {}\nfinal class Orders { public function open(): ?object { return Order::query()->where('open')->first(); } }\n",
 	})
 	var targets []string
 	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
@@ -446,5 +446,30 @@ spl_autoload_register(function (string $class): void {
 		if !slices.Contains(targets, wanted) {
 			t.Errorf("the chain through documented returns reaches %q, and %s is not among them", targets, wanted)
 		}
+	}
+}
+
+func TestAParameterIsTypedAsTheSubtypeItsDocCommentDocuments(t *testing.T) {
+	folder := written(t, map[string]string{
+		"app/Setting.php": "<?php\nnamespace App\\Settings;\nabstract class Setting { public function name(): string { return ''; } }\nfinal class AutoSync extends Setting { public function every(): int { return 1; } }\nfinal class Unrelated { public function every(): int { return 1; } }\n",
+		"app/Sync.php": "<?php\nnamespace App;\nuse App\\Settings\\AutoSync;\nuse App\\Settings\\Setting;\nuse App\\Settings\\Unrelated;\nfinal class Sync {\n" +
+			"    /** @param  AutoSync  $setting */\n    public function run(Setting $setting): int { return $setting->every(); }\n" +
+			"    /** @param  Unrelated  $setting */\n    public function other(Setting $setting): string { return $setting->name(); }\n}\n",
+	})
+	var targets []string
+	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
+		for _, node := range file.Nodes() {
+			if node.Target != nil {
+				targets = append(targets, node.Target.Symbol)
+			}
+		}
+	}
+	for _, wanted := range []string{`App\Settings\AutoSync::every`, `App\Settings\Setting::name`} {
+		if !slices.Contains(targets, wanted) {
+			t.Errorf("the calls reach %q, and %s is not among them", targets, wanted)
+		}
+	}
+	if slices.Contains(targets, `App\Settings\Unrelated::name`) {
+		t.Errorf("a documented class that is no subtype of the written one narrowed the parameter: %q", targets)
 	}
 }

@@ -20,6 +20,7 @@ require __DIR__ . '/src/Sources.php';
 require __DIR__ . '/src/TreeNode.php';
 require __DIR__ . '/src/Types.php';
 require __DIR__ . '/src/AnonymousClassNames.php';
+require __DIR__ . '/src/DocumentedParameters.php';
 require __DIR__ . '/src/Translator.php';
 require __DIR__ . '/src/ParsedFile.php';
 require __DIR__ . '/src/UnreadableSymbol.php';

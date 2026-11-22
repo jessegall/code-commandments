@@ -250,7 +250,7 @@ final class Types
                     $variables = $node instanceof Expr\ArrowFunction ? end($this->scopes)['variables'] : [];
                     foreach ($node->getParams() as $parameter) {
                         if ($parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
-                            $variables[$parameter->var->name] = $this->types->written($parameter->type, $this->class);
+                            $variables[$parameter->var->name] = $this->types->narrowedBy($parameter->getAttribute('documented'), $this->types->written($parameter->type, $this->class));
                             $parameter->var->setAttribute('type', $variables[$parameter->var->name]);
                         }
                     }
@@ -387,6 +387,48 @@ final class Types
         }
 
         return null;
+    }
+
+    /**
+     * A parameter's written type, or the class its doc comment documents when that class is the written one or a subtype of it.
+     */
+    public function narrowedBy(?array $documented, ?array $written): ?array
+    {
+        if ($documented === null || $this->declaration($documented['name']) === null) {
+            return $written;
+        }
+        if ($written !== null && ($written['name'] ?? null) === null) {
+            return $written;
+        }
+        if ($written !== null && ! $this->isSubtype($documented['name'], $written['name'])) {
+            return $written;
+        }
+
+        $nullable = $written !== null ? ($written['nullable'] ?? false) : ($documented['nullable'] ?? false);
+
+        return ['name' => $documented['name']] + ($nullable ? ['nullable' => true] : []);
+    }
+
+    private function isSubtype(string $class, string $super): bool
+    {
+        $seen = [];
+        $waiting = [$class];
+        while ($waiting !== []) {
+            $at = array_shift($waiting);
+            if (strcasecmp(ltrim($at, '\\'), ltrim($super, '\\')) === 0) {
+                return true;
+            }
+            if (isset($seen[strtolower($at)]) || ($declared = $this->declaration($at)) === null) {
+                continue;
+            }
+            $seen[strtolower($at)] = true;
+            if ($declared['parent'] !== null) {
+                $waiting[] = $declared['parent'];
+            }
+            array_push($waiting, ...$declared['interfaces']);
+        }
+
+        return false;
     }
 
     private function constructed(Expr\New_ $new, ?string $class): ?array
