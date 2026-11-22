@@ -583,7 +583,7 @@ final class Types
     {
         $key = strtolower(ltrim($class, '\\'));
         if (! isset($this->classes[$key]) && ($this->loads || $this->builtIn($key))) {
-            $this->classes[$key] = $this->reflected($key);
+            $this->classes[$key] = $this->reflected(ltrim($class, '\\'));
         }
         $declared = $this->classes[$key] ?? null;
         if ($declared !== null) {

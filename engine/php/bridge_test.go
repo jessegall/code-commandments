@@ -345,3 +345,32 @@ class Ledger extends Book {
 		t.Errorf("the doc references resolve to %q, not %q", resolved, wanted)
 	}
 }
+
+func TestACallToAClassTheAutoloaderLoadsByItsWrittenCaseIsResolved(t *testing.T) {
+	folder := written(t, map[string]string{
+		"vendor/autoload.php": `<?php
+spl_autoload_register(function (string $class): void {
+    if (! str_starts_with($class, 'Framework\\')) {
+        return;
+    }
+    $path = __DIR__.'/src/'.str_replace('\\', '/', $class).'.php';
+    if (is_file($path)) {
+        require $path;
+    }
+});
+`,
+		"vendor/src/Framework/Validation/Failure.php": "<?php\nnamespace Framework\\Validation;\nclass Failure extends \\RuntimeException { public static function withMessages(array $messages): static { return new static(); } }\n",
+		"app/Form.php": "<?php\nnamespace App;\nuse Framework\\Validation\\Failure;\nclass Form { public function reject(): void { throw Failure::withMessages(['name' => 'taken']); } }\n",
+	})
+	var targets []string
+	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
+		for _, node := range file.Nodes() {
+			if node.Target != nil {
+				targets = append(targets, node.Target.Symbol)
+			}
+		}
+	}
+	if !slices.Contains(targets, `Framework\Validation\Failure::withMessages`) {
+		t.Errorf("the static call to a class the autoloader loads reaches %q, not Framework\\Validation\\Failure::withMessages", targets)
+	}
+}
