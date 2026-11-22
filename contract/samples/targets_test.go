@@ -9,7 +9,7 @@ import (
 )
 
 func TestATargetResolvesToTheNodeItsLabelOrLineSitsOn(t *testing.T) {
-	all, err := AllExpected("testdata/expected")
+	all, err := AllExpected("testdata/unit")
 	if err != nil {
 		t.Fatal(err)
 	}

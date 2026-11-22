@@ -14,7 +14,7 @@ import (
 func TestAFactMarkerChecksItsValueByTypeAndItsSymbolByDeclaration(t *testing.T) {
 	declarations := writtenSample(t, "contract-php-declarations", ".php", []marker.Marker{label("limit", 34, "binding", 0), label("size", 32, "binding", 0)})
 	reordered := declarations
-	reordered.File = withTypesReordered(t, "testdata/expected/contract-php-declarations/php.jsonl")
+	reordered.File = withTypesReordered(t, "testdata/unit/contract-php-declarations/php.jsonl")
 	fact := func(key, owner string, line, column int, operator, value string, targets ...marker.Target) marker.Marker {
 		return marker.Marker{Directive: marker.Directive{Key: key, Owner: owner, Column: column, Operator: operator, Value: json.RawMessage(value), Targets: targets}, Line: line}
 	}

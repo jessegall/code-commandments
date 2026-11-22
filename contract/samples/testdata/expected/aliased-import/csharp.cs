@@ -1,4 +1,6 @@
-using Money = System.Decimal;
+// @contract kind/import
+// @contract role/import-binding/alias -> alias
+using Money = System.Decimal; // @label alias binding
 
 namespace Orders;
 

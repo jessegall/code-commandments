@@ -10,14 +10,17 @@ public sealed class Account
     public int Settle(List<int> amounts)
     {
         var total = 0;
-        foreach (var amount in amounts)
+        // @contract kind/loop
+        // @contract fact/loop/form = "for-each"
+        foreach (var amount in amounts) // @label each loop
         {
-            if (amount > 0 && amount < 100)
+            // @contract role/if/condition -> both
+            if (amount > 0 && amount < 100) // @label both logical
             {
-                total += amount;
-                continue;
+                total += amount; // @contract kind/assignment
+                continue; // @contract link/continue/destination -> each
             }
-            break;
+            break; // @contract link/break/destination -> each
         }
         try
         {

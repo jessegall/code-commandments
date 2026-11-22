@@ -11,12 +11,15 @@ final class Account
     public function settle(array $amounts): int
     {
         $total = 0;
-        foreach ($amounts as $amount) {
-            if ($amount > 0 && $amount < 100) {
-                $total += $amount;
-                continue;
+        // @contract kind/loop
+        // @contract fact/loop/form = "for-each"
+        foreach ($amounts as $amount) { // @label each loop
+            // @contract role/if/condition -> both
+            if ($amount > 0 && $amount < 100) { // @label both logical
+                $total += $amount; // @contract kind/assignment
+                continue; // @contract link/continue/destination -> each
             }
-            break;
+            break; // @contract link/break/destination -> each
         }
         try {
             $this->ledger?->record($total);

@@ -41,7 +41,7 @@ func TestARoleOrLinkMarkerHoldsExactlyItsTargetsInOrder(t *testing.T) {
 
 func writtenSample(t *testing.T, construct, extension string, markers []marker.Marker) Written {
 	t.Helper()
-	all, err := AllExpected("testdata/expected")
+	all, err := AllExpected("testdata/unit")
 	if err != nil {
 		t.Fatal(err)
 	}

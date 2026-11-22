@@ -183,3 +183,20 @@ Every flag of section 19 is a fact in `flags/<language>`:
 | resolves | import `resolves`, an index fact | stated under `/sample/` for the folder the sample is placed in, since the absolute path a run reads the file at differs per run: `/sample/aliased_import/money.py` |
 | inherited | member `obligations`, a compiler fact | `flags` csharp: `ToString` overrides `object.ToString()`, fixed outside the project |
 | constant (wire key) | `constantValue`, a compiler fact | `flags` csharp: `Limit` folds to 3 |
+
+## Exclusions
+
+A construct marked in several languages carries the same markers in each (`Parity` in `contract/samples/parity.go`),
+except where a row here says a language truly cannot hold a key. `*` stands for every key or every language.
+
+| Construct | Key | Language | Why |
+|---|---|---|---|
+| aliased-import | role/import/alias | php | PHP's `use X as Y` aliases the imported name, so its alias is the binding's |
+| aliased-import | role/import/alias | typescript | `{ X as Y }` aliases the imported name, so its alias is the binding's |
+| aliased-import | role/import/alias | csharp | `using Y = X` aliases a type name, so its alias is the binding's |
+| aliased-import | role/import-binding/alias | go | Go aliases the whole package: `import y "x"` |
+| aliased-import | role/import-binding/alias | python | `import x as y` aliases the whole module |
+| flags | * | * | each language's own flags, one catalogue per language rather than one construct |
+| selectors | * | vue | the Vue sample is a template's selectors, not a script's loop |
+
+| recovery-node | fact/*/incomplete | php | php-parser recovers no partial declaration (contract/coverage/php.md) |

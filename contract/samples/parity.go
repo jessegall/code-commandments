@@ -39,12 +39,13 @@ func ExclusionsFrom(file string, text []byte, constructs []string) ([]Exclusion,
 			Why:       strings.TrimSpace(cells[4]),
 		}
 		_, knownKey := slices.BinarySearch(items, row.Key)
+		knownKey = knownKey || row.Key == "*"
 		switch {
 		case !slices.Contains(constructs, row.Construct):
 			faults = append(faults, fmt.Errorf("%s:%d: %s is no sample construct", file, number+1, row.Construct))
 		case !knownKey:
 			faults = append(faults, fmt.Errorf("%s:%d: %s is no contract item", file, number+1, row.Key))
-		case !slices.Contains(contract.Languages, row.Language):
+		case !slices.Contains(contract.Languages, row.Language) && row.Language != "*":
 			faults = append(faults, fmt.Errorf("%s:%d: %s is no language", file, number+1, row.Language))
 		case row.Why == "":
 			faults = append(faults, fmt.Errorf("%s:%d: %s for %s is excluded without a reason", file, number+1, row.Key, row.Language))
@@ -124,7 +125,7 @@ func targetName(source marker.Source, target marker.Target) string {
 
 func excluded(exclusions []Exclusion, construct, key string, language contract.Language) bool {
 	return slices.ContainsFunc(exclusions, func(row Exclusion) bool {
-		return row.Construct == construct && row.Key == key && row.Language == language
+		return row.Construct == construct && (row.Key == key || row.Key == "*") && (row.Language == language || row.Language == "*")
 	})
 }
 

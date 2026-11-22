@@ -5,12 +5,15 @@ export class Account {
 
   settle(amounts: number[]): number {
     let total = 0;
-    for (const amount of amounts) {
-      if (amount > 0 && amount < 100) {
-        total += amount;
-        continue;
+    // @contract kind/loop
+    // @contract fact/loop/form = "for-each"
+    for (const amount of amounts) { // @label each loop
+      // @contract role/if/condition -> both
+      if (amount > 0 && amount < 100) { // @label both logical
+        total += amount; // @contract kind/assignment
+        continue; // @contract link/continue/destination -> each
       }
-      break;
+      break; // @contract link/break/destination -> each
     }
     try {
       this.ledger?.record(total);

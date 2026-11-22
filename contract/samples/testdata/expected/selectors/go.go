@@ -11,12 +11,15 @@ func New() *Account {
 }
 
 func (a *Account) Settle(amounts []int) (int, error) {
-	for _, amount := range amounts {
-		if amount > 0 && amount < 100 {
-			a.total += amount
-			continue
+	// @contract kind/loop
+	// @contract fact/loop/form = "for-each"
+	for _, amount := range amounts { // @label each loop
+		// @contract role/if/condition -> both
+		if amount > 0 && amount < 100 { // @label both logical
+			a.total += amount // @contract kind/assignment
+			continue // @contract link/continue/destination -> each
 		}
-		break
+		break // @contract link/break/destination -> each
 	}
 	if a.total == 0 {
 		return 0, errors.New("nothing settled")

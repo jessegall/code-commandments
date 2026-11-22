@@ -1,7 +1,10 @@
 def size(n: int) -> str:
-    if n < 10:
+    # @contract kind/if
+    # @contract role/if/condition -> small
+    # @contract role/if/else -> second
+    if n < 10: # @label small comparison
         return "small"
-    elif n < 100:
+    elif n < 100: # @label second if
         return "medium"
     else:
         return "large"
