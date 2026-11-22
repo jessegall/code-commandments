@@ -273,6 +273,13 @@
               "within",
               "$a",
               "$x"
+            ],
+            [
+              "not",
+              [
+                "laravel.renders",
+                "$a.parent"
+              ]
             ]
           ]
         ]

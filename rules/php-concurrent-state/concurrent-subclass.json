@@ -42,16 +42,34 @@
         ]
       ],
       [
-        "none",
+        "or",
         [
-          "docTags",
-          "$t"
+          "none",
+          [
+            "docTags",
+            "$t"
+          ],
+          "g",
+          [
+            "=",
+            "$g.name",
+            "template"
+          ]
         ],
-        "g",
         [
-          "=",
-          "$g.name",
-          "template"
+          "some",
+          [
+            "docTags",
+            "$t"
+          ],
+          "g",
+          [
+            "in",
+            "$g.name",
+            "property",
+            "property-read",
+            "property-write"
+          ]
         ]
       ]
     ],

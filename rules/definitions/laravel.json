@@ -1252,6 +1252,45 @@
           "$c.target.type"
         ]
       ]
+    },
+    "renders": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$c.callee.member.name",
+            "render"
+          ],
+          [
+            "=",
+            "$c.callee.subject.refers",
+            "Inertia\\Inertia"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$c.callee.refers",
+            "inertia"
+          ]
+        ]
+      ]
     }
   }
 }

@@ -85,6 +85,20 @@ final class RoundedRates
     }
 
     #[Righteous(MutableStaticState::class)]
+    public static function half(string $region, float $rate): ?float
+    {
+        if (array_key_exists($region . ':half', self::$rounded)) {
+            return self::$rounded[$region . ':half'];
+        }
+
+        if ($rate <= 0) {
+            return self::$rounded[$region . ':half'] = null;
+        }
+
+        return self::$rounded[$region . ':half'] = round($rate / 2, 2);
+    }
+
+    #[Righteous(MutableStaticState::class)]
     public static function ceiling(string $region, float $rate): float
     {
         return self::$rounded[$region . ':ceiling'] ??= ceil($rate);

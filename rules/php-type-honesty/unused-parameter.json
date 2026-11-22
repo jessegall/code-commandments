@@ -232,15 +232,23 @@
             0
           ],
           [
-            "=",
+            "or",
             [
-              "count",
-              [
-                "subtypes",
-                "$owner"
-              ]
+              "=",
+              "$owner.form",
+              "trait"
             ],
-            0
+            [
+              "=",
+              [
+                "count",
+                [
+                  "subtypes",
+                  "$owner"
+                ]
+              ],
+              0
+            ]
           ],
           [
             "not",
