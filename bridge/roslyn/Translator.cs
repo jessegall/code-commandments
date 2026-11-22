@@ -1088,6 +1088,8 @@ public sealed partial class ContractWriter
         {
             { IsVar: true } => null,
             NullableTypeSyntax nullable when model.GetTypeInfo(nullable.ElementType).Type is { IsReferenceType: true, TypeKind: not TypeKind.Error } element => element.WithNullableAnnotation(NullableAnnotation.Annotated),
+            _ when model.GetTypeInfo(type).Type is { IsReferenceType: true, TypeKind: not TypeKind.Error, NullableAnnotation: NullableAnnotation.None } held
+                && model.GetNullableContext(type.SpanStart).AnnotationsEnabled() => held.WithNullableAnnotation(NullableAnnotation.NotAnnotated),
             _ => model.GetTypeInfo(type).Type,
         });
 

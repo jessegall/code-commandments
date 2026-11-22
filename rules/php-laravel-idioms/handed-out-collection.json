@@ -26,6 +26,153 @@
         "x"
       ],
       "expr": "$x.resolved"
+    },
+    "fieldOfHook": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "siblings",
+            "$h"
+          ],
+          "f",
+          [
+            "and",
+            [
+              "=",
+              "$f.kind",
+              "field"
+            ],
+            [
+              "some",
+              "$f.hooks",
+              "x",
+              [
+                "=",
+                "$x",
+                "$h"
+              ]
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "declaredReturn": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "case",
+        "$f.form",
+        {
+          "get": [
+            "typeOf",
+            [
+              "fieldOfHook",
+              "$f"
+            ]
+          ]
+        },
+        [
+          "typeOf",
+          "$f"
+        ]
+      ]
+    },
+    "returnsSelf": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$m.kind",
+          "function"
+        ],
+        [
+          "some",
+          "$m.body.statements",
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "return"
+            ],
+            [
+              "isSelf",
+              [
+                "at",
+                "$s.values",
+                0
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "onlyChains": {
+      "args": [
+        "t",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          ">",
+          [
+            "count",
+            [
+              "filter",
+              "$t.writtenMembers",
+              "m",
+              [
+                "returnsSelf",
+                "$m"
+              ]
+            ]
+          ],
+          0
+        ],
+        [
+          "every",
+          [
+            "filter",
+            "$t.writtenMembers",
+            "m",
+            [
+              "and",
+              [
+                "=",
+                "$m.kind",
+                "function"
+              ],
+              [
+                "!=",
+                "$m.form",
+                "constructor"
+              ],
+              [
+                "!=",
+                "$m",
+                "$f"
+              ]
+            ]
+          ],
+          "m",
+          [
+            "returnsSelf",
+            "$m"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -90,8 +237,19 @@
       [
         "typed",
         [
-          "declaredTypeOf",
-          "$held"
+          "coalesce",
+          [
+            "declaredReturn",
+            [
+              "enclosing",
+              "$r",
+              "function"
+            ]
+          ],
+          [
+            "declaredTypeOf",
+            "$held"
+          ]
         ]
       ]
     ],
@@ -172,9 +330,28 @@
       [
         "not",
         [
-          "contains",
-          "$typed.text",
-          "Readonly"
+          "has",
+          [
+            "identities",
+            "readonly-collection"
+          ],
+          "$typed.name"
+        ]
+      ],
+      [
+        "not",
+        [
+          "onlyChains",
+          [
+            "enclosing",
+            "$r",
+            "type"
+          ],
+          [
+            "enclosing",
+            "$r",
+            "function"
+          ]
         ]
       ]
     ],

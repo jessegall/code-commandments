@@ -31,21 +31,90 @@
           "$c.entries",
           "e",
           [
-            "and",
+            "or",
             [
-              "=",
-              "$e.key.kind",
-              "literal"
+              "and",
+              [
+                "=",
+                "$e.key.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$e.key.literalKind",
+                "string"
+              ]
             ],
             [
-              "=",
-              "$e.key.literalKind",
-              "string"
+              "and",
+              [
+                "=",
+                "$c.form",
+                "object"
+              ],
+              [
+                "=",
+                "$e.key.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$e.key.form",
+                "name"
+              ]
             ]
           ]
         ],
         "e",
-        "$e.key.value"
+        [
+          "case",
+          "$e.key.kind",
+          {
+            "literal": "$e.key.value",
+            "reference": "$e.key.name"
+          },
+          ""
+        ]
+      ]
+    },
+    "fieldNamed": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "every",
+        [
+          "stringKeys",
+          "$c"
+        ],
+        "k",
+        [
+          "matchesText",
+          "$k",
+          "^[A-Za-z_][A-Za-z0-9_]*$"
+        ]
+      ]
+    },
+    "standing": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "case",
+        [
+          "exists",
+          [
+            "assignedOnce",
+            "$h"
+          ]
+        ],
+        {
+          "true": [
+            "assignedOnce",
+            "$h"
+          ]
+        },
+        "$h"
       ]
     }
   },
@@ -102,12 +171,20 @@
         "handed",
         [
           "map",
-          "$calls",
-          "c",
           [
-            "tree.valueAt",
-            "$c",
-            "$at"
+            "map",
+            "$calls",
+            "c",
+            [
+              "tree.valueAt",
+              "$c",
+              "$at"
+            ]
+          ],
+          "h",
+          [
+            "standing",
+            "$h"
           ]
         ]
       ]
@@ -120,7 +197,7 @@
           "count",
           "$calls"
         ],
-        2
+        1
       ],
       [
         "every",
@@ -143,6 +220,10 @@
               ]
             ],
             2
+          ],
+          [
+            "fieldNamed",
+            "$h"
           ],
           [
             "=",

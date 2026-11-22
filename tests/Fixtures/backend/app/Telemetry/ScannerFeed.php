@@ -19,9 +19,9 @@ final class ScannerFeed
         $this->emit('scanned', ['sku' => $sku, 'bin' => $bin]);
     }
 
-    public function rejected(string $sku, string $reason): void
+    public function rejected(string $sku, string $bin): void
     {
-        $this->emit('rejected', ['sku' => $sku, 'reason' => $reason]);
+        $this->emit('rejected', ['sku' => $sku, 'bin' => $bin]);
     }
 
     public function counted(ScanCount $count): void

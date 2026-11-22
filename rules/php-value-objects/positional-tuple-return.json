@@ -104,6 +104,43 @@
         "c"
       ],
       "expr": "$c.entries"
+    },
+    "declaredSequence": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "and",
+        [
+          "not",
+          [
+            "tree.looseRecord",
+            [
+              "typeOf",
+              [
+                "enclosing",
+                "$r",
+                "function"
+              ]
+            ]
+          ]
+        ],
+        [
+          "=",
+          [
+            "typeCategory",
+            [
+              "typeOf",
+              [
+                "enclosing",
+                "$r",
+                "function"
+              ]
+            ]
+          ],
+          "list"
+        ]
+      ]
     }
   },
   "find": {
@@ -137,6 +174,16 @@
           [
             "not",
             "$s.file.test"
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "declaredSequence",
+                "$s"
+              ]
+            ]
           ]
         ],
         "function": [

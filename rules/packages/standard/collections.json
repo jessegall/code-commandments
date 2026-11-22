@@ -2,7 +2,7 @@
   "package": "collections",
   "ecosystem": "standard",
   "versions": "",
-  "provenance": "each language's own membership test over a list or set: PHP in_array, JavaScript Array.prototype.includes and Set.prototype.has, .NET Enumerable.Contains, MemoryExtensions.Contains (an array's Contains) and the collections' own Contains",
+  "provenance": "each language's own membership test over a list or set: PHP in_array, JavaScript Array.prototype.includes and Set.prototype.has, .NET Enumerable.Contains, MemoryExtensions.Contains (an array's Contains) and the collections' own Contains; and the collection types each language offers that cannot be written through (read-only collection)",
   "entries": [
     {
       "type": "",
@@ -81,6 +81,84 @@
       "name": "Contains",
       "effect": "tests-membership",
       "execution": "call"
+    }
+  ],
+  "identities": [
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Generic.IReadOnlyList"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Generic.IReadOnlyCollection"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Generic.IReadOnlyDictionary"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Generic.IReadOnlySet"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Generic.IEnumerable"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Immutable.ImmutableArray"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Immutable.ImmutableList"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Immutable.ImmutableDictionary"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "global::System.Collections.Immutable.ImmutableHashSet"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "typing.Mapping"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "typing.Sequence"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "typing.Iterable"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "typing.AbstractSet"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "collections.abc.Mapping"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "collections.abc.Sequence"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "builtins.frozenset"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "ReadonlyArray"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "ReadonlyMap"
+    },
+    {
+      "name": "readonly-collection",
+      "type": "ReadonlySet"
     }
   ]
 }
