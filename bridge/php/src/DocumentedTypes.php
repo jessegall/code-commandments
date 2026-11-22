@@ -45,6 +45,13 @@ final class DocumentedTypes extends NodeVisitorAbstract
     {
         preg_match_all('/'.$tag.'\s+(\??)([\\\\A-Za-z_][\\\\A-Za-z0-9_]*)(\|null)?\s+(?:\.\.\.)?\$([A-Za-z_][A-Za-z0-9_]*)/', $doc, $documented, PREG_SET_ORDER);
         $classes = [];
+        preg_match_all('/'.$tag.'\s+(?:(?:array|list|iterable|non-empty-list|non-empty-array)<(?:[^,<>]+,\s*)?([\\\\A-Za-z_][\\\\A-Za-z0-9_]*)>|([\\\\A-Za-z_][\\\\A-Za-z0-9_]*)\[\])\s+(?:\.\.\.)?\$([A-Za-z_][A-Za-z0-9_]*)/', $doc, $listed, PREG_SET_ORDER);
+        foreach ($listed as [, $inBrackets, $beforeBrackets, $name]) {
+            $element = $inBrackets !== '' ? $inBrackets : $beforeBrackets;
+            if (! in_array(strtolower($element), self::BUILT_IN, true)) {
+                $classes[$name] = ['element' => ['name' => $this->names->getNameContext()->getResolvedClassName(new Node\Name($element))->toString()]];
+            }
+        }
         foreach ($documented as [, $nullable, $written, $orNull, $name]) {
             if (in_array(strtolower($written), self::BUILT_IN, true)) {
                 continue;

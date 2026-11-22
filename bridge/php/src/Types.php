@@ -90,7 +90,9 @@ final class Types
             if ($method->name->toLowerString() === '__construct') {
                 foreach ($method->params as $parameter) {
                     if ($parameter->flags !== 0 && $parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
-                        $properties[$parameter->var->name] = $this->written($parameter->type, $name);
+                        $written = $this->written($parameter->type, $name);
+                        $documented = $parameter->getAttribute('documented');
+                        $properties[$parameter->var->name] = isset($documented['element']) ? $this->narrowedBy($documented, $written) : $written;
                     }
                 }
             }
@@ -250,6 +252,7 @@ final class Types
                 }
                 if ($node instanceof Stmt\Foreach_ && $node->valueVar instanceof Expr\Variable && is_string($node->valueVar->name)) {
                     $this->scopes[array_key_last($this->scopes)]['variables'][$node->valueVar->name] = null;
+                    $node->expr->setAttribute('iteratedInto', $node->valueVar->name);
                 }
                 if ($node instanceof Node\FunctionLike) {
                     $variables = $node instanceof Expr\ArrowFunction ? end($this->scopes)['variables'] : [];
@@ -288,6 +291,9 @@ final class Types
                     }
                     if ($node instanceof Expr\Assign && $node->var instanceof Expr\Variable && is_string($node->var->name)) {
                         $this->scopes[$scope]['variables'][$node->var->name] = $type;
+                    }
+                    if (($into = $node->getAttribute('iteratedInto')) !== null) {
+                        $this->scopes[$scope]['variables'][$into] = $type['element'] ?? null;
                     }
                 }
                 if ($node instanceof Node\FunctionLike) {
@@ -399,6 +405,9 @@ final class Types
      */
     public function narrowedBy(?array $documented, ?array $written): ?array
     {
+        if (isset($documented['element'])) {
+            return in_array($written['keyword'] ?? null, ['array', 'iterable'], true) ? $written + ['element' => $documented['element']] : $written;
+        }
         if ($documented === null || $this->declaration($documented['name']) === null) {
             return $written;
         }

@@ -492,3 +492,24 @@ func TestAPropertyAClassDocumentsIsTypedAsTheClassItNames(t *testing.T) {
 		t.Errorf("a call on a documented property reaches %q, and App\\Values\\Money::cents is not among them", targets)
 	}
 }
+
+func TestAForeachValueIsTypedAsTheElementItsListIsDocumentedToHold(t *testing.T) {
+	folder := written(t, map[string]string{
+		"app/Zone.php": "<?php\nnamespace App\\Delivery;\nfinal class Zone { public function code(): string { return ''; } }\n",
+		"app/Profile.php": "<?php\nnamespace App;\nuse App\\Delivery\\Zone;\nfinal class Profile {\n" +
+			"    /** @param  array<int, Zone>  $zones */\n    public function __construct(public readonly array $zones = []) {}\n" +
+			"    public function codes(): array { $codes = []; foreach ($this->zones as $zone) { $codes[] = $zone->code(); } return $codes; }\n" +
+			"    /** @param  list<Zone>  $more */\n    public function first(array $more): string { foreach ($more as $each) { return $each->code(); } return ''; }\n}\n",
+	})
+	count := 0
+	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
+		for _, node := range file.Nodes() {
+			if node.Target != nil && node.Target.Symbol == `App\Delivery\Zone::code` {
+				count++
+			}
+		}
+	}
+	if count != 2 {
+		t.Errorf("%d calls on a documented list's element reach Zone::code, and 2 is right", count)
+	}
+}
