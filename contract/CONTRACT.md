@@ -175,7 +175,7 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   (see *Go*). Facts `name?` (absent for an anonymous class), `symbol`, `form` (`class`, `interface`, `trait`,
   `enum`, `struct`, `record`, `object`).
 - **`field`**: a property or field declaration. `declarators[]`, `declaredType?`, `attributes[]`. Facts
-  `modifiers`, `effective`. A PHP property hook is a `function` of form `get` or `set` among the owning type's
+  `modifiers`, `effective`, `optional` (TypeScript `name?`: the property may be left out). A PHP property hook is a `function` of form `get` or `set` among the owning type's
   `writtenMembers`, and the field links it in `hooks[]`.
 - **`constant`**: `declarators[]`, `declaredType?`, `attributes[]`.
 - **`declarator`**: one name a field, constant or variable declares. `binding`, `initializer?`.
@@ -195,7 +195,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   `keyword`), `optional` (TypeScript `x?`), `evaluated` (when its default is evaluated: `call`, or
   `definition` for Python). A promoted constructor parameter (PHP, a TypeScript parameter property) is
   the one written node of the field it declares: its `modifiers` are the field's, and its type lists it in `implicitMembers`.
-- **`variable`**: a local declaration with a keyword (`let`, `const`, `var`, C# typed locals, Go `var`). A
+- **`variable`**: a declaration with a keyword (`let`, `const`, `var`, C# typed locals, Go `var`) or a type (Python's
+  `x: T = v` outside a class, form `annotated`). A
   `using` declaration (C# `using var`, TypeScript `using` and `await using`) is form `using`: its value is released
   where the enclosing block ends; the statement that holds a body is a `resource-scope`.
   `declarators[]`, `declaredType?`. Fact `form`. Go's `:=` is an `assignment` with mode `define`.

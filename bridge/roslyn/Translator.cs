@@ -641,7 +641,7 @@ public sealed partial class ContractWriter
 
         private TreeNode Unsupported(SyntaxNode node, string construct) => New("unsupported", node)
             .Fact("construct", construct)
-            .HoldsAll("parts", node.ChildNodes().OfType<ExpressionSyntax>().Select(Expression));
+            .HoldsAll("parts", node.ChildNodes().OfType<ExpressionSyntax>().Select(part => part is TypeSyntax type ? TypeExpression(type) : Expression(part)));
 
         // Expressions -----------------------------------------------------------------------------------------------
 

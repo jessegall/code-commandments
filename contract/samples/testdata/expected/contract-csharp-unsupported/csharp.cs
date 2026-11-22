@@ -1,5 +1,7 @@
 namespace Shop;
 
+// @label op_return type-expression 17
+// @contract role/unsupported/parts at 1 -> [op_return]
 public delegate int Op(int a);
 
 public static class Maths

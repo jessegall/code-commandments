@@ -1379,7 +1379,9 @@
       "links": {
         "hooks": "[]"
       },
-      "facts": [],
+      "facts": [
+        "optional"
+      ],
       "required": []
     },
     "constant": {

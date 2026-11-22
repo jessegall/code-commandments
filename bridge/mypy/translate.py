@@ -204,6 +204,9 @@ class Translator:
     def stmt_AnnAssign(self, statement: ast.AnnAssign, scope, owner) -> Node:
         if owner == "class":
             return self.field(statement, [statement.target], statement.annotation, statement.value, scope)
+        if isinstance(statement.target, ast.Name):
+            return self.field(statement, [statement.target], statement.annotation, statement.value, scope,
+                              self.of("variable", statement, form="annotated"))
         values = [self.expression(statement.value)] if statement.value is not None else []
         return self.assigned(statement, self.new("assignment", *self.span(statement), mode="assign"), [self.expression(statement.target)], values)
 
@@ -218,8 +221,8 @@ class Translator:
         return node
 
     def field(self, statement: ast.stmt, targets: list[ast.expr], annotation: ast.expr | None, value: ast.expr | None,
-              scope: list[str]) -> Node:
-        node = self.of("field", statement)
+              scope: list[str], node: Node | None = None) -> Node:
+        node = node or self.of("field", statement)
         declarators = []
         for target in targets:
             start, end = self.span(target)

@@ -1,6 +1,14 @@
 import enum
 from typing import Final
 
+# @label limit_type type-expression 8
+# @label limit_declarator declarator 1
+# @label limit_value literal 16
+# @contract kind/variable
+# @contract fact/variable/form = "annotated"
+# @contract role/variable/declaredType -> limit_type
+# @contract role/variable/declarators -> [limit_declarator]
+# @contract role/declarator/initializer -> limit_value
 LIMIT: Final = 3
 
 

@@ -1,4 +1,5 @@
 interface Item {
+    // @contract fact/field/optional = true
     name?: string
     tags: string[]
 }

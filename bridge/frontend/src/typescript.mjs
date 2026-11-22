@@ -118,9 +118,10 @@ export class Translator {
         const imports = []
         const declarations = []
         const written = []
+        const listed = new Set(statements.flatMap((statement) => exportedByList(statement)))
         for (const statement of statements) {
             if (ts.isImportDeclaration(statement)) imports.push(this.import(statement))
-            else if (declares(statement)) declarations.push(this.statement(statement))
+            else if (declares(statement)) declarations.push(this.statement(statement).fact('effective', listed.has(statement.name?.text) ? { visibility: 'public' } : undefined))
             else written.push(this.statement(statement))
         }
 
@@ -335,6 +336,7 @@ export class Translator {
 
             return this.new('field', member)
                 .fact('modifiers', this.modifiers(member))
+                .fact('optional', member.questionToken !== undefined)
                 .holdsAll('attributes', this.attributes(member))
                 .holds('declaredType', member.type && this.type(member.type))
                 .holdsAll('declarators', [this.between('declarator', member.name.getStart(this.sourceFile), end)
@@ -989,4 +991,14 @@ function commaParts(expression) {
     }
 
     return [expression]
+}
+
+/** The names an `export { a, b as c }` or `export default a` of the file's own declarations makes public. */
+function exportedByList(statement) {
+    if (ts.isExportDeclaration(statement) && !statement.moduleSpecifier && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+        return statement.exportClause.elements.map((element) => (element.propertyName ?? element.name).text)
+    }
+    if (ts.isExportAssignment(statement) && ts.isIdentifier(statement.expression)) return [statement.expression.text]
+
+    return []
 }

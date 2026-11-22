@@ -71,6 +71,7 @@ def outer(): # @label outer_fn function
     # @contract role/loop/normalCompletion -> for_else
     # @label item_b binding 9
     # @label range_call construction 17
+    # @contract fact/*/target on construction = {"symbol": "builtins.range.__new__", "type": "builtins.range", "name": "__new__"}
     for item in range(3):
         # @contract kind/break
         break # @label for_body block

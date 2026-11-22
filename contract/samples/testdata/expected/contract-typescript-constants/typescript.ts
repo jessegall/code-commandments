@@ -1,3 +1,4 @@
+// @contract fact/*/effective on type = {"visibility":"private"}
 enum Suit { Hearts = 'H', Spades = 'S' }
 // @label limit binding
 const LIMIT = 3
@@ -8,6 +9,7 @@ export class Box<T extends object = {}> {
 
 export type Pair<T extends string = 'a'> = [T, T]
 
+// @contract fact/*/effective on function = {"visibility":"public"}
 export function describe(suit: Suit, run?: () => number): string {
     // @contract fact/call/nullConditional = true
     run?.()
@@ -23,3 +25,10 @@ export function describe(suit: Suit, run?: () => number): string {
             return 'black'
     }
 }
+
+// @contract fact/*/effective on function = {"visibility":"public"}
+function shared(): number {
+    return 1
+}
+
+export { shared }

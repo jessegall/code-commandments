@@ -373,13 +373,22 @@ def target_of(call: CallExpr, types: dict[Expression, Type]) -> dict[str, str] |
     if isinstance(node, Decorator):
         node = node.func
     if isinstance(node, TypeInfo):
-        declared = node.get_method("__init__")
+        declared = constructor_of(node)
+        name = declared.name if declared is not None else "__init__"
         owner = declared.info.fullname if declared is not None and not isinstance(declared.info, FakeInfo) else node.fullname
-        return {"symbol": owner + ".__init__", "type": owner, "name": "__init__"}
+        return {"symbol": owner + "." + name, "type": owner, "name": name}
     if isinstance(node, (FuncBase, OverloadedFuncDef)) and node.fullname:
         owner = node.info.fullname if not isinstance(node.info, FakeInfo) else node.fullname.rpartition(".")[0]
         return {"symbol": node.fullname, "type": owner, "name": node.name}
     return None
+
+
+def constructor_of(info: TypeInfo):
+    """The constructor a call of the class runs: its __init__, or its __new__ when a class nearer in its MRO defines it."""
+    found = [method for method in (info.get_method("__init__"), info.get_method("__new__")) if method is not None]
+    nearest = [method for method in found if method.info in info.mro]
+
+    return min(nearest, key=lambda method: info.mro.index(method.info)) if nearest else None
 
 
 @dataclass(frozen=True)

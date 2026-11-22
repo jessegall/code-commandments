@@ -60,6 +60,7 @@ public static class Flow
         // @contract role/interpolation/parts -> [itemText, totalRef]
         // @contract kind/text
         // @contract fact/text/value = "item "
+        // @contract fact/*/resolvedType on reference at 21 = {"kind":"keyword","name":"string","nullable":true}
         var label = name as string ?? $"item {total}";
         // @label posCmp comparison
         // @label negUnary unary 33
@@ -79,6 +80,7 @@ public static class Flow
         var no = !(total > 0);
         // @contract fact/unary/operator = "assert-present"
         // @contract fact/access/form = "instance"
+        // @contract fact/*/resolvedType on reference at 22 = {"kind":"keyword","name":"string","nullable":false}
         var length = name!.Length;
         // @contract fact/assignment/mode = "increment"
         // @contract fact/assignment/prefix = true

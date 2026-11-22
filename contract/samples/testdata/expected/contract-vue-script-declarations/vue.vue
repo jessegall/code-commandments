@@ -66,6 +66,7 @@ export enum Level {
 }
 
 class Base<T> {
+    // @contract fact/field/optional = true
     protected value?: T
 }
 

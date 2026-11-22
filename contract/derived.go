@@ -4,8 +4,12 @@ import "slices"
 
 func derive(file *File) {
 	for _, node := range file.nodes {
-		if declares(node) && node.Facts.Effective == nil {
-			node.Own().Effective = effective(node, file.Language)
+		if declares(node) {
+			written, made := node.Facts.Effective, effective(node, file.Language)
+			if written != nil && written.Visibility != "" {
+				made.Visibility = written.Visibility
+			}
+			node.Own().Effective = made
 		}
 		switch node.Kind {
 		case "break", "continue":
@@ -151,7 +155,7 @@ func effective(node *Node, language Language) *Effective {
 		made.Visibility = parent.Facts.Effective.Visibility
 	}
 	if made.Visibility == "" {
-		made.Visibility = DefaultVisibility(language, name, member)
+		made.Visibility = DefaultVisibility(language, name, member, node.Facts.Modifiers)
 	}
 	if node.Kind == "constant" {
 		made.Static, made.Readonly = true, true
