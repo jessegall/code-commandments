@@ -49,37 +49,21 @@
                   "true": 3
                 },
                 [
-                  "add",
+                  "case",
                   [
-                    "case",
+                    ">",
                     [
-                      ">",
-                      [
-                        "count",
-                        "$m.hooks"
-                      ],
-                      0
+                      "count",
+                      "$m.hooks"
                     ],
-                    {
-                      "true": 7
-                    },
-                    4
+                    0
                   ],
+                  {
+                    "true": 7
+                  },
                   [
-                    "case",
-                    [
-                      "some",
-                      "$m.modifiers",
-                      "x",
-                      [
-                        "=",
-                        "$x",
-                        "private"
-                      ]
-                    ],
-                    {
-                      "true": 2
-                    },
+                    "add",
+                    4,
                     [
                       "case",
                       [
@@ -89,13 +73,29 @@
                         [
                           "=",
                           "$x",
-                          "protected"
+                          "private"
                         ]
                       ],
                       {
-                        "true": 1
+                        "true": 2
                       },
-                      0
+                      [
+                        "case",
+                        [
+                          "some",
+                          "$m.modifiers",
+                          "x",
+                          [
+                            "=",
+                            "$x",
+                            "protected"
+                          ]
+                        ],
+                        {
+                          "true": 1
+                        },
+                        0
+                      ]
                     ]
                   ]
                 ]
@@ -294,14 +294,12 @@
           ]
         ],
         [
-          "some",
-          "$earlier",
-          "r",
+          ">",
           [
-            ">",
-            "$r",
-            "$mine"
-          ]
+            "last",
+            "$earlier"
+          ],
+          "$mine"
         ],
         [
           "not",
