@@ -16,7 +16,7 @@ final class ConsignmentManifest
      * @return list<ConsignmentParcelData>
      */
     #[Sinful(ManualHydrationLoop::class)]
-    public function parcelsOf(Consignment $consignment): array
+    public function parcelsOf(CourierConsignment $consignment): array
     {
         return $consignment->parcels->map(fn ($parcel) => ConsignmentParcelData::from($parcel))->all();
     }
@@ -25,7 +25,7 @@ final class ConsignmentManifest
      * @return list<ConsignmentParcelData>
      */
     #[Fixed(ManualHydrationLoop::class)]
-    public function listedParcelsOf(Consignment $consignment): array
+    public function listedParcelsOf(CourierConsignment $consignment): array
     {
         return ConsignmentParcelData::collect($consignment->parcels->all());
     }
