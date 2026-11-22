@@ -137,6 +137,28 @@
               "flows": [
                 "laravel.boundaryFlows",
                 "$f"
+              ],
+              "owners": [
+                "laravel.boundaryOwners",
+                "$f"
+              ],
+              "decides": [
+                "some",
+                [
+                  "ownDescendants",
+                  "$f.body"
+                ],
+                "x",
+                [
+                  "in",
+                  "$x.kind",
+                  "if",
+                  "loop",
+                  "dispatch",
+                  "try",
+                  "throw",
+                  "conditional"
+                ]
               ]
             }
           },
@@ -214,6 +236,39 @@
             ]
           ]
         }
+      },
+      {
+        "where": [
+          "or",
+          [
+            ">=",
+            [
+              "count",
+              [
+                "filter",
+                "$e.owners",
+                "t",
+                [
+                  "has",
+                  "$o.owners",
+                  "$t"
+                ]
+              ]
+            ],
+            2
+          ],
+          [
+            "and",
+            [
+              "not",
+              "$e.decides"
+            ],
+            [
+              "not",
+              "$o.decides"
+            ]
+          ]
+        ]
       },
       {
         "where": [

@@ -26,9 +26,11 @@
       [
         "or",
         [
-          "=",
+          "in",
           "$f.parent.kind",
-          "argument"
+          "argument",
+          "index",
+          "entry"
         ],
         [
           "and",

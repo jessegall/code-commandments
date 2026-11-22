@@ -199,6 +199,68 @@
           ]
         ],
         0
+      ],
+      [
+        "none",
+        [
+          "flatten",
+          [
+            "map",
+            [
+              "list",
+              [
+                "enclosing",
+                "$d",
+                "type"
+              ]
+            ],
+            "t",
+            [
+              "flatten",
+              [
+                "map",
+                "$t.mixins",
+                "m",
+                [
+                  "descendants",
+                  [
+                    "typeDeclaration",
+                    "$m.refers"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        "x",
+        [
+          "and",
+          [
+            "tree.selfField",
+            "$x"
+          ],
+          [
+            "=",
+            [
+              "case",
+              "$x.kind",
+              {
+                "access": "$x.member.name",
+                "reference": "$x.name"
+              },
+              ""
+            ],
+            [
+              "case",
+              "$d.kind",
+              {
+                "declarator": "$d.binding.name",
+                "parameter": "$d.binding.name"
+              },
+              ""
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$d"

@@ -764,7 +764,49 @@
         "$t.form",
         {
           "named": "$t.refers",
-          "nullable": "$t.element.refers"
+          "nullable": "$t.element.refers",
+          "union": [
+            "case",
+            [
+              "=",
+              [
+                "count",
+                [
+                  "filter",
+                  "$t.members",
+                  "m",
+                  [
+                    "=",
+                    "$m.form",
+                    "named"
+                  ]
+                ]
+              ],
+              1
+            ],
+            {
+              "true": [
+                "at",
+                [
+                  "map",
+                  [
+                    "filter",
+                    "$t.members",
+                    "m",
+                    [
+                      "=",
+                      "$m.form",
+                      "named"
+                    ]
+                  ],
+                  "m",
+                  "$m.refers"
+                ],
+                0
+              ]
+            },
+            ""
+          ]
         },
         ""
       ]

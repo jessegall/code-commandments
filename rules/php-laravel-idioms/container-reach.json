@@ -69,28 +69,60 @@
         "c"
       ],
       "expr": [
-        "and",
+        "or",
         [
-          "nonempty",
+          "and",
           [
-            "classLiteral",
-            "$c"
+            "=",
+            "$c.callee.kind",
+            "reference"
+          ],
+          [
+            "in",
+            "$c.callee.refers",
+            "app",
+            "resolve"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            1
+          ],
+          [
+            "or",
+            [
+              "nonempty",
+              [
+                "classLiteral",
+                "$c"
+              ]
+            ],
+            [
+              "=",
+              [
+                "at",
+                [
+                  "map",
+                  "$c.arguments",
+                  "a",
+                  "$a.value.kind"
+                ],
+                0
+              ],
+              "literal"
+            ]
           ]
         ],
         [
-          "or",
+          "and",
           [
-            "and",
+            "nonempty",
             [
-              "=",
-              "$c.callee.kind",
-              "reference"
-            ],
-            [
-              "in",
-              "$c.callee.refers",
-              "app",
-              "resolve"
+              "classLiteral",
+              "$c"
             ]
           ],
           [
@@ -118,6 +150,40 @@
                 "assignable",
                 "$c.callee.subject.resolved",
                 "application"
+              ],
+              [
+                "and",
+                [
+                  "=",
+                  "$c.callee.subject.kind",
+                  "call"
+                ],
+                [
+                  "=",
+                  [
+                    "count",
+                    "$c.callee.subject.arguments"
+                  ],
+                  0
+                ],
+                [
+                  "=",
+                  "$c.callee.subject.callee.kind",
+                  "reference"
+                ],
+                [
+                  "=",
+                  "$c.callee.subject.callee.refers",
+                  "app"
+                ]
+              ],
+              [
+                "has",
+                [
+                  "identities",
+                  "container-facade"
+                ],
+                "$c.callee.subject.refers"
               ],
               [
                 "and",
@@ -498,6 +564,135 @@
               ]
             ],
             [
+              "not",
+              [
+                "laravel.ownerIs",
+                "$c",
+                "model-factory"
+              ]
+            ],
+            [
+              "not",
+              [
+                "and",
+                [
+                  "=",
+                  "$owner.form",
+                  "trait"
+                ],
+                [
+                  ">",
+                  [
+                    "count",
+                    [
+                      "filter",
+                      [
+                        "referrers",
+                        "$owner"
+                      ],
+                      "r",
+                      [
+                        "=",
+                        "$r.role",
+                        "mixins"
+                      ]
+                    ]
+                  ],
+                  0
+                ],
+                [
+                  "every",
+                  [
+                    "filter",
+                    [
+                      "referrers",
+                      "$owner"
+                    ],
+                    "r",
+                    [
+                      "=",
+                      "$r.role",
+                      "mixins"
+                    ]
+                  ],
+                  "r",
+                  [
+                    "assignable",
+                    [
+                      "enclosing",
+                      "$r",
+                      "type"
+                    ],
+                    "model"
+                  ]
+                ]
+              ]
+            ],
+            [
+              "not",
+              [
+                "and",
+                [
+                  "=",
+                  "$c.parent.kind",
+                  "assignment"
+                ],
+                [
+                  "=",
+                  "$c.parent.mode",
+                  "fallback"
+                ]
+              ]
+            ],
+            [
+              "not",
+              [
+                "and",
+                [
+                  "=",
+                  "$c.parent.kind",
+                  "arm"
+                ],
+                [
+                  "=",
+                  "$c.role",
+                  "body"
+                ]
+              ]
+            ],
+            [
+              "not",
+              [
+                "some",
+                [
+                  "ancestors",
+                  "$c"
+                ],
+                "a",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$a.kind",
+                    "call"
+                  ],
+                  [
+                    "some",
+                    [
+                      "identities",
+                      "serialized-callback"
+                    ],
+                    "i",
+                    [
+                      "=",
+                      "$i",
+                      "$a.target.symbol"
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            [
               "!=",
               [
                 "classLiteral",
@@ -561,6 +756,21 @@
                 "reachExempt",
                 "$c",
                 "$owner"
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "exemptedBy",
+                  "no-container",
+                  [
+                    "enclosing",
+                    "$c",
+                    "function"
+                  ]
+                ]
               ]
             ]
           ]

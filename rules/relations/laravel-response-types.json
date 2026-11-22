@@ -1,19 +1,144 @@
 {
   "$schema": "commandments:neutral-rule/v2",
-  "engine": ["php"],
+  "engine": [
+    "php"
+  ],
   "definitions": {
-    "renders": {"args": ["c"], "expr": ["or",
-      ["and", ["=", "$c.callee.kind", "access"], ["=", "$c.callee.member.name", "render"], ["=", "$c.callee.subject.refers", "Inertia\\Inertia"]],
-      ["and", ["=", "$c.callee.kind", "reference"], ["=", "$c.callee.refers", "inertia"]]]},
-    "typesIn": {"args": ["x"], "expr": ["filter", ["map", ["flatten", ["list", ["list", "$x"], ["ownDescendants", "$x"]]], "d", "$d.resolved.name"], "n", ["nonempty", "$n"]]}
+    "renders": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$c.callee.member.name",
+            "render"
+          ],
+          [
+            "=",
+            "$c.callee.subject.refers",
+            "Inertia\\Inertia"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$c.callee.refers",
+            "inertia"
+          ]
+        ]
+      ]
+    },
+    "typesIn": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "filter",
+        [
+          "map",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$x"
+              ],
+              [
+                "ownDescendants",
+                "$x"
+              ]
+            ]
+          ],
+          "d",
+          [
+            "case",
+            [
+              "nonempty",
+              "$d.resolved.name"
+            ],
+            {
+              "true": "$d.resolved.name"
+            },
+            [
+              "case",
+              [
+                "and",
+                [
+                  "=",
+                  "$d.kind",
+                  "reference"
+                ],
+                [
+                  "=",
+                  "$d.role",
+                  "subject"
+                ],
+                [
+                  "=",
+                  "$d.parent.form",
+                  "static"
+                ]
+              ],
+              {
+                "true": "$d.refers"
+              },
+              ""
+            ]
+          ]
+        ],
+        "n",
+        [
+          "nonempty",
+          "$n"
+        ]
+      ]
+    }
   },
   "relation": {
     "from": "call",
     "as": "c",
     "pipeline": [
-      {"where": ["renders", "$c"]},
-      {"expand": ["flatten", ["map", "$c.arguments", "a", ["typesIn", "$a.value"]]]},
-      {"project": {"type": "$row"}}
+      {
+        "where": [
+          "renders",
+          "$c"
+        ]
+      },
+      {
+        "expand": [
+          "flatten",
+          [
+            "map",
+            "$c.arguments",
+            "a",
+            [
+              "typesIn",
+              "$a.value"
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "type": "$row"
+        }
+      }
     ]
   }
 }

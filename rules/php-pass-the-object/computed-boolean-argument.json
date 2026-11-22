@@ -16,7 +16,7 @@
     ],
     "skill": "php/pass-the-object",
     "description": "A parameter that's just true/false, computed by every caller from the same object it could be given instead.",
-    "rule": "Take the SUBJECT and ask it \u2014 never a bool every caller derives from that same object.",
+    "rule": "Take the SUBJECT and ask it — never a bool every caller derives from that same object.",
     "suggestion": "swap the flags for the object the callers already hold: `CornerInset::for($editor)`",
     "reporting": {
       "crossFile": true
@@ -41,13 +41,29 @@
       "expr": [
         "in",
         "$x.kind",
-        "access",
         "call",
         "comparison",
         "logical",
         "unary",
         "conditional",
         "binary"
+      ]
+    },
+    "textOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "stripPrefix",
+        [
+          "case",
+          "$t.kind",
+          {
+            "pointer": "$t.element.text"
+          },
+          "$t.text"
+        ],
+        "?"
       ]
     },
     "computed": {
@@ -62,11 +78,37 @@
           "$positions",
           "n",
           [
-            "derived",
+            "or",
             [
-              "at",
-              "$handed",
-              "$n"
+              "derived",
+              [
+                "at",
+                "$handed",
+                "$n"
+              ]
+            ],
+            [
+              "and",
+              [
+                ">=",
+                [
+                  "count",
+                  "$positions"
+                ],
+                2
+              ],
+              [
+                "=",
+                [
+                  "tree.kindOf",
+                  [
+                    "at",
+                    "$handed",
+                    "$n"
+                  ]
+                ],
+                "access"
+              ]
             ]
           ]
         ],
@@ -97,6 +139,31 @@
             ]
           ],
           1
+        ],
+        [
+          "none",
+          [
+            "flatten",
+            [
+              "map",
+              "$positions",
+              "n",
+              [
+                "booleanParts",
+                [
+                  "at",
+                  "$handed",
+                  "$n"
+                ]
+              ]
+            ]
+          ],
+          "r",
+          [
+            "=",
+            "$r.form",
+            "self"
+          ]
         ]
       ]
     },
@@ -220,6 +287,43 @@
           ],
           "$positions"
         ]
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          [
+            "map",
+            "$calls",
+            "o",
+            [
+              "textOf",
+              [
+                "typeOf",
+                [
+                  "at",
+                  [
+                    "booleanParts",
+                    [
+                      "at",
+                      [
+                        "values",
+                        "$o"
+                      ],
+                      [
+                        "at",
+                        "$positions",
+                        0
+                      ]
+                    ]
+                  ],
+                  0
+                ]
+              ]
+            ]
+          ]
+        ],
+        1
       ]
     ],
     "emit": "$c"

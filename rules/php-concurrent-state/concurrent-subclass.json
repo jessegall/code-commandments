@@ -31,9 +31,12 @@
       "$t.bases",
       "b",
       [
-        "assignable",
-        "$b",
-        "concurrent"
+        "has",
+        [
+          "identities",
+          "concurrent"
+        ],
+        "$b.refers"
       ]
     ],
     "emit": "$t"

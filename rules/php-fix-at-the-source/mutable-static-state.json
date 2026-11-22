@@ -24,11 +24,18 @@
     "select": "assignment",
     "as": "a",
     "where": [
-      "exists",
+      "and",
       [
-        "enclosing",
-        "$a",
-        "function"
+        "exists",
+        [
+          "enclosing",
+          "$a",
+          "function"
+        ]
+      ],
+      [
+        "not",
+        "$a.file.test"
       ]
     ],
     "let": [
@@ -78,12 +85,20 @@
     "having": [
       "and",
       [
-        "=",
+        "or",
         [
-          "count",
-          "$fn.obligations"
+          "=",
+          [
+            "count",
+            "$fn.obligations"
+          ],
+          0
         ],
-        0
+        [
+          "=",
+          "$fn.form",
+          "constructor"
+        ]
       ],
       [
         "or",
@@ -205,6 +220,57 @@
                     },
                     ""
                   ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "before",
+            [
+              "enclosing",
+              "$a",
+              "expression-statement"
+            ]
+          ],
+          "g",
+          [
+            "and",
+            [
+              "=",
+              "$g.kind",
+              "if"
+            ],
+            [
+              "not",
+              [
+                "completes",
+                "$g.then"
+              ]
+            ],
+            [
+              "some",
+              [
+                "descendants",
+                "$g.condition"
+              ],
+              "y",
+              [
+                "tree.names",
+                "$y",
+                [
+                  "case",
+                  "$root.kind",
+                  {
+                    "access": "$root.member.name",
+                    "reference": "$root.name"
+                  },
+                  ""
                 ]
               ]
             ]

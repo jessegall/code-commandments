@@ -23,6 +23,45 @@
       "crossFile": true
     }
   },
+  "definitions": {
+    "typeNamed": {
+      "args": [
+        "t"
+      ],
+      "expr": "$t.name"
+    },
+    "idKey": {
+      "args": [
+        "k"
+      ],
+      "expr": [
+        "not",
+        [
+          "proven",
+          [
+            "in",
+            [
+              "tree.formOf",
+              [
+                "typeDeclaration",
+                [
+                  "typeNamed",
+                  [
+                    "typeOf",
+                    "$k.binding.parent"
+                  ]
+                ]
+              ]
+            ],
+            "class",
+            "interface",
+            "record",
+            "struct"
+          ]
+        ]
+      ]
+    }
+  },
   "find": {
     "select": [
       "index",
@@ -152,6 +191,10 @@
             "!=",
             "$k.name",
             "$root.name"
+          ],
+          [
+            "idKey",
+            "$k"
           ]
         ]
       ],
@@ -219,6 +262,22 @@
             "=",
             "$r.resolved.name",
             "$root.resolved.name"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "some",
+            "$function.parameters",
+            "p",
+            [
+              "exemptedBy",
+              "boundary",
+              "$p.declaredType"
+            ]
           ]
         ]
       ]

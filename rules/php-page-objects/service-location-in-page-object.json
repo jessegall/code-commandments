@@ -34,36 +34,12 @@
             "reference"
           ],
           [
-            "in",
-            "$c.callee.refers",
-            "app",
-            "resolve"
-          ],
-          [
-            "some",
-            "$c.arguments",
-            "a",
+            "has",
             [
-              "and",
-              [
-                "=",
-                [
-                  "position",
-                  "$a"
-                ],
-                0
-              ],
-              [
-                "=",
-                "$a.value.kind",
-                "access"
-              ],
-              [
-                "=",
-                "$a.value.member.name",
-                "class"
-              ]
-            ]
+              "identities",
+              "service-locator"
+            ],
+            "$c.callee.refers"
           ],
           [
             "spatie.composes",

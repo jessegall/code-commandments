@@ -1,0 +1,23 @@
+{
+  "package": "spatie/laravel-event-sourcing",
+  "ecosystem": "composer",
+  "versions": ">=7",
+  "provenance": "a stored event's constructor properties are the payload that is persisted and replayed, so they are not derivations the event could drop",
+  "entries": [],
+  "exemptions": [
+    {
+      "classes": [
+        "Spatie\\EventSourcing\\AggregateRoots\\AggregateRoot",
+        "Spatie\\EventSourcing\\AggregateRoots\\AggregatePartial"
+      ],
+      "tag": "keyed-state",
+      "why": "An aggregate holds keyed domain state it replays from events; it is not a store of registered collaborators."
+    }
+  ],
+  "identities": [
+    {
+      "name": "stored-event",
+      "type": "Spatie\\EventSourcing\\StoredEvents\\ShouldBeStored"
+    }
+  ]
+}

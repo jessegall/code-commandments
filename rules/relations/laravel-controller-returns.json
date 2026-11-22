@@ -28,15 +28,53 @@
           ],
           "d",
           [
+            "or",
+            [
+              "proven",
+              [
+                "nonempty",
+                "$d.resolved.name"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$d.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$d.role",
+                "subject"
+              ],
+              [
+                "=",
+                "$d.parent.form",
+                "static"
+              ],
+              [
+                "nonempty",
+                "$d.refers"
+              ]
+            ]
+          ]
+        ],
+        "d",
+        [
+          "case",
+          [
             "proven",
             [
               "nonempty",
               "$d.resolved.name"
             ]
-          ]
-        ],
-        "d",
-        "$d.resolved.name"
+          ],
+          {
+            "true": "$d.resolved.name"
+          },
+          "$d.refers"
+        ]
       ]
     },
     "publicControllerMethod": {

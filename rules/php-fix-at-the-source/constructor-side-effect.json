@@ -78,6 +78,11 @@
             "reference"
           ],
           [
+            "=",
+            "$receiver.form",
+            "name"
+          ],
+          [
             "some",
             "$constructor.parameters",
             "p",
@@ -99,8 +104,86 @@
             "mutates-receiver"
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$receiver.kind",
+            "access"
+          ],
+          [
+            "builtHere",
+            "$constructor",
+            "$receiver.member.name"
+          ]
+        ]
       ]
     ],
     "emit": "$c"
+  },
+  "definitions": {
+    "builtHere": {
+      "args": [
+        "constructor",
+        "member"
+      ],
+      "expr": [
+        "some",
+        "$constructor.body.statements",
+        "s",
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "expression-statement"
+          ],
+          [
+            "=",
+            "$s.expression.kind",
+            "assignment"
+          ],
+          [
+            "tree.selfField",
+            [
+              "at",
+              "$s.expression.targets",
+              0
+            ]
+          ],
+          [
+            "=",
+            [
+              "at",
+              [
+                "map",
+                "$s.expression.targets",
+                "t",
+                "$t.member.name"
+              ],
+              0
+            ],
+            "$member"
+          ],
+          [
+            "!=",
+            [
+              "at",
+              [
+                "map",
+                "$s.expression.values",
+                "v",
+                "$v.kind"
+              ],
+              0
+            ],
+            "reference"
+          ]
+        ]
+      ]
+    }
   }
 }

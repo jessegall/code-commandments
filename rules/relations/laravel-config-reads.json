@@ -1,0 +1,50 @@
+{
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "relation": {
+    "from": "call",
+    "as": "c",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "laravel.configRead",
+            "$c"
+          ],
+          [
+            "literalIs",
+            [
+              "at",
+              [
+                "map",
+                "$c.arguments",
+                "a",
+                "$a.value"
+              ],
+              0
+            ],
+            "string"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$c",
+          "key": [
+            "at",
+            [
+              "map",
+              "$c.arguments",
+              "a",
+              "$a.value.value"
+            ],
+            0
+          ]
+        }
+      }
+    ]
+  }
+}

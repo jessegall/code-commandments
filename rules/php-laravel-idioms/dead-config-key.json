@@ -10,7 +10,7 @@
       "DeadConfigKey"
     ],
     "skill": "php/laravel-idioms",
-    "description": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt",
+    "description": "A config key nothing reads \u2014 dead surface left behind by a deleted feature, which new code may wrongly adopt",
     "rule": "Config is an interface: every key exists because something reads it. When the last reader goes, the key goes with it.",
     "suggestion": "Delete the key (and its env var), or restore the reader the feature lost.",
     "requires": {
@@ -60,9 +60,13 @@
             ],
             "p",
             [
-              "has",
-              "$texts",
-              "$p"
+              "hasRow",
+              "laravel-config-reads",
+              [
+                "record",
+                "key",
+                "$p"
+              ]
             ]
           ]
         ]

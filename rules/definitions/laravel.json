@@ -90,6 +90,21 @@
           "receiverIs",
           "$c",
           "mcp-request"
+        ],
+        [
+          "requestCall",
+          "$c.callee.subject"
+        ],
+        [
+          "requestCall",
+          [
+            "assignedOnce",
+            "$c.callee.subject"
+          ]
+        ],
+        [
+          "requestTrait",
+          "$c"
         ]
       ]
     },
@@ -1056,6 +1071,140 @@
               ]
             ]
           ]
+        ]
+      ]
+    },
+    "configRead": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$c.callee.refers",
+            "config"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "has",
+            [
+              "identities",
+              "config-reader"
+            ],
+            [
+              "concat",
+              "$c.callee.subject.refers",
+              "::",
+              "$c.callee.member.name"
+            ]
+          ]
+        ]
+      ]
+    },
+    "requestCall": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "call"
+        ],
+        [
+          "has",
+          [
+            "identities",
+            "request-helper"
+          ],
+          "$x.callee.refers"
+        ]
+      ]
+    },
+    "requestTrait": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "isSelf",
+          "$c.callee.subject"
+        ],
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "=",
+              "$t.form",
+              "trait"
+            ],
+            [
+              "some",
+              [
+                "referrers",
+                "$t"
+              ],
+              "u",
+              [
+                "ownerIs",
+                "$u",
+                "form-request"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "boundaryOwners": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "distinct",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "descendants",
+              "$f.body",
+              "call"
+            ],
+            "c",
+            [
+              "ownCall",
+              "$c"
+            ]
+          ],
+          "c",
+          "$c.target.type"
         ]
       ]
     }

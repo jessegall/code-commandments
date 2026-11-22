@@ -10,8 +10,8 @@
       "ConfigRead"
     ],
     "skill": "php/laravel-idioms",
-    "description": "`config('…')` read inside a class",
-    "rule": "Inject a typed config object; never read `config('…')` inside a class.",
+    "description": "`config('\u2026')` read inside a class",
+    "rule": "Inject a typed config object; never read `config('\u2026')` inside a class.",
     "suggestion": "Inject a typed config value object.",
     "requires": {
       "name": "illuminate/support",
@@ -28,25 +28,15 @@
         "$c.file.test"
       ],
       [
-        "=",
-        "$c.callee.kind",
-        "reference"
-      ],
-      [
-        "=",
-        "$c.callee.refers",
-        "config"
+        "laravel.configRead",
+        "$c"
       ]
     ],
     "having": [
       "and",
       [
         "exists",
-        [
-          "enclosing",
-          "$c",
-          "type"
-        ]
+        "$owner"
       ],
       [
         "not",
@@ -62,8 +52,89 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "exemptedBy",
+            "composition-root",
+            "$owner"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$owner.form",
+            "trait"
+          ],
+          [
+            ">",
+            [
+              "count",
+              [
+                "filter",
+                [
+                  "referrers",
+                  "$owner"
+                ],
+                "r",
+                [
+                  "=",
+                  "$r.role",
+                  "mixins"
+                ]
+              ]
+            ],
+            0
+          ],
+          [
+            "every",
+            [
+              "filter",
+              [
+                "referrers",
+                "$owner"
+              ],
+              "r",
+              [
+                "=",
+                "$r.role",
+                "mixins"
+              ]
+            ],
+            "r",
+            [
+              "proven",
+              [
+                "exemptedBy",
+                "composition-root",
+                [
+                  "enclosing",
+                  "$r",
+                  "type"
+                ]
+              ]
+            ]
+          ]
+        ]
       ]
     ],
-    "emit": "$c"
+    "emit": "$c",
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$c",
+          "type"
+        ]
+      ]
+    ]
   }
 }

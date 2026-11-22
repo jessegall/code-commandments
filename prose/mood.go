@@ -39,8 +39,9 @@ var prepositions = []string{
 }
 
 var stateVerbs = []string{
-	"admit", "alarm", "contain", "differ", "gate", "need", "overwrite", "permit",
-	"presume", "reference", "refuse", "staff", "stand", "state", "suggest", "support", "walk", "want", "work",
+	"admit", "alarm", "allow", "bill", "complete", "contain", "declare", "derive", "differ", "earn", "gate", "ignore",
+	"minify", "mirror", "need", "override", "overwrite", "permit", "pin", "presume", "reference", "refuse", "return",
+	"staff", "stand", "state", "suggest", "support", "take", "use", "walk", "want", "work",
 }
 
 func IsRelationalCompound(name string) bool {

@@ -2426,7 +2426,9 @@
     },
     {
       "classes": [
-        "Illuminate\\Support\\ServiceProvider"
+        "Illuminate\\Support\\ServiceProvider",
+        "Illuminate\\Database\\Migrations\\Migration",
+        "Illuminate\\Database\\Eloquent\\Model"
       ],
       "on": {
         "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
@@ -2434,7 +2436,7 @@
         ]
       },
       "tag": "composition-root",
-      "why": "A provider or framework construction hook that wires config into values without constructor injection."
+      "why": "A provider, a framework construction hook, or a class the framework builds itself (a migration, a hydrated model), which takes config without constructor injection."
     },
     {
       "on": {
@@ -2498,6 +2500,15 @@
       },
       "tag": "validation-response",
       "why": "A framework factory builds a validation response from field messages and has no parameter for the caught failure."
+    },
+    {
+      "tag": "no-container",
+      "on": {
+        "Illuminate\\Contracts\\Queue\\ShouldQueue": [
+          "failed"
+        ]
+      },
+      "why": "A queued job's failure hook: the framework calls it with the failure only, and the job is serialized, so a service it needs cannot be injected."
     }
   ],
   "identities": [
@@ -2728,6 +2739,274 @@
     {
       "name": "scoped-binding",
       "type": "scopedIf"
+    },
+    {
+      "name": "container-facade",
+      "type": "Illuminate\\Support\\Facades\\App"
+    },
+    {
+      "name": "model-factory",
+      "type": "Illuminate\\Database\\Eloquent\\Factories\\Factory"
+    },
+    {
+      "name": "serialized-callback",
+      "type": "Illuminate\\Bus\\PendingBatch::then"
+    },
+    {
+      "name": "serialized-callback",
+      "type": "Illuminate\\Bus\\PendingBatch::catch"
+    },
+    {
+      "name": "serialized-callback",
+      "type": "Illuminate\\Bus\\PendingBatch::finally"
+    },
+    {
+      "name": "serialized-callback",
+      "type": "Illuminate\\Bus\\PendingBatch::progress"
+    },
+    {
+      "name": "config-reader",
+      "type": "Illuminate\\Support\\Facades\\Config::get"
+    },
+    {
+      "name": "config-reader",
+      "type": "Illuminate\\Support\\Facades\\Config::string"
+    },
+    {
+      "name": "config-reader",
+      "type": "Illuminate\\Support\\Facades\\Config::integer"
+    },
+    {
+      "name": "config-reader",
+      "type": "Illuminate\\Support\\Facades\\Config::boolean"
+    },
+    {
+      "name": "config-reader",
+      "type": "Illuminate\\Support\\Facades\\Config::array"
+    },
+    {
+      "name": "config-reader",
+      "type": "Illuminate\\Support\\Facades\\Config::float"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "app"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "auth"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "broadcasting"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "cache"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "cors"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "database"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "filesystems"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "hashing"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "logging"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "mail"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "queue"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "session"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "view"
+    },
+    {
+      "name": "service-provider",
+      "type": "Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider"
+    },
+    {
+      "name": "service-provider",
+      "type": "Illuminate\\Foundation\\Support\\Providers\\EventServiceProvider"
+    },
+    {
+      "name": "service-provider",
+      "type": "Illuminate\\Foundation\\Support\\Providers\\AuthServiceProvider"
+    },
+    {
+      "name": "expression-facade",
+      "type": "Illuminate\\Support\\Facades\\DB"
+    },
+    {
+      "name": "expression-facade",
+      "type": "DB"
+    },
+    {
+      "name": "request-helper",
+      "type": "request"
+    },
+    {
+      "name": "facade",
+      "type": "App"
+    },
+    {
+      "name": "facade",
+      "type": "Artisan"
+    },
+    {
+      "name": "facade",
+      "type": "Auth"
+    },
+    {
+      "name": "facade",
+      "type": "Blade"
+    },
+    {
+      "name": "facade",
+      "type": "Broadcast"
+    },
+    {
+      "name": "facade",
+      "type": "Bus"
+    },
+    {
+      "name": "facade",
+      "type": "Cache"
+    },
+    {
+      "name": "facade",
+      "type": "Config"
+    },
+    {
+      "name": "facade",
+      "type": "Cookie"
+    },
+    {
+      "name": "facade",
+      "type": "Crypt"
+    },
+    {
+      "name": "facade",
+      "type": "DB"
+    },
+    {
+      "name": "facade",
+      "type": "Event"
+    },
+    {
+      "name": "facade",
+      "type": "File"
+    },
+    {
+      "name": "facade",
+      "type": "Gate"
+    },
+    {
+      "name": "facade",
+      "type": "Hash"
+    },
+    {
+      "name": "facade",
+      "type": "Http"
+    },
+    {
+      "name": "facade",
+      "type": "Lang"
+    },
+    {
+      "name": "facade",
+      "type": "Log"
+    },
+    {
+      "name": "facade",
+      "type": "Mail"
+    },
+    {
+      "name": "facade",
+      "type": "Notification"
+    },
+    {
+      "name": "facade",
+      "type": "Process"
+    },
+    {
+      "name": "facade",
+      "type": "Queue"
+    },
+    {
+      "name": "facade",
+      "type": "RateLimiter"
+    },
+    {
+      "name": "facade",
+      "type": "Redirect"
+    },
+    {
+      "name": "facade",
+      "type": "Route"
+    },
+    {
+      "name": "facade",
+      "type": "Schema"
+    },
+    {
+      "name": "facade",
+      "type": "Session"
+    },
+    {
+      "name": "facade",
+      "type": "Storage"
+    },
+    {
+      "name": "facade",
+      "type": "URL"
+    },
+    {
+      "name": "facade",
+      "type": "Validator"
+    },
+    {
+      "name": "facade",
+      "type": "View"
+    },
+    {
+      "name": "facade",
+      "type": "Vite"
+    },
+    {
+      "name": "service-locator",
+      "type": "app"
+    },
+    {
+      "name": "service-locator",
+      "type": "resolve"
+    },
+    {
+      "name": "service-locator",
+      "type": "request"
+    },
+    {
+      "name": "service-locator",
+      "type": "session"
     }
   ],
   "forwards": [

@@ -173,6 +173,68 @@
           ]
         ]
       ]
+    },
+    "assignedFromParameter": {
+      "args": [
+        "f",
+        "h"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownDescendants",
+          "$f"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "assignment"
+          ],
+          [
+            "tree.selfField",
+            [
+              "at",
+              "$a.targets",
+              0
+            ]
+          ],
+          [
+            "=",
+            [
+              "at",
+              [
+                "map",
+                "$a.targets",
+                "t",
+                "$t.member.name"
+              ],
+              0
+            ],
+            "$h.member.name"
+          ],
+          [
+            "some",
+            "$a.values",
+            "v",
+            [
+              "and",
+              [
+                "=",
+                "$v.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$v.binding.parent.kind",
+                "parameter"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -351,6 +413,53 @@
             "enclosing",
             "$r",
             "function"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "assignedFromParameter",
+          [
+            "enclosing",
+            "$r",
+            "function"
+          ],
+          "$held"
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$r",
+              "function"
+            ]
+          ],
+          "f",
+          [
+            "=",
+            "$f.effective.visibility",
+            "private"
+          ]
+        ]
+      ],
+      [
+        "not",
+        "$r.file.test"
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            "$held.resolved.valueType",
+            true
           ]
         ]
       ]

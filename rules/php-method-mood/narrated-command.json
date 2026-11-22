@@ -15,8 +15,8 @@
       "python-narrated-command"
     ],
     "skill": "php/method-mood",
-    "description": "A command named in the third person \u2014 `hides()`, `entersTestMode()` \u2014 where a call is an order, not a description of one",
-    "rule": "Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\\$user)` \u2014 never the third-person `hides()`, and never a participle.",
+    "description": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one",
+    "rule": "Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\\$user)` — never the third-person `hides()`, and never a participle.",
     "suggestion": "drop the -s: the call site is giving the order, not narrating it"
   },
   "definitions": {
@@ -108,6 +108,34 @@
           "$f.form",
           "get",
           "set"
+        ]
+      ],
+      [
+        "not",
+        [
+          "has",
+          [
+            "functionRole",
+            "$f"
+          ],
+          "test"
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            [
+              "typeCategory",
+              [
+                "typeOf",
+                "$f"
+              ]
+            ],
+            "never"
+          ]
         ]
       ],
       [

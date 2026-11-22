@@ -36,6 +36,18 @@
     {
       "name": "date-time",
       "type": "DateTimeImmutable"
+    },
+    {
+      "name": "collection-contract",
+      "type": "ArrayAccess"
+    },
+    {
+      "name": "collection-contract",
+      "type": "IteratorAggregate"
+    },
+    {
+      "name": "collection-contract",
+      "type": "Countable"
     }
   ],
   "exemptions": [

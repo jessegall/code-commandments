@@ -50,5 +50,9 @@
   {
     "tag": "validation-response",
     "why": "A framework factory builds a validation response from field messages and has no parameter for the caught failure."
+  },
+  {
+    "tag": "keyed-state",
+    "why": "The class holds keyed state a framework replays or rebuilds (an event-sourced aggregate), not a registry of its own making."
   }
 ]
