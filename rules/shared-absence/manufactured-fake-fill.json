@@ -17,9 +17,9 @@
       "InventedDefaultDetector"
     ],
     "skill": "shared/absence",
-    "description": "An empty scalar fills a slot that expects a meaningful value",
-    "rule": "Keep absence explicit and resolve it before calling.",
-    "suggestion": "Keep absence explicit and resolve it before calling."
+    "description": "An empty scalar stands in for a missing key a lookup is asked for",
+    "rule": "Keep absence explicit and resolve it before the lookup.",
+    "suggestion": "Resolve the missing key at its source, throw or return there, and look up only a key that exists."
   },
   "definitions": {
     "emptyScalar": {
@@ -240,6 +240,67 @@
           ]
         ]
       ]
+    },
+    "looksUp": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "hasEffect",
+          "$c",
+          "database-read"
+        ],
+        [
+          "hasEffect",
+          "$c",
+          "deferred-query"
+        ]
+      ]
+    },
+    "feedsLookup": {
+      "args": [
+        "slot",
+        "parameter"
+      ],
+      "expr": [
+        "or",
+        [
+          "looksUp",
+          "$slot.parent"
+        ],
+        [
+          "some",
+          [
+            "descendants",
+            "$parameter.parent.body"
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "reference"
+            ],
+            [
+              "=",
+              "$x.name",
+              "$parameter.binding.name"
+            ],
+            [
+              "=",
+              "$x.parent.kind",
+              "argument"
+            ],
+            [
+              "looksUp",
+              "$x.parent.parent"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -302,10 +363,6 @@
         "construction"
       ],
       [
-        "exists",
-        "$parameter"
-      ],
-      [
         "or",
         [
           "not",
@@ -330,6 +387,11 @@
             "exact"
           ]
         ]
+      ],
+      [
+        "feedsLookup",
+        "$slot",
+        "$parameter"
       ]
     ],
     "emit": "$f"

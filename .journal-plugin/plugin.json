@@ -1615,7 +1615,7 @@
         },
         "sin_manufactured-fake-fill": {
             "title": "manufactured-fake-fill",
-            "help": "An empty scalar fills a slot that expects a meaningful value",
+            "help": "An empty scalar stands in for a missing key a lookup is asked for",
             "type": "flag",
             "default": "true",
             "group": "shared/absence",

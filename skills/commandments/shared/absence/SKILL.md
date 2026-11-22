@@ -42,8 +42,8 @@ something that is there, or make the caller always hand one over.
       _Build the collection from an explicit conditional contribution._
 - [ ] Make the finder provide a value or report the miss.
       _Make the finder provide a value or report the miss._
-- [ ] Keep absence explicit and resolve it before calling.
-      _Keep absence explicit and resolve it before calling._
+- [ ] Keep absence explicit and resolve it before the lookup.
+      _Resolve the missing key at its source, throw or return there, and look up only a key that exists._
 - [ ] Keep required state non-null, or pass it directly to the operation that uses it.
       _Remove the fallback by giving the value a certain type where it is set._
 - [ ] Give a callback a usable default when every caller must be able to invoke it.

@@ -30,7 +30,6 @@ final class ImportRowNormalizer
      * @param  array<string, mixed>  $row
      */
     #[Sinful(ArrayBag::class)]
-    #[Sinful(ManufacturedFakeFill::class)]
     public function normalize(array $row): void
     {
         $this->products->upsert(

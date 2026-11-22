@@ -253,7 +253,7 @@ _175 sins across 40 skills._
 | `coalesced-loop-subject` | The loop header replaces a missing collection with an empty one |
 | `conditional-array-spread` | A spread branch supplies an empty collection as a placeholder |
 | `de-nulled-finder` | Every caller takes a nullable result as present |
-| `manufactured-fake-fill` | An empty scalar fills a slot that expects a meaningful value |
+| `manufactured-fake-fill` | An empty scalar stands in for a missing key a lookup is asked for |
 | `masked-invariant` | Masking an optional field behind a literal hides a value the design requires |
 | `nullable-callback` | A callback is declared optional, checked for absence, and then invoked |
 | `nullable-registry-lookup` | A keyed store returns absence on a miss |

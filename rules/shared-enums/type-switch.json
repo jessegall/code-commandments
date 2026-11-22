@@ -415,6 +415,54 @@
         ],
         0
       ]
+    },
+    "typedRungAbove": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "some",
+        [
+          "ancestors",
+          "$b"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "if"
+          ],
+          [
+            "typeTested",
+            "$a.condition"
+          ],
+          [
+            "some",
+            [
+              "follow",
+              "$a",
+              "else",
+              "if"
+            ],
+            "r",
+            [
+              "and",
+              [
+                "within",
+                "$r",
+                "$b"
+              ],
+              [
+                "within",
+                "$b",
+                "$r"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -438,6 +486,10 @@
             "=",
             "$b.role",
             "else"
+          ],
+          [
+            "typedRungAbove",
+            "$b"
           ]
         ]
       ],

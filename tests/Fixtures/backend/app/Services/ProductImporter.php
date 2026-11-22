@@ -2,7 +2,6 @@
 
 namespace Shop\Services;
 
-use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NewDataObject;
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\QueryInLoop;
@@ -17,7 +16,6 @@ final class ProductImporter
      * @param  array<int, array<string, mixed>>  $rows
      */
     #[Sinful(NewDataObject::class)]
-    #[Sinful(ManufacturedFakeFill::class)]
     #[Sinful(QueryInLoop::class)]
     public function import(array $rows): void
     {

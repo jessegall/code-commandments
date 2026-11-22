@@ -8,7 +8,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`coalesced-loop-subject`** — The loop header replaces a missing collection with an empty one — `coalesced-loop-subject`
 - **`conditional-array-spread`** — A spread branch supplies an empty collection as a placeholder — `conditional-array-spread`
 - **`de-nulled-finder`** — Every caller takes a nullable result as present — `de-nulled-finder`
-- **`manufactured-fake-fill`** — An empty scalar fills a slot that expects a meaningful value — `manufactured-fake-fill`
+- **`manufactured-fake-fill`** — An empty scalar stands in for a missing key a lookup is asked for — `manufactured-fake-fill`
 - **`masked-invariant`** — Masking an optional field behind a literal hides a value the design requires — `masked-invariant`
 - **`nullable-callback`** — A callback is declared optional, checked for absence, and then invoked — `nullable-callback`
 - **`nullable-registry-lookup`** — A keyed store returns absence on a miss — `nullable-registry-lookup`

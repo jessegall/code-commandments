@@ -981,7 +981,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An empty scalar fills a slot that expects a meaningful value"
+        "help": "An empty scalar stands in for a missing key a lookup is asked for"
     },
     {
         "key": "sin_masked-invariant",
