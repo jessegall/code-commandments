@@ -201,6 +201,22 @@
         "$implementing",
         "i",
         [
+          "=",
+          [
+            "count",
+            [
+              "subtypes",
+              "$i"
+            ]
+          ],
+          0
+        ]
+      ],
+      [
+        "every",
+        "$implementing",
+        "i",
+        [
           "not",
           "$i.file.test"
         ]

@@ -322,9 +322,16 @@
         "pipeline": [
           {
             "where": [
-              "!=",
-              "$a.nullConditional",
-              true
+              "and",
+              [
+                "!=",
+                "$a.nullConditional",
+                true
+              ],
+              [
+                "not",
+                "$a.file.test"
+              ]
             ]
           },
           {
@@ -382,115 +389,122 @@
     ],
     "as": "d",
     "where": [
-      "or",
+      "and",
       [
-        "and",
+        "not",
+        "$d.file.test"
+      ],
+      [
+        "or",
         [
-          "=",
-          "$d.kind",
-          "declarator"
-        ],
-        [
-          "=",
-          "$d.parent.kind",
-          "field"
-        ],
-        [
-          "isNullable",
+          "and",
           [
-            "typeOf",
-            "$d.parent"
-          ]
-        ],
-        [
-          "not",
+            "=",
+            "$d.kind",
+            "declarator"
+          ],
           [
-            "mixedType",
+            "=",
+            "$d.parent.kind",
+            "field"
+          ],
+          [
+            "isNullable",
             [
               "typeOf",
               "$d.parent"
             ]
+          ],
+          [
+            "not",
+            [
+              "mixedType",
+              [
+                "typeOf",
+                "$d.parent"
+              ]
+            ]
           ]
-        ]
-      ],
-      [
-        "and",
-        [
-          "=",
-          "$d.kind",
-          "parameter"
         ],
         [
-          "some",
-          "$d.parent.parent.implicitMembers",
-          "m",
+          "and",
           [
             "=",
-            "$m",
-            "$d"
-          ]
-        ],
-        [
-          "isNullable",
+            "$d.kind",
+            "parameter"
+          ],
           [
-            "typeOf",
-            "$d"
-          ]
-        ],
-        [
-          "not",
+            "some",
+            "$d.parent.parent.implicitMembers",
+            "m",
+            [
+              "=",
+              "$m",
+              "$d"
+            ]
+          ],
           [
-            "mixedType",
+            "isNullable",
             [
               "typeOf",
               "$d"
             ]
-          ]
-        ]
-      ],
-      [
-        "and",
-        [
-          "=",
-          "$d.kind",
-          "reference"
-        ],
-        [
-          "=",
-          "$d.role",
-          "member"
-        ],
-        [
-          "=",
-          "$d.parent.kind",
-          "access"
-        ],
-        [
-          "isSelf",
-          "$d.parent.subject"
-        ],
-        [
-          "nonempty",
-          "$d.symbol"
-        ],
-        [
-          "=",
-          "$d.parent.role",
-          "targets"
-        ],
-        [
-          "=",
-          "$d.parent.parent.kind",
-          "assignment"
-        ],
-        [
-          "isNullable",
+          ],
           [
-            "typeOf",
+            "not",
             [
-              "at",
-              "$d.parent.parent.values",
-              0
+              "mixedType",
+              [
+                "typeOf",
+                "$d"
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$d.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$d.role",
+            "member"
+          ],
+          [
+            "=",
+            "$d.parent.kind",
+            "access"
+          ],
+          [
+            "isSelf",
+            "$d.parent.subject"
+          ],
+          [
+            "nonempty",
+            "$d.symbol"
+          ],
+          [
+            "=",
+            "$d.parent.role",
+            "targets"
+          ],
+          [
+            "=",
+            "$d.parent.parent.kind",
+            "assignment"
+          ],
+          [
+            "isNullable",
+            [
+              "typeOf",
+              [
+                "at",
+                "$d.parent.parent.values",
+                0
+              ]
             ]
           ]
         ]

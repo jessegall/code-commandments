@@ -176,11 +176,26 @@
       [
         "not",
         [
+          "proven",
+          [
+            "exemptedBy",
+            "composition-root",
+            [
+              "enclosing",
+              "$c",
+              "type"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
           "and",
           [
-            "=",
+            "matchesText",
             "$c.callee.member.name",
-            "raw"
+            "(?i)^raw$"
           ],
           [
             "has",

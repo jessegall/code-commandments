@@ -93,8 +93,14 @@
         ]
       ],
       [
-        "tree.notOverriding",
-        "$function"
+        "none",
+        "$function.obligations",
+        "o",
+        [
+          "=",
+          "$o.origin",
+          "external"
+        ]
       ]
     ],
     "emit": "$c"

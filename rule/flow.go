@@ -107,6 +107,10 @@ func init() {
 		"buildsText": nodeTruth(buildsText),
 		"testsType": func(_ evaluation, operands []value) value {
 			return onNode(operands, func(site engine.Match) value {
+				negated := false
+				for site.Node().Kind == "unary" && site.Node().Operator == "not" {
+					site, negated = site.Child("operand"), !negated
+				}
 				if site.Node().Kind != "type-test" {
 					return known(nil)
 				}
@@ -116,7 +120,7 @@ func init() {
 					types = matches(members).held.([]value)
 				}
 
-				return known(record{"subject": known(site.Child("subject")), "types": known(types), "negated": known(site.Node().Negated)})
+				return known(record{"subject": known(site.Child("subject")), "types": known(types), "negated": known(site.Node().Negated != negated)})
 			})
 		},
 		"membershipTest": func(_ evaluation, operands []value) value { return onNode(operands, membershipTest) },
@@ -376,6 +380,8 @@ func pathConditions(site engine.Match) ([]value, bool) {
 			add(parent.Child("left"), holder.Operator == "and")
 		case holder.Kind == "arm" && role == "body" && parent.Child("guard").Exists():
 			add(parent.Child("guard"), true)
+		case holder.Kind == "arm" && role == "body" && dispatchesOnTruth(parent.Parent()) && len(parent.ChildrenIn("patterns")) == 1:
+			add(parent.ChildrenIn("patterns")[0].Child("value"), true)
 		case holder.Kind == "block":
 			for _, earlier := range siblings(at, true) {
 				guard, _ := nodeOf(earlier)
@@ -660,4 +666,18 @@ func dispatchArms(site engine.Match) value {
 	}
 
 	return known(arms)
+}
+
+func dispatchesOnTruth(dispatch engine.Match) bool {
+	subject := dispatch.Child("subject")
+	if !subject.Exists() {
+		return dispatch.Node().Kind == "dispatch"
+	}
+
+	if subject.Node().Kind != "literal" || subject.Node().Value == nil {
+		return false
+	}
+	truth, isBool := subject.Node().Value.Bool()
+
+	return isBool && truth
 }

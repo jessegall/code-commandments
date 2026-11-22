@@ -574,6 +574,17 @@
             [
               "not",
               [
+                "proven",
+                [
+                  "exemptedBy",
+                  "composition-root",
+                  "$owner"
+                ]
+              ]
+            ],
+            [
+              "not",
+              [
                 "and",
                 [
                   "=",

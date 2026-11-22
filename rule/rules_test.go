@@ -293,3 +293,29 @@ func TestACommentRuleAskedOfOneFileAfterAnotherFindsTheSecondFilesComments(t *te
 		}
 	}
 }
+
+func TestUndeclaredMemberReadsTheTypeANegatedGuardOrAMatchTrueArmNarrowsTo(t *testing.T) {
+	found := judged(t, "rules/shared-dependencies/undeclared-member.json", map[string]string{"Area.php": `<?php
+namespace App;
+interface Shape {}
+final class Circle implements Shape { public float $radius = 1.0; }
+final class Area {
+    public function guarded(Shape $shape): float {
+        if (! $shape instanceof Circle) {
+            return 0.0;
+        }
+        return $shape->radius;
+    }
+    public function matched(Shape $shape): float {
+        return match (true) {
+            $shape instanceof Circle => $shape->radius,
+            default => 0.0,
+        };
+    }
+    public function bare(Shape $shape): float {
+        return $shape->radius;
+    }
+}
+`})
+	expect(t, "php", found, "Area.php:19")
+}

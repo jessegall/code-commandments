@@ -160,6 +160,52 @@
           ]
         ]
       ]
+    },
+    "outsideSupertype": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ],
+        "t",
+        [
+          "and",
+          [
+            "exists",
+            "$t"
+          ],
+          [
+            "some",
+            [
+              "flatten",
+              [
+                "list",
+                "$t.bases",
+                "$t.interfaces"
+              ]
+            ],
+            "b",
+            [
+              "not",
+              [
+                "exists",
+                [
+                  "typeDeclaration",
+                  "$b.refers"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -180,6 +226,10 @@
           ],
           [
             "namedConstructor",
+            "$f"
+          ],
+          [
+            "outsideSupertype",
             "$f"
           ],
           "$f.file.test"
