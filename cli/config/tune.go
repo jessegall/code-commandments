@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
-	"github.com/jessegall/code-commandments/skill"
 )
 
 type publicContractDetector interface {
@@ -25,7 +24,7 @@ type layeredDetector interface {
 func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 	var enabled []detectors.Detector
 	for _, detector := range Packaged(detectors.All(), installed) {
-		if !c.Disables(rulesOf(detector)...) {
+		if !c.TurnsOff(detector) {
 			enabled = append(enabled, detector)
 		}
 	}
@@ -85,24 +84,6 @@ func Packaged(list []detectors.Detector, installed Installed) []detectors.Detect
 	return kept
 }
 
-func rulesOf(detector detectors.Detector) []Rule {
-	engine, _ := detectors.EngineOf(detector)
-	sin := detector.Sin()
-
-	taught := sin.Definition().Skill
-	sinEngine, _ := sins.EngineOf(sin)
-	skillEngine, _ := skill.EngineOf(taught)
-	var rules []Rule
-	for _, name := range catalog.Names(detector) {
-		rules = append(rules, Rule{Kind: Detector, Engine: engine, Name: name})
-	}
-	for _, name := range catalog.Names(sin) {
-		rules = append(rules, Rule{Kind: Sin, Engine: engine, Name: name}, Rule{Kind: Sin, Engine: sinEngine, Name: name})
-	}
-
-	return append(rules, Rule{Kind: Skill, Engine: engine, Name: catalog.Name(taught)}, Rule{Kind: Skill, Engine: skillEngine, Name: catalog.Name(taught)})
-}
-
 func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.Detector, error) {
 	tuned := append([]detectors.Detector(nil), list...)
 
@@ -132,17 +113,11 @@ func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.
 	return tuned, nil
 }
 
-// indexOf is where the rule a configure names stands in the list: a Go detector by its engine and name, a rule file
-// by its name, its sin's name or an alias, under any engine it judges, or none written.
+// indexOf is where the rule a configure names stands in the list: by its name, its sin's name or an alias, under any
+// engine it judges, or none written.
 func indexOf(list []detectors.Detector, named Rule) int {
 	for i, detector := range list {
-		engine, _ := detectors.EngineOf(detector)
-		_, isRuleFile := detector.(parameterised)
-		judges := named.Engine == "" || slices.Contains(detectors.EnginesOf(detector), named.Engine)
-		wanted := catalog.Normalise(named.Name)
-		answers := slices.ContainsFunc(catalog.Names(detector), func(name string) bool { return catalog.Normalise(name) == wanted })
-
-		if named.Kind == Detector && (isRuleFile && judges || named.Engine == engine) && answers {
+		if named.Kind == Detector && named.Names(detector) {
 			return i
 		}
 	}

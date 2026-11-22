@@ -1,4 +1,4 @@
-// Package parity proves the Go binary answers every invocation exactly as the PHP tool does: the same stdout, the same stderr, the same exit code.
+// Package parity pins how the binary answers every invocation of its commands: the same stdout, the same stderr, the same exit code and the same files written as when each golden was recorded.
 package parity
 
 import (
@@ -175,7 +175,7 @@ func snapshot(project string) map[string]string {
 func digested(files map[string]string, folders []string) map[string]string {
 	for path, contents := range files {
 		for _, folder := range folders {
-			if strings.HasPrefix(path, strings.TrimSuffix(folder, "/")+"/") {
+			if path == folder || strings.HasPrefix(path, strings.TrimSuffix(folder, "/")+"/") {
 				files[path] = fmt.Sprintf("sha256 %x", sha256.Sum256([]byte(contents)))
 			}
 		}

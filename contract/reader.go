@@ -175,19 +175,31 @@ func (r *Reader) acceptFile(file *File) error {
 	if r.program {
 		return fmt.Errorf("%s comes after the program line, which follows every file", file.Path)
 	}
+	if err := prepared(file); err != nil {
+		return err
+	}
+	r.keep(file)
+
+	return nil
+}
+
+func prepared(file *File) error {
 	if err := resolveTypes(file); err != nil {
 		return fmt.Errorf("%s: %w", file.Path, err)
 	}
 	if err := link(file); err != nil {
 		return fmt.Errorf("%s: %w", file.Path, err)
 	}
+
+	return nil
+}
+
+func (r *Reader) keep(file *File) {
 	if r.held == nil {
 		r.held = newInterned()
 	}
 	r.held.file(file)
 	r.files++
-
-	return nil
 }
 
 func (r *Reader) acceptProgram(program *Program) error {

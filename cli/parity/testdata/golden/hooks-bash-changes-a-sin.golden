@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — src/Order.php:7 narrated-command (hides) — load `commandments-php-method-mood`, then fix it at its source.\n\nCode Commandments: judged by the 194 rules that answer from one file, and the 87 that read across files were not asked, because an edit is judged on its own, and the whole tree is read only to judge the changes together, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)"}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — src/Order.php:11 swallow-catch — load `commandments-shared-exceptions`, then fix it at its source.\n\nCode Commandments: judged by the 64 rules that answer from one file, and the 66 that read across files were not asked, because an edit is judged on its own, and the whole tree is read only to judge the changes together, so this is not a clean answer, it is a smaller one. Run `commandments judge --changes` for the whole answer. (src/Order.php)"}}
 
 --- stderr
 
@@ -18,7 +18,7 @@ Safe to delete — the reminder stays silent until the session changes a judged 
 
 === changed .commandments/sessions/640d8/.reported-findings
 -----
-<project>/src/Order.php	narrated-command at <project>/src/Order.php:7
+<project>/src/Order.php	swallow-catch at <project>/src/Order.php:11
 -----
 Code-commandments — the findings the per-edit check has already named this session, so each is said once.
 

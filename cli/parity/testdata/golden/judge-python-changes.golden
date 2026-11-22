@@ -3,7 +3,7 @@ exit: 0
 [32m✓ No sins found in 1 file, the lines changed in the working tree, of 328 read.[0m
 
 --- stderr
-· reading the whole path, not only the 1 file judged: 183 of the 455 rules read across files, so the scope chose what is reported, not what is read
-· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (806 rule answers from memory, 30354 asked): 0 sins
+· reading the whole path, not only the 1 file judged: 66 of the 130 rules read across files, so the scope chose what is reported, not what is read
+· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (793 rule answers from memory, 40863 asked): 0 sins
 
 --- files

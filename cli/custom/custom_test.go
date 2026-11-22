@@ -9,11 +9,12 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/config"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/skill"
 )
 
-const rawSQL = `{"engine": "backend", "sin": {"name": "raw-sql", "description": "SQL written inline", "skill": "no-raw-sql"},
- "find": {"select": "call", "where": [{"name": "select"}]}}`
+const rawSQL = `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "raw-sql", "description": "SQL written inline", "skill": "no-raw-sql"},
+ "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`
 
 const ownSkill = `---
 name: No raw SQL
@@ -81,22 +82,30 @@ func TestOnlyTheRulesTheConfigTurnsOnRun(t *testing.T) {
 
 func TestEverythingTheBinaryCannotRunIsNamed(t *testing.T) {
 	loaded := Load(project(t, map[string]string{
-		"Broken.json":          `{"engine": "backend"}`,
+		"Broken.json":          `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"]}`,
 		"NoRawSqlDetector.php": "<?php final class NoRawSqlDetector {}",
 	}))
 
 	warnings := strings.Join(loaded.Warnings(config.Config{Detectors: []string{"Gone"}}), "\n")
 
-	for _, said := range []string{"declared nowhere", "  Gone", "Broken: a sin needs a name", "NoRawSqlDetector.php is a PHP class", "commandments make", "SKILL.md", "Migrating from the PHP tool"} {
+	for _, said := range []string{"declared nowhere", "  Gone", "Broken.json: a sin needs a name", "NoRawSqlDetector.php is a PHP class", "commandments make", "SKILL.md", "delete the class"} {
 		if !strings.Contains(warnings, said) {
 			t.Errorf("%q not said in\n%s", said, warnings)
 		}
 	}
 }
 
+func TestAShippedRuleIsNeverTheProjectsOwn(t *testing.T) {
+	for _, shipped := range rules.All() {
+		if Owns(shipped) {
+			t.Fatalf("the shipped rule %s is said to be the project's own, so its findings send the reader to .commandments/custom/", catalog.Name(shipped))
+		}
+	}
+}
+
 func TestARuleNamesItsEngineByEitherName(t *testing.T) {
 	root := project(t, map[string]string{
-		"FormerName.json": `{"engine": "backend", "sin": {"name": "former-name", "description": "written before the rename", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "select"}]}}`,
+		"FormerName.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["backend"], "sin": {"name": "former-name", "description": "written before the rename", "skill": "backend/absence"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`,
 	})
 
 	read := Load(root)

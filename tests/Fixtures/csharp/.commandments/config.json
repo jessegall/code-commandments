@@ -1,0 +1,36 @@
+{
+    "configure": {
+        "csharp/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "Shop.Catalog"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop.Search",
+                    [
+                        "Shop.Catalog"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop.Checkout",
+                    [
+                        "Shop.Catalog"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop.Storefront",
+                    [
+                        "Shop.Search",
+                        "Shop.Catalog"
+                    ]
+                ]
+            }
+        ]
+    }
+}

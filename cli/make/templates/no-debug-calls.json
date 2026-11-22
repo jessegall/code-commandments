@@ -1,14 +1,14 @@
 {
     "summary": "a debugging call left in the code: dd() and dump(), print() and breakpoint(), console.log(), Console.WriteLine()",
+    "engine": ["php", "python", "typescript", "vue", "csharp"],
     "sin": {
         "description": "A debugging call is left in the code.",
         "rule": "Remove the call; log through the project's logger when the output is wanted."
     },
     "find": {
-        "php": {"select": "call", "where": [{"nameIn": ["dd", "dump", "ddd", "var_dump", "print_r", "ray"]}]},
-        "python": {"select": "call", "where": [{"nameIn": ["print", "breakpoint", "set_trace"]}]},
-        "typescript": {"select": "call", "where": [{"nameIn": ["log", "debug", "trace", "dir"]}, {"descendant": {"name": "console"}, "of": "child:expression"}]},
-        "vue": {"select": "call", "where": [{"nameIn": ["log", "debug", "trace", "dir"]}, {"descendant": {"name": "console"}, "of": "child:expression"}]},
-        "csharp": {"select": "call", "where": [{"nameIn": ["WriteLine", "Write"]}, {"descendant": {"name": "Console"}, "of": "child:Expression"}]}
+        "select": "call",
+        "as": "c",
+        "where": ["or", ["in", "$c.callee.name", "dd", "dump", "ddd", "var_dump", "print_r", "ray", "print", "breakpoint"], ["=", "$c.callee.member.name", "set_trace"], ["and", ["in", "$c.callee.member.name", "log", "debug", "trace", "dir"], ["=", "$c.callee.subject.name", "console"]], ["and", ["in", "$c.callee.member.name", "WriteLine", "Write"], ["=", "$c.callee.subject.name", "Console"]]],
+        "emit": "$c"
     }
 }

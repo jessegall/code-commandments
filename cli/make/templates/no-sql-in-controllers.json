@@ -1,10 +1,14 @@
 {
     "summary": "an SQL statement written inside a controller",
+    "engine": ["php"],
     "sin": {
         "description": "A controller writes an SQL statement itself.",
         "rule": "Query through the model or a repository, and keep the controller to the request and the response."
     },
     "find": {
-        "php": {"select": "literal", "where": [{"textMatches": "(?i)^\\s*(select|insert|update|delete)\\s"}, {"inside": {"extendsAny": "Illuminate\\Routing\\Controller"}}]}
+        "select": "literal",
+        "as": "s",
+        "where": ["and", ["=", "$s.literalKind", "string"], ["matchesText", "$s.value", "(?i)^\\s*(select|insert|update|delete)\\s"], ["some", ["knownSupertypes", ["enclosing", "$s", "type"]], "t", ["=", "$t", "Illuminate\\Routing\\Controller"]]],
+        "emit": "$s"
     }
 }

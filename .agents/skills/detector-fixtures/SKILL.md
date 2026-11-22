@@ -30,7 +30,7 @@ Each engine's fixture test runs every registered detector of that engine over it
 - a flagged **righteous twin**, and a flagged **fix** (the published good example would still be the sin).
 
 All must be empty. So the whole *unmarked* fixture is the false-positive guard. The backend fixture is read
-from its committed stream, so a change to it needs `scripts/dev go generate ./engine/php` before
+from its committed stream, so a change to it needs `scripts/dev go run ./engine/php/shop/generate` before
 `scripts/dev go test ./engine/php/shop`.
 
 ## The ≥3-diverse-scenarios floor

@@ -347,10 +347,10 @@ func holds(segment string, kinds []string, written, at string) error {
 		candidates = contract.Kinds()
 	}
 	for _, kind := range candidates {
-		if _, err := contract.RoleArity(kind, segment); err == nil {
+		if _, declared := contract.DeclaredRole(kind, segment); declared {
 			return nil
 		}
-		if _, err := contract.LinkArity(kind, segment); err == nil {
+		if _, declared := contract.DeclaredLink(kind, segment); declared {
 			return nil
 		}
 		if contract.FactApplies(kind, segment) {

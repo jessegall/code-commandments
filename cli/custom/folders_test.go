@@ -8,8 +8,8 @@ import (
 )
 
 func aRule(sin, called string) string {
-	return `{"engine": "python", "sin": {"name": "` + sin + `", "description": "a rule of the project's own", "skill": "python/flow"},
-	 "find": {"select": "call", "where": [{"name": "` + called + `"}]}}`
+	return `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "` + sin + `", "description": "a rule of the project's own", "skill": "python/flow"},
+	 "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.name", "` + called + `"], "emit": "$c"}}`
 }
 
 func TestARuleIsReadFromAnyFolderUnderTheCustomOne(t *testing.T) {
@@ -55,8 +55,8 @@ func TestTwoRulesOfOneNameInTwoFoldersAreBothRefused(t *testing.T) {
 func TestTheListsAreReadWhereverTheyAreKept(t *testing.T) {
 	root := project(t, map[string]string{
 		"assets/lists.json": `{"poetic": ["ephemeral", "sublime"]}`,
-		"viewer/NamesTheListDetector.json": `{"engine": "python", "sin": {"name": "names-the-list", "description": "a rule naming a list from another folder", "skill": "python/flow"},
-		 "find": {"select": "function", "where": [{"nameIn": ["$poetic"]}]}}`,
+		"viewer/NamesTheListDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "names-the-list", "description": "a rule naming a list from another folder", "skill": "python/flow"},
+		 "find": {"select": "function", "as": "f", "where": ["in", "$f.name", "${poetic}"], "emit": "$f"}}`,
 	})
 
 	read := Load(root)
@@ -70,8 +70,8 @@ func TestOneListNameInTwoFilesIsRefused(t *testing.T) {
 	root := project(t, map[string]string{
 		"assets/lists.json": `{"poetic": ["ephemeral"]}`,
 		"core/lists.json":   `{"poetic": ["sublime"]}`,
-		"NamesTheListDetector.json": `{"engine": "python", "sin": {"name": "names-the-list", "description": "a rule naming a list declared twice", "skill": "python/flow"},
-		 "find": {"select": "function", "where": [{"nameIn": ["$poetic"]}]}}`,
+		"NamesTheListDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "names-the-list", "description": "a rule naming a list declared twice", "skill": "python/flow"},
+		 "find": {"select": "function", "as": "f", "where": ["in", "$f.name", "${poetic}"], "emit": "$f"}}`,
 	})
 
 	read := Load(root)
@@ -84,8 +84,8 @@ func TestOneListNameInTwoFilesIsRefused(t *testing.T) {
 
 func TestADetectorDeclaredNowhereIsToldApartFromOneThatCannotRun(t *testing.T) {
 	root := project(t, map[string]string{
-		"BrokenDetector.json": `{"engine": "python", "sin": {"name": "broken", "description": "a rule naming a list nothing declares", "skill": "python/flow"},
-		 "find": {"select": "function", "where": [{"nameIn": ["$nowhere"]}]}}`,
+		"BrokenDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "broken", "description": "a rule naming a list nothing declares", "skill": "python/flow"},
+		 "find": {"select": "function", "as": "f", "where": ["in", "$f.name", "${nowhere}"], "emit": "$f"}}`,
 	})
 
 	read := Load(root)

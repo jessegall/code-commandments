@@ -5,6 +5,9 @@
         "rule": "Do the work now, or file it where work is tracked and delete the comment."
     },
     "find": {
-        "*": {"select": "function", "where": [{"descendant": {"commentMatches": "(?i)\\b(TODO|FIXME)\\b"}}]}
+        "select": "function",
+        "as": "f",
+        "where": ["some", ["commentsOf", "$f"], "k", ["matchesText", "$k.text", "(?i)\\b(TODO|FIXME)\\b"]],
+        "emit": "$f"
     }
 }

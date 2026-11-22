@@ -153,7 +153,7 @@
   ],
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php"
+   "mkdir -p .commandments && printf '%s\\n' '{\"paths\": [\"src\"]}' > .commandments/config.json"
   ],
   "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"tests/OrderTest.php\"}}",
   "env": {
@@ -168,7 +168,7 @@
   ],
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php"
+   "mkdir -p .commandments && printf '%s\\n' '{\"paths\": [\"src\"]}' > .commandments/config.json"
   ],
   "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"src/tests/OrderTest.php\"}}",
   "env": {
@@ -242,7 +242,8 @@
    "install"
   ],
   "digest": [
-   ".agents/skills"
+   ".agents/skills",
+   ".commandments/config.schema.json"
   ],
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
@@ -261,8 +262,8 @@
   ],
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
-   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
+   "mkdir -p .commandments && printf '%s\\n' '{\"paths\": [\"src\"]}' > .commandments/config.json",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function settle(): void' '    {' '        try {' '            $this->total([]);' '        } catch (\\Throwable $e) {' '        }' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
   ],
   "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}",
   "env": {
@@ -277,8 +278,8 @@
   ],
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
-   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
+   "mkdir -p .commandments && printf '%s\\n' '{\"paths\": [\"src\"]}' > .commandments/config.json",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function settle(): void' '    {' '        try {' '            $this->total([]);' '        } catch (\\Throwable $e) {' '        }' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
    "echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}' | \"$PARITY_TOOL\" hooks > /dev/null"
   ],
   "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}",
@@ -294,9 +295,9 @@
   ],
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p .commandments && printf '%s\\n' '{\"paths\": [\"src\"]}' > .commandments/config.json",
    "mkdir -p src && printf '<?php\\n' > src/Clean.php && touch -t 200001010000 src/Clean.php && echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Clean.php\"}}' | \"$PARITY_TOOL\" hooks > /dev/null",
-   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function settle(): void' '    {' '        try {' '            $this->total([]);' '        } catch (\\Throwable $e) {' '        }' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
   ],
   "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i x src/Order.php\"}}",
   "env": {
@@ -311,8 +312,8 @@
   ],
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
-   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
-   "mkdir -p lib && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > lib/Order.php"
+   "mkdir -p .commandments && printf '%s\\n' '{\"paths\": [\"src\"]}' > .commandments/config.json",
+   "mkdir -p lib && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function settle(): void' '    {' '        try {' '            $this->total([]);' '        } catch (\\Throwable $e) {' '        }' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > lib/Order.php"
   ],
   "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"lib/Order.php\"}}",
   "env": {

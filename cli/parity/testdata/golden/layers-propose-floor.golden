@@ -1,83 +1,346 @@
 exit: 0
 --- stdout
-[1mNamespace layers[0m — 99 namespaces
+[1mNamespace layers[0m — 108 namespaces
 
-  [32m44[0m are depended on but depend on nothing of yours — the floor your stack rests on
+  [32m52[0m are depended on but depend on nothing of yours — the floor your stack rests on
       Shop\Audit\Forwarding
       Shop\Auth\Gates
       Shop\Authoring
       Shop\Billing
       Shop\Catalog\Lookup
+      Shop\CompareSelf
+      Shop\Concurrent
       Shop\Contracts
       Shop\Courier\Manifest
       Shop\Courier\Printing
       Shop\Domain
       Shop\Events
-      Shop\Exceptions
-      Shop\Exports
-      … and 32 more
+      … and 40 more
 
-  [33m30[0m sit in a cycle — declared below as they stand, each permitting the other:
+  [33m31[0m sit in a cycle — declared below as they stand, each permitting the other:
       Shop\Enums  ->  Shop\Shipping
       Shop\Models  ->  Shop\Fulfillment
       Shop\Telemetry  ->  Shop\Diagnostics
       Shop\Warranty  ->  Shop\Claims
     [2mrun `vendor/bin/commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
 
-  Proposed declaration — the floor (44 namespaces):
+  Proposed declaration — the floor (52 namespaces):
 
-    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
-        ->layer('Shop\\Audit\\Forwarding')
-        ->layer('Shop\\Auth\\Gates')
-        ->layer('Shop\\Authoring')
-        ->layer('Shop\\Billing')
-        ->layer('Shop\\Catalog\\Lookup')
-        ->layer('Shop\\Contracts')
-        ->layer('Shop\\Courier\\Manifest')
-        ->layer('Shop\\Courier\\Printing')
-        ->layer('Shop\\Domain')
-        ->layer('Shop\\Events')
-        ->layer('Shop\\Exceptions')
-        ->layer('Shop\\Exports')
-        ->layer('Shop\\Giftwrap\\Contracts')
-        ->layer('Shop\\Http\\Controllers\\CommandActions')
-        ->layer('Shop\\Http\\Controllers\\Delegated')
-        ->layer('Shop\\Http\\Controllers\\DuplicateActions')
-        ->layer('Shop\\Http\\Pages\\FlatCluster')
-        ->layer('Shop\\Http\\Pages\\RepeatedCall')
-        ->layer('Shop\\Inertia')
-        ->layer('Shop\\Irrigation')
-        ->layer('Shop\\Labels')
-        ->layer('Shop\\Ledger')
-        ->layer('Shop\\Lockers')
-        ->layer('Shop\\Models\\Scopes')
-        ->layer('Shop\\Notifications\\Retrying')
-        ->layer('Shop\\Plugins')
-        ->layer('Shop\\Pricing\\Lookup')
-        ->layer('Shop\\Printing')
-        ->layer('Shop\\Refunds')
-        ->layer('Shop\\Rentals')
-        ->layer('Shop\\Repairs')
-        ->layer('Shop\\Returns')
-        ->layer('Shop\\Routing')
-        ->layer('Shop\\Scales')
-        ->layer('Shop\\Shelving')
-        ->layer('Shop\\Shipping\\Tracking')
-        ->layer('Shop\\Snapshots')
-        ->layer('Shop\\Support\\Text')
-        ->layer('Shop\\Telemetry\\Devices')
-        ->layer('Shop\\Ui\\Pages')
-        ->layer('Shop\\Ui\\Tokens')
-        ->layer('Shop\\ValueObjects')
-        ->layer('Shop\\Vouchers\\Contracts')
-        ->layer('Shop\\Wire'));
+    "configure": {
+        "php/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "Shop\\Audit\\Forwarding"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Auth\\Gates"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Authoring"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Billing"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Catalog\\Lookup"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\CompareSelf"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Concurrent"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Contracts"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Courier\\Manifest"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Courier\\Printing"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Domain"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Events"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Exceptions"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Exports"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Giftwrap\\Contracts"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Http\\Controllers\\CommandActions"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Http\\Controllers\\Delegated"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Http\\Controllers\\DuplicateActions"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Http\\Pages\\FlatCluster"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Http\\Pages\\RepeatedCall"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Inertia"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\InterfaceOverlap\\Stock"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Irrigation"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Labels"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ledger"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Lockers"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Models\\Scopes"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Notifications\\Retrying"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Plugins"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Pricing\\Lookup"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Printing"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Realtime"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Refunds"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Rentals"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Repairs"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Reports"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Returns"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Routing"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Scales"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Shelving"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Shipping\\Tracking"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Shipping\\Zones"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Snapshots"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Sockets"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Support\\Text"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Telemetry\\Devices"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Templating"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Pages"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Tokens"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\ValueObjects"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Vouchers\\Contracts"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Wire"
+                ]
+            }
+        ]
+    }
 
   [2mA starting point to EDIT, not a verdict: everything already here passes, so this
   holds the architecture where it stands and refuses the NEXT arrow somewhere new.[0m
-  [2mre-run with --write to add it to .commandments/config.php[0m
+  [2mre-run with --write to add it to .commandments/config.json[0m
 
 --- stderr
 ⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install
   ↳ a method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 
 --- files
+=== changed .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "app"
+    ],
+    "configure": {
+        "php/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "Shop\\Ui\\Tokens"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Elements",
+                    [
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Shared",
+                    [
+                        "Shop\\Ui\\Elements",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Pages",
+                    [
+                        "Shop\\Ui\\Shared",
+                        "Shop\\Ui\\Elements",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            }
+        ]
+    }
+}
+

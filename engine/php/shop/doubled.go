@@ -31,7 +31,7 @@ func streamsOf(t testing.TB) []*contract.Stream {
 	for _, name := range []string{"shop.jsonl.gz", "shop-frontend.jsonl.gz"} {
 		stream, err := readStream(name)
 		if err != nil {
-			t.Fatalf("the committed shop streams do not load (run go generate ./engine/php): %v", err)
+			t.Fatalf("the committed shop streams do not load (run go run ./engine/php/shop/generate): %v", err)
 		}
 
 		streams = append(streams, stream)

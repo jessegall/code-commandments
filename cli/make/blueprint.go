@@ -21,35 +21,31 @@ func ParseEngine(name string) (Engine, bool) {
 	return catalog.EngineNamed(name)
 }
 
-func ProbeRoot(e Engine) string {
-	if e == catalog.Vue || e == catalog.TypeScript {
-		return "resources/js"
-	}
-
-	return "src"
-}
-
 // ProbeExtension is the extension a probe file of the engine is written with: the first of its own language's, each
 // engine being named after the language it judges first.
 func ProbeExtension(e Engine) string {
 	return contract.ExtensionsOf(contract.Language(e))[0]
 }
 
-// Blueprint is a commandment named and placed: its sin, the engine its rule judges, and the skill that teaches the fix, written anew when no existing one was named.
+// Blueprint is a commandment named and placed: its sin, the engines its rule judges, and the skill that teaches the fix, written anew when no existing one was named.
 type Blueprint struct {
 	Sin      string
 	ID       string
-	Engine   Engine
+	Engines  []Engine
 	Slug     string
 	NewSkill bool
 	Dir      string
 	From     *Template
 }
 
-func Of(name string, engine Engine, slug string, newSkill bool, dir string) Blueprint {
+func Of(name string, engines []Engine, slug string, newSkill bool, dir string) Blueprint {
 	sin := Studly(strings.TrimSuffix(Studly(name), "Detector"))
 
-	return Blueprint{Sin: sin, ID: Kebab(sin), Engine: engine, Slug: slug, NewSkill: newSkill, Dir: dir}
+	return Blueprint{Sin: sin, ID: Kebab(sin), Engines: engines, Slug: slug, NewSkill: newSkill, Dir: dir}
+}
+
+func (b Blueprint) Probe() Engine {
+	return b.Engines[0]
 }
 
 func (b Blueprint) Detector() string {

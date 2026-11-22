@@ -5,14 +5,13 @@ exit: 0
 --- stderr
 
 --- files
-=== changed .commandments/config.php
-<?php
-
-use JesseGall\CodeCommandments\Sins;
-
-return function ($config) {
-    $config->disable(
-        \JesseGall\CodeCommandments\Sins\Python\DictBag::class,
-    );
-};
+=== changed .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "disable": {
+        "sins": [
+            "python-dict-bag"
+        ]
+    }
+}
 

@@ -111,31 +111,30 @@ func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 		}
 	}
 	enrols := "package x\n\nfunc init() {}\n"
-	write("sins/sin.go", enrols)
-	write("sins/backend/array_bag.go", enrols)
-	write("detectors/backend/laravel/facade.go", enrols)
-	write("detectors/backend/testdata/toy.go", enrols)
-	write("detectors/_draft/draft.go", enrols)
-	write("detectors/paritytest/paritytest.go", "package paritytest\n\nfunc Compare() {}\n")
+	write("rules/rules.go", enrols)
+	write("skill/backend/backend.go", enrols)
+	write("skill/backend/laravel/laravel.go", enrols)
+	write("skill/backend/testdata/toy.go", enrols)
+	write("skill/_draft/draft.go", enrols)
 	write("skill/backend/absence/SKILL.md", "")
 	write("skill/python/flow/flow_test.go", enrols)
 	write("skill/render/render.go", "package render\n\nfunc Documents() {}\n")
 	write("skill/render/generate/main.go", "package main\n\nfunc main() {}\n")
-	write("published/published.go", enrols)
-	write("published/spatie/spatie.go", enrols)
+	write("sins/sin.go", enrols)
+	write("detectors/detector.go", enrols)
 
 	source, err := catalog.Enrolment(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for _, want := range []string{`"github.com/jessegall/code-commandments/detectors/backend/laravel"`, `"github.com/jessegall/code-commandments/sins/backend"`, `"github.com/jessegall/code-commandments/published/spatie"`} {
+	for _, want := range []string{`"github.com/jessegall/code-commandments/rules"`, `"github.com/jessegall/code-commandments/skill/backend"`, `"github.com/jessegall/code-commandments/skill/backend/laravel"`} {
 		if !strings.Contains(string(source), want) {
 			t.Fatalf("%s is not imported:\n%s", want, source)
 		}
 	}
-	if strings.Count(string(source), "_ \"") != 5 {
-		t.Fatalf("only the five rule packages are imported:\n%s", source)
+	if strings.Count(string(source), "_ \"") != 3 {
+		t.Fatalf("only the three rule packages are imported:\n%s", source)
 	}
 }
 

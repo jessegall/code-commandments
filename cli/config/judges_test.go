@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -51,13 +52,16 @@ func TestTheOtherConfigureCallsStillReachTheirDetector(t *testing.T) {
 		t.Errorf("the method beside the judges call no longer reaches its detector: %v", err)
 	}
 
-	broken := configWith(t, `{
+	broken, err := ReadJSON(writeJSON(t, `{
         "paths": ["src"],
         "configure": {"vue/ComponentBudgetDetector": [{"noSuchMethod": [1]}]}
-    }`)
+    }`))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	if _, err := broken.Enabled(Everything); err == nil {
-		t.Error("a configure call naming no method of the detector is accepted")
+	if err := broken.resolved(); err == nil || !strings.Contains(err.Error(), "configure.vue/ComponentBudgetDetector.noSuchMethod") {
+		t.Errorf("a configure call naming no parameter of the rule is accepted: %v", err)
 	}
 }
 

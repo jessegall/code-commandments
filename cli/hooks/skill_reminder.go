@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -47,7 +48,17 @@ func (SkillReminder) Handle(event Event) Response {
 
 	home := projectOf(event.Root)
 
-	project, _ := config.Load(home)
+	project, err := config.Load(home)
+	refusal := ""
+	if err != nil {
+		refusal = strings.Join(strings.Fields(err.Error()), " ")
+	}
+	if fresh := SaidIn(event.Workspace()).Fresh(map[string]Narrowed{workspace.JSONConfig(home): Narrowed(refusal)}); len(fresh) > 0 {
+		return Injecting(event.Name(), "✗ "+err.Error()+"\nNo edit is judged until the config reads.", false)
+	}
+	if err != nil {
+		return Silent()
+	}
 
 	enabled, err := project.Enabled(config.InstalledIn(home))
 	if err != nil {

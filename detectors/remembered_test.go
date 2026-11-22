@@ -15,7 +15,7 @@ func (plainDetector) Find(*engine.Codebase) []engine.Match { return nil }
 
 type wholeTreeDetector struct{ plainDetector }
 
-func (wholeTreeDetector) WholeTree() {}
+func (wholeTreeDetector) StandsOnTheTree() bool { return true }
 
 type settledDetector struct {
 	plainDetector

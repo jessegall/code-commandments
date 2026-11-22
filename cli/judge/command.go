@@ -817,10 +817,10 @@ func keep(findings []engine.Finding, exclude []string, targets scope.Scope, judg
 }
 
 func judgesItsFolder(judged config.Config, finding engine.Finding, targets scope.Scope) bool {
-	folders := append(
-		judged.Judged(config.RuleNamed(config.Detector, finding.Detector)),
-		judged.Judged(config.RuleNamed(config.Detector, finding.Engine+"/"+finding.Detector))...,
-	)
+	folders := judged.Judged(config.RuleNamed(config.Detector, finding.Detector))
+	for _, rule := range detectors.EveryNamedIn(detectors.All(), finding.Detector) {
+		folders = append(folders, judged.JudgedBy(rule, catalog.Engine(finding.Engine))...)
+	}
 	if len(folders) == 0 {
 		return false
 	}

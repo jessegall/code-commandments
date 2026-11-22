@@ -180,7 +180,7 @@ func init() {
 	}
 }
 
-// All is every rule the tool ships: the installed rule files and the Go detectors not yet written as one.
+// All is every rule the tool ships: the installed rule files.
 func All() []detectors.Detector {
 	return detectors.All()
 }

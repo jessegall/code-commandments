@@ -1,14 +1,15 @@
 exit: 0
 --- stdout
-[32m✓ Reindexed 1 source root(s) into .commandments/config.php:[0m app
+[32m✓ Reindexed 1 source root(s) into .commandments/config.json:[0m app
 
 --- stderr
 
 --- files
-=== changed .commandments/config.php
-<?php
-
-return function ($config) {
-    $config->paths('app');
-};
+=== changed .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "app"
+    ]
+}
 

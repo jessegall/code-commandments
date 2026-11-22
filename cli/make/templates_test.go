@@ -44,7 +44,7 @@ class OrdersController extends Controller
 func ready(t *testing.T, template Template, engine Engine) rule.Rule {
 	t.Helper()
 
-	blueprint := Of("Ready", engine, "php/absence", false, t.TempDir())
+	blueprint := Of("Ready", []Engine{engine}, "php/absence", false, t.TempDir())
 	blueprint.From = &template
 
 	parsed, err := rule.Parse("ReadyDetector", []byte(RuleStub(blueprint)), skill.Slugged)

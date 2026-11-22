@@ -19,10 +19,7 @@ if [ "${1:-}" = "--install" ]; then
     cat > "$hooks/pre-commit" <<'HOOK'
 #!/usr/bin/env bash
 top="$(git rev-parse --show-toplevel)"
-if [ -x "$top/scripts/hooks/pre-commit" ]; then
-    exec "$top/scripts/hooks/pre-commit"
-fi
-exec php "$top/scripts/hooks/PreCommit.php"
+exec "$top/scripts/hooks/pre-commit"
 HOOK
     chmod +x "$hooks/pre-commit"
     cat > "$hooks/post-commit" <<'HOOK'

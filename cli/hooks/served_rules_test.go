@@ -1,3 +1,3 @@
 package hooks
 
-const ownRule = `{"engine": "backend", "sin": {"name": "own-rule", "description": "written while the service ran", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "select"}]}}`
+const ownRule = `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "own-rule", "description": "written while the service ran", "skill": "php/absence"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`

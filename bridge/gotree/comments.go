@@ -28,6 +28,7 @@ func (w *writer) comments(parsed *ast.File, nodes []*contract.Node) []contract.C
 	for _, group := range parsed.Comments {
 		ends[w.fset.Position(group.Pos()).Offset] = w.fset.Position(group.End()).Offset
 	}
+	grouped := firstOfEachGroup(w.fset, parsed)
 	comments := []contract.Comment{}
 
 	for _, group := range parsed.Comments {
@@ -39,7 +40,9 @@ func (w *writer) comments(parsed *ast.File, nodes []*contract.Node) []contract.C
 			Span: contract.Span{Start: start.Offset, End: end.Offset, Line: start.Line},
 		}
 		lineStart := strings.LastIndexByte(string(w.source[:start.Offset]), '\n') + 1
-		if strings.TrimSpace(string(w.source[lineStart:start.Offset])) != "" {
+		if group == parsed.Doc {
+			held.Attached = moduleNode(nodes)
+		} else if strings.TrimSpace(string(w.source[lineStart:start.Offset])) != "" {
 			held.Trailing = true
 			for _, node := range owners {
 				if node.Span.End <= start.Offset && node.Span.End > lineStart {
@@ -48,6 +51,9 @@ func (w *writer) comments(parsed *ast.File, nodes []*contract.Node) []contract.C
 				}
 			}
 		} else if next, leads := leading(w.source, end.Offset, ends); leads {
+			if first, isGroup := grouped[next]; isGroup {
+				next = first
+			}
 			for _, node := range owners {
 				if node.Span.Start == next && node.Span.End > node.Span.Start {
 					held.Attached = &node.ID
@@ -64,6 +70,27 @@ func (w *writer) comments(parsed *ast.File, nodes []*contract.Node) []contract.C
 	}
 
 	return comments
+}
+
+func moduleNode(nodes []*contract.Node) *int {
+	for _, node := range nodes {
+		if node.Kind == "module" {
+			return &node.ID
+		}
+	}
+
+	return nil
+}
+
+func firstOfEachGroup(fset *token.FileSet, parsed *ast.File) map[int]int {
+	first := map[int]int{}
+	for _, declared := range parsed.Decls {
+		if general, isGeneral := declared.(*ast.GenDecl); isGeneral && general.Lparen.IsValid() && len(general.Specs) > 0 {
+			first[fset.Position(general.Pos()).Offset] = fset.Position(general.Specs[0].Pos()).Offset
+		}
+	}
+
+	return first
 }
 
 // leading is where the code a comment leads starts, other comments skipped; none past a blank line.

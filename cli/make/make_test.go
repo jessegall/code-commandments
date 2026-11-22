@@ -2,6 +2,7 @@ package make
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -56,8 +57,8 @@ func TestANewCommandmentIsARuleAndItsSkillTurnedOn(t *testing.T) {
 
 	written, _ := os.ReadFile(filepath.Join(root, ".commandments/custom/NoRawSqlDetector.json"))
 	if schema, err := os.ReadFile(custom.SchemaPath(root)); err != nil || !bytes.Equal(schema, rule.Schema()) ||
-		!strings.Contains(string(written), `"$schema": "../rule.schema.json"`) {
-		t.Errorf("the rule names no schema an editor can read: %v\n%s", err, written)
+		!strings.Contains(string(written), `"$schema": "`+rule.Format+`"`) {
+		t.Errorf("the rule names no format the loader reads, or the schema is not written: %v\n%s", err, written)
 	}
 
 	project, _ := config.Load(root)
@@ -89,14 +90,29 @@ func TestACommandmentTaughtByAnExistingSkillWritesNone(t *testing.T) {
 
 func TestAWrongInvocationSaysWhy(t *testing.T) {
 	for args, reason := range map[string]string{
-		"":                     "name the commandment",
-		"--- ---":              "name the commandment",
-		"Thing --engine=cobol": "unknown --engine=cobol",
+		"":                            "name the commandment",
+		"--- ---":                     "name the commandment",
+		"Thing --engine=cobol":        "unknown engine `cobol`",
+		"Thing --engine=python,cobol": "unknown engine `cobol`",
 	} {
 		said, code := run(t, t.TempDir(), strings.Fields(args)...)
 		if code != 2 || !strings.Contains(said, reason) {
 			t.Errorf("%q: %d\n%s", args, code, said)
 		}
+	}
+}
+
+func TestOneRuleJudgesEveryEngineNamed(t *testing.T) {
+	root := t.TempDir()
+
+	if said, code := run(t, root, "NoEval", "--engine=python,go"); code != 0 {
+		t.Fatalf("exit %d\n%s", code, said)
+	}
+
+	loaded := custom.Load(root)
+	oneRuleForBothEngines := len(loaded.Rules) == 1 && len(loaded.Unreadable) == 0 && fmt.Sprint(loaded.Rules[0].Engines()) == "[python go]"
+	if !oneRuleForBothEngines {
+		t.Errorf("%+v", loaded)
 	}
 }
 

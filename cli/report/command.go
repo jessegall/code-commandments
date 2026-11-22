@@ -271,10 +271,9 @@ func requiresBestDesign(name string) bool {
 		return false
 	}
 
-	_, marked := detector.(interface{ RequiresBestDesign() })
-	_, sinMarked := detector.Sin().(interface{ RequiresBestDesign() })
+	asks, marked := detector.(detectors.RequiresBestDesign)
 
-	return marked || sinMarked
+	return marked && asks.RequiresBestDesign()
 }
 
 func firstHedge(texts ...string) (string, bool) {

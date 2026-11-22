@@ -35,18 +35,15 @@ func (Command) Names() []string {
 
 func (Command) Help() help.Help {
 	return help.Of("Work on a rule of your own: see the tree it reads, try it on a path, prove it on the samples that mark it, and print the schema an editor checks it by.").
-		Form("rule explain <file> [--line=N]", "print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to").
+		Form("rule explain <file> [--line=N]", "print the generic tree a rule reads in the file: every node's line, the role it holds in its parent, its kind, form, name, text and what it resolves to").
 		Form("rule try <Rule> <path>…", "run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched").
 		Form("rule prove [path]", "check every rule of the project flags exactly the code its samples mark, and nothing else").
 		Form("rule prove --all [path]", "check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed").
 		Form("rule schema", "print the JSON Schema of a rule file").
 		Form("rule export <folder>", "write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/").
-		Form("rule migrate [--dry-run]", "bring your own rules up to this release: merge the copies that differ only in the engine they judge into one rule naming them all, and name every rule this release no longer reads, with the reason").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
-		Option("--dry-run", "with `migrate`, say what would change and change nothing").
 		Option("--work", "with `try`, print how many nodes, checks and analyses the rule cost").
 		Option("--all", "with `prove`, prove the shipped rules too, over every fixture project under the path").
-		Note("`rule migrate` never stops at the first rule it cannot settle: it reads every one, merges every set of copies it can, and ends by naming what is left. A rule naming a construct no parser writes is named rather than repaired, since the nearest real word is a guess and a guess written into your own file is worse than a message.").
 		Note("<Rule> is a rule of `.commandments/custom/` by its name — `NoRawSql` or `NoRawSqlDetector` — or the path of a rule file anywhere.").
 		Note("A sample marks the code a rule must flag with a comment above it — `// @sin NoRawSqlDetector`, `# @sin …` in Python, `<!-- @sin … -->` in a Vue template — the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark, flags anything unmarked, has no `@sin` mark at all, or cannot be read, and when a mark names no rule of the project.")
 }
@@ -64,8 +61,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return c.try(in, root, console)
 	case "prove":
 		return c.prove(in, root, console)
-	case "migrate":
-		return c.migrate(in, root, console)
 	case "schema":
 		console.Write(string(rule.Schema()))
 
@@ -83,7 +78,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 		return 0, nil
 	default:
-		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule prove`, `rule schema`, `rule export` or `rule migrate`."), nil
+		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule prove`, `rule schema` or `rule export`."), nil
 	}
 }
 
@@ -104,7 +99,7 @@ func (c Command) explain(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if info, err := os.Stat(path); err != nil || !info.Mode().IsRegular() || !source.Judges(path) {
-		return console.Refuse(path + " is no file the tool reads — name one source file: PHP, Vue, TypeScript, Python or C#."), nil
+		return console.Refuse(path + " is no file the tool reads — name one source file: PHP, Vue, TypeScript, Python, C# or Go."), nil
 	}
 
 	codebase, err := scan.OneFile(path).Load()
@@ -148,7 +143,12 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 
 	tried = tried.WithLayers(project.Layers(tried.Engine()))
 
-	codebase, err := scan.Walk(paths, source.Under(root, project.Excluded)).Only(source.OfEngine(tried.Engine())...).Load()
+	var languages []source.Language
+	for _, judged := range tried.Engines() {
+		languages = append(languages, source.OfEngine(judged)...)
+	}
+
+	codebase, err := scan.Walk(paths, source.Under(root, project.Excluded)).Only(languages...).Load()
 	if err != nil {
 		return 0, err
 	}

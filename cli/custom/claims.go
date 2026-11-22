@@ -60,11 +60,11 @@ func (p Project) declaredNames() []string {
 	var declared []string
 
 	for _, own := range p.Rules {
-		declared = append(declared, own.Sin().Definition().Name, own.Name())
+		declared = append(append(declared, own.Sin().Definition().Names()...), own.Name())
 	}
 
 	for _, shipped := range rules.Sins() {
-		declared = append(declared, shipped.Definition().Name)
+		declared = append(declared, shipped.Definition().Names()...)
 	}
 
 	return declared

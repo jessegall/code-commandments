@@ -19,7 +19,6 @@ type joinIndex struct {
 	scanned     bool
 }
 
-// indexJoin is the index of the rows on the join's fields.
 func indexJoin(records []value, on map[string]Expr) *joinIndex {
 	fields := slices.Sorted(func(yield func(string) bool) {
 		for field := range on {
@@ -51,11 +50,10 @@ func indexJoin(records []value, on map[string]Expr) *joinIndex {
 	return index
 }
 
-// matching is the rows that agree with the row on every field: the first only, unless every one is asked for.
 func (index *joinIndex) matching(r rows, each row, every bool) []value {
 	values := make([]value, len(index.expressions))
 	for at, expression := range index.expressions {
-		values[at] = r.evaluate(expression, each)
+		values[at] = r.evaluate(expression, each.scope())
 	}
 	key, keyed := joinKey(values)
 	if !keyed || index.scanned {
@@ -72,7 +70,6 @@ func (index *joinIndex) matching(r rows, each row, every bool) []value {
 	return found
 }
 
-// slowly is the rows that agree with values a key cannot be written for, compared one by one.
 func (index *joinIndex) slowly(values []value, every bool) []value {
 	var matched []value
 	for _, candidate := range index.records {
@@ -95,8 +92,6 @@ func (index *joinIndex) slowly(values []value, every bool) []value {
 	return matched
 }
 
-// joinKey is the values written as one key that equal values share and no unequal ones do. No key, but keyed, when
-// a value is unknown, since an unknown value equals nothing; not keyed when a value is a list or a record.
 func joinKey(values []value) (*string, bool) {
 	var key strings.Builder
 	for _, each := range values {

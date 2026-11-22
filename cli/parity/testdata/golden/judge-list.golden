@@ -1,286 +1,170 @@
 exit: 0
 --- stdout
 [1;33mcsharp/absence[0m
-  NullForgivenDetector
-[1;33mcsharp/behaviour-per-method[0m
-  FlagArgumentDetector
-[1;33mcsharp/class-layout[0m
-  MemberAfterMethodDetector
-  MemberOutOfOrderDetector
-[1;33mcsharp/dependency-direction[0m
-  ContainerReachDetector
-  NamespaceCycleDetector
-  NamespaceDependencyDetector
-  OrphanedBindingDetector
-[1;33mcsharp/enums[0m
-  StringMirrorsEnumDetector
+  csharp-null-forgiven
 [1;33mcsharp/fix-at-the-source[0m
-  BlockedAwaitDetector
-  ConstructorSideEffectDetector
-  MutableStaticStateDetector
-  UnreadCollaboratorDetector
+  csharp-blocked-await
 [1;33mcsharp/flow[0m
-  CollectionMutatedWhileIteratedDetector
-  InlineThrowDetector
-[1;33mcsharp/method-mood[0m
-  BareStatePredicateDetector
-[1;33mcsharp/pass-the-object[0m
-  DerivedArgumentDetector
-  ParamResolvedFromParamDetector
-[1;33mcsharp/repeated-call-helper[0m
-  RepeatedNamedCallDetector
-[1;33mcsharp/tell-dont-ask[0m
-  FeatureEnvyDetector
-[1;33mcsharp/templates[0m
-  AssembledTemplateDetector
-[1;33mcsharp/type-honesty[0m
-  FilledParameterDetector
-  ImpossibleGuardDetector
-[1;33mcsharp/value-objects[0m
-  ArrayReturnBagDetector
-  CoupledFieldsDetector
-  DataClumpDetector
-  DictionaryBagDetector
-  HandedOutCollectionDetector
-  MutableValueObjectDetector
-  PositionalTupleReturnDetector
+  csharp-inline-throw
 [1;33mphp/absence[0m
-  BlankStringOnTheWireDetector
-  ErasedNullObjectDetector
-  FalseForNothingDetector
-  OptionAsNullableDetector
+  blank-string-on-the-wire
+  erased-null-object
+  false-for-nothing
+  option-as-nullable
 [1;33mphp/behaviour-per-method[0m
-  FlagArgumentDetector
+  flag-argument
 [1;33mphp/class-layout[0m
-  MemberAfterMethodDetector
-  MemberOutOfOrderDetector
+  member-after-method
+  member-out-of-order
 [1;33mphp/dependency-direction[0m
-  NamespaceCycleDetector
-  NamespaceDependencyDetector
+  namespace-dependency
 [1;33mphp/documentation[0m
-  InlineDocblockDetector
+  inline-docblock
 [1;33mphp/enums-with-behaviour[0m
-  EnumValueMatchDetector
+  compare-self
+  enum-value-match
 [1;33mphp/fix-at-the-source[0m
-  ConstructorSideEffectDetector
-  MutableStaticStateDetector
-  UnreadCollaboratorDetector
+  constructor-side-effect
+  mutable-static-state
+  unread-collaborator
 [1;33mphp/guard-clauses-and-flow[0m
-  IfElseLadderDetector
-  InlineThrowDetector
+  if-else-ladder
+  inline-throw
 [1;33mphp/laravel-idioms[0m
-  HandedOutCollectionDetector
-  QueryInLoopDetector
+  handed-out-collection
+  query-in-loop
 [1;33mphp/method-mood[0m
-  BareStatePredicateDetector
-  NarratedCommandDetector
+  bare-state-predicate
+  narrated-command
 [1;33mphp/pass-the-object[0m
-  ComputedBooleanArgumentDetector
-  DerivedArgumentDetector
-  ParamResolvedFromParamDetector
+  computed-boolean-argument
+  derived-argument
+  param-resolved-from-param
 [1;33mphp/repeated-call-helper[0m
-  RepeatedNamedCallDetector
+  repeated-named-call
 [1;33mphp/role-vocabulary[0m
-  HandRolledRegistryDetector
+  hand-rolled-registry
 [1;33mphp/tell-dont-ask[0m
-  FeatureEnvyDetector
-  GuardBesideTransitionDetector
-  KeyedLookupEnvyDetector
-  MiddleManDetector
-  TrainWreckDetector
+  feature-envy
+  guard-beside-transition
+  keyed-lookup-envy
+  middle-man
+  train-wreck
 [1;33mphp/templates[0m
-  AssembledTemplateDetector
+  assembled-template
 [1;33mphp/type-honesty[0m
-  FilledParameterDetector
-  ImpossibleGuardDetector
-  RefusedBequestDetector
-  ScratchStateRestoreDetector
-  UnusedParameterDetector
-  UnusedPrivateMemberDetector
-  UselessPropertyHookDetector
+  filled-parameter
+  impossible-guard
+  refused-bequest
+  scratch-state-restore
+  unused-parameter
+  unused-private-member
+  useless-property-hook
 [1;33mphp/value-objects[0m
-  ArrayBagDetector
-  ArrayBagParameterDetector
-  ArrayReturnBagDetector
-  CoupledFieldsDetector
-  DataClumpDetector
-  HandRolledWitherDetector
-  MutableValueObjectDetector
-  PositionalTupleReturnDetector
-[1;33mpython/behaviour-per-method[0m
-  FlagArgumentDetector
-[1;33mpython/class-layout[0m
-  MemberAfterMethodDetector
-  MemberOutOfOrderDetector
-[1;33mpython/dependency-direction[0m
-  NamespaceCycleDetector
-  NamespaceDependencyDetector
-[1;33mpython/enums[0m
-  ConstantClassEnumDetector
-  EnumValueMatchDetector
-  MatchWildcardReturnsNoneDetector
+  array-bag
+  array-bag-parameter
+  array-return-bag
+  coupled-fields
+  hand-rolled-wither
+  mutable-value-object
+  positional-tuple-return
 [1;33mpython/fix-at-the-source[0m
-  BlockedAwaitDetector
-  ConstructorSideEffectDetector
-  FrozenDefaultDetector
-  MutableDefaultDetector
-  MutableStaticStateDetector
-  UnreadCollaboratorDetector
-[1;33mpython/flow[0m
-  CollectionMutatedWhileIteratedDetector
-[1;33mpython/method-mood[0m
-  BareStatePredicateDetector
-  NarratedCommandDetector
-[1;33mpython/pass-the-object[0m
-  ComputedBooleanArgumentDetector
-  DerivedArgumentDetector
-  ParamResolvedFromParamDetector
-[1;33mpython/repeated-call-helper[0m
-  RepeatedNamedCallDetector
-[1;33mpython/tell-dont-ask[0m
-  FeatureEnvyDetector
-  KeyedLookupEnvyDetector
-[1;33mpython/templates[0m
-  AssembledTemplateDetector
+  python-blocked-await
+  python-frozen-default
+  python-mutable-default
 [1;33mpython/type-honesty[0m
-  ConstantPropertyDetector
-  FilledParameterDetector
-  ImpossibleGuardDetector
-  ScratchStateRestoreDetector
-[1;33mpython/value-objects[0m
-  CoupledFieldsDetector
-  DataClumpDetector
-  DictBagDetector
-  DictReturnBagDetector
-  HandRolledReplaceDetector
-  HandedOutCollectionDetector
-  MutableValueObjectDetector
-  PositionalTupleReturnDetector
+  python-constant-property
 [1;33mshared/absence[0m
-  BlankStringDefaultDetector
-  CancelledCoalesceDetector
-  CapabilityProbeHubDetector
-  CoalescedLoopSubjectDetector
-  ConditionalArraySpreadDetector
-  DeNulledFinderDetector
-  ManufacturedFakeFillDetector
-  MaskedInvariantDetector
-  NullableCallbackDetector
-  NullableRegistryLookupDetector
-  PhantomNullableDetector
-  RawDecodedArrayReturnDetector
-  PlaceholderFilledDataDetector
+  blank-string-default
+  cancelled-coalesce
+  capability-probe-hub
+  coalesced-loop-subject
+  conditional-array-spread
+  de-nulled-finder
+  manufactured-fake-fill
+  masked-invariant
+  nullable-callback
+  nullable-registry-lookup
+  phantom-nullable
+  placeholder-filled-data
+  raw-decoded-array-return
 [1;33mshared/arguments[0m
-  MatchDefaultReturnsNullDetector
-  RedundantArrowReturnTypeDetector
-  ComputedBooleanArgumentDetector
-  HandRolledWitherDetector
-  KeyedLookupEnvyDetector
-  NarratedCommandDetector
-  ScratchStateRestoreDetector
-  UnusedParameterDetector
-  ArrayBagDetector
-  ArrayBagParameterDetector
-  ArrayReturnBagDetector
-  AssembledTemplateDetector
-  BareStatePredicateDetector
-  ConstructorSideEffectDetector
-  CoupledFieldsDetector
-  DataClumpDetector
-  DerivedArgumentDetector
-  FeatureEnvyDetector
-  FilledParameterDetector
-  FlagArgumentDetector
-  HandedOutCollectionDetector
-  MemberAfterMethodDetector
-  MemberOutOfOrderDetector
-  MutableStaticStateDetector
-  MutableValueObjectDetector
-  ParamResolvedFromParamDetector
-  PositionalTupleReturnDetector
+  data-clump
+  match-default-returns-null
+  redundant-arrow-return-type
 [1;33mshared/dependencies[0m
-  ConcreteCrossModuleDependencyDetector
-  LoneImplementerInterfaceDetector
-  UndeclaredMemberDetector
-  GuardBesideTransitionDetector
-  HandRolledRegistryDetector
-  MiddleManDetector
-  RefusedBequestDetector
-  TrainWreckDetector
-  UnusedPrivateMemberDetector
-  UselessPropertyHookDetector
-  NamespaceCycleDetector
-  NamespaceDependencyDetector
-  UnreadCollaboratorDetector
+  concrete-cross-module-dependency
+  interface-overlap
+  lone-implementer-interface
+  namespace-cycle
+  undeclared-member
 [1;33mshared/documentation[0m
-  ArchaeologyCommentDetector
-  BloatedDocblockDetector
-  CeremonyDocblockDetector
-  DanglingDocReferenceDetector
-  NegativeSpaceCommentDetector
-  RestatedCommentDetector
-  StackedDocblockDetector
+  archaeology-comment
+  bloated-docblock
+  ceremony-docblock
+  dangling-doc-reference
+  negative-space-comment
+  restated-comment
+  stacked-docblock
 [1;33mshared/duplication[0m
-  ConvertedArgumentDetector
-  DivergentTwinDetector
-  DuplicateFunctionDetector
-  ListMirrorsFolderDetector
-  NearDuplicateFunctionDetector
-  RepeatedFolderPathDetector
-  RepeatedGuardDetector
-  RepeatedTypeGuardDetector
-  UnnamedVocabularyLiteralDetector
+  converted-argument
+  divergent-twin
+  duplicate-function
+  list-mirrors-folder
+  near-duplicate-function
+  repeated-folder-path
+  repeated-guard
+  repeated-type-guard
+  unnamed-vocabulary-literal
 [1;33mshared/enums[0m
-  ConstClassEnumDetector
-  EnumCaseOrChainDetector
-  InArrayMirrorsEnumDetector
-  SideTableTraitDetector
-  StringMatchMirrorsEnumDetector
-  TypeSwitchDetector
+  const-class-enum
+  enum-case-or-chain
+  in-array-mirrors-enum
+  side-table-trait
+  string-match-mirrors-enum
+  type-switch
 [1;33mshared/exceptions[0m
-  GenericExceptionDetector
-  MessageAtThrowDetector
-  RethrownUnchangedDetector
-  SwallowCatchDetector
-  WrappingWithoutCauseDetector
+  generic-exception
+  message-at-throw
+  rethrown-unchanged
+  swallow-catch
+  wrapping-without-cause
 [1;33mshared/flow[0m
-  DeepNestingDetector
-  DuplicatedBranchTailDetector
-  LoopInvertedGuardDetector
-  NestedTernaryDetector
-  NonCountingForDetector
-  ReassignedParameterDetector
-  RedundantElseDetector
-  ShortCircuitStatementDetector
-  TernaryStatementDetector
-  UnnamedConditionDetector
-  UnreachableStatementDetector
-  QueryInLoopDetector
-  SubjectLadderDetector
+  collection-mutated-while-iterated
+  deep-nesting
+  duplicated-branch-tail
+  loop-inverted-guard
+  nested-ternary
+  non-counting-for
+  reassigned-parameter
+  redundant-else
+  short-circuit-statement
+  subject-ladder
+  ternary-statement
+  unnamed-condition
+  unreachable-statement
 [1;33mtypescript/absence[0m
-  DefendedCertainFieldDetector
-  FalselyOptionalFieldDetector
-[1;33mtypescript/flow[0m
-  CollectionMutatedWhileIteratedDetector
+  defended-certain-field
+  falsely-optional-field
 [1;33mvue/server-calls[0m
-  HardCodedServerURLDetector
-  RawFetchInComponentDetector
+  hard-coded-server-url
+  raw-fetch-in-component
 [1;33mvue/vue-components[0m
-  ComponentBudgetDetector
-  CompoundInlineComponentDetector
-  DeepDataReachDetector
-  DeepNestedDetector
-  DuplicateElementDetector
-  InlineCaseViewsDetector
-  NearDuplicateElementDetector
-  PropDrillingDetector
-  PropMutationDetector
+  compound-inline-component
+  deep-data-reach
+  deep-nested
+  duplicate-element
+  inline-case-views
+  near-duplicate-element
+  oversized-component
+  prop-drilling
+  prop-mutation
 [1;33mvue/vue-control-flow[0m
-  ControlFlowOnElementDetector
-  IndexAsKeyDetector
-  LoopWithConditionDetector
-  RetestedSwitchCaseDetector
-  SwitchCaseDetector
+  control-flow-on-element
+  index-as-key
+  loop-with-condition
+  re-tested-switch-case
+  switch-case
 
 [1;33mlanguages read here[0m
   PHP, Vue, TypeScript, Python, C#

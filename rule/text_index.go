@@ -16,7 +16,6 @@ type textIndex struct {
 	sorted []string
 }
 
-// shortestIndexed is the length below which a list is read item by item: building an index for it costs more.
 const shortestIndexed = 32
 
 type listIdentity struct {
@@ -26,8 +25,6 @@ type listIdentity struct {
 
 type textIndexesKey struct{}
 
-// textIndexOf is the index of a list of known texts, built once for the list a codebase holds; none for a short list
-// or one holding anything but known texts. The index keeps its list, so no other list takes its place in memory.
 func (e evaluation) textIndexOf(items []value) *textIndex {
 	if len(items) < shortestIndexed {
 		return nil
@@ -70,7 +67,6 @@ func (index *textIndex) holdsStartingWith(part string) bool {
 	return at < len(index.sorted) && strings.HasPrefix(index.sorted[at], part)
 }
 
-// prefixesOf is each part of a text that ends before one of its separators, shortest first: a.b.c reads a and a.b.
 func prefixesOf(text, separator string) []value {
 	var prefixes []value
 	for at := strings.Index(text, separator); at >= 0; {

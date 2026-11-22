@@ -1,4 +1,4 @@
-// Command generate writes the shop's streams in engine/php/testdata, gzipped, through the PHP and frontend bridges: the live fixture's, with the digest of the sources they came from, and the frozen fixture's the PHP engine's answers in testdata/oracle are about.
+// Command generate writes the shop's streams in engine/php/testdata, gzipped, through the PHP and frontend bridges, with the digest of the sources they came from.
 package main
 
 import (
@@ -24,13 +24,6 @@ func main() {
 
 func generate() error {
 	if err := streams(shop.Fixture(), shop.Testdata()); err != nil {
-		return err
-	}
-	frozen, err := shop.Frozen()
-	if err != nil {
-		return err
-	}
-	if err := streams(filepath.Join(frozen, "backend"), shop.Oracle()); err != nil {
 		return err
 	}
 	digest, err := shop.Digest()

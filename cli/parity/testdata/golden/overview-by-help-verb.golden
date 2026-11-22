@@ -12,12 +12,6 @@ Commands:
   make             Scaffold a commandment of your own — a rule naming its sin, and the skill that
                    teaches the fix, in `.commandments/custom/`, turned on in your config, with the
                    rest of the process printed for you.
-  hints            Auto-fix the Spatie Data magic surface — rename non-`from…` object factories
-                   to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the
-                   `@method from(...)`/`collect(...)` docblock hints.
-  repent           Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints)
-                   and each Repentable detector's own fix, PHP, Vue and TypeScript, and the fix a
-                   project's own rule declares.
   scaffold         Generate the reusable helper a sin's fix uses — written into your source root
                    with its namespace injected. Idempotent: an existing file is skipped.
   report           File a GitHub issue about code-commandments itself (via `gh`) — a false
@@ -42,8 +36,7 @@ Commands:
   journal-skills   Render the skills into the agent journal plugin's folder, for the journal to
                    publish.
   disable          Toggle a rule in the project's .commandments/config.json, leaving the rest of the
-                   file as you wrote it — or in a config.php from an earlier version, through its
-                   tree, so your own lines are untouched.
+                   file as you wrote it.
   allow            Publish a public interface for the lone-implementer rule.
   config           Inspect and manage .commandments/config.json — what is configured, and what is
                    actually running.

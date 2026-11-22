@@ -175,6 +175,31 @@ func TestACommentSaysWhereItBelongs(t *testing.T) {
 	}
 }
 
+func TestACommentLeadingADeclarationGroupBelongsToItsFirstDeclaration(t *testing.T) {
+	source := "package shop\n\n// The ecosystems a package comes from.\nconst (\n\tComposer = \"composer\"\n\tPyPI     = \"pypi\"\n)\n\nfunc run() {}\n"
+	file := streamOf(t, map[string]string{"ecosystems.go": source}).Files[0]
+
+	if len(file.Comments) != 1 || file.Comments[0].Attached == nil {
+		t.Fatalf("the comment above the group belongs to no node: %+v", file.Comments)
+	}
+	owner := file.Nodes()[*file.Comments[0].Attached]
+	if owner.Kind != "constant" || !strings.HasPrefix(source[owner.Span.Start:], "Composer") {
+		t.Errorf("the comment above the group documents the %s at %q, where it documents the group's first constant", owner.Kind, source[owner.Span.Start:owner.Span.End])
+	}
+}
+
+func TestAPackageDocCommentDocumentsTheModule(t *testing.T) {
+	source := "// Package shop sells carts.\npackage shop\n\nimport \"fmt\"\n\nfunc run() { fmt.Println() }\n"
+	file := streamOf(t, map[string]string{"shop.go": source}).Files[0]
+
+	if len(file.Comments) != 1 || file.Comments[0].Attached == nil {
+		t.Fatalf("the package's doc comment belongs to no node: %+v", file.Comments)
+	}
+	if owner := file.Nodes()[*file.Comments[0].Attached]; owner.Kind != "module" {
+		t.Errorf("the package's doc comment documents a %s, where it documents the module", owner.Kind)
+	}
+}
+
 func TestAFileThatDoesNotCompileIsStillATree(t *testing.T) {
 	stream := streamOf(t, map[string]string{"broken.go": "package shop\n\nfunc total(\n", "fine.go": "package shop\n\nfunc fine() {}\n"})
 

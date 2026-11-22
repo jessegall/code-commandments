@@ -5,6 +5,9 @@
         "rule": "Split it into named steps, each a function of its own."
     },
     "find": {
-        "*": {"select": "function", "where": [{"lines": {"atLeast": 40}}]}
+        "select": "function",
+        "as": "f",
+        "where": [">=", ["lineCount", "$f"], 40],
+        "emit": "$f"
     }
 }

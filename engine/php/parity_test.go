@@ -19,6 +19,6 @@ func TestTheCommittedShopIsGeneratedFromTodaysSources(t *testing.T) {
 		t.Fatal(err)
 	}
 	if strings.TrimSpace(string(committed)) != digest {
-		t.Fatal("a source engine/php/testdata is generated from changed since it was generated (the shop fixture, the PHP engine, composer.json, the bridge or the oracle): run go generate ./engine/php")
+		t.Fatal("a source engine/php/testdata is generated from changed since it was generated (the shop fixture, the PHP engine, composer.json, the bridge or the oracle): run go run ./engine/php/shop/generate")
 	}
 }

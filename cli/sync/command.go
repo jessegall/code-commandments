@@ -163,20 +163,11 @@ func wire(root string, agent agents.Agent, lib library.Library, published []stri
 }
 
 func ensureConfig(root string, console cli.Console) error {
-	migrated, err := config.Migrate(root)
-	if err != nil {
-		console.Warn("⚠ .commandments/config.php stays as it is: " + err.Error())
-	}
-
-	if migrated {
-		console.Say("↻ .commandments/config.php is now .commandments/config.json — the original is kept as " + config.Backup + ".")
-	}
-
 	if _, err := config.EditorIn(root).Scaffold(config.DetectRoots(root)); err != nil {
 		return err
 	}
 
-	_, err = config.WriteSchema(root)
+	_, err := config.WriteSchema(root)
 
 	return err
 }

@@ -226,16 +226,7 @@ func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, e
 
 	root := journalProjectRoot()
 
-	if _, err := config.Migrate(root); err != nil {
-		return nil, 0, err
-	}
-
-	editor, switches := config.EditorIn(root).(config.Switches)
-	if !switches {
-		console.Warn("⚠ .commandments/config.php could not be migrated to config.json — the switches were left unapplied.")
-
-		return nil, 1, nil
-	}
+	editor := config.SwitchesIn(root)
 
 	changed := 0
 
@@ -268,7 +259,7 @@ func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, e
 			toggle = editor.Disable
 		}
 
-		if did, err := toggle(config.ClassOf(config.Sin, sin)); err != nil {
+		if did, err := toggle(config.Rule{Kind: config.Sin, Name: sin.Definition().Name}); err != nil {
 			return nil, 0, err
 		} else if did {
 			changed++

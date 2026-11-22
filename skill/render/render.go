@@ -2,10 +2,10 @@
 package render
 
 import (
-	"github.com/jessegall/code-commandments/rules"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/jessegall/code-commandments/rules"
 	"slices"
 	"strings"
 

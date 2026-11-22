@@ -1,11 +1,8 @@
 package rule
 
 import (
-	"strings"
-
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/prose"
 )
 
 // commentSource is what a rule selects to judge comments: each comment run of the program, as a record of its facts.
@@ -13,8 +10,6 @@ const commentSource = "comment"
 
 // commentsOf is every comment run of the codebase as the record a rule reads: its prose, its form, the node it
 // documents and that node's own words, whether its references dangle, and the node a finding about it reports at.
-// A part of the codebase in fewer languages reads the whole's records of its own files, so the records are built once
-// whatever languages the rules asking for them judge.
 func commentsOf(codebase *engine.Codebase) []record {
 	whole := codebase.Whole()
 	every := everyComment(whole)
@@ -50,23 +45,15 @@ func everyComment(codebase *engine.Codebase) []record {
 		comments := make([]record, 0, len(runs))
 		for _, comment := range runs {
 			documented := comment.Documents()
-			description := strings.Join(comment.Description(), " ")
 			comments = append(comments, record{
-				"text":        known(comment.Prose()),
-				"raw":         known(comment.Text),
-				"description": known(description),
-				"tags":        known(tagRecords(comment.Comment.Tags)),
-				"words":       known(texts(comment.Words())),
-				"paragraphs":  known(float64(prose.Paragraphs(prose.WithoutFencedExamples(comment.Description()), func(line string) bool { return line != "" }))),
-				"form":        known(comment.Form),
-				"trailing":    known(comment.Trailing),
-				"code":        known(comment.IsCode()),
-				"documents":   known(documented),
-				"codeWords":   known(texts(documented.CodeWords())),
-				"docsOnOwner": known(float64(docs[documented])),
-				"dangling":    known(comment.Dangling()),
-				"line":        known(float64(comment.Line())),
-				"location":    known(comment.Location()),
+				"form":      known(comment.Form),
+				"trailing":  known(comment.Trailing),
+				"code":      known(comment.IsCode()),
+				"documents": known(documented),
+				"dangling":  known(comment.Dangling()),
+				"line":      known(float64(comment.Line())),
+				"location":  known(comment.Location()),
+				derivedAt:   known(commentWords{comment: comment, documented: documented, docs: docs}),
 			})
 		}
 

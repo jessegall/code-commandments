@@ -312,10 +312,12 @@ is in — and name it where the words would go:
 ```
 
 ```json
-{"nameIn": ["$poetry", "plain"]}            // the whole list among a check's words
-{"nameMatches": "^(${poetry})$"}            // and inside a pattern, each word quoted so a dot is a dot
-{"nameMatches": "(?i)^(${poetry})$"}        // the same words, any case, which is the regexp's own business
+["in", "$f.name", "${poetry}", "plain"]            // an item that is exactly ${name} is the whole list, word by word
+["matchesText", "$f.name", "^(${poetry})$"]        // inside a pattern, each word quoted so a dot is a dot
+["matchesText", "$f.name", "(?i)^(${poetry})$"]    // the same words, any case, which is the regexp's own business
 ```
+
+A list is always `${name}`: a bare `$f` is the rule's own binding, never a list.
 
 A rule is written out before it is read, so every check that takes words or a pattern takes a list without knowing
 lists exist. A rule naming a list the project has not declared is refused by name, with the lists it does have,
@@ -495,9 +497,7 @@ through whatever each language wraps it in. This is the difference that makes a 
 rules.
 
 Where the languages genuinely differ, a step carries the per-language check in the same file — `{"php":
-"facadeCall"}` — answered only by that language. And `commandments rule migrate` merges rules you already have
-that differ in nothing but the engine they judge; it leaves alone any pair that differs in more, because then
-they are two rules and merging them would change what one of them finds.
+"facadeCall"}` — answered only by that language.
 
 ## See what a rule reads before you write it
 
@@ -607,19 +607,17 @@ never against what the code happens to do today.
 | Command | Does |
 |---|---|
 | `commandments make <Name>` | scaffold a PHP commandment and turn it on |
-| `commandments make <Name> --engine=vue` | scaffold a Vue one instead |
-| `commandments make <Name> --engine=typescript` | scaffold a TypeScript one instead |
 | `commandments make <Name> --engine=python` | scaffold a Python one instead |
-| `commandments make <Name> --engine=csharp` | scaffold a C# one instead |
+| `commandments make <Name> --engine=php,python,go` | scaffold one rule that judges each engine named |
+| `commandments make <Name> --engine=php,vue,typescript,python,csharp,go` | scaffold one that judges every language |
 | `commandments make <Name> --skill=NAME` | point the sin at an EXISTING skill (shipped or your own) instead of writing a new one |
 | `commandments make <Name> --from=<template>` | start from a ready rule to adapt: max-function-length, max-nesting, max-parameters, no-debug-calls, no-sql-in-controllers, no-todo-comments |
-| `commandments rule explain <file> [--line=N]` | print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to |
+| `commandments rule explain <file> [--line=N]` | print the generic tree a rule reads in the file: every node's line, the role it holds in its parent, its kind, form, name, text and what it resolves to |
 | `commandments rule try <Rule> <path>…` | run one rule over the paths without turning it on, and print each match with its line: a folder, or the files a change touched |
 | `commandments rule prove [path]` | check every rule of the project flags exactly the code its samples mark, and nothing else |
 | `commandments rule prove --all [path]` | check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed |
 | `commandments rule schema` | print the JSON Schema of a rule file |
 | `commandments rule export <folder>` | write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/ |
-| `commandments rule migrate [--dry-run]` | bring your own rules up to this release: merge the copies that differ only in the engine they judge into one rule naming them all, and name every rule this release no longer reads, with the reason |
 
 <!-- END: commands:make,rule -->
 

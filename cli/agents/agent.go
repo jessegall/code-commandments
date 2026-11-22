@@ -44,8 +44,8 @@ func Unshipped(project config.Config) []string {
 			continue
 		}
 
-		warnings = append(warnings, "⚠ config.json turns on the agent "+name+", which the tool does not ship, and it was skipped — "+
-			"docs/parity.md, \"Migrating from the PHP tool\", says what becomes of it.")
+		warnings = append(warnings, "⚠ config.json turns on the agent "+name+", which the tool does not ship, and it was skipped: "+
+			"remove it from the agents list.")
 	}
 
 	return warnings

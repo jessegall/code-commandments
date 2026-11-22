@@ -116,6 +116,13 @@ func (w *fingerprintWalk) role(node *contract.Node) string {
 var orderFree = []string{"add", "multiply", "bit-and", "bit-or", "bit-xor", "equal", "not-equal", "identical", "not-identical", "and", "or"}
 
 func (w *fingerprintWalk) structure(m Match) string {
+	var out strings.Builder
+	w.write(&out, m)
+
+	return out.String()
+}
+
+func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 	node := m.node
 	if node.Incomplete || node.Kind == "unsupported" {
 		w.recovered = true
@@ -124,43 +131,57 @@ func (w *fingerprintWalk) structure(m Match) string {
 	role := w.role(node)
 	switch {
 	case w.how.Mode == "shape":
-		parts := []string{node.Kind, role}
-		for _, child := range m.Children() {
-			if child.node.Kind != "no-op" {
-				parts = append(parts, w.structure(child))
-			}
+		out.WriteString("(" + node.Kind + "|" + role)
+		for _, child := range m.statedChildren() {
+			out.WriteByte('|')
+			w.write(out, child)
 		}
+		out.WriteByte(')')
 
-		return "(" + strings.Join(parts, "|") + ")"
+		return
 	case node.Kind == "literal" && (normalize || w.how.LiteralKinds):
-		return "(literal|" + node.LiteralKind + ")"
+		out.WriteString("(literal|" + node.LiteralKind + ")")
+
+		return
 	case node.Kind == "literal" && node.Value != nil:
 		written, _ := node.Value.MarshalJSON()
+		out.WriteString("(literal|" + node.LiteralKind + "|" + string(written) + ")")
 
-		return "(literal|" + node.LiteralKind + "|" + string(written) + ")"
+		return
 	case node.Kind == "reference" && normalize && role != "callee":
-		return "(reference)"
+		out.WriteString("(reference)")
+
+		return
 	case w.how.Mode == "renamed" && node.Kind == "binding":
-		return "(binding|" + role + "|v" + w.number(node.ID) + ")"
+		out.WriteString("(binding|" + role + "|v" + w.number(node.ID) + ")")
+
+		return
 	case w.how.Mode == "renamed" && node.Kind == "reference" && len(node.Linked("binding")) == 1:
-		return "(reference|" + role + "|v" + w.number(node.Linked("binding")[0]) + ")"
+		out.WriteString("(reference|" + role + "|v" + w.number(node.Linked("binding")[0]) + ")")
+
+		return
 	}
-	parts := []string{node.Kind, role}
+	out.WriteString("(" + node.Kind + "|" + role)
 	if !normalize || !node.Is("declaration") {
-		parts = append(parts, node.Name)
+		out.WriteString("|" + node.Name)
 	}
-	parts = append(parts, node.Operator, node.Form, strings.Join(node.Modifiers, " "))
-	var children []string
-	for _, child := range m.Children() {
-		if child.node.Kind != "no-op" {
+	out.WriteString("|" + node.Operator + "|" + node.Form + "|" + strings.Join(node.Modifiers, " "))
+	if w.how.Commutative && slices.Contains(orderFree, node.Operator) {
+		var children []string
+		for _, child := range m.statedChildren() {
 			children = append(children, w.structure(child))
 		}
-	}
-	if w.how.Commutative && slices.Contains(orderFree, node.Operator) {
 		slices.Sort(children)
+		for _, child := range children {
+			out.WriteString("|" + child)
+		}
+	} else {
+		for _, child := range m.statedChildren() {
+			out.WriteByte('|')
+			w.write(out, child)
+		}
 	}
-
-	return "(" + strings.Join(append(parts, children...), "|") + ")"
+	out.WriteByte(')')
 }
 
 // number is a local binding's place among the bindings the subtree names, counted in the order each first appears.
@@ -372,4 +393,8 @@ func (c *Codebase) reached(imported Match, byPath map[string]string, modules map
 	}
 
 	return reached
+}
+
+func (m Match) statedChildren() []Match {
+	return slices.DeleteFunc(m.Children(), func(child Match) bool { return child.node.Kind == "no-op" })
 }

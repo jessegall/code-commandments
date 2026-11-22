@@ -107,8 +107,9 @@ func (k *keptLines) split(files []string) (hits []*contract.File, header *contra
 
 	found := make([]*contract.File, len(files))
 	readsOf := make([][]string, len(files))
+	reader := contract.KeptUnder(*header)
 	sidebyside.Each(len(files), runtime.GOMAXPROCS(0), func(at int) {
-		found[at], readsOf[at] = k.line(contract.KeptUnder(*header), files[at])
+		found[at], readsOf[at] = k.line(reader, files[at])
 	})
 	standing := k.standingOnWhatTheyRead(files, readsOf, func(at int) bool { return found[at] != nil })
 

@@ -151,14 +151,27 @@ func (s stage) operations() []string {
 	return named
 }
 
-// row is one row of a pipeline: the names bound for it.
-type row = bindings
+// row is one row of a pipeline: the names bound for it, each name a link that points at the names bound before it, so
+// a stage that binds a name copies nothing.
+type row struct{ names bindings }
+
+func (r row) with(name string, bound value) row {
+	return row{r.names.with(name, bound)}
+}
+
+func (r row) scope() bindings {
+	return r.names
+}
+
+func (r row) named(name string) (value, bool) {
+	return r.names.lookup(name)
+}
 
 // record is a row, or a relation's record, read as one value: each field by name.
 type record map[string]value
 
 func asRecord(each row) value {
-	return known(record(each))
+	return known(each.names.record())
 }
 
 // rows is a pipeline run over one codebase: relations built once each.
@@ -193,7 +206,7 @@ func (r rows) from(names source, as string) []row {
 	var started []row
 	for _, name := range names {
 		for _, item := range r.relationRows(name) {
-			started = append(started, row{as: item})
+			started = append(started, row{}.with(as, item))
 		}
 	}
 
@@ -241,7 +254,8 @@ func (r rows) build(defined relation) []value {
 		if projects {
 			items = append(items, asRecord(each))
 		} else {
-			items = append(items, each[as])
+			held, _ := each.named(as)
+			items = append(items, held)
 		}
 	}
 	if defined.GroupBy == nil {
@@ -274,7 +288,7 @@ func (r rows) aggregated(items []value, defined relation) []value {
 			grouped[field] = read(members[0], field)
 		}
 		for name, expression := range defined.Aggregate {
-			grouped[name] = r.evaluate(expression, bindings{"rows": known(members)})
+			grouped[name] = r.evaluate(expression, bindings{}.with("rows", known(members)))
 		}
 		records = append(records, known(grouped))
 	}
@@ -286,7 +300,7 @@ func (r rows) aggregated(items []value, defined relation) []value {
 func (r rows) through(started []row, stages []stage) []value {
 	var emitted []value
 	for _, each := range r.stages(started, stages) {
-		if anchor, named := each["\x00emit"]; named {
+		if anchor, named := each.named("\x00emit"); named {
 			emitted = append(emitted, anchor)
 		}
 	}
@@ -305,16 +319,16 @@ func (r rows) stages(current []row, stages []stage) []row {
 func (r rows) stage(current []row, step stage) []row {
 	switch {
 	case step.Reject != nil:
-		return slices.DeleteFunc(current, func(each row) bool { return truthOf(r.evaluate(*step.Reject, each)) != engine.False })
+		return slices.DeleteFunc(current, func(each row) bool { return truthOf(r.evaluate(*step.Reject, each.scope())) != engine.False })
 	case step.Where != nil:
-		return slices.DeleteFunc(current, func(each row) bool { return truthOf(r.evaluate(*step.Where, each)) != engine.True })
+		return slices.DeleteFunc(current, func(each row) bool { return truthOf(r.evaluate(*step.Where, each.scope())) != engine.True })
 	case step.Having != nil:
-		return slices.DeleteFunc(current, func(each row) bool { return truthOf(r.evaluate(*step.Having, each)) != engine.True })
+		return slices.DeleteFunc(current, func(each row) bool { return truthOf(r.evaluate(*step.Having, each.scope())) != engine.True })
 	case step.Project != nil:
 		for at, each := range current {
 			projected := each
 			for name, expression := range step.Project {
-				projected = projected.with(name, r.evaluate(expression, each))
+				projected = projected.with(name, r.evaluate(expression, each.scope()))
 			}
 			current[at] = projected
 		}
@@ -326,7 +340,7 @@ func (r rows) stage(current []row, step stage) []row {
 		return r.expanded(current, *step.Expand)
 	case step.Emit != nil:
 		for at, each := range current {
-			current[at] = each.with("\x00emit", r.evaluate(*step.Emit, each))
+			current[at] = each.with("\x00emit", r.evaluate(*step.Emit, each.scope()))
 		}
 
 		return current
@@ -348,7 +362,7 @@ func (r rows) stage(current []row, step stage) []row {
 		seen := map[string]bool{}
 
 		return slices.DeleteFunc(current, func(each row) bool {
-			distinctKey := r.evaluate(*step.Distinct, each)
+			distinctKey := r.evaluate(*step.Distinct, each.scope())
 			if !distinctKey.known {
 				return true
 			}
@@ -381,7 +395,7 @@ func (r rows) grouped(current []row, by Expr) []row {
 	members := map[string][]value{}
 	values := map[string]value{}
 	for _, each := range current {
-		groupKey := r.evaluate(by, each)
+		groupKey := r.evaluate(by, each.scope())
 		if !groupKey.known {
 			continue
 		}
@@ -394,7 +408,7 @@ func (r rows) grouped(current []row, by Expr) []row {
 	}
 	grouped := make([]row, 0, len(keys))
 	for _, written := range keys {
-		grouped = append(grouped, row{name: values[written], "rows": known(members[written])})
+		grouped = append(grouped, row{}.with(name, values[written]).with("rows", known(members[written])))
 	}
 
 	return grouped
@@ -405,21 +419,28 @@ func (r rows) grouped(current []row, by Expr) []row {
 func (r rows) expanded(current []row, list Expr) []row {
 	var expanded []row
 	for _, group := range current {
-		items, _ := listOf(r.evaluate(list, group))
+		items, _ := listOf(r.evaluate(list, group.scope()))
 		for _, item := range items {
-			restored := group.with("row", item)
-			if fields, isRecord := item.held.(record); isRecord {
-				for name, field := range fields {
-					if name != "rows" {
-						restored = restored.with(name, field)
-					}
-				}
-			}
-			expanded = append(expanded, restored)
+			expanded = append(expanded, group.restoring(item))
 		}
 	}
 
 	return expanded
+}
+
+func (r row) restoring(item value) row {
+	restored := r.with("row", item)
+	fields, isRecord := item.held.(record)
+	if !isRecord {
+		return restored
+	}
+	for name, field := range fields.whole() {
+		if name != "rows" {
+			restored = restored.with(name, field)
+		}
+	}
+
+	return restored
 }
 
 // joined binds to each row the record of the relation whose fields equal the values given; a row with no such record
@@ -461,7 +482,7 @@ func (r rows) joined(current []row, step stage) []row {
 
 func (r rows) order(by []Expr, a, b row) int {
 	for _, expression := range by {
-		if compared := compareValues(r.evaluate(expression, a), r.evaluate(expression, b)); compared != 0 {
+		if compared := compareValues(r.evaluate(expression, a.scope()), r.evaluate(expression, b.scope())); compared != 0 {
 			return compared
 		}
 	}
@@ -472,7 +493,7 @@ func (r rows) order(by []Expr, a, b row) int {
 func (r rows) keyOf(by []Expr, each row) string {
 	var parts []string
 	for _, expression := range by {
-		parts = append(parts, r.evaluate(expression, each).String())
+		parts = append(parts, r.evaluate(expression, each.scope()).String())
 	}
 
 	return fmt.Sprint(parts)

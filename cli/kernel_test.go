@@ -70,7 +70,7 @@ func TestHelpAfterAVerbPrintsItsPageAndAnAliasFindsIt(t *testing.T) {
 func TestAnInvalidConfigurationIsSaidInASentenceWithExitTwo(t *testing.T) {
 	kernel := NewKernel("dev", &toy{names: []string{"judge"}, err: &InvalidConfiguration{Reason: "no such sin"}})
 
-	if code, _, err := run(kernel, "judge"); code != 2 || err != "✗ .commandments/config.php: no such sin\n" {
+	if code, _, err := run(kernel, "judge"); code != 2 || err != "✗ no such sin\n" {
 		t.Errorf("exit %d, err %q", code, err)
 	}
 }

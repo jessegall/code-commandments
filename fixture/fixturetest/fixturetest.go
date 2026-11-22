@@ -32,11 +32,6 @@ func Prove(t testing.TB, f fixture.Fixture) {
 	for _, detector := range f.Detectors {
 		proveDiversity(t, f, detector)
 	}
-	for detector, deepest := range f.ChainDepths() {
-		if deepest < fixture.MinChainFiles {
-			t.Errorf("%s is a chain detector but its deepest finding crosses only %d file(s); it must follow a value through %d or more", detector, deepest, fixture.MinChainFiles)
-		}
-	}
 	proveWhatEachRuleReads(t, f)
 	for detector, widest := range f.RecurrenceSpans() {
 		if widest < fixture.MinRecurrenceFiles {

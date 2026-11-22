@@ -2,6 +2,7 @@ exit: 0
 --- stdout
 
 [1mre-tested-switch-case[0m  [2mvue/vue-control-flow[0m
+  [2malso answers to RetestedSwitchCaseDetector, RetestedSwitchCase[0m
   A `<SwitchCase>` case that tests again the value the `<SwitchCase>` already dispatched
   on
 
@@ -18,33 +19,16 @@ exit: 0
   it is a second, drifting copy of the dispatch.
   Give each value its own slot (`#paid`, `#refunded`) and drop the inner test.
 
-[33mExample[0m
-
-  ```vue
-  ----------[ Bad ]----------
-  
-  <template v-if="request.reason === 'damaged'">
-    <h3>Damaged on arrival</h3>
-    <p>{{ request.photos }} photos attached</p>
-  </template>
-  
-  ----------[ Good ]----------
-  
-  <SwitchCase :value="request.reason">
-    <template #damaged><ReturnDamagedNote :photos="request.photos" /></template>
-    <template #unwanted><h3>No longer wanted</h3></template>
-  </SwitchCase>
-  ```
-
 [33mCommands[0m
 
   [36mLearn     [0m load the skill [1mcommandments-vue-vue-control-flow[0m
   [36mFind it   [0m commandments judge --sin=re-tested-switch-case
   [36mTurn off  [0m commandments disable re-tested-switch-case
-  [36mWrong?    [0m commandments report --detector=RetestedSwitchCaseDetector --reason="…" --ref=PATH:LINE
+  [36mWrong?    [0m commandments report --detector=re-tested-switch-case --reason="…" --ref=PATH:LINE
 
 
 [1mswitch-case[0m  [2mvue/vue-control-flow[0m
+  [2malso answers to SwitchCaseDetector, SwitchCase[0m
   A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)
 
 [33mWhy it is a sin[0m
@@ -60,34 +44,13 @@ exit: 0
   `v-if`/`v-else-if` chain re-testing the same subject.
   the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`.
 
-[33mExample[0m
-
-  ```vue
-  ----------[ Bad ]----------
-  
-  <span v-if="status === 'paid'" class="badge badge-green">Paid</span>
-  
-  ----------[ Good ]----------
-  
-  <!-- in OrderStatusBadge.vue -->
-  <SwitchCase :value="status">
-    <template #paid><span class="badge badge-green">Paid</span></template>
-    <template #pending><span class="badge badge-amber">Pending</span></template>
-    <template #refunded><span class="badge badge-grey">Refunded</span></template>
-    <template #default><span class="badge">Unknown</span></template>
-  </SwitchCase>
-  
-  <!-- in SwitchCase.vue -->
-  <slot :name="$slots[value] ? value : 'default'" />
-  ```
-
 [33mCommands[0m
 
   [36mLearn     [0m load the skill [1mcommandments-vue-vue-control-flow[0m
   [36mScaffold  [0m commandments scaffold --sin=switch-case
   [36mFind it   [0m commandments judge --sin=switch-case
   [36mTurn off  [0m commandments disable switch-case
-  [36mWrong?    [0m commandments report --detector=SwitchCaseDetector --reason="…" --ref=PATH:LINE
+  [36mWrong?    [0m commandments report --detector=switch-case --reason="…" --ref=PATH:LINE
 
 
 --- stderr

@@ -7,8 +7,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/reported"
+	"github.com/jessegall/code-commandments/detectors"
 
 	_ "github.com/jessegall/code-commandments/registry"
 )
@@ -23,7 +25,7 @@ func TestADetectorReportRecordsTheSinItWasAbout(t *testing.T) {
 	}
 
 	held, _ := reported.Of(root)
-	row, found := held.Reported([]string{"InventedDefaultDetector"}, root, filepath.Join(root, "src/refund.py"), 2)
+	row, found := held.Reported(namesOf(t, "python/InventedDefaultDetector"), root, filepath.Join(root, "src/refund.py"), 2)
 	if !found {
 		t.Fatal("the line the report was about is not recorded as reported")
 	}
@@ -83,7 +85,7 @@ func TestASinAlreadyReportedIsSaidOutLoudAndNotForgotten(t *testing.T) {
 	}
 
 	held, _ := reported.Of(root)
-	if row, _ := held.Reported([]string{"InventedDefaultDetector"}, root, filepath.Join(root, "src/refund.py"), 1); row.Issue != 814 {
+	if row, _ := held.Reported(namesOf(t, "python/InventedDefaultDetector"), root, filepath.Join(root, "src/refund.py"), 1); row.Issue != 814 {
 		t.Errorf("the row now names issue %d, and the first issue is forgotten", row.Issue)
 	}
 }
@@ -170,4 +172,14 @@ func input(t *testing.T, ref string) *cli.Input {
 	t.Helper()
 
 	return cli.InputOf("report", "--detector=python/InventedDefaultDetector", "--ref="+ref)
+}
+
+func namesOf(t *testing.T, detector string) []string {
+	t.Helper()
+	rule, found := detectors.Named(detector)
+	if !found {
+		t.Fatalf("no rule answers to %s", detector)
+	}
+
+	return catalog.Names(rule)
 }

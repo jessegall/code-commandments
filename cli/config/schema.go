@@ -13,7 +13,6 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/skill"
 )
 
@@ -190,10 +189,16 @@ func sinRules() []named {
 func detectorRules() []named {
 	var listed []named
 
+	for _, each := range rules.Sins() {
+		for _, name := range each.Definition().Names() {
+			listed = append(listed, named{name, "Finds " + each.Definition().Name + "."})
+		}
+	}
+
 	for _, engine := range catalog.Curriculum {
-		for _, each := range detectors.Of(engine) {
-			for _, name := range catalog.Names(each) {
-				listed = append(listed, named{Rule{Detector, engine, name}.ID(), "Finds " + each.Sin().Definition().Name + "."})
+		for _, each := range rules.SinsOf(engine) {
+			for _, name := range each.Definition().Names() {
+				listed = append(listed, named{Rule{Detector, engine, name}.ID(), "Finds " + each.Definition().Name + "."})
 			}
 		}
 	}

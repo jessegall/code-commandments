@@ -11,7 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
 func TestEveryKeyOfConfigJSONIsRead(t *testing.T) {
@@ -79,17 +78,6 @@ func TestWhatConfigJSONWritesItReadsBack(t *testing.T) {
 	read, err := ReadJSON(writeJSON(t, written))
 	if err != nil || !reflect.DeepEqual(read, config) {
 		t.Errorf("read back\n%#v\n%v", read, err)
-	}
-}
-
-func TestConfigJSONIsReadBeforeConfigPHP(t *testing.T) {
-	dir := t.TempDir()
-	must(t, os.MkdirAll(filepath.Join(dir, ".commandments"), 0o755))
-	must(t, os.WriteFile(workspace.Config(dir), []byte("<?php\nreturn fn ($c) => $c->paths('php');\n"), 0o644))
-	must(t, os.WriteFile(workspace.JSONConfig(dir), []byte(`{"paths": ["json"]}`), 0o644))
-
-	if config, err := Load(dir); err != nil || !reflect.DeepEqual(config.Paths, []string{"json"}) {
-		t.Errorf("%+v %v", config, err)
 	}
 }
 

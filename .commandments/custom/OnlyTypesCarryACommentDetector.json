@@ -1,5 +1,8 @@
 {
-  "engine": "go",
+  "$schema": "commandments:neutral-rule/v2",
+  "engine": [
+    "go"
+  ],
   "sin": {
     "name": "comment-not-on-a-type",
     "description": "A comment anywhere but above a type: inline, above a function, above a const, inside a body.",
@@ -7,30 +10,63 @@
   },
   "find": {
     "select": "comment",
-    "reject": [
-      {
-        "documents": {
-          "is": "type-declaration"
-        }
-      },
-      {
-        "documents": {
-          "child": {
-            "is": "type-declaration"
-          }
-        }
-      },
-      {
-        "documents": {
-          "kind": "File"
-        }
-      },
-      {
-        "commentLike": "//go:*"
-      },
-      {
-        "commentLike": "*Code generated*"
-      }
-    ]
+    "as": "c",
+    "where": [
+      "not",
+      [
+        "or",
+        [
+          "and",
+          [
+            "exists",
+            "$c.documents"
+          ],
+          [
+            "in",
+            "$c.documents.kind",
+            "type",
+            "alias",
+            "file",
+            "module"
+          ]
+        ],
+        [
+          "and",
+          [
+            "exists",
+            "$c.documents"
+          ],
+          [
+            "some",
+            [
+              "children",
+              "$c.documents"
+            ],
+            "k",
+            [
+              "=",
+              "$k.kind",
+              "type"
+            ]
+          ]
+        ],
+        [
+          "startsWith",
+          "$c.raw",
+          "//go:"
+        ],
+        [
+          "contains",
+          "$c.raw",
+          "Code generated"
+        ],
+        [
+          "reads",
+          "$c.text",
+          "fixture-marker"
+        ]
+      ]
+    ],
+    "emit": "$c.location"
   }
 }

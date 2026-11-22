@@ -11,7 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/sins"
-	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )
 
 func TestNoRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
@@ -26,11 +25,18 @@ func TestNoRuleCostsMoreThanTheTreeItReadsGrewBy(t *testing.T) {
 	fixturetest.NoRuleOutgrowsItsTree(t, small, large, rules)
 }
 
+// quadraticSin is the sin the quadratic probe rule names, which no shipped rule judges.
+type quadraticSin struct{}
+
+func (quadraticSin) Definition() sins.Definition {
+	return sins.Definition{Name: "quadratic-probe"}
+}
+
 // everyFileAgainstEveryOther is a rule written the way the gate exists to catch: for each class it walks the whole
 // project again, so twice the tree costs four times the compute.
 type everyFileAgainstEveryOther struct{}
 
-func (everyFileAgainstEveryOther) Sin() sins.Sin { return backendsins.ArrayBag{} }
+func (everyFileAgainstEveryOther) Sin() sins.Sin { return quadraticSin{} }
 
 func (everyFileAgainstEveryOther) Find(codebase *engine.Codebase) []engine.Match {
 	var found []engine.Match

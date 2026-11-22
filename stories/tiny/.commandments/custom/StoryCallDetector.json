@@ -1,1 +1,0 @@
-{"engine": "python", "sin": {"name": "story-call", "description": "a call a story looks for", "skill": "python/flow"}, "find": {"select": "call", "where": [{"name": "eval"}]}}

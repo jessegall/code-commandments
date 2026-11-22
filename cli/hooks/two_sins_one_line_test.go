@@ -19,12 +19,12 @@ func TestTwoSinsOnOneLineAreBothTold(t *testing.T) {
 
 	files := map[string]string{
 		".commandments/config.json": `{"paths": ["src"], "detectors": ["DocstringInMethodDetector", "PoeticMethodNameDetector"]}`,
-		".commandments/custom/DocstringInMethodDetector.json": `{"engine": "python",
+		".commandments/custom/DocstringInMethodDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
  "sin": {"name": "docstring-in-method", "description": "a docstring inside a method", "skill": "python/documentation"},
- "find": {"select": "function", "where": [{"documented": true}]}}`,
-		".commandments/custom/PoeticMethodNameDetector.json": `{"engine": "python",
+ "find": {"select": "function", "as": "f", "where": ["nonempty", ["commentsOf", "$f"]], "emit": "$f"}}`,
+		".commandments/custom/PoeticMethodNameDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
  "sin": {"name": "poetic-method-name", "description": "a method named by a word that does not say what it does", "skill": "python/documentation"},
- "find": {"select": "function", "where": [{"name": "muse"}]}}`,
+ "find": {"select": "function", "as": "f", "where": ["=", "$f.name", "muse"], "emit": "$f"}}`,
 		"src/probe.py": "class Whisper:\n    def muse(self, value):\n        \"\"\"Says the value.\"\"\"\n        return value\n",
 	}
 	for path, text := range files {

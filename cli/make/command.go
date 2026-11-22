@@ -3,6 +3,7 @@ package make
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -28,18 +29,18 @@ func (Command) Names() []string {
 func (Command) Help() help.Help {
 	return help.Of("Scaffold a commandment of your own — a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`, turned on in your config, with the rest of the process printed for you.").
 		Form("make <Name>", "scaffold a PHP commandment and turn it on").
-		Form("make <Name> --engine=vue", "scaffold a Vue one instead").
-		Form("make <Name> --engine=typescript", "scaffold a TypeScript one instead").
 		Form("make <Name> --engine=python", "scaffold a Python one instead").
-		Form("make <Name> --engine=csharp", "scaffold a C# one instead").
+		Form("make <Name> --engine=php,python,go", "scaffold one rule that judges each engine named").
+		Form("make <Name> --engine=php,vue,typescript,python,csharp,go", "scaffold one that judges every language").
 		Form("make <Name> --skill=NAME", "point the sin at an EXISTING skill (shipped or your own) instead of writing a new one").
 		Form("make <Name> --from=<template>", "start from a ready rule to adapt: "+templateNames()).
-		Option("--engine=php|vue|typescript|python|csharp", "which engine the rule judges (default: php; backend and frontend still name php and vue)").
+		Option("--engine=ENGINE[,ENGINE…]", "the engines the rule judges, one or several of php, vue, typescript, python, csharp and go (default: php)").
 		Option("--skill=NAME", "the skill that teaches the fix — a lenient name/slug match against the existing skills, or a new slug to create one").
-		Option("--from=<template>", "the ready rule to start from, its query written for the engine").
+		Option("--from=<template>", "the ready rule to start from, its query written over the generic tree").
 		Option("--force", "overwrite files that already exist").
-		Note("A rule is data the binary runs: `<Name>Detector.json` names its engine, its sin and a query — a " +
-			"selector, then `where` and `reject` steps of one check each. A new skill is `skills/<slug>/SKILL.md`, " +
+		Note("A rule is data the binary runs: `<Name>Detector.json`, written in commandments:neutral-rule/v2, names " +
+			"the engines it judges, its sin and one query over the generic tree — a kind to select, the name each " +
+			"node is bound to, and a `where` expression it must hold. A new skill is `skills/<slug>/SKILL.md`, " +
 			"published as you write it. The folder is kept OUT of the .commandments/ gitignore — your rules are " +
 			"source, so commit them.").
 		Note("A scaffolded rule does not work yet, and is not meant to: its query finds nothing until you write " +
@@ -53,15 +54,18 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return help.Usage(console.Err, c, "name the commandment, e.g. `"+binary.Here()+" make NullableElementReturn`."), nil
 	}
 
-	engine := catalog.PHP
+	engines := []Engine{catalog.PHP}
 
 	if given, set := in.Option("engine"); set {
-		parsed, known := ParseEngine(given)
-		if !known {
-			return help.Usage(console.Err, c, "unknown --engine="+given+" — it is one of `php`, `vue`, `typescript`, `python`, `csharp`."), nil
-		}
+		engines = nil
+		for _, name := range strings.Split(given, ",") {
+			parsed, known := ParseEngine(strings.TrimSpace(name))
+			if !known {
+				return help.Usage(console.Err, c, "unknown engine `"+name+"` in --engine="+given+" — each is one of `php`, `vue`, `typescript`, `python`, `csharp`, `go`."), nil
+			}
 
-		engine = parsed
+			engines = append(engines, parsed)
+		}
 	}
 
 	root, err := os.Getwd()
@@ -70,7 +74,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	query, _ := in.Option("skill")
-	blueprint := plan(name, engine, query, root)
+	blueprint := plan(name, engines, query, root)
 
 	if from, set := in.Option("from"); set {
 		template, known := TemplateNamed(from)
@@ -78,8 +82,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			return help.Usage(console.Err, c, "no template `"+from+"` — the ready rules are "+templateNames()+"."), nil
 		}
 
-		if _, written := template.Query(engine); !written {
-			return help.Usage(console.Err, c, "the `"+from+"` template is written for "+engineList(template.Engines())+", not --engine="+string(engine)+"."), nil
+		for _, engine := range engines {
+			if !template.Judges(engine) {
+				return help.Usage(console.Err, c, "the `"+from+"` template is written for "+engineList(template.Engines())+", not "+string(engine)+"."), nil
+			}
 		}
 
 		blueprint.From = &template
@@ -95,10 +101,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	if _, err := config.Migrate(root); err != nil {
-		return 0, err
-	}
-
 	registered, err := config.EditorIn(root).RegisterDetector(blueprint.Detector())
 	if err != nil {
 		return 0, err
@@ -109,18 +111,28 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-func plan(name string, engine Engine, query, root string) Blueprint {
+func plan(name string, engines []Engine, query, root string) Blueprint {
 	dir := workspace.CustomDir(root)
 
 	if query != "" {
+		var matched []skill.Definition
 		for _, teaching := range append(skill.Ordered(), ownSkills(root)...) {
 			if definition := teaching.Definition(); definition.Matches(query) {
-				return Of(name, engine, definition.Slug, false, dir)
+				matched = append(matched, definition)
 			}
+		}
+		ownEngine := slices.IndexFunc(matched, func(definition skill.Definition) bool {
+			return strings.HasPrefix(definition.Slug, string(engines[0])+"/")
+		})
+		if ownEngine >= 0 {
+			return Of(name, engines, matched[ownEngine].Slug, false, dir)
+		}
+		if len(matched) > 0 {
+			return Of(name, engines, matched[0].Slug, false, dir)
 		}
 	}
 
-	blueprint := Of(name, engine, "", true, dir)
+	blueprint := Of(name, engines, "", true, dir)
 	blueprint.Slug = Kebab(blueprint.Sin)
 
 	if query != "" {
@@ -175,7 +187,7 @@ func write(blueprint Blueprint, root string) error {
 }
 
 func report(blueprint Blueprint, registered bool, root string, console cli.Console) {
-	probe := ProbeRoot(blueprint.Engine) + "/Probe" + blueprint.Sin + "." + ProbeExtension(blueprint.Engine)
+	sample := ".commandments/custom/samples/" + blueprint.Sin + "." + ProbeExtension(blueprint.Probe())
 
 	console.Write("\033[32m✓ Scaffolded the `" + blueprint.ID + "` commandment.\033[0m\n")
 
@@ -191,12 +203,12 @@ func report(blueprint Blueprint, registered bool, root string, console cli.Conso
 
 	console.Write("\n\033[1mNext — a scaffold is not a detector yet:\033[0m\n")
 
-	for i, step := range steps(blueprint, probe) {
+	for i, step := range steps(blueprint, sample) {
 		console.Write("  \033[1;36m" + strconv.Itoa(i+1) + ".\033[0m " + step + "\n")
 	}
 }
 
-func steps(blueprint Blueprint, probe string) []string {
+func steps(blueprint Blueprint, sample string) []string {
 	rule := strings.TrimPrefix(blueprint.RuleFile(), blueprint.Dir+"/")
 	steps := []string{"\033[1mLoad the skill\033[0m \033[36mcommandments-writing-detectors\033[0m. It lists every check a\n" +
 		"     step can make; a rule is only as good as the question each step asks."}
@@ -210,13 +222,13 @@ func steps(blueprint Blueprint, probe string) []string {
 	return append(steps,
 		"\033[1mName the sin\033[0m — fill its description and rule in \033[36m"+rule+"\033[0m. The description is\n"+
 			"     the symptom, the rule is the positive directive.",
-		"\033[1mWrite the query\033[0m — the `select`, then `where` and `reject` in \033[36m"+rule+"\033[0m. One check\n"+
-			"     per step, classified by what the node IS (its neutral kind, what its name resolves to) — never by a\n"+
-			"     name list.",
-		"\033[1mProve it fires\033[0m — write a throwaway probe at \033[36m"+probe+"\033[0m holding one example of\n"+
-			"     EVERY form you mean to catch plus a near-miss you must NOT, then run\n"+
-			"     \033[36m"+binary.Here()+" judge "+ProbeRoot(blueprint.Engine)+" --sin="+blueprint.ID+" --no-checklist\033[0m\n"+
-			"     and confirm exactly the intended lines are flagged. Delete the probe after.",
+		"\033[1mWrite the query\033[0m — the `select` and its `where` in \033[36m"+rule+"\033[0m. Classify a node by\n"+
+			"     what it IS (its kind, its roles, what its name resolves to) — never by a name list. \033[36m"+binary.Here()+" rule explain <file>\033[0m\n"+
+			"     prints the tree a rule reads.",
+		"\033[1mProve it fires\033[0m — write a sample at \033[36m"+sample+"\033[0m holding one example of\n"+
+			"     EVERY form you mean to catch, each marked `@sin "+blueprint.Detector()+"` on the line above, plus a\n"+
+			"     near-miss marked `@righteous "+blueprint.Detector()+"`, then run \033[36m"+binary.Here()+" rule prove\033[0m.\n"+
+			"     The sample stays: it is the rule's spec.",
 		"\033[1mCalibrate on real code\033[0m — run it with \033[36m--changes\033[0m or \033[36m--branch\033[0m over your source\n"+
 			"     and READ the hits. Judge each against the skill, never against what the code happens to do:\n"+
 			"     volume proves nothing, only a genuine false positive does. Tighten with a principled `reject`.",

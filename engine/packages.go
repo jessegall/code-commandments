@@ -56,8 +56,6 @@ func RegisterPackageFacts(facts PackageFacts) {
 	packageFacts.held = append(slices.Clone(packageFacts.held), facts)
 }
 
-// registeredPackageFacts is every package's facts as registered; a reader only ranges over them. Registering appends a
-// copy under the lock, so a slice handed out before is never written to.
 func registeredPackageFacts() []PackageFacts {
 	packageFacts.Lock()
 	defer packageFacts.Unlock()
@@ -154,7 +152,6 @@ func readPackageVersions(c *Codebase) map[string]map[string]string {
 	return versions
 }
 
-// foldersUpFrom is the folder and every folder above it, nearest first, up to the root of the file system.
 func foldersUpFrom(folder string) []string {
 	parent := filepath.Dir(folder)
 	if parent == folder {

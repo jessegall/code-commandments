@@ -53,38 +53,6 @@ func (r Result) Passed() bool {
 	return len(r.Missed)+len(r.Unexpected)+len(r.FlaggedRighteous)+len(r.FlaggedFixed) == 0
 }
 
-const MinChainFiles = 5
-
-func (f Fixture) ChainDepths() map[string]int {
-	depths := map[string]int{}
-	for _, detector := range f.Detectors {
-		chained, ok := detector.(chained)
-		if !ok {
-			continue
-		}
-		deepest := 0
-		for _, finding := range detector.Find(f.Codebase) {
-			deepest = max(deepest, len(filesAlong(chained.ChainPath(finding, f.Codebase))))
-		}
-		depths[catalog.Name(detector)] = deepest
-	}
-
-	return depths
-}
-
-func filesAlong(steps []string) map[string]bool {
-	files := map[string]bool{}
-	for _, step := range steps {
-		_, file, named := strings.Cut(step, "@")
-		if !named {
-			continue
-		}
-		files[file] = true
-	}
-
-	return files
-}
-
 const MinRecurrenceFiles = 2
 
 func (f Fixture) RecurrenceSpans() map[string]int {
@@ -231,11 +199,6 @@ type Rule interface {
 // grouped is a rule whose findings come in groups, each finding with the key of the group it belongs to.
 type grouped interface {
 	GroupKey(match engine.Match) (string, bool)
-}
-
-// chained is a rule whose finding reads a path of other places, each of which a fixture marks.
-type chained interface {
-	ChainPath(finding engine.Match, codebase *engine.Codebase) []string
 }
 
 func Marking(markers []Marker, tag Tag, detector Rule) []Marker {

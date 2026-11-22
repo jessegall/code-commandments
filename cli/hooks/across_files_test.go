@@ -19,12 +19,12 @@ func TestAProjectsRuleThatFollowsAChainOfParentsIsNotAskedAboutOneFile(t *testin
 
 	files := map[string]string{
 		".commandments/config.json": `{"paths": ["src"], "detectors": ["HelperInAKindFolderDetector", "NumberedMigrationDetector"]}`,
-		".commandments/custom/HelperInAKindFolderDetector.json": `{"engine": "python",
+		".commandments/custom/HelperInAKindFolderDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
  "sin": {"name": "helper-in-a-kind-folder", "description": "a class sits among the classes of a kind folder it is not", "skill": "python/absence"},
- "find": {"select": "type-declaration", "where": [{"fileMatches": "/migrations/"}, {"not": {"extendsAny": "Migration"}}]}}`,
-		".commandments/custom/NumberedMigrationDetector.json": `{"engine": "python",
+ "find": {"select": "type", "as": "t", "where": ["and", ["contains", "$t.file.path", "/migrations/"], ["not", ["some", ["supertypes", "$t"], "s", ["matchesText", "$s", "(^|\\.)Migration$"]]]], "emit": "$t"}}`,
+		".commandments/custom/NumberedMigrationDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
  "sin": {"name": "numbered-migration", "description": "a migration says its number in its name", "skill": "python/absence"},
- "find": {"select": "type-declaration", "where": [{"nameLike": "Drop*"}]}}`,
+ "find": {"select": "type", "as": "t", "where": ["startsWith", "$t.name", "Drop"], "emit": "$t"}}`,
 		"src/base/migration.py": "class Migration:\n    number = 0\n",
 		"src/base/rebuild_migration.py": `from base.migration import Migration
 

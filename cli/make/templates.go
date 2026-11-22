@@ -14,12 +14,14 @@ import (
 //go:embed templates/*.json
 var shipped embed.FS
 
-// Template is a ready rule: what it flags, its sin, and its query for each engine it is written for, or for every engine under "*".
+// Template is a ready rule: what it flags, its sin, the engines it is written for (every engine when it names none),
+// and the one query each of them judges it by.
 type Template struct {
-	Name    string                     `json:"-"`
-	Summary string                     `json:"summary"`
-	Sin     TemplateSin                `json:"sin"`
-	Find    map[string]json.RawMessage `json:"find"`
+	Name    string          `json:"-"`
+	Summary string          `json:"summary"`
+	Engine  []string        `json:"engine"`
+	Sin     TemplateSin     `json:"sin"`
+	Find    json.RawMessage `json:"find"`
 }
 
 // TemplateSin is what a template says of its sin: the symptom and the directive its fix follows.
@@ -66,27 +68,23 @@ func TemplateNamed(name string) (Template, bool) {
 	return templates[at], true
 }
 
-func (t Template) Query(engine Engine) (json.RawMessage, bool) {
-	for key, query := range t.Find {
-		if named, known := catalog.EngineNamed(key); known && named == engine {
-			return query, true
-		}
+func (t Template) Engines() []Engine {
+	if len(t.Engine) == 0 {
+		return Engines
 	}
 
-	query, everywhere := t.Find["*"]
-
-	return query, everywhere
-}
-
-func (t Template) Engines() []Engine {
 	var written []Engine
-	for _, engine := range Engines {
-		if _, found := t.Query(engine); found {
+	for _, name := range t.Engine {
+		if engine, known := catalog.EngineNamed(name); known {
 			written = append(written, engine)
 		}
 	}
 
 	return written
+}
+
+func (t Template) Judges(engine Engine) bool {
+	return slices.Contains(t.Engines(), engine)
 }
 
 func templateNames() string {

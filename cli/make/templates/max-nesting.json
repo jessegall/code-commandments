@@ -5,6 +5,9 @@
         "rule": "Move the inner loops into functions named for what they do, or into the type that holds the collection."
     },
     "find": {
-        "*": {"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 3}}]}
+        "select": "loop",
+        "as": "l",
+        "where": [">=", ["count", ["filter", ["ancestors", "$l"], "a", ["=", "$a.kind", "loop"]]], 2],
+        "emit": "$l"
     }
 }

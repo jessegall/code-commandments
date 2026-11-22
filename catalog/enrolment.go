@@ -18,7 +18,7 @@ import (
 
 const Module = "github.com/jessegall/code-commandments"
 
-var RuleRoots = []string{"sins", "skill", "detectors", "published", "rules"}
+var RuleRoots = []string{"skill", "rules"}
 
 func Enrolment(root string) ([]byte, error) {
 	var packages []string

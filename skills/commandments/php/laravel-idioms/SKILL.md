@@ -82,7 +82,7 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 - `{{binary}} judge --skill=php/laravel-idioms` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `bare-scope-escape`, `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `handed-out-collection`, `hard-coded-route-path`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `request-accessor-recast`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

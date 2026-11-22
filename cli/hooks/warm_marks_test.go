@@ -23,9 +23,9 @@ func migrationProject(t *testing.T) (root, data string) {
 
 	files := map[string]string{
 		".commandments/config.json": `{"paths": ["shop"], "detectors": ["MigrationByItsParentsDetector"]}`,
-		".commandments/custom/MigrationByItsParentsDetector.json": `{"engine": "python",
+		".commandments/custom/MigrationByItsParentsDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
  "sin": {"name": "migration-by-its-parents", "description": "a class the chain of its parents says is a migration", "skill": "python/absence"},
- "find": {"select": "type-declaration", "where": [{"fileMatches": "/migrations/"}, {"extendsAny": "Migration"}]}}`,
+ "find": {"select": "type", "as": "t", "where": ["and", ["contains", "$t.file.path", "/migrations/"], ["some", ["supertypes", "$t"], "s", ["matchesText", "$s", "(^|\\.)Migration$"]]], "emit": "$t"}}`,
 		"shop/__init__.py": "",
 		"shop/migration.py": `class Migration:
     number = 0

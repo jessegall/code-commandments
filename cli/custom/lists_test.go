@@ -5,8 +5,9 @@ import (
 	"testing"
 )
 
-const poetic = `{"engine": "backend", "sin": {"name": "poetic-name", "description": "a name from a poem", "skill": "no-raw-sql"},
- "find": {"select": "function", "where": [{"nameIn": ["$poetry", "plain"]}, {"nameMatches": "^(${poetry})_"}]}}`
+const poetic = `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"],
+ "sin": {"name": "poetic-name", "description": "a name from a poem", "skill": "no-raw-sql"},
+ "find": {"select": "function", "as": "f", "where": ["or", ["in", "$f.name", "${poetry}", "plain"], ["matchesText", "$f.name", "^(${poetry})_"]], "emit": "$f"}}`
 
 func TestARuleNamesAListTheProjectDeclaresOnce(t *testing.T) {
 	root := project(t, map[string]string{

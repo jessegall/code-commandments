@@ -5,7 +5,8 @@
    "sync"
   ],
   "digest": [
-   ".agents/skills"
+   ".agents/skills",
+   ".commandments/config.schema.json"
   ],
   "setup": [
    "git init -q",
@@ -19,7 +20,8 @@
    "sync"
   ],
   "digest": [
-   ".agents/skills"
+   ".agents/skills",
+   ".commandments/config.schema.json"
   ],
   "setup": [
    "git init -q",

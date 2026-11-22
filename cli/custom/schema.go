@@ -10,8 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/walk"
 )
 
-const SchemaReference = "../" + rule.SchemaFile
-
 func SchemaPath(root string) string {
 	return workspace.At(root, "").Shared(rule.SchemaFile)
 }

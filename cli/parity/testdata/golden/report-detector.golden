@@ -18,8 +18,8 @@ Recorded as reported in reports.json: 1 line, issue 1.
   "note": "The sins this project has reported to code-commandments. A judge reads a sin listed here as reported rather than active, so deleting this file makes every one of them active again and invites a second report of each. The flagged line is kept as a hash, never as text: this file is committed and the issues it names are public.",
   "reports": {
     "<id>": {
-      "detector": "DictBagDetector",
-      "sin": "python-dict-bag",
+      "detector": "array-bag",
+      "sin": "array-bag",
       "file": "src/A.php",
       "line": 5,
       "reason": "The dict is the wire format itself.",

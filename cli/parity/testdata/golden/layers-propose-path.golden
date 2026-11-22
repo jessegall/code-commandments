@@ -9,16 +9,47 @@ exit: 0
 
   Proposed declaration — today's shape, held (5 namespaces):
 
-    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
-        ->layer('Shop\\Ui\\Pages')
-        ->layer('Shop\\Ui\\Tokens')
-        ->layer('Shop\\Ui\\Wire')
-        ->layer('Shop\\Ui\\Shared', mayUse: ['Shop\\Ui\\Pages', 'Shop\\Ui\\Tokens'])
-        ->layer('Shop\\Ui\\Elements', mayUse: ['Shop\\Ui\\Shared', 'Shop\\Ui\\Tokens']));
+    "configure": {
+        "php/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "Shop\\Ui\\Pages"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Tokens"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Wire"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Shared",
+                    [
+                        "Shop\\Ui\\Pages",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Elements",
+                    [
+                        "Shop\\Ui\\Shared",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            }
+        ]
+    }
 
   [2mA starting point to EDIT, not a verdict: everything already here passes, so this
   holds the architecture where it stands and refuses the NEXT arrow somewhere new.[0m
-  [2mre-run with --write to add it to .commandments/config.php, or --floor for just the bottom[0m
+  [2mre-run with --write to add it to .commandments/config.json, or --floor for just the bottom[0m
 
 --- stderr
 ⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install

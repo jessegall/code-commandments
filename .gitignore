@@ -94,6 +94,3 @@ __pycache__/
 /skills/commandments/.written-from
 /.claude/settings.local.json
 
-# replay recordings are taken from private projects and stay on this machine
-stories/replay/recordings/
-/bin/story-lab/

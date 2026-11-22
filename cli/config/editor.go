@@ -1,8 +1,6 @@
 package config
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -15,60 +13,28 @@ import (
 	"github.com/jessegall/code-commandments/walk"
 )
 
-// Editor changes a project's config in whichever format the project keeps it: config.json, or the config.php sync has not migrated yet.
+// Editor changes a project's config.json, keeping every key it does not touch.
 type Editor interface {
 	Name() string
-	Disable(class string) (bool, error)
-	Enable(class string) (bool, error)
+	Disable(rule Rule) (bool, error)
+	Enable(rule Rule) (bool, error)
 	Scaffold(roots []string) (bool, error)
 	EnsurePaths(roots []string) error
 	RewritePaths(roots []string) error
 	Layers() ([]Layer, error)
 	RewriteLayers(layers []Layer) (bool, error)
 	EnsureLayers(layers []Layer) (bool, error)
-	RegisterDetector(class string) (bool, error)
+	RegisterDetector(name string) (bool, error)
 	AllowContract(engine catalog.Engine, identity string) (bool, error)
 	Declaration(layers []Layer) string
 }
 
 func EditorIn(dir string) Editor {
-	dir = workspace.SettingsRoot(dir)
-
-	_, noJSON := os.Stat(workspace.JSONConfig(dir))
-	_, noPHP := os.Stat(workspace.Config(dir))
-
-	if errors.Is(noJSON, os.ErrNotExist) && noPHP == nil {
-		return phpConfig{FileIn(dir), ScribeIn(dir)}
-	}
-
-	return jsonConfig{workspace.JSONConfig(dir)}
+	return jsonConfig{workspace.JSONConfig(workspace.SettingsRoot(dir))}
 }
 
-// phpConfig edits a config.php through its tree.
-type phpConfig struct {
-	File
-	Scribe
-}
-
-func (phpConfig) Name() string {
-	return ".commandments/config.php"
-}
-
-func (phpConfig) AllowContract(catalog.Engine, string) (bool, error) {
-	return false, fmt.Errorf("run commandments sync to migrate config.php to config.json before publishing a contract")
-}
-
-func (phpConfig) Declaration(layers []Layer) string {
-	return RenderDeclaration(layers)
-}
-
-func (p phpConfig) EnsureLayers(layers []Layer) (bool, error) {
-	return p.Scribe.EnsureLayers(RenderDeclaration(layers))
-}
-
-func RenderDeclaration(layers []Layer) string {
-	return "    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector" +
-		RenderChain(layers, "        ") + ");"
+func SwitchesIn(dir string) Switches {
+	return jsonConfig{workspace.JSONConfig(workspace.SettingsRoot(dir))}
 }
 
 // jsonConfig edits a config.json: it reads the file, changes the config and writes it back whole.
@@ -91,35 +57,41 @@ func (jsonConfig) Declaration(layers []Layer) string {
 	return strings.TrimSuffix(strings.TrimSuffix(configure, "\n"), "\n}")
 }
 
-func (j jsonConfig) Disable(class string) (bool, error) {
-	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
-		return false, err
-	}
-
-	return j.edit(func(config *Config) bool {
-		rule := ruleOfClass(class)
-		if slices.Contains(config.Disabled, rule) {
-			return false
-		}
-
-		config.Disabled = append(config.Disabled, rule)
-
-		return true
+func (j jsonConfig) Disable(rule Rule) (bool, error) {
+	return j.editScaffolded(DetectRoots(j.root()), func(config *Config) bool {
+		return added(&config.Disabled, rule, func(each Rule) bool { return each.ID() == rule.ID() })
 	})
 }
 
-func (j jsonConfig) Enable(class string) (bool, error) {
+func (j jsonConfig) Enable(rule Rule) (bool, error) {
 	if !j.exists() {
 		return false, nil
 	}
 
 	return j.edit(func(config *Config) bool {
-		kept := slices.DeleteFunc(slices.Clone(config.Disabled), func(each Rule) bool { return each == ruleOfClass(class) })
+		kept := slices.DeleteFunc(slices.Clone(config.Disabled), func(each Rule) bool { return each.ID() == rule.ID() })
 		changed := len(kept) != len(config.Disabled)
 		config.Disabled = kept
 
 		return changed
 	})
+}
+
+func (j jsonConfig) editScaffolded(roots []string, change func(config *Config) bool) (bool, error) {
+	if _, err := j.Scaffold(roots); err != nil {
+		return false, err
+	}
+
+	return j.edit(change)
+}
+
+func added[T any](list *[]T, item T, same func(T) bool) bool {
+	if slices.ContainsFunc(*list, same) {
+		return false
+	}
+	*list = append(*list, item)
+
+	return true
 }
 
 func (j jsonConfig) Scaffold(roots []string) (bool, error) {
@@ -145,11 +117,7 @@ func (j jsonConfig) EnsurePaths(roots []string) error {
 }
 
 func (j jsonConfig) RewritePaths(roots []string) error {
-	if scaffolded, err := j.Scaffold(roots); scaffolded || err != nil {
-		return err
-	}
-
-	_, err := j.edit(func(config *Config) bool {
+	_, err := j.editScaffolded(roots, func(config *Config) bool {
 		config.Paths = roots
 
 		return true
@@ -195,20 +163,9 @@ func (j jsonConfig) EnsureLayers(layers []Layer) (bool, error) {
 	})
 }
 
-func (j jsonConfig) RegisterDetector(class string) (bool, error) {
-	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
-		return false, err
-	}
-
-	return j.edit(func(config *Config) bool {
-		name := shortName(class)
-		if slices.Contains(config.Detectors, name) {
-			return false
-		}
-
-		config.Detectors = append(config.Detectors, name)
-
-		return true
+func (j jsonConfig) RegisterDetector(name string) (bool, error) {
+	return j.editScaffolded(DetectRoots(j.root()), func(config *Config) bool {
+		return added(&config.Detectors, name, func(each string) bool { return each == name })
 	})
 }
 
@@ -254,6 +211,12 @@ func (j jsonConfig) exists() bool {
 
 func (j jsonConfig) root() string {
 	return filepath.Dir(filepath.Dir(j.path))
+}
+
+// Layer is one layer a project declares: its namespace and the namespaces it may use.
+type Layer struct {
+	Namespace string
+	MayUse    []string
 }
 
 func layersOf(config Config, engine catalog.Engine) []Layer {

@@ -37,13 +37,12 @@ twin analyses, the syntax hash). Never write the same machinery twice.
 |---|---|
 | The engine · a language's view of it | `engine/` · `engine/{php,frontend,typescript,vue,python,csharp}` |
 | The bridges and how the tool runs them | `bridge/` (the PHP and frontend bundles embedded; mypy's venv built on first use; the C# bridge fetched from the release) |
-| Detectors · Sins · Skills | `detectors/<engine>` · `sins/<engine>` · `skill/<engine>` |
-| A package's own knowledge (stated once) | `engine/php/{laravel,spatie,concurrent,phptypes}`, its sins and detectors in `detectors/backend/<pkg>/` |
+| Rules · Skills | `rules/<skill>/<sin>.json` · `skill/<engine>` |
+| A package's own knowledge (stated once) | `engine/php/{laravel,spatie,concurrent,phptypes}`, its rules in `rules/` |
 | Exemptions (keep general rules framework-agnostic) | `engine/php/packages` |
 | CLI commands | `cli/` (one package per verb), dispatched by `cli/commands` from `cmd/commandments` |
 | A consumer's own rules | `rule/` (a detector written as data), read from `.commandments/custom/` by `cli/custom` |
 | Self-checking fixtures | `tests/Fixtures/{backend,frontend,python,csharp}` |
-| The PHP tool's recorded answers the tests still hold Go to | `engine/php/testdata/oracle`, the scribes' `testdata`, `docs/parity.md` |
 
 ## CLI
 

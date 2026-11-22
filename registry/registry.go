@@ -5,8 +5,6 @@ package registry
 
 import (
 	_ "github.com/jessegall/code-commandments/rules"
-	_ "github.com/jessegall/code-commandments/sins/backend"
-	_ "github.com/jessegall/code-commandments/sins/csharp"
 	_ "github.com/jessegall/code-commandments/skill/backend"
 	_ "github.com/jessegall/code-commandments/skill/backend/concurrent"
 	_ "github.com/jessegall/code-commandments/skill/backend/laravel"

@@ -749,10 +749,11 @@ func literalOf(site engine.Match) value {
 
 // nestedPaths is the path of every value a record holds, nested records walked into.
 func nestedPaths(v value, prefix, separator string) ([]value, bool) {
-	fields, isRecord := v.held.(record)
+	held, isRecord := v.held.(record)
 	if !v.known || !isRecord {
 		return nil, v.known
 	}
+	fields := held.whole()
 	var found []value
 	for _, name := range slices.Sorted(maps.Keys(fields)) {
 		at := name

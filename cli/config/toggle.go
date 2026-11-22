@@ -12,7 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// Toggle is `disable` and `enable`: turn a sin or a whole skill off or back on in the project's config, edited through the tree so the file stays valid PHP and the project's own lines are untouched.
+// Toggle is `disable` and `enable`: turn a sin or a whole skill off or back on in the project's config.json, every other key left as it was.
 type Toggle struct{}
 
 func (Toggle) Names() []string {
@@ -20,7 +20,7 @@ func (Toggle) Names() []string {
 }
 
 func (Toggle) Help() help.Help {
-	return help.Of("Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched.").
+	return help.Of("Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it.").
 		Form("disable <sin|skill>", "turn a rule off — a skill silences every detector it teaches the fix for").
 		Form("enable <sin|skill>", "turn it back on").
 		Note("The argument is a sin id OR a skill slug (the --sin= / --skill= keys), matched leniently. Run " +
@@ -29,7 +29,7 @@ func (Toggle) Help() help.Help {
 
 // target is a sin or a skill the arguments name.
 type target struct {
-	class string
+	rule  Rule
 	label string
 	named string
 }
@@ -66,6 +66,10 @@ func (t Toggle) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
+	if _, err := Load(root); err != nil {
+		return 0, err
+	}
+
 	file := EditorIn(root)
 	toggle := file.Disable
 
@@ -73,7 +77,7 @@ func (t Toggle) Run(in *cli.Input, console cli.Console) (int, error) {
 		toggle = file.Enable
 	}
 
-	changed, err := toggle(matches[0].class)
+	changed, err := toggle(matches[0].rule)
 	if err != nil {
 		return 0, err
 	}
@@ -100,7 +104,7 @@ func matching(query string) []target {
 
 	for _, sin := range rules.Sins() {
 		definition := sin.Definition()
-		each := target{ClassOf(Sin, sin), "`" + definition.Name + "`", definition.Name}
+		each := target{Rule{Kind: Sin, Name: definition.Name}, "`" + definition.Name + "`", definition.Name}
 
 		if definition.Name == query {
 			exact = append(exact, each)
@@ -113,7 +117,7 @@ func matching(query string) []target {
 
 	for _, taught := range skill.All() {
 		definition := taught.Definition()
-		each := target{ClassOf(Skill, taught), "skill `" + definition.Slug + "`", definition.Slug}
+		each := target{RuleNamed(Skill, definition.Slug), "skill `" + definition.Slug + "`", definition.Slug}
 
 		if definition.Slug == query {
 			exact = append(exact, each)

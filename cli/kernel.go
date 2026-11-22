@@ -69,7 +69,7 @@ func (k *Kernel) Run(args []string, console Console) int {
 	var invalid *InvalidConfiguration
 
 	if errors.As(err, &invalid) {
-		console.Warn("✗ .commandments/config.php: " + invalid.Reason)
+		console.Warn("✗ " + invalid.Reason)
 
 		return 2
 	}

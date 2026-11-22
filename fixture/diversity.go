@@ -32,13 +32,7 @@ func (f Fixture) Scenarios(detector Rule) ([]Scenario, error) {
 
 func ScopeScenarios(codebase *engine.Codebase, detector Rule) ([]Scenario, error) {
 	var scenarios []Scenario
-	chained, isChain := detector.(chained)
 	for _, finding := range detector.Find(codebase) {
-		if isChain {
-			scenarios = append(scenarios, Scenario{File: finding.File(), Source: strings.Join(chained.ChainPath(finding, codebase), "\n")})
-
-			continue
-		}
 		subject := finding
 		if comment, ok := finding.AsComment(); ok && comment.Documents().Exists() {
 			subject = comment.Documents()

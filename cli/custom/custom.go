@@ -62,7 +62,7 @@ func Load(root string) Project {
 
 	ruleFiles, listFiles := jsonUnder(dir)
 
-	lists, err := readLists(dir, listFiles)
+	lists, err := readLists(root, listFiles)
 	if err != nil {
 		project.Unreadable = append(project.Unreadable, err.Error())
 	}
@@ -79,15 +79,15 @@ func Load(root string) Project {
 		name := strings.TrimSuffix(filepath.Base(path), ".json")
 		if where, taken := named[name]; taken {
 			project.Unreadable = append(project.Unreadable, fmt.Sprintf("%s: a rule named %s is read from %s as well, and a rule's name is its file's; rename one of the two",
-				shortOf(dir, path), name, where))
+				fromRoot(root, path), name, where))
 			project.Refused = append(project.Refused, name)
 
 			continue
 		}
 
-		named[name] = shortOf(dir, path)
+		named[name] = fromRoot(root, path)
 
-		written, err := lists.Expand(name, text)
+		written, err := lists.Expand(fromRoot(root, path), text)
 		if err != nil {
 			project.Unreadable = append(project.Unreadable, err.Error())
 			project.Refused = append(project.Refused, name)
@@ -228,7 +228,7 @@ func (p Project) Warnings(project config.Config) []string {
 	}
 
 	for _, reason := range p.Unreadable {
-		warnings = append(warnings, "⚠ .commandments/custom/"+reason)
+		warnings = append(warnings, "⚠ "+reason)
 	}
 
 	warnings = append(warnings, p.ClaimWarnings()...)
@@ -242,16 +242,16 @@ func (p Project) ClassWarnings() []string {
 	for _, class := range p.Classes {
 		warnings = append(warnings, "⚠ "+class+" is a PHP class the binary cannot run, and was skipped — "+
 			"a detector and its sin become a rule (`commandments make`), a skill a folder holding a SKILL.md; "+
-			"then delete the class. docs/parity.md, \"Migrating from the PHP tool\", says how, and what an agent class becomes.")
+			"then delete the class.")
 	}
 
 	return warnings
 }
 
 func Owns(detector detectors.Detector) bool {
-	_, own := detector.(rule.Rule)
+	read, isRule := detector.(rule.Rule)
 
-	return own
+	return isRule && read.Origin() == rule.Project
 }
 
 func readSkill(path string) (Skill, bool) {

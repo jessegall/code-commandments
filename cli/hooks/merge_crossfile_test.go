@@ -16,9 +16,9 @@ func crossFileProject(t *testing.T) (root, before string) {
 
 	for path, text := range map[string]string{
 		".commandments/config.json": `{"paths": ["src"], "detectors": ["KindOfThingDetector"]}`,
-		".commandments/custom/KindOfThingDetector.json": `{"engine": "python",
+		".commandments/custom/KindOfThingDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
  "sin": {"name": "kind-of-thing", "description": "a class the chain of its parents says is a kind", "skill": "python/absence"},
- "find": {"select": "type-declaration", "where": [{"extendsAny": "Kind"}]}}`,
+ "find": {"select": "type", "as": "t", "where": ["some", ["supertypes", "$t"], "s", ["matchesText", "$s", "(^|\\.)Kind$"]], "emit": "$t"}}`,
 		"src/kinds.py": "class Kind:\n    number = 0\n",
 	} {
 		whole := filepath.Join(root, path)

@@ -1,8 +1,6 @@
 exit: 0
 --- stdout
-[32m✓ Scaffolded 7 files.[0m
-  app/Support/Invokable.php
-  app/Support/NoOp.php
+[32m✓ Scaffolded 5 files.[0m
   app/Support/Eager.php
   app/TypeScript/DropDataHiddenPropertyProcessor.php
   app/TypeScript/HiddenAwareAttributedClassTransformer.php
@@ -27,43 +25,6 @@ use Attribute;
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class Eager {}
-
-=== created app/Support/Invokable.php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Support;
-
-/**
- * A callable as a first-class object — the seam that lets an optional callback default to
- * a no-op ({@see NoOp}) instead of a nullable normalised in the body. Type a parameter
- * `Invokable`, default it to `new NoOp`, and call it with `($this->callback)(...)`.
- */
-interface Invokable
-{
-    public function __invoke(mixed ...$arguments): mixed;
-}
-
-=== created app/Support/NoOp.php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Support;
-
-/**
- * The do-nothing {@see Invokable} — the Null Object for an optional callback, so a slot
- * that "might have a callback" defaults to behaviour (a harmless no-op), never null.
- * Default an optional-callback parameter to `new NoOp` and just call it.
- */
-final class NoOp implements Invokable
-{
-    public function __invoke(mixed ...$arguments): mixed
-    {
-        return null;
-    }
-}
 
 === created app/Support/OptionalOrMissing.php
 <?php

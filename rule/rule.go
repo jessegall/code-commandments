@@ -727,6 +727,10 @@ func (f file) IsStub() bool {
 	return f.Find.Select == nil && f.Find.From == nil
 }
 
+func (r Rule) RequiresBestDesign() bool {
+	return r.read.Sin.Reporting.RequiresBestDesign
+}
+
 // IsUnpublished says whether the rule is still being calibrated, so no catalogue ships it.
 func (r Rule) IsUnpublished() bool {
 	return r.read.Sin.Unpublished

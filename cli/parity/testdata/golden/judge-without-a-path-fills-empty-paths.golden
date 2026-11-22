@@ -3,13 +3,14 @@ exit: 0
 [32m✓ No sins found in 1 file.[0m
 
 --- stderr
-· read 1 files in <took> (0 from the cache, 1 by the bridges), judged in <took> (0 rule answers from memory, 3 asked): 0 sins
+· read 1 files in <took> (0 from the cache, 1 by the bridges), judged in <took> (0 rule answers from memory, 2 asked): 0 sins
 
 --- files
-=== changed .commandments/config.php
-<?php
-
-return function ($config) {
-    $config->paths('src');
-};
+=== changed .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "src"
+    ]
+}
 

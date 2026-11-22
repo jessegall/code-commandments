@@ -16,14 +16,19 @@ type projectsRule struct {
 
 func (r projectsRule) Name() string                         { return r.name }
 func (r projectsRule) Judges() []string                     { return r.judges }
-func (r projectsRule) Sin() sins.Sin                        { return nil }
+func (r projectsRule) Sin() sins.Sin                        { return namedSin(r.name) }
 func (r projectsRule) Find(*engine.Codebase) []engine.Match { return nil }
+
+// namedSin is the sin a fake rule finds, named as the rule is.
+type namedSin string
+
+func (s namedSin) Definition() sins.Definition { return sins.Definition{Name: string(s)} }
 
 // packagedRule is a rule the tool ships: it declares no folders of its own, and takes them from the config.
 type packagedRule struct{ name string }
 
 func (r packagedRule) Name() string                         { return r.name }
-func (r packagedRule) Sin() sins.Sin                        { return nil }
+func (r packagedRule) Sin() sins.Sin                        { return namedSin(r.name) }
 func (r packagedRule) Find(*engine.Codebase) []engine.Match { return nil }
 
 func TestARulesOwnFileNamesTheFolderItJudges(t *testing.T) {

@@ -3,7 +3,7 @@ exit: 0
 [32m✓ No sins found in 1 file.[0m
 
 --- stderr
-· read 1 files in <took> (0 from the cache, 1 by the bridges), judged in <took> (0 rule answers from memory, 95 asked): 0 sins
+· read 1 files in <took> (0 from the cache, 1 by the bridges), judged in <took> (0 rule answers from memory, 127 asked): 0 sins
 
 --- files
 === created .commandments/config.json

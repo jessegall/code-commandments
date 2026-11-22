@@ -79,6 +79,16 @@ func Load(sources []Source, skills Skills) Library {
 
 			continue
 		}
+		if decoded.Sin.Name == "" {
+			library.Problems = append(library.Problems, fmt.Errorf("%s: a sin needs a name", each.Path))
+
+			continue
+		}
+		if decoded.IsStub() && each.Origin == Project {
+			library.Problems = append(library.Problems, fmt.Errorf("%s: the rule has no find yet; write what it selects", each.Path))
+
+			continue
+		}
 		written[each.name()] = append(written[each.name()], each)
 		if !decoded.IsStub() {
 			read[each.Path] = decoded

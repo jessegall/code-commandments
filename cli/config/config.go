@@ -1,9 +1,12 @@
-// Package config reads what a project declares about how it is judged: its `.commandments/config.json`, or, until sync migrates it, the `.commandments/config.php` the PHP tool executed.
+// Package config reads what a project declares about how it is judged: its `.commandments/config.json`.
 package config
 
 import (
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -38,11 +41,20 @@ func Load(dir string) (Config, error) {
 		return served, nil
 	}
 
-	if walk.Exists(workspace.JSONConfig(settings)) {
-		return ReadJSON(workspace.JSONConfig(settings))
+	if walk.Exists(workspace.Config(settings)) {
+		return Config{}, &cli.InvalidConfiguration{Reason: ".commandments/config.php is the PHP tool's config, and this version reads only .commandments/config.json: write its settings there (`" + binary.Here() + " config --help` lists every key), then delete config.php."}
 	}
 
-	return ReadPHP(workspace.Config(settings))
+	if !walk.Exists(workspace.JSONConfig(settings)) {
+		return Config{}, nil
+	}
+
+	read, err := ReadJSON(workspace.JSONConfig(settings))
+	if err != nil {
+		return Config{}, err
+	}
+
+	return read, read.resolved()
 }
 
 // Configurator tunes one detector: the detector and the calls it makes on it, in order.
@@ -80,36 +92,6 @@ const (
 	Hook     Kind = "Hooks"
 	Agent    Kind = "Agents"
 )
-
-func RuleOf(class string) (Rule, bool) {
-	path, shipped := strings.CutPrefix(strings.TrimPrefix(class, `\`), root)
-	segments := strings.Split(path, `\`)
-
-	if shipped && (segments[0] == string(Hook) || segments[0] == string(Agent)) && len(segments) > 1 {
-		return Rule{Kind(segments[0]), "", segments[len(segments)-1]}, true
-	}
-
-	if !shipped || len(segments) < 3 {
-		return Rule{}, false
-	}
-
-	kind := Kind(segments[0])
-	if kind != Skill && kind != Sin && kind != Detector {
-		return Rule{}, false
-	}
-
-	engine, known := engineOf(segments[1 : len(segments)-1])
-
-	return Rule{kind, engine, segments[len(segments)-1]}, known
-}
-
-func engineOf(namespace []string) (catalog.Engine, bool) {
-	if namespace[0] == "Frontend" && len(namespace) > 1 && namespace[1] == "TypeScript" {
-		return catalog.TypeScript, true
-	}
-
-	return catalog.EngineNamed(namespace[0])
-}
 
 func (r Rule) ID() string {
 	if r.Engine == "" {

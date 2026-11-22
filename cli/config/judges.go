@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
+
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/walk"
 )
@@ -13,6 +14,12 @@ const Judges = "judges"
 
 func (c Config) Judged(detector Rule) []string {
 	return c.judged(func(target Rule) bool { return target.ID() == detector.ID() })
+}
+
+func (c Config) JudgedBy(detector detectors.Detector, judging catalog.Engine) []string {
+	return c.judged(func(target Rule) bool {
+		return target.Kind == Detector && target.Names(detector) && (target.Engine == "" || judging == "" || target.Engine == judging)
+	})
 }
 
 func (c Config) JudgedDespiteExclusion() []string {
@@ -87,22 +94,12 @@ func (c Config) RulesFor(root, file string, rules []detectors.Detector) []detect
 
 	var kept []detectors.Detector
 	for _, rule := range rules {
-		if slices.ContainsFunc(namesOf(rule), func(named Rule) bool { return slices.Contains(c.Judged(named), inside) }) {
+		if slices.Contains(c.JudgedBy(rule, ""), inside) {
 			kept = append(kept, rule)
 		}
 	}
 
 	return kept
-}
-
-func namesOf(detector detectors.Detector) []Rule {
-	engine, _ := detectors.EngineOf(detector)
-	var rules []Rule
-	for _, name := range catalog.Names(detector) {
-		rules = append(rules, Rule{Kind: Detector, Engine: engine, Name: name}, Rule{Kind: Detector, Name: name})
-	}
-
-	return rules
 }
 
 func (c Config) judgedFolderOf(root, file string) string {

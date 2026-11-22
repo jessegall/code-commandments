@@ -1,16 +1,13 @@
 package config
 
 import (
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-const arrayBag = `JesseGall\CodeCommandments\Sins\Backend\ArrayBag`
+var arrayBag = Rule{Sin, catalog.PHP, "ArrayBag"}
 
 func TestAProjectWithNoConfigStartsWithConfigJSON(t *testing.T) {
 	dir := t.TempDir()
@@ -35,16 +32,6 @@ func TestAProjectWithNoConfigStartsWithConfigJSON(t *testing.T) {
 
 	if config, _ := Load(dir); len(config.Disabled) != 0 {
 		t.Errorf("still disabled: %+v", config.Disabled)
-	}
-}
-
-func TestAProjectWithOnlyConfigPHPKeepsEditingIt(t *testing.T) {
-	dir := t.TempDir()
-	must(t, os.MkdirAll(filepath.Join(dir, ".commandments"), 0o755))
-	must(t, os.WriteFile(workspace.Config(dir), []byte(Render(dir, []string{"src"})), 0o644))
-
-	if name := EditorIn(dir).Name(); name != ".commandments/config.php" {
-		t.Errorf("edits %s", name)
 	}
 }
 
@@ -102,11 +89,11 @@ func TestAProjectsOwnDetectorIsRegisteredByName(t *testing.T) {
 	dir := t.TempDir()
 	editor := EditorIn(dir)
 
-	if registered, err := editor.RegisterDetector(`App\Commandments\NoRawSqlDetector`); !registered || err != nil {
+	if registered, err := editor.RegisterDetector("NoRawSqlDetector"); !registered || err != nil {
 		t.Fatalf("%v %v", registered, err)
 	}
 
-	if again, _ := editor.RegisterDetector(`App\Commandments\NoRawSqlDetector`); again {
+	if again, _ := editor.RegisterDetector("NoRawSqlDetector"); again {
 		t.Error("registered twice")
 	}
 

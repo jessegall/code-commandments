@@ -60,8 +60,6 @@ func (in *interned) node(node *Node) {
 	node.Facts = in.shared(facts)
 }
 
-// shared is one copy of facts every node that reads alike holds: most nodes carry only a form, a name or a symbol
-// they share with many others.
 func (in *interned) shared(facts *Facts) *Facts {
 	written, err := json.Marshal(facts)
 	if err != nil {

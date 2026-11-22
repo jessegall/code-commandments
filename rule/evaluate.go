@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"iter"
 	"maps"
 	"math"
 	"slices"
@@ -21,14 +22,66 @@ type Judged struct {
 	Undecided []engine.Match
 }
 
-// bindings are the names an expression may read, each to its value.
-type bindings map[string]value
+// bindings are the names an expression may read, each to its value: a name a loop or a let binds points at the names
+// it extends and is read nearest first, so binding one more name copies nothing; names handed in together sit at the root.
+type bindings struct {
+	names  map[string]value
+	name   string
+	bound  value
+	parent *bindings
+}
 
 func (b bindings) with(name string, bound value) bindings {
-	extended := maps.Clone(b)
-	extended[name] = bound
+	return bindings{name: name, bound: bound, parent: &b}
+}
 
-	return extended
+func (b *bindings) link(name string, bound value) bindings {
+	return bindings{name: name, bound: bound, parent: b}
+}
+
+func (b bindings) nearestFirst() iter.Seq[*bindings] {
+	return func(yield func(*bindings) bool) {
+		at := &b
+		for at != nil && yield(at) {
+			at = at.parent
+		}
+	}
+}
+
+func (b *bindings) own() map[string]value {
+	if b.parent == nil {
+		return b.names
+	}
+
+	return map[string]value{b.name: b.bound}
+}
+
+func (b bindings) record() record {
+	fields := record{}
+	for at := range b.nearestFirst() {
+		for name, held := range at.own() {
+			if _, nearer := fields[name]; !nearer {
+				fields[name] = held
+			}
+		}
+	}
+
+	return fields
+}
+
+func (b bindings) lookup(name string) (value, bool) {
+	for at := range b.nearestFirst() {
+		if at.parent == nil {
+			held, isBound := at.names[name]
+
+			return held, isBound
+		}
+		if at.name == name {
+			return at.bound, true
+		}
+	}
+
+	return unknown, false
 }
 
 // evaluation is one rule asked of one selected node.
@@ -50,8 +103,9 @@ func (r Rule) Judge(codebase *engine.Codebase) Judged {
 		return judgeRows(asked, codebase, r.parameters())
 	}
 	run := rows{evaluation{definitions: asked.Definitions, parameters: r.parameters(), codebase: codebase}, codebase, written.Relations, map[string][]value{}}
+	parameters, relations := r.parameters(), run.relationRows
 	asking := func(site engine.Match) evaluation {
-		return evaluation{definitions: asked.Definitions, site: site, parameters: r.parameters(), codebase: codebase, relations: run.relationRows}
+		return evaluation{definitions: asked.Definitions, site: site, parameters: parameters, codebase: codebase, relations: relations}
 	}
 	var judged Judged
 	note := func(site, emitted engine.Match, verdict engine.Truth) {
@@ -90,12 +144,8 @@ func (r Rule) AdviceFor(finding engine.Match) string {
 		return ""
 	}
 	advice := evaluation{definitions: asked.Definitions, site: finding, parameters: r.parameters(), codebase: finding.Codebase()}
-	written, isText := advice.evaluate(*asked.Find.Advice, bindings{asked.Find.As: known(finding)}).held.(string)
-	if !isText {
-		return ""
-	}
 
-	return written
+	return stringOf(advice.evaluate(*asked.Find.Advice, bindings{}.with(asked.Find.As, known(finding))))
 }
 
 func (r Rule) evaluate(codebase *engine.Codebase) []engine.Match {
@@ -107,7 +157,7 @@ func (e evaluation) judge(written find, site engine.Match) (engine.Match, engine
 }
 
 func (e evaluation) judgeBound(written find, selected value, site engine.Match) (engine.Match, engine.Truth) {
-	bound := bindings{written.As: selected}
+	bound := bindings{}.with(written.As, selected)
 	if written.Where != nil {
 		if verdict := truthOf(e.evaluate(*written.Where, bound)); verdict != engine.True {
 			return engine.Match{}, verdict
@@ -135,7 +185,7 @@ func (e evaluation) judgeBound(written find, selected value, site engine.Match) 
 func (e evaluation) evaluate(expression Expr, bound bindings) value {
 	switch {
 	case expression.IsReference():
-		reached, isBound := bound[expression.Name()]
+		reached, isBound := bound.lookup(expression.Name())
 		if !isBound && expression.Name() == parameterName {
 			reached, isBound = e.parameters, true
 		}
@@ -151,7 +201,7 @@ func (e evaluation) evaluate(expression Expr, bound bindings) value {
 		if defined, isDefinition := e.definitions[expression.Operator]; isDefinition {
 			own := bindings{}
 			for at, name := range defined.Args {
-				own[name] = e.evaluate(expression.Operands[at], bound)
+				own = own.with(name, e.evaluate(expression.Operands[at], bound))
 			}
 
 			return e.evaluate(defined.Expr, own)
@@ -457,7 +507,7 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		if !operand(0).known || !isRecord {
 			return unknown
 		}
-		names := slices.Sorted(maps.Keys(held))
+		names := slices.Sorted(maps.Keys(held.whole()))
 		keys := make([]value, len(names))
 		for at, name := range names {
 			keys[at] = known(name)
@@ -470,7 +520,7 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 		if !operand(0).known || !isRecord || !isName {
 			return unknown
 		}
-		if field, found := held[name]; found {
+		if field, found := held.field(name); found {
 			return field
 		}
 
@@ -682,7 +732,8 @@ func (e evaluation) iterate(expression Expr, bound bindings) value {
 	}
 	name, _ := expression.Operands[1].Value.(string)
 	body := expression.Operands[2]
-	answer := func(item value) value { return e.evaluate(body, bound.with(name, item)) }
+	outer := &bound
+	answer := func(item value) value { return e.evaluate(body, outer.link(name, item)) }
 
 	switch expression.Operator {
 	case "distinctBy", "groupItems", "sortBy", "minBy", "maxBy":
@@ -708,17 +759,25 @@ func (e evaluation) iterate(expression Expr, bound bindings) value {
 		return known(kept)
 	}
 
-	some := engine.False
-	every := engine.True
-	for _, item := range items {
-		verdict := truthOf(answer(item))
-		some, every = some.Or(verdict), every.And(verdict)
-	}
-	switch expression.Operator {
-	case "some":
-		return truthValue(some)
-	case "every":
+	if expression.Operator == "every" {
+		every := engine.True
+		for _, item := range items {
+			if every = every.And(truthOf(answer(item))); every == engine.False {
+				break
+			}
+		}
+
 		return truthValue(every)
+	}
+
+	some := engine.False
+	for _, item := range items {
+		if some = some.Or(truthOf(answer(item))); some == engine.True {
+			break
+		}
+	}
+	if expression.Operator == "some" {
+		return truthValue(some)
 	}
 
 	return truthValue(some.Not())
@@ -897,7 +956,7 @@ func read(from value, segment string) value {
 
 		return known(items)
 	case record:
-		field, found := held[segment]
+		field, found := held.field(segment)
 		if !found {
 			return unknown
 		}
@@ -947,7 +1006,15 @@ func readNode(site engine.Match, segment string) value {
 
 		return known(record{"symbol": known(node.Target.Symbol), "type": known(node.Target.Type), "name": known(node.Target.Name)})
 	}
-	if arity, err := contract.RoleArity(node.Kind, segment); err == nil {
+	if arity, declared := contract.DeclaredRole(node.Kind, segment); declared && arity != contract.Many {
+		first, answer := site.Single(segment)
+		if answer == contract.Unknown {
+			return unknown
+		}
+
+		return known(first)
+	}
+	if arity, declared := contract.DeclaredRole(node.Kind, segment); declared {
 		held, _ := site.In(segment)
 		if held.Answer == contract.Unknown {
 			return unknown
@@ -955,7 +1022,7 @@ func readNode(site engine.Match, segment string) value {
 
 		return nodes(held.Nodes, arity)
 	}
-	if arity, err := contract.LinkArity(node.Kind, segment); err == nil {
+	if arity, declared := contract.DeclaredLink(node.Kind, segment); declared {
 		ids := node.Linked(segment)
 		if len(ids) == 0 && (node.Incomplete || (segment == "binding" && !site.Source().Knows("refers"))) {
 			return unknown
@@ -1100,8 +1167,9 @@ func (e evaluation) trailing(expression Expr, bound bindings) value {
 	}
 	name, _ := expression.Operands[1].Value.(string)
 	count := 0
+	outer := &bound
 	for at := len(items) - 1; at >= 0; at-- {
-		switch truthOf(e.evaluate(expression.Operands[2], bound.with(name, items[at]))) {
+		switch truthOf(e.evaluate(expression.Operands[2], outer.link(name, items[at]))) {
 		case engine.True:
 			count++
 		case engine.Unknown:

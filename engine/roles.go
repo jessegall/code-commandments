@@ -91,7 +91,9 @@ func (m Match) In(role string) (Held, error) {
 	if m.node == nil {
 		return Held{Answer: contract.Inapplicable}, nil
 	}
-	if _, err := contract.RoleArity(m.node.Kind, role); err != nil {
+	if _, declared := contract.DeclaredRole(m.node.Kind, role); !declared {
+		_, err := contract.RoleArity(m.node.Kind, role)
+
 		return Held{Answer: contract.Inapplicable}, err
 	}
 	nodes, answer := m.node.Role(role)
@@ -101,6 +103,18 @@ func (m Match) In(role string) (Held, error) {
 	}
 
 	return held, nil
+}
+
+func (m Match) Single(role string) (Match, contract.Answer) {
+	if m.node == nil {
+		return Match{}, contract.Inapplicable
+	}
+	nodes, answer := m.node.Role(role)
+	if len(nodes) == 0 {
+		return Match{}, answer
+	}
+
+	return Match{node: nodes[0], file: m.file}, answer
 }
 
 // One reads a role that holds at most one node.

@@ -20,7 +20,7 @@ exit: 0
             "python"
         ],
         "sins": [
-            "php/ArrayBag"
+            "array-bag"
         ]
     }
 }

@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
+func TestTheBinaryAnswersEveryCaseAsRecorded(t *testing.T) {
 	repo, err := filepath.Abs("../..")
 	if err != nil {
 		t.Fatal(err)
@@ -51,12 +51,11 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			want, got = EquateConfigs(want, got, t.TempDir())
 			want, got = EquateInvocation(c, repo, want, got)
 			matches := got == want
 
 			if c.Pending != "" && matches {
-				t.Fatalf("matches the PHP tool now: drop its pending mark (%s)", c.Pending)
+				t.Fatalf("matches its golden now: drop its pending mark (%s)", c.Pending)
 			}
 
 			if c.Pending != "" {
@@ -64,7 +63,7 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 			}
 
 			if !matches {
-				t.Errorf("differs from the PHP tool in %s\n--- PHP\n%s\n--- Go\n%s", differing(want, got), Golden(want), Golden(got))
+				t.Errorf("differs from its golden in %s; if the change is meant, record it again with `scripts/dev go run ./cli/parity/record %s`\n--- golden\n%s\n--- now\n%s", differing(want, got), c.Name, Golden(want), Golden(got))
 			}
 		})
 	}

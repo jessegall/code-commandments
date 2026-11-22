@@ -61,7 +61,7 @@ something that is there, or make the caller always hand one over.
 
 - `{{binary}} judge --skill=shared/absence` — find every one of these in the codebase.
 - `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `cancelled-coalesce`, `capability-probe-hub`, `coalesced-loop-subject`, `conditional-array-spread`, `de-nulled-finder`, `manufactured-fake-fill`, `masked-invariant`, `nullable-callback`, `nullable-registry-lookup`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
-- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

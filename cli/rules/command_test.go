@@ -49,7 +49,7 @@ func project(t *testing.T) string {
 }
 
 func ruleFlagging(sin, call string) string {
-	return `{"engine": "backend", "sin": {"name": "` + sin + `", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"name": "` + call + `"}]}}`
+	return `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "` + sin + `", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "as": "c", "where": ["or", ["=", "$c.callee.name", "` + call + `"], ["=", "$c.callee.member.name", "` + call + `"]], "emit": "$c"}}`
 }
 
 func run(t *testing.T, root string, args ...string) (string, int) {
@@ -76,12 +76,12 @@ func TestExplainShowsTheTreeARuleReads(t *testing.T) {
 	root := project(t)
 
 	said, code := run(t, root, "explain", ".commandments/custom/samples/Shows.php", "--line=8")
-	if code != 0 || !strings.Contains(said, "Expr_FuncCall  [call]") || !strings.Contains(said, `name="dump"`) || strings.Contains(said, "Stmt_Class") {
+	if code != 0 || !strings.Contains(said, "expression: call") || !strings.Contains(said, `callee: reference  form=name  name="dump"`) || strings.Contains(said, "declarations: type") {
 		t.Errorf("line 8 of the sample: %d\n%s", code, said)
 	}
 
 	whole, _ := run(t, root, "explain", ".commandments/custom/samples/Shows.php")
-	if !strings.Contains(whole, `Stmt_Class  [type-declaration]  field=stmts  name="Shows"`) || !strings.Contains(whole, "Expr_MethodCall") {
+	if !strings.Contains(whole, `declarations: type  form=class  name="Shows"`) || !strings.Contains(whole, "callee: access  form=instance") {
 		t.Errorf("the whole sample:\n%s", whole)
 	}
 

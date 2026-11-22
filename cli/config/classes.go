@@ -8,6 +8,8 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 )
 
+const phpToolClassNamespace = `JesseGall\CodeCommandments\`
+
 var namespaces = map[string]string{
 	"backend":    "Backend",
 	"frontend":   "Frontend",
@@ -49,7 +51,7 @@ func ClassOf(kind Kind, rule any) string {
 		}
 	}
 
-	return root + string(kind) + `\` + strings.Join(append(path, catalog.Name(rule)), `\`)
+	return phpToolClassNamespace + string(kind) + `\` + strings.Join(append(path, catalog.Name(rule)), `\`)
 }
 
 func indexOfKind(folders []string) int {

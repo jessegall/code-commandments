@@ -28,7 +28,6 @@ Options:
                                  under the path with its own .git
   --pr=REPO#N                    only the files pull request N changes in the repository REPO, asked
                                  of GitHub with gh
-  --repent[=ID]                  only the files listed in a past run's checklist (bare: the latest)
   --parallel=N                   run detectors across N worker processes (default: 2, capped at
                                  cores; 1 = off)
   --ignore-package-requirements  keep package-gated rules even if this project lacks the package

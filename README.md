@@ -165,7 +165,7 @@ Exit code is non-zero when sins are found.
 | `commandments journal-scan` | Scan the project for the folders to check and the ones to leave out, for the agent journal plugin. |
 | `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |
 | `commandments hook <Name>` | Run ONE hook directly, by name — the form every wired hook is written as. |
-| `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched. |
+| `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it. |
 | `commandments allow lone-implementer-interface <path-or-symbol>` | Publish a public interface for the lone-implementer rule. |
 | `commandments config` | Inspect and manage .commandments/config.json — what is configured, and what is actually running. |
 | `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
@@ -218,9 +218,10 @@ A `.commandments/config.json` is scaffolded on install, with a schema beside it
   (see [Developing detectors](#developing-detectors)), turned on.
 
 `commandments disable <sin>` and `enable <sin>` edit the file for you, leaving the rest as you wrote
-it. Run `commandments config` for a summary of what's in effect. A project that still has a
-`config.php` from an earlier version has it turned into `config.json` on the next `composer update`
-(the original is kept as `config.php.bak`).
+it. Run `commandments config` for a summary of what's in effect. A `config.php` from an earlier
+version is not read: write its settings into `config.json` and delete it. A name the config writes
+that no rule answers to, or a setting a rule does not declare, stops the run with one message naming
+every line to change.
 
 ### Declaring your layers
 
@@ -319,8 +320,7 @@ your own left exactly as it was.
 
 These two are the agents the tool ships, and a project cannot add one of its own. An
 agent that reads `AGENTS.md` or `.agents/skills/` already gets the canon and the
-skills where they are; a project that wrote an `Agents\Agent` subclass for the PHP
-tool finds what becomes of it in [docs/parity.md](docs/parity.md#migrating-from-the-php-tool).
+skills where they are.
 
 ### Hooks are Claude Code only
 

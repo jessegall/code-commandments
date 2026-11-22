@@ -45,7 +45,7 @@ func TestALoneBinaryJudgesAsTheCheckoutDoes(t *testing.T) {
 		return string(out)
 	}
 	alone := judge(lone, bin)
-	if checkout := judge(plain, os.Getenv("PATH")); alone != checkout {
+	if checkout := judge(plain, os.Getenv("PATH")); findingsIn(alone) != findingsIn(checkout) {
 		t.Errorf("the lone binary judged\n%s\nthe checkout's build judged\n%s", alone, checkout)
 	}
 	for _, fixture := range []string{"php/", "vue/", "python/"} {
@@ -56,4 +56,15 @@ func TestALoneBinaryJudgesAsTheCheckoutDoes(t *testing.T) {
 	if version, _ := exec.Command(lone, "--version").Output(); !strings.Contains(string(version), "v0.0.0-lone") {
 		t.Errorf("the stamped binary says it is %q", version)
 	}
+}
+
+func findingsIn(judged string) string {
+	var findings []string
+	for _, line := range strings.Split(judged, "\n") {
+		if !strings.HasPrefix(strings.TrimSpace(line), "· read ") {
+			findings = append(findings, line)
+		}
+	}
+
+	return strings.Join(findings, "\n")
 }

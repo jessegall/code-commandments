@@ -3,6 +3,7 @@ package info
 import (
 	"io/fs"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -89,6 +90,9 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 	teaching := sin.Skill.Definition()
 
 	console.Write("\n\033[1m" + sin.Name + "\033[0m  \033[2m" + sin.Slug() + "\033[0m\n")
+	if len(sin.Formerly) > 0 {
+		console.Write("  \033[2malso answers to " + strings.Join(sin.Formerly, ", ") + "\033[0m\n")
+	}
 	paragraph(console, sin.Description)
 
 	why := teaching.Intro
@@ -124,7 +128,7 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 		row(console, "Exempts", binary.Here()+" exemptions "+sin.Name)
 	}
 
-	if reports := reportedHere(catalog.Name(detector)); len(reports) > 0 {
+	if reports := reportedHere(catalog.Names(detector)); len(reports) > 0 {
 		heading(console, "Reported by this project")
 		paragraph(console, "This project has reported "+natural.Counted(len(reports), "finding")+
 			" of this rule as wrong, so a judge reads those lines as reported rather than as sins to fix. "+
@@ -141,13 +145,13 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 	console.Write("\n")
 }
 
-func reportedHere(rule string) []reported.Row {
+func reportedHere(names []string) []reported.Row {
 	cwd, _ := os.Getwd()
 	record, _ := reported.Of(workspace.ProjectRoot(cwd))
 
 	var mine []reported.Row
 	for _, row := range record.Rows() {
-		if row.Detector == rule {
+		if slices.Contains(names, row.Detector) {
 			mine = append(mine, row)
 		}
 	}

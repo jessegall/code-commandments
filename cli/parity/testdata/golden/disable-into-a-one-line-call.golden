@@ -5,13 +5,16 @@ exit: 0
 --- stderr
 
 --- files
-=== changed .commandments/config.php
-<?php
-
-return function ($config) {
-    $config->disable(
-        \JesseGall\CodeCommandments\Language::Python,
-        \JesseGall\CodeCommandments\Sins\Frontend\DuplicateElement::class,
-    );
-};
+=== changed .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "disable": {
+        "languages": [
+            "python"
+        ],
+        "sins": [
+            "duplicate-element"
+        ]
+    }
+}
 

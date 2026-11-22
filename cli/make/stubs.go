@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/jessegall/code-commandments/cli/custom"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 func SkillStub(b Blueprint) string {
@@ -13,7 +13,7 @@ func SkillStub(b Blueprint) string {
 		"description: TODO — WHEN to reach for this skill: the code you are about to write that it governs.\n" +
 		"summary: TODO — the discipline in one line, as the briefing lists it.\n" +
 		"tier: keep-in-mind\n" +
-		"languages: [" + ProbeExtension(b.Engine) + "]\n" +
+		"languages: [" + extensions(b.Engines) + "]\n" +
 		"---\n\n" +
 		"# " + b.Sin + "\n\n" +
 		"TODO — what good looks like here, and why.\n\n" +
@@ -25,22 +25,37 @@ func SkillStub(b Blueprint) string {
 		"TODO — the code as it is flagged, then as it should be.\n"
 }
 
+func extensions(engines []Engine) string {
+	var written []string
+	for _, engine := range engines {
+		written = append(written, ProbeExtension(engine))
+	}
+
+	return strings.Join(written, ", ")
+}
+
 func RuleStub(b Blueprint) string {
 	var find any = map[string]any{
 		"select": "call",
-		"where":  []any{map[string]any{"name": "TODO-the-call-this-rule-flags"}},
-		"reject": []any{},
+		"as":     "c",
+		"where":  []any{"=", "$c.callee.name", "TODO-the-call-this-rule-flags"},
+		"emit":   "$c",
 	}
 	description, directive := "TODO — the symptom, in one line.", "TODO — the positive directive the fix follows."
 
 	if b.From != nil {
-		find, _ = b.From.Query(b.Engine)
+		find = b.From.Find
 		description, directive = b.From.Sin.Description, b.From.Sin.Rule
 	}
 
+	var engines []string
+	for _, engine := range b.Engines {
+		engines = append(engines, string(engine))
+	}
+
 	rule := map[string]any{
-		"$schema": custom.SchemaReference,
-		"engine":  string(b.Engine),
+		"$schema": rule.Format,
+		"engine":  engines,
 		"sin": map[string]any{
 			"name":        b.ID,
 			"description": description,

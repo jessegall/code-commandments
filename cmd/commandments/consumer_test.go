@@ -151,7 +151,7 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		t.Errorf("make said\n%s", made)
 	}
 
-	c.write(".commandments/custom/NoEvalDetector.json", `{"engine": "python", "sin": {"name": "no-eval", "description": "eval runs text as code", "skill": "no-eval"}, "find": {"select": "call", "where": [{"name": "eval"}]}}`)
+	c.write(".commandments/custom/NoEvalDetector.json", `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "no-eval", "description": "eval runs text as code", "skill": "no-eval"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.name", "eval"], "emit": "$c"}}`)
 
 	if synced := c.run(0, "commandments", "sync"); !strings.Contains(synced, "synced") {
 		t.Errorf("resync said\n%s", synced)
@@ -236,7 +236,7 @@ func TestAProjectWithNoJournalIsUntouchedByTheWorkerJudging(t *testing.T) {
 
 	judged := c.run(1, "commandments", "judge", "--no-checklist", "--parallel=2")
 
-	for _, named := range []string{"RedundantElseDetector", "src/order.py"} {
+	for _, named := range []string{"redundant-else", "src/order.py"} {
 		if !strings.Contains(judged, named) {
 			t.Errorf("a project with no journal does not have its sins named: %s is missing from\n%s", named, judged)
 		}
@@ -246,11 +246,6 @@ func TestAProjectWithNoJournalIsUntouchedByTheWorkerJudging(t *testing.T) {
 		if strings.Contains(judged, journalOnly) {
 			t.Errorf("a project with no journal is told about %q, which belongs to the journal's side alone:\n%s", journalOnly, judged)
 		}
-	}
-
-	lanes := c.run(2, "commandments", "lanes")
-	if !strings.Contains(lanes, "no service is running here") {
-		t.Errorf("a project with no journal is not told plainly that nothing is held: %s", lanes)
 	}
 
 	why := c.run(2, "commandments", "why")

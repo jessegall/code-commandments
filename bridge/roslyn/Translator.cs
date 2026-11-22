@@ -1043,10 +1043,12 @@ public sealed partial class ContractWriter
             if (block.Statements is [ExpressionStatementSyntax { Expression: var lone }])
             {
                 // The lone expression's kind is what the translation makes of it, as for any expression of the file.
-                var snippet = CSharpSyntaxTree.ParseText("class Fragment { void Read() { " + lone.ToFullString() + "; } }");
-                var expression = snippet.GetRoot().DescendantNodes().OfType<ExpressionStatementSyntax>().First().Expression;
-                var compiled = CSharpCompilation.Create("fragment", [snippet]);
-                read["expressionKind"] = new Translator(run, readings, snippet, compiled.GetSemanticModel(snippet)).Expression(expression).Kind;
+                var snippet = CSharpSyntaxTree.ParseText("class Fragment { void Read() { " + lone.ToString() + "; } }");
+                if (snippet.GetRoot().DescendantNodes().OfType<ExpressionStatementSyntax>().FirstOrDefault() is { } statement)
+                {
+                    var compiled = CSharpCompilation.Create("fragment", [snippet]);
+                    read["expressionKind"] = new Translator(run, readings, snippet, compiled.GetSemanticModel(snippet)).Expression(statement.Expression).Kind;
+                }
             }
 
             return read;

@@ -1,0 +1,38 @@
+{
+    "configure": {
+        "php/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "Shop\\Ui\\Tokens"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Elements",
+                    [
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Shared",
+                    [
+                        "Shop\\Ui\\Elements",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Pages",
+                    [
+                        "Shop\\Ui\\Shared",
+                        "Shop\\Ui\\Elements",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            }
+        ]
+    }
+}

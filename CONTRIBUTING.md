@@ -52,12 +52,9 @@ wants a composer-installed project has composer install one of its own in a temp
 (the shim test), and the parity cases that want an installed package copy the stub
 `cli/parity/testdata/installed.json`, which says in its own comment what it stands for.
 
-The PHP tool this one replaced left its answers behind as recordings, and the tests
-still hold the Go tool to them: the shop fixture's answers beside the fixture they
-are about (`engine/php/testdata/oracle`), the scribes' rewrites, and the real
-codebases' findings (`docs/parity.md`). Nothing records them again: a new rule is
-proven by its fixture's markers alone. They were recorded on macOS, so every walk lists
-a folder in the order APFS does (`listing`), whatever filesystem it runs on.
+A rule is proven by its fixture's markers alone. Every walk lists a folder in the order
+APFS does (`listing`), whatever filesystem it runs on, so findings come out in one order
+everywhere.
 
 ## Before a release
 

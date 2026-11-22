@@ -5,3 +5,44 @@ exit: 0
 --- stderr
 
 --- files
+=== changed .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "configure": {
+        "php/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "Shop\\Ui\\Tokens"
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Elements",
+                    [
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Shared",
+                    [
+                        "Shop\\Ui\\Elements",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "Shop\\Ui\\Pages",
+                    [
+                        "Shop\\Ui\\Shared",
+                        "Shop\\Ui\\Elements",
+                        "Shop\\Ui\\Tokens"
+                    ]
+                ]
+            }
+        ]
+    }
+}
+

@@ -1,13 +1,20 @@
 package contract
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 // Kept reads file lines a cache kept between runs, as the reader of the stream that wrote them read them: decoded,
-// linked and checked under the stream's header.
-type Kept struct{ reader Reader }
+// linked and checked under the stream's header. Lines may be read side by side, and every file it reads shares one
+// copy of each value the files repeat.
+type Kept struct {
+	reader  Reader
+	keeping sync.Mutex
+}
 
 func KeptUnder(header Header) *Kept {
-	return &Kept{Reader{header: &header}}
+	return &Kept{reader: Reader{header: &header}}
 }
 
 func (k *Kept) File(raw []byte) (*File, error) {
@@ -18,9 +25,12 @@ func (k *Kept) File(raw []byte) (*File, error) {
 	if line.File == nil {
 		return nil, fmt.Errorf("a kept line holds no file")
 	}
-	if err := k.reader.acceptFile(line.File); err != nil {
+	if err := prepared(line.File); err != nil {
 		return nil, err
 	}
+	k.keeping.Lock()
+	defer k.keeping.Unlock()
+	k.reader.keep(line.File)
 
 	return line.File, nil
 }

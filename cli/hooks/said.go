@@ -58,6 +58,10 @@ func (s Said) Fresh(narrowed map[string]Narrowed) map[string]Narrowed {
 		items = append(items, file+"\t"+before[file])
 	}
 
+	if slices.Equal(items, read.Items()) {
+		return fresh
+	}
+
 	if err := s.file.Write(read.WithItems(items)); err != nil {
 		return narrowed
 	}

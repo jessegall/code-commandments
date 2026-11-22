@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -17,22 +16,22 @@ type Lists map[string][]string
 
 var named = regexp.MustCompile(`\$\{([A-Za-z][A-Za-z0-9_-]*)\}`)
 
-func readLists(dir string, files []string) (Lists, error) {
+func readLists(root string, files []string) (Lists, error) {
 	lists := Lists{}
 	declaring := map[string]string{}
 
 	for _, path := range files {
-		read, err := readListsFile(path, shortOf(dir, path))
+		read, err := readListsFile(path, fromRoot(root, path))
 		if err != nil {
 			return nil, err
 		}
 
 		for name, words := range read {
 			if where, declared := declaring[name]; declared {
-				return nil, fmt.Errorf("%s: the list %q is declared in %s too, and a rule names a list, never the file it is in", shortOf(dir, path), name, where)
+				return nil, fmt.Errorf("%s: the list %q is declared in %s too, and a rule names a list, never the file it is in", fromRoot(root, path), name, where)
 			}
 
-			declaring[name] = shortOf(dir, path)
+			declaring[name] = fromRoot(root, path)
 			lists[name] = words
 		}
 	}
@@ -61,14 +60,6 @@ func readListsFile(path, short string) (Lists, error) {
 	}
 
 	return lists, nil
-}
-
-func shortOf(dir, path string) string {
-	if short, err := filepath.Rel(dir, path); err == nil {
-		return filepath.ToSlash(short)
-	}
-
-	return filepath.Base(path)
 }
 
 func (l Lists) Expand(name string, text []byte) ([]byte, error) {
@@ -126,13 +117,14 @@ func (l Lists) expand(rule string, read any) (any, error) {
 
 func (l Lists) spliced(rule string, element any) ([]any, bool, error) {
 	text, is := element.(string)
-	if !is || !strings.HasPrefix(text, "$") || strings.HasPrefix(text, "${") {
+	whole := named.FindStringSubmatch(text)
+	if !is || whole == nil || whole[0] != text {
 		return nil, false, nil
 	}
 
-	words, declared := l[strings.TrimPrefix(text, "$")]
+	words, declared := l[whole[1]]
 	if !declared {
-		return nil, false, l.undeclared(rule, strings.TrimPrefix(text, "$"))
+		return nil, false, l.undeclared(rule, whole[1])
 	}
 
 	var out []any

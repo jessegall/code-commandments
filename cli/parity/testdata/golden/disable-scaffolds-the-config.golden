@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-[32m✓ disabled `python-dict-bag`.[0m
+[32m✓ disabled `array-bag`.[0m
 
 --- stderr
 
@@ -13,7 +13,7 @@ exit: 0
     ],
     "disable": {
         "sins": [
-            "python/DictBag"
+            "array-bag"
         ]
     }
 }

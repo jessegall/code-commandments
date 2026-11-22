@@ -51,7 +51,7 @@ and `registry` imports every detector package. There is no list to add it to.
 3. **Prove it in the fixture** ([[detector-fixtures]]): mark ≥3 DIVERSE examples with the SIN's name, keep a
    righteous twin it must not flag, and write a fixed twin — the sinful code REPAIRED the way the rule says,
    which the published skill shows as "Good". A backend fixture change needs its stream regenerated:
-   `scripts/dev go generate ./engine/php`, then `scripts/dev go test ./engine/php/shop`.
+   `scripts/dev go run ./engine/php/shop/generate`, then `scripts/dev go test ./engine/php/shop`.
 4. **Validate on real code.** Build the tool (`scripts/build`) and read the hits:
    `bin/commandments judge ../some-app/src --sin=your-sin --no-checklist`. A real false positive → tighten
    the detector (a principled `Reject`, never a name list) before shipping.

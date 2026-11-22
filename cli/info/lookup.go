@@ -42,9 +42,8 @@ func Detectors(query string) []detectors.Detector {
 }
 
 func matches(detector detectors.Detector, query, needle string) bool {
-	return detector.Sin().Definition().Matches(query) || slices.ContainsFunc(catalog.Names(detector), func(name string) bool {
-		return strings.Contains(normalise(name), needle)
-	})
+	return detector.Sin().Definition().Matches(query) || len(detectors.EveryNamedIn([]detectors.Detector{detector}, query)) == 1 ||
+		slices.ContainsFunc(catalog.Names(detector), func(name string) bool { return strings.Contains(normalise(name), needle) })
 }
 
 func ownRules() []detectors.Detector {

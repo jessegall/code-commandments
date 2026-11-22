@@ -1,0 +1,36 @@
+{
+    "configure": {
+        "python/NamespaceDependencyDetector": [
+            {
+                "layer": [
+                    "shop.layout"
+                ]
+            },
+            {
+                "layer": [
+                    "shop.widgets",
+                    [
+                        "shop.layout"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "shop.screens",
+                    [
+                        "shop.widgets",
+                        "shop.layout"
+                    ]
+                ]
+            },
+            {
+                "layer": [
+                    "shop.menus",
+                    [
+                        "shop.layout"
+                    ]
+                ]
+            }
+        ]
+    }
+}

@@ -5,15 +5,16 @@ exit: 0
 --- stderr
 
 --- files
-=== changed .commandments/config.php
-<?php
-
-return function ($config) {
-    $config->paths('src');
-
-    $config->disable(
-        // a comment
-        \JesseGall\CodeCommandments\Skills\Python\Absence::class,
-    );
-};
+=== changed .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "src"
+    ],
+    "disable": {
+        "skills": [
+            "python/absence"
+        ]
+    }
+}
 

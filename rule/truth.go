@@ -89,7 +89,8 @@ func equal(a, b value) engine.Truth {
 
 		return answer
 	case record:
-		second, alsoRecord := b.held.(record)
+		placedToo, alsoRecord := b.held.(record)
+		first, second := first.whole(), placedToo.whole()
 		if !alsoRecord || len(first) != len(second) {
 			return engine.False
 		}
@@ -129,7 +130,7 @@ func plain(held any) any {
 		return string(written)
 	case record:
 		fields := map[string]any{}
-		for name, field := range typed {
+		for name, field := range typed.whole() {
 			fields[name] = plain(field.held)
 		}
 		written, _ := json.Marshal(fields)

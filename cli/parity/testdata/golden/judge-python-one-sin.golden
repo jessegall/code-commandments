@@ -1,30 +1,8 @@
-exit: 1
+exit: 0
 --- stdout
-
-[1;33mpython/value-objects[0m  (15)
-  [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
-  [36mdiscounts.py:7[0m  call  [2m[DictBagDetector][0m
-  [36mdiscounts.py:9[0m  call  [2m[DictBagDetector][0m
-  [36mdiscounts.py:11[0m  call  [2m[DictBagDetector][0m
-  [36mexports.py:7[0m  call  [2m[DictBagDetector][0m
-  [36mexports.py:7[0m  subscript  [2m[DictBagDetector][0m
-  [36mexports.py:7[0m  subscript  [2m[DictBagDetector][0m
-  [36mpayload_fields.py:16[0m  call  [2m[DictBagDetector][0m
-  [36mpayload_fields.py:16[0m  call  [2m[DictBagDetector][0m
-  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
-  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
-  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
-  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
-  [36mstock_report.py:8[0m  subscript  [2m[DictBagDetector][0m
-  [36mstock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
-  [36mstock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
-
-[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
-[2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
-
-[1m15 sins[0m across 1 skill.
+[32m✓ No sins found in 328 files.[0m
 
 --- stderr
-· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (13 rule answers from memory, 315 asked): 15 sins
+· read 328 files in <took> (0 from the cache, 328 by the bridges), judged in <took> (0 rule answers from memory, 328 asked): 0 sins
 
 --- files

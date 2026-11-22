@@ -13,19 +13,19 @@ import (
 func TestAProjectsOwnRuleIsExplained(t *testing.T) {
 	root := project(t, map[string]string{
 		".commandments/custom/naming_PoeticVariableNameDetector.json": `{
-			"engine": "python",
+			"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
 			"sin": {
 				"name": "poetic-variable-name",
 				"description": "A variable named for what it feels like rather than what it holds.",
 				"rule": "Name it after the thing it holds.",
 				"skill": "python/absence"
 			},
-			"find": {"select": "identifier", "where": [{"nameMatches": "^(dream|whisper)"}]}
+			"find": {"select": "declarator", "as": "v", "where": ["matchesText", "$v.name", "^(dream|whisper)"], "emit": "$v"}
 		}`,
 		".commandments/custom/naming_SleepyNameDetector.json": `{
-			"engine": "python",
+			"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
 			"sin": {"name": "sleepy-name", "description": "x", "rule": "x", "skill": "python/absence"},
-			"find": {"select": "identifier", "where": [{"nameMatches": "^zzz"}]}
+			"find": {"select": "declarator", "as": "v", "where": ["matchesText", "$v.name", "^zzz"], "emit": "$v"}
 		}`,
 		".commandments/config.json": `{"paths": ["src"], "detectors": ["naming_PoeticVariableNameDetector"]}`,
 	})
@@ -54,9 +54,9 @@ func TestAProjectsOwnRuleIsExplained(t *testing.T) {
 func TestAShippedRuleIsStillExplainedFromAProjectWithOwnRules(t *testing.T) {
 	chdir(t, project(t, map[string]string{
 		".commandments/custom/Whatever.json": `{
-			"engine": "python",
+			"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
 			"sin": {"name": "whatever", "description": "x", "rule": "x", "skill": "python/absence"},
-			"find": {"select": "identifier"}
+			"find": {"select": "declarator", "as": "v", "where": true, "emit": "$v"}
 		}`,
 	}))
 

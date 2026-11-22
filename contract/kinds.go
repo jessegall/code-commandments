@@ -72,32 +72,52 @@ func Kind(name string) (KindSpec, bool) {
 	return spec, found
 }
 
-// RoleArity is the arity of a role a kind owns. A role the kind does not declare is refused by name.
-func RoleArity(kind, role string) (Arity, error) {
+// namedPart is what a kind declares by name: the roles it owns, or the non-owning links it holds. A name the kind does not
+// declare is refused by name.
+type namedPart struct {
+	noun     string
+	declares func(KindSpec) map[string]Arity
+}
+
+var (
+	ownedRoles = namedPart{noun: "role", declares: func(spec KindSpec) map[string]Arity { return spec.Roles }}
+	heldLinks  = namedPart{noun: "link", declares: func(spec KindSpec) map[string]Arity { return spec.Links }}
+)
+
+func (p namedPart) declared(kind, name string) (Arity, bool) {
+	spec, found := Kind(kind)
+	arity, declared := p.declares(spec)[name]
+
+	return arity, found && declared
+}
+
+func (p namedPart) arity(kind, name string) (Arity, error) {
 	spec, found := Kind(kind)
 	if !found {
 		return "", fmt.Errorf("the tree has no kind %q", kind)
 	}
-	arity, declared := spec.Roles[role]
+	arity, declared := p.declares(spec)[name]
 	if !declared {
-		return "", fmt.Errorf("a %s has no role %q: its roles are %s", kind, role, listed(spec.Roles))
+		return "", fmt.Errorf("a %s has no %s %q: its %ss are %s", kind, p.noun, name, p.noun, listed(p.declares(spec)))
 	}
 
 	return arity, nil
 }
 
-// LinkArity is the arity of a non-owning link a kind declares. A link the kind does not declare is refused by name.
-func LinkArity(kind, link string) (Arity, error) {
-	spec, found := Kind(kind)
-	if !found {
-		return "", fmt.Errorf("the tree has no kind %q", kind)
-	}
-	arity, declared := spec.Links[link]
-	if !declared {
-		return "", fmt.Errorf("a %s has no link %q: its links are %s", kind, link, listed(spec.Links))
-	}
+func RoleArity(kind, role string) (Arity, error) {
+	return ownedRoles.arity(kind, role)
+}
 
-	return arity, nil
+func LinkArity(kind, link string) (Arity, error) {
+	return heldLinks.arity(kind, link)
+}
+
+func DeclaredRole(kind, role string) (Arity, bool) {
+	return ownedRoles.declared(kind, role)
+}
+
+func DeclaredLink(kind, link string) (Arity, bool) {
+	return heldLinks.declared(kind, link)
 }
 
 // FactApplies says whether a node of the kind may carry the fact: one of its own, or one any node may carry.

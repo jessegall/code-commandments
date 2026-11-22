@@ -12,7 +12,7 @@ import (
 func ownRule(t *testing.T, name, tags string) detectors.Detector {
 	t.Helper()
 
-	text := `{"engine": "python", "sin": {"name": "` + name + `", "description": "a test rule", "skill": "python/flow"}, "find": {"select": "call"}` + tags + `}`
+	text := `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "` + name + `", "description": "a test rule", "skill": "python/flow"}, "find": {"select": "call", "as": "c", "where": true, "emit": "$c"}` + tags + `}`
 
 	found, err := rule.Parse(name, []byte(text), skill.Slugged)
 	if err != nil {

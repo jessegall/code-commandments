@@ -182,10 +182,10 @@ type Node struct {
 
 // Facts are a node's facts, every one optional; a compiler fact that is absent is unknown, never known-empty. The facts
 // most nodes carry are held here; the rest are in RareFacts, which a node without any of them shares with every other.
+// Facts the reader holds once for several nodes are marked shared, and ownsRare says the RareFacts are this node's own:
+// Own copies both before a write.
 type Facts struct {
-	// shared is facts the reader holds once for every node that reads alike; Own copies them before a write.
-	shared bool
-	// ownsRare is whether RareFacts are this node's own to write, not shared with another node.
+	shared   bool
 	ownsRare bool
 
 	Name        string   `json:"name,omitempty"`
@@ -411,7 +411,7 @@ const (
 // Role is the nodes a role holds and the answer they make. An incomplete node, one the parser recovered from an error,
 // answers unknown for every role it does not hold.
 func (n *Node) Role(role string) ([]*Node, Answer) {
-	if _, err := RoleArity(n.Kind, role); err != nil {
+	if _, declared := DeclaredRole(n.Kind, role); !declared {
 		return nil, Inapplicable
 	}
 	for _, part := range n.Parts {
@@ -475,7 +475,6 @@ var (
 	none        = &Facts{RareFacts: noRareFacts}
 )
 
-// settled gives facts without rare ones the shared empty rare facts, so reading a rare fact never meets nothing.
 func (f *Facts) settled() {
 	if f.RareFacts == nil {
 		f.RareFacts = noRareFacts
@@ -497,8 +496,6 @@ func Untouched() bool {
 	return reflect.ValueOf(*noRareFacts).IsZero() && reflect.ValueOf(common).IsZero() && none.RareFacts == noRareFacts
 }
 
-// Own is the node's facts, its own to write: the shared empty facts and facts the reader shares between nodes that
-// read alike are copied first, so writing one node's never changes another's.
 func (n *Node) Own() *Facts {
 	if n.Facts == nil || n.Facts == none || n.Facts.shared || !n.Facts.ownsRare {
 		n.Facts = n.Facts.copied()
@@ -507,7 +504,6 @@ func (n *Node) Own() *Facts {
 	return n.Facts
 }
 
-// copied is a copy of the facts and of their rare facts, both the caller's own to write.
 func (f *Facts) copied() *Facts {
 	owned, rare := Facts{}, RareFacts{}
 	if f != nil {

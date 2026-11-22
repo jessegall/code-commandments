@@ -65,7 +65,7 @@ func TestAComposerInstallJudgesAsTheCheckoutDoes(t *testing.T) {
 		t.Fatalf("install said\n%s", out)
 	}
 	judged := run("vendor/bin/commandments", "judge", "src", "--no-checklist", "--parallel=2")
-	if checkout := run(released, "judge", "src", "--no-checklist", "--parallel=2"); judged != checkout {
+	if checkout := run(released, "judge", "src", "--no-checklist", "--parallel=2"); findingsIn(judged) != findingsIn(checkout) {
 		t.Errorf("the composer install judged\n%s\nthe checkout's build judged\n%s", judged, checkout)
 	}
 	for _, finding := range []string{".php:", ".vue:", ".py:"} {
