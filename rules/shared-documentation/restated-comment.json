@@ -86,6 +86,16 @@
             "$w"
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "laravel.routed",
+            "$c.documents.expression"
+          ]
+        ]
       ]
     ],
     "emit": "$c.location"

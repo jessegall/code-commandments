@@ -398,3 +398,53 @@ class Report {
 		t.Errorf("the obligations are %v: rows answers the trait's abstract method once, title overrides nothing it must keep", bound)
 	}
 }
+
+func TestAFileTheParserFailsOnIsWrittenUnreadAndTheRestIsRead(t *testing.T) {
+	failing, err := os.ReadFile("../../bridge/php/parser/lib/PhpParser/ParserAbstract.php")
+	if err != nil {
+		t.Fatal(err)
+	}
+	folder := written(t, map[string]string{
+		"ParserAbstract.php": string(failing),
+		"Cart.php":           "<?php\nnamespace Shop;\nfinal class Cart {}\n",
+	})
+	files := map[string]*contract.File{}
+	for _, file := range bridged(t, folder).Files {
+		files[filepath.Base(file.Path)] = file
+	}
+	if cart := files["Cart.php"]; cart == nil || cart.Errors != 0 {
+		t.Fatalf("the file beside the one the parser fails on is not read: %v", files)
+	}
+	if unread := files["ParserAbstract.php"]; unread == nil || unread.Resolver == nil || unread.Resolver.Ran || unread.Errors == 0 || unread.Unread == "" {
+		t.Errorf("the file the parser fails on is not written as unread: %+v", unread)
+	}
+}
+
+func TestACallOnWhatALibraryMethodDocumentsItReturnsIsResolved(t *testing.T) {
+	folder := written(t, map[string]string{
+		"vendor/autoload.php": `<?php
+spl_autoload_register(function (string $class): void {
+    if (! str_starts_with($class, 'Framework\\')) {
+        return;
+    }
+    require __DIR__.'/src/'.str_replace('\\', '/', $class).'.php';
+});
+`,
+		"vendor/src/Framework/Query.php": "<?php\nnamespace Framework;\nclass Query {\n    /** @return $this */\n    public function where(string $column) {}\n    public function first(): ?object { return null; }\n}\n",
+		"vendor/src/Framework/Record.php": "<?php\nnamespace Framework;\nabstract class Record {\n    /** @return \\Framework\\Query<static> */\n    public static function query() {}\n}\n",
+		"app/Order.php": "<?php\nnamespace App;\nuse Framework\\Record;\nfinal class Order extends Record {}\nfinal class Orders { public function open(): ?object { return Order::query()->where('open')->first(); } }\n",
+	})
+	var targets []string
+	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
+		for _, node := range file.Nodes() {
+			if node.Target != nil {
+				targets = append(targets, node.Target.Symbol)
+			}
+		}
+	}
+	for _, wanted := range []string{`Framework\Record::query`, `Framework\Query::where`, `Framework\Query::first`} {
+		if !slices.Contains(targets, wanted) {
+			t.Errorf("the chain through documented returns reaches %q, and %s is not among them", targets, wanted)
+		}
+	}
+}

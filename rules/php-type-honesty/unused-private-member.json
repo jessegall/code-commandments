@@ -194,6 +194,14 @@
           },
           "$m"
         ]
+      ],
+      [
+        "owner",
+        [
+          "enclosing",
+          "$m",
+          "type"
+        ]
       ]
     ],
     "having": [
@@ -238,6 +246,24 @@
           "=",
           "$l.value",
           "$named.name"
+        ]
+      ],
+      [
+        "none",
+        "$owner.writtenMembers",
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "function"
+          ],
+          [
+            "=",
+            "$x.name",
+            "__call"
+          ]
         ]
       ]
     ],

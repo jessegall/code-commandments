@@ -146,6 +146,7 @@ class Request implements \Stringable
     public function isMethodIdempotent(): bool {}
     public function isMethodCacheable(): bool {}
     public function getProtocolVersion(): ?string {}
+    /** @return string|resource */
     public function getContent(bool $asResource = false) {}
     public function getPayload(): \Symfony\Component\HttpFoundation\InputBag {}
     public function toArray(): array {}

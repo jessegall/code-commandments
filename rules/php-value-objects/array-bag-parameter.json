@@ -17,7 +17,8 @@
     "suggestion": "Type the parameter as a value object with those fields, and have callers construct it.",
     "reporting": {
       "crossFile": true
-    }
+    },
+    "unpublished": true
   },
   "definitions": {
     "stringKeys": {

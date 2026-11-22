@@ -137,7 +137,7 @@ func (f Fixture) UnknownResolutions() []string {
 		names = append(names, keys(detector)...)
 	}
 	for _, sin := range rules.Sins() {
-		names = append(names, catalog.Name(sin), sin.Definition().Name)
+		names = append(names, append(catalog.Names(sin), sin.Definition().Name)...)
 	}
 	var unknown []string
 	for _, marker := range Markers(f.Codebase) {

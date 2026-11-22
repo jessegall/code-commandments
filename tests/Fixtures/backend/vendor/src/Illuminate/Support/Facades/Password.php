@@ -14,5 +14,6 @@ class Password extends \Illuminate\Support\Facades\Facade
     public const INVALID_USER = 'passwords.user';
     public const INVALID_TOKEN = 'passwords.token';
     public const RESET_THROTTLED = 'passwords.throttled';
+    /** @return string */
     protected static function getFacadeAccessor() {}
 }

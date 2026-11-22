@@ -152,87 +152,169 @@ class Validator implements \Illuminate\Contracts\Validation\Validator, \Illumina
     public function __construct(\Illuminate\Contracts\Translation\Translator $translator, array $data, array $rules, array $messages = array (
 ), array $attributes = array (
 )) {}
+    /** @return array */
     public function parseData(array $data) {}
+    /** @return array */
     protected function replacePlaceholders($data) {}
+    /** @return string */
     protected function replacePlaceholderInString(string $value) {}
+    /** @return array */
     protected function replaceDotPlaceholderInParameters(array $parameters) {}
+    /** @return $this */
     public function after($callback) {}
+    /** @return bool */
     public function passes() {}
+    /** @return bool */
     public function fails() {}
+    /** @return $this|TWhenReturnType */
     public function whenPasses(callable $callback, ?callable $default = NULL) {}
+    /** @return $this|TWhenReturnType */
     public function whenFails(callable $callback, ?callable $default = NULL) {}
+    /** @return bool */
     protected function shouldBeExcluded($attribute) {}
+    /** @return void */
     protected function removeAttribute($attribute) {}
+    /** @return array */
     public function validate() {}
+    /** @return array */
     public function validateWithBag(string $errorBag) {}
+    /** @return \Illuminate\Support\ValidatedInput|array */
     public function safe(?array $keys = NULL) {}
+    /** @return array */
     public function validated() {}
+    /** @return void */
     protected function validateAttribute($attribute, $rule) {}
+    /** @return bool */
     protected function dependsOnOtherFields($rule) {}
+    /** @return array */
     protected function getExplicitKeys($attribute) {}
+    /** @return string */
     protected function getPrimaryAttribute($attribute) {}
+    /** @return array */
     protected function replaceDotInParameters(array $parameters) {}
+    /** @return array */
     protected function replaceAsterisksInParameters(array $parameters, array $keys) {}
+    /** @return bool */
     protected function isValidatable($rule, $attribute, $value) {}
+    /** @return bool */
     protected function presentOrRuleIsImplicit($rule, $attribute, $value) {}
+    /** @return bool */
     protected function isImplicit($rule) {}
+    /** @return bool */
     protected function passesOptionalCheck($attribute) {}
+    /** @return bool */
     protected function isNotNullIfMarkedAsNullable($rule, $attribute) {}
+    /** @return bool */
     protected function hasNotFailedPreviousRuleIfPresenceRule($rule, $attribute) {}
+    /** @return void */
     protected function validateUsingCustomRule($attribute, $value, $rule) {}
+    /** @return bool */
     protected function shouldStopValidating($attribute) {}
+    /** @return void */
     public function addFailure($attribute, $rule, $parameters = array (
 )) {}
+    /** @return void */
     protected function excludeAttribute(string $attribute) {}
+    /** @return array */
     public function valid() {}
+    /** @return array */
     public function invalid() {}
+    /** @return array */
     protected function attributesThatHaveMessages() {}
+    /** @return array */
     public function failed() {}
+    /** @return \Illuminate\Support\MessageBag */
     public function messages() {}
+    /** @return \Illuminate\Support\MessageBag */
     public function errors() {}
+    /** @return \Illuminate\Support\MessageBag */
     public function getMessageBag() {}
+    /** @return bool */
     public function hasRule($attribute, $rules) {}
+    /** @return array|null */
     protected function getRule($attribute, $rules) {}
+    /** @return array */
     public function attributes() {}
+    /** @return array */
     public function getData() {}
+    /** @return $this */
     public function setData(array $data) {}
+    /** @return mixed */
     public function getValue($attribute) {}
+    /** @return void */
     public function setValue($attribute, $value) {}
+    /** @return array */
     public function getRules() {}
+    /** @return array */
     public function getRulesWithoutPlaceholders() {}
+    /** @return $this */
     public function setRules(array $rules) {}
+    /** @return $this */
     public function appendRules(array $rules) {}
+    /** @return void */
     public function addRules($rules) {}
+    /** @return $this */
     public function sometimes($attribute, $rules, callable $callback) {}
+    /** @return \Illuminate\Support\Fluent|mixed */
     private function dataForSometimesIteration(string $attribute, bool $removeLastSegmentOfAttribute) {}
+    /** @return $this */
     public function stopOnFirstFailure($stopOnFirstFailure = true) {}
+    /** @return void */
     public function addExtensions(array $extensions) {}
+    /** @return void */
     public function addImplicitExtensions(array $extensions) {}
+    /** @return void */
     public function addDependentExtensions(array $extensions) {}
+    /** @return void */
     public function addExtension($rule, $extension) {}
+    /** @return void */
     public function addImplicitExtension($rule, $extension) {}
+    /** @return void */
     public function addDependentExtension($rule, $extension) {}
+    /** @return void */
     public function addReplacers(array $replacers) {}
+    /** @return void */
     public function addReplacer($rule, $replacer) {}
+    /** @return $this */
     public function setCustomMessages(array $messages) {}
+    /** @return $this */
     public function setAttributeNames(array $attributes) {}
+    /** @return $this */
     public function addCustomAttributes(array $attributes) {}
+    /** @return $this */
     public function setImplicitAttributesFormatter(?callable $formatter = NULL) {}
+    /** @return $this */
     public function setValueNames(array $values) {}
+    /** @return $this */
     public function addCustomValues(array $customValues) {}
+    /** @return void */
     public function setFallbackMessages(array $messages) {}
+    /** @return \Illuminate\Validation\PresenceVerifierInterface */
     public function getPresenceVerifier($connection = NULL) {}
+    /** @return void */
     public function setPresenceVerifier(\Illuminate\Validation\PresenceVerifierInterface $presenceVerifier) {}
+    /** @return class-string<\Illuminate\Validation\ValidationException> */
     public function getException() {}
+    /** @return $this */
     public function setException($exception) {}
+    /** @return $this */
     public function ensureExponentWithinAllowedRangeUsing($callback) {}
+    /** @return \Illuminate\Contracts\Translation\Translator */
     public function getTranslator() {}
+    /** @return void */
     public function setTranslator(\Illuminate\Contracts\Translation\Translator $translator) {}
+    /** @return void */
     public function setContainer(\Illuminate\Contracts\Container\Container $container) {}
+    /** @return bool|null */
     protected function callExtension($rule, $parameters) {}
+    /** @return bool */
     protected function callClassBasedExtension($callback, $parameters) {}
+    /** @return string */
     protected static function encodeAttributeWithPlaceholder(string $attribute) {}
+    /** @return string */
     protected static function decodeAttributeWithPlaceholder(string $attribute) {}
+    /** @return void */
     public static function flushState() {}
+    /** @return mixed */
     public function __call($method, $parameters) {}
 }

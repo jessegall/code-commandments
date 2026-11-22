@@ -10,8 +10,8 @@
       "ConfigRead"
     ],
     "skill": "php/laravel-idioms",
-    "description": "`config('\u2026')` read inside a class",
-    "rule": "Inject a typed config object; never read `config('\u2026')` inside a class.",
+    "description": "`config('…')` read inside a class",
+    "rule": "Inject a typed config object; never read `config('…')` inside a class.",
     "suggestion": "Inject a typed config value object.",
     "requires": {
       "name": "illuminate/support",
@@ -123,6 +123,16 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "wrapsOnlyConfig",
+            "$owner"
+          ]
+        ]
       ]
     ],
     "emit": "$c",
@@ -136,5 +146,107 @@
         ]
       ]
     ]
+  },
+  "definitions": {
+    "selfOrConfig": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "or",
+        [
+          "isSelf",
+          "$s"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "access"
+          ],
+          [
+            "isSelf",
+            "$s.subject"
+          ],
+          [
+            "in",
+            "$s.resolved.name",
+            "Illuminate\\Contracts\\Config\\Repository",
+            "Illuminate\\Config\\Repository"
+          ]
+        ]
+      ]
+    },
+    "foreignCall": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.callee.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$x.callee.form",
+          "instance"
+        ],
+        [
+          "not",
+          [
+            "selfOrConfig",
+            "$x.callee.subject"
+          ]
+        ]
+      ]
+    },
+    "wrapsOnlyConfig": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          "$t"
+        ],
+        [
+          ">=",
+          [
+            "count",
+            [
+              "filter",
+              [
+                "descendants",
+                "$t",
+                "call"
+              ],
+              "x",
+              [
+                "laravel.configRead",
+                "$x"
+              ]
+            ]
+          ],
+          3
+        ],
+        [
+          "none",
+          [
+            "descendants",
+            "$t",
+            "call"
+          ],
+          "x",
+          [
+            "foreignCall",
+            "$x"
+          ]
+        ]
+      ]
+    }
   }
 }

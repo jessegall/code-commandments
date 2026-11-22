@@ -198,6 +198,30 @@
           ]
         },
         false
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$d.kind",
+            "parameter"
+          ],
+          [
+            "some",
+            [
+              "tree.callsOf",
+              "$d.parent"
+            ],
+            "c",
+            [
+              "within",
+              "$c",
+              "$d.parent.body"
+            ]
+          ]
+        ]
       ]
     ],
     "let": [

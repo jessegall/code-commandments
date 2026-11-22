@@ -328,6 +328,60 @@
                       "parameter"
                     ]
                   ]
+                ],
+                [
+                  "and",
+                  [
+                    "=",
+                    "$x.kind",
+                    "call"
+                  ],
+                  [
+                    "some",
+                    "$x.arguments",
+                    "g",
+                    [
+                      "some",
+                      [
+                        "list",
+                        [
+                          "declarationOf",
+                          "$g.value"
+                        ]
+                      ],
+                      "q",
+                      [
+                        "and",
+                        [
+                          "=",
+                          "$q.parent.kind",
+                          "parameter"
+                        ],
+                        [
+                          "proven",
+                          [
+                            "some",
+                            [
+                              "typeMembers",
+                              [
+                                "typeOf",
+                                "$q.parent"
+                              ]
+                            ],
+                            "m",
+                            [
+                              "=",
+                              [
+                                "typeCategory",
+                                "$m"
+                              ],
+                              "function"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
                 ]
               ]
             ]

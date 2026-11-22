@@ -319,3 +319,77 @@ final class Area {
 `})
 	expect(t, "php", found, "Area.php:19")
 }
+
+func TestUndeclaredMemberReadsAPromotedConstructorParameterAsADeclaredProperty(t *testing.T) {
+	found := judged(t, "rules/shared-dependencies/undeclared-member.json", map[string]string{"Node.php": `<?php
+namespace App;
+final class Node {
+    public function __construct(public array $parts = []) {}
+}
+final class Builder {
+    public function filled(Node $node): Node {
+        $node->parts = ['body' => 1];
+        return $node;
+    }
+    public function misspelled(Node $node): Node {
+        $node->part = ['body' => 1];
+        return $node;
+    }
+}
+`})
+	expect(t, "php", found, "Node.php:12")
+}
+
+func TestQueryInLoopSparesALoopModelsOwnSavingMethod(t *testing.T) {
+	found := judged(t, "rules/php-laravel-idioms/query-in-loop.json", map[string]string{
+		"composer.lock":       `{"packages":[{"name":"laravel/framework","version":"v12.0.0"}]}`,
+		"vendor/autoload.php": "<?php\nspl_autoload_register(function (string $class): void { if ($class === 'Illuminate\\\\Database\\\\Eloquent\\\\Model') { require __DIR__.'/Model.php'; } });\n",
+		"vendor/Model.php":    "<?php\nnamespace Illuminate\\Database\\Eloquent;\nabstract class Model { public function save(array $options = []): bool { return true; } }\n",
+		"app/Share.php": `<?php
+namespace App;
+use Illuminate\Database\Eloquent\Model;
+final class Share extends Model {
+    public bool $active = false;
+    public function activate(): void {
+        $this->active = true;
+        $this->save();
+    }
+}
+`,
+		"app/Gateway.php": `<?php
+namespace App;
+final class Gateway {
+    public function activateAll(array $ids): void {
+        foreach ($ids as $id) {
+            $share = new Share();
+            $share->activate();
+        }
+    }
+    public function saveAll(array $ids): void {
+        foreach ($ids as $id) {
+            $share = new Share();
+            $share->save();
+        }
+    }
+}
+`,
+	})
+	expect(t, "php", found, "app/Gateway.php:13")
+}
+
+func TestNarratedCommandJudgesAOneFileCodebaseAsItDoesAProject(t *testing.T) {
+	found := judged(t, "rules/php-method-mood/narrated-command.json", map[string]string{"CouponDesk.php": `<?php
+namespace App;
+final class CouponDesk {
+    /** @var list<string> */
+    private array $applied = [];
+    public function writesTo(string $ledger): void {
+        $this->applied[] = $ledger;
+    }
+    public function write(string $ledger): void {
+        $this->applied[] = $ledger;
+    }
+}
+`})
+	expect(t, "php", found, "CouponDesk.php:6")
+}

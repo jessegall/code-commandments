@@ -70,6 +70,7 @@ type File struct {
 	// between runs stands while its own file and every one of these are unchanged.
 	Reads    []string  `json:"reads,omitempty"`
 	Resolver *Resolver `json:"resolver,omitempty"`
+	Unread   string    `json:"unread,omitempty"`
 	Root     *Node     `json:"root"`
 	Comments []Comment `json:"comments"`
 	Types    []*Type   `json:"types,omitempty"`

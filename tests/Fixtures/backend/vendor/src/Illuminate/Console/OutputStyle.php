@@ -19,5 +19,6 @@ class OutputStyle extends \Symfony\Component\Console\Style\SymfonyStyle implemen
     public function isVerbose(): bool {}
     public function isVeryVerbose(): bool {}
     public function isDebug(): bool {}
+    /** @return \Symfony\Component\Console\Output\OutputInterface */
     public function getOutput() {}
 }

@@ -630,6 +630,9 @@
           ],
           "additionalProperties": false
         },
+        "unread": {
+          "type": "string"
+        },
         "root": {
           "$ref": "#/$defs/node"
         },

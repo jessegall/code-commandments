@@ -435,6 +435,11 @@ func projectOf(roots []string) (string, bool) {
 
 func sayUnreadable(streams []*contract.Stream) {
 	for _, stream := range streams {
+		for _, file := range stream.Files {
+			if file.Unread != "" {
+				fmt.Fprintf(os.Stderr, "⚠ %s is not judged: its parser failed on it (%s)\n", file.Path, file.Unread)
+			}
+		}
 		if stream.Program == nil {
 			continue
 		}

@@ -18,7 +18,7 @@ final class ShelfTagCollection
     #[Sinful(ManualHydrationLoop::class)]
     public function tags(Collection $rows): Collection
     {
-        return $rows->map(fn (array $row): ShelfTagData => ShelfTagData::from($row));
+        return $rows->map(fn (array $row) => ShelfTagData::from($row));
     }
 
     /**
@@ -33,7 +33,7 @@ final class ShelfTagCollection
     #[Righteous(ManualHydrationLoop::class)]
     public function labels(ShelfLabels $labels): array
     {
-        return $labels->map(fn (array $row): ShelfTagData => ShelfTagData::from($row));
+        return $labels->map(fn (array $row) => ShelfTagData::from($row));
     }
 }
 

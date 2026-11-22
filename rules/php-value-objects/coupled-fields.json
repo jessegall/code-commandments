@@ -191,74 +191,150 @@
           ],
           "l",
           [
-            ">=",
+            "and",
             [
-              "distinctCount",
+              ">=",
               [
-                "map",
+                "distinctCount",
                 [
-                  "filter",
+                  "map",
                   [
-                    "flatten",
+                    "filter",
                     [
-                      "list",
+                      "flatten",
                       [
                         "list",
-                        "$l"
+                        [
+                          "list",
+                          "$l"
+                        ],
+                        [
+                          "descendants",
+                          "$l"
+                        ]
+                      ]
+                    ],
+                    "x",
+                    [
+                      "and",
+                      [
+                        "tree.selfField",
+                        "$x"
                       ],
                       [
-                        "descendants",
-                        "$l"
+                        "some",
+                        [
+                          "filter",
+                          [
+                            "ownFields",
+                            "$t"
+                          ],
+                          "n",
+                          [
+                            "isNullable",
+                            [
+                              "typeOf",
+                              "$n"
+                            ]
+                          ]
+                        ],
+                        "n",
+                        [
+                          "=",
+                          [
+                            "nameOf",
+                            "$n"
+                          ],
+                          [
+                            "readName",
+                            "$x"
+                          ]
+                        ]
                       ]
                     ]
                   ],
                   "x",
                   [
-                    "and",
+                    "readName",
+                    "$x"
+                  ]
+                ]
+              ],
+              2
+            ],
+            [
+              "<",
+              [
+                "distinctCount",
+                [
+                  "map",
+                  [
+                    "filter",
                     [
-                      "tree.selfField",
-                      "$x"
-                    ],
-                    [
-                      "some",
+                      "flatten",
                       [
-                        "filter",
+                        "list",
+                        [
+                          "list",
+                          "$l"
+                        ],
+                        [
+                          "descendants",
+                          "$l"
+                        ]
+                      ]
+                    ],
+                    "x",
+                    [
+                      "and",
+                      [
+                        "tree.selfField",
+                        "$x"
+                      ],
+                      [
+                        "some",
                         [
                           "ownFields",
                           "$t"
                         ],
                         "n",
                         [
-                          "isNullable",
+                          "=",
                           [
-                            "typeOf",
+                            "nameOf",
                             "$n"
+                          ],
+                          [
+                            "readName",
+                            "$x"
                           ]
-                        ]
-                      ],
-                      "n",
-                      [
-                        "=",
-                        [
-                          "nameOf",
-                          "$n"
-                        ],
-                        [
-                          "readName",
-                          "$x"
                         ]
                       ]
                     ]
+                  ],
+                  "x",
+                  [
+                    "readName",
+                    "$x"
                   ]
-                ],
-                "x",
+                ]
+              ],
+              [
+                "distinctCount",
                 [
-                  "readName",
-                  "$x"
+                  "map",
+                  [
+                    "ownFields",
+                    "$t"
+                  ],
+                  "n",
+                  [
+                    "nameOf",
+                    "$n"
+                  ]
                 ]
               ]
-            ],
-            2
+            ]
           ]
         ]
       ]
@@ -550,105 +626,71 @@
               "named"
             ],
             [
-              "or",
+              "some",
+              [
+                "list",
+                [
+                  "typeDeclaration",
+                  "$b.declaredType.refers"
+                ]
+              ],
+              "bt",
               [
                 "and",
                 [
-                  "sameType",
-                  [
-                    "typeOf",
-                    "$a"
-                  ],
-                  [
-                    "typeOf",
-                    "$b"
-                  ]
+                  "exists",
+                  "$bt"
                 ],
                 [
-                  "usedTogether",
-                  "$t",
+                  "some",
                   [
-                    "list",
-                    "construction"
-                  ],
-                  [
-                    "nameOf",
-                    "$a"
-                  ],
-                  [
-                    "nameOf",
-                    "$b"
-                  ],
-                  ""
-                ]
-              ],
-              [
-                "some",
-                [
-                  "list",
-                  [
-                    "typeDeclaration",
-                    "$b.declaredType.refers"
-                  ]
-                ],
-                "bt",
-                [
-                  "and",
-                  [
-                    "exists",
-                    "$bt"
-                  ],
-                  [
-                    "some",
+                    "filter",
                     [
-                      "filter",
-                      [
-                        "members",
-                        "$bt"
-                      ],
-                      "bm",
-                      [
-                        "in",
-                        "$bm.kind",
-                        "field",
-                        "parameter"
-                      ]
+                      "members",
+                      "$bt"
                     ],
                     "bm",
                     [
-                      "and",
+                      "in",
+                      "$bm.kind",
+                      "field",
+                      "parameter"
+                    ]
+                  ],
+                  "bm",
+                  [
+                    "and",
+                    [
+                      "sameType",
                       [
-                        "sameType",
-                        [
-                          "typeOf",
-                          "$a"
-                        ],
-                        [
-                          "typeOf",
-                          "$bm"
-                        ]
+                        "typeOf",
+                        "$a"
                       ],
                       [
-                        "usedTogether",
-                        "$t",
-                        [
-                          "list",
-                          "call",
-                          "construction",
-                          "collection"
-                        ],
-                        [
-                          "nameOf",
-                          "$a"
-                        ],
-                        [
-                          "nameOf",
-                          "$b"
-                        ],
-                        [
-                          "nameOf",
-                          "$bm"
-                        ]
+                        "typeOf",
+                        "$bm"
+                      ]
+                    ],
+                    [
+                      "usedTogether",
+                      "$t",
+                      [
+                        "list",
+                        "call",
+                        "construction",
+                        "collection"
+                      ],
+                      [
+                        "nameOf",
+                        "$a"
+                      ],
+                      [
+                        "nameOf",
+                        "$b"
+                      ],
+                      [
+                        "nameOf",
+                        "$bm"
                       ]
                     ]
                   ]

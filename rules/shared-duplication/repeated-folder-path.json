@@ -383,12 +383,44 @@
           ]
         },
         [
-          ">",
+          "case",
+          "$c.file.language",
+          {
+            "php": [
+              "and",
+              [
+                ">",
+                [
+                  "count",
+                  "$c.arguments"
+                ],
+                0
+              ],
+              [
+                "or",
+                [
+                  "joinsPaths",
+                  "$c"
+                ],
+                [
+                  "has",
+                  [
+                    "identities",
+                    "path-helper"
+                  ],
+                  "$c.callee.refers"
+                ]
+              ]
+            ]
+          },
           [
-            "count",
-            "$c.arguments"
-          ],
-          0
+            ">",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            0
+          ]
         ]
       ]
     },

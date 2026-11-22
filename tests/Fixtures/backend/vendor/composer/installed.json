@@ -1,0 +1,21 @@
+{
+    "packages": [
+        {
+            "name": "jessegall/concurrent",
+            "version": "v3.2.4"
+        },
+        {
+            "name": "jessegall/php-types",
+            "version": "v1.14.1"
+        },
+        {
+            "name": "laravel/framework",
+            "version": "v12.65.0"
+        },
+        {
+            "name": "spatie/laravel-data",
+            "version": "4.23.0"
+        }
+    ],
+    "stubs": "dace5efa81510955349c11fac177a12648a31fbe8e9ed1d3fdc9dd4705531c35"
+}

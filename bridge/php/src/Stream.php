@@ -38,9 +38,14 @@ final readonly class Stream
         $written = 0;
         $types = new Types();
         $judged = array_values(array_filter($files, $this->request->judges(...)));
+        $unread = [];
         foreach ($files as $path) {
             $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
-            $types->declare($this->read($this->request->contents[$path] ?? (string) file_get_contents($path), $parser, $path)[1], $path);
+            try {
+                $types->declare($this->read($this->request->contents[$path] ?? (string) file_get_contents($path), $parser, $path)[1], $path);
+            } catch (\Throwable $failure) {
+                $unread[$path] = $failure->getMessage();
+            }
         }
         $autoload = $this->autoload();
         if ($autoload !== null && $this->loadFailure($autoload) === '') {
@@ -49,9 +54,20 @@ final readonly class Stream
         }
         foreach ($judged as $path) {
             $code = $this->request->contents[$path] ?? (string) file_get_contents($path);
-            [, $statements, $errors, $tokens] = $this->read($code, $parser, $path);
-            $types->infer($statements, $path);
-            $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types);
+            try {
+                if (isset($unread[$path])) {
+                    throw new \RuntimeException($unread[$path]);
+                }
+                [, $statements, $errors, $tokens] = $this->read($code, $parser, $path);
+                $types->infer($statements, $path);
+                $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types);
+            } catch (\Throwable $failure) {
+                fwrite(STDERR, "php-bridge: {$path} is not read: {$failure->getMessage()}\n");
+                $this->line($out, ['file' => $this->unreadFile($path, $code, $failure->getMessage())]);
+                $written++;
+
+                continue;
+            }
             $this->line($out, ['file' => $file]);
             $referenced += $file->translator->referenced;
             $declared += $file->translator->declared;
@@ -260,6 +276,24 @@ final readonly class Stream
         if ($program !== []) {
             $this->line($out, ['program' => $program]);
         }
+    }
+
+    /**
+     * A file the parser failed on: written with no tree, so the run says it is there and was not read.
+     *
+     * @return array<string, mixed>
+     */
+    private function unreadFile(string $path, string $code, string $reason): array
+    {
+        return [
+            'path' => $path,
+            'language' => 'php',
+            'errors' => 1,
+            'resolver' => ['tool' => 'php-parser', 'ran' => false],
+            'unread' => $reason,
+            'root' => ['id' => 0, 'kind' => 'file', 'span' => [0, strlen($code), 1], 'incomplete' => true],
+            'comments' => [],
+        ];
     }
 
     /**

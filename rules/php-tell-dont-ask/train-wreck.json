@@ -28,33 +28,64 @@
     ],
     "as": "x",
     "where": [
-      "not",
+      "and",
       [
-        "or",
+        "not",
+        [
+          "or",
+          [
+            "and",
+            [
+              "in",
+              "$x.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$x.role",
+              "subject"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$x.parent.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$x.role",
+              "callee"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
         [
           "and",
           [
-            "in",
-            "$x.parent.kind",
+            "=",
+            "$x.kind",
             "access"
           ],
           [
-            "=",
-            "$x.role",
-            "subject"
-          ]
-        ],
-        [
-          "and",
-          [
-            "=",
-            "$x.parent.kind",
-            "call"
+            "in",
+            "$x.member.name",
+            "value",
+            "name"
           ],
           [
             "=",
-            "$x.role",
-            "callee"
+            [
+              "tree.formOf",
+              [
+                "typeDeclaration",
+                "$x.subject.resolved.name"
+              ]
+            ],
+            "enum"
           ]
         ]
       ]

@@ -39,25 +39,6 @@
         ">=",
         "$c.paragraphs",
         2
-      ],
-      [
-        "not",
-        [
-          "and",
-          [
-            "contains",
-            "$c.description",
-            "`"
-          ],
-          [
-            "<",
-            [
-              "length",
-              "$c.description"
-            ],
-            500
-          ]
-        ]
       ]
     ],
     "emit": "$c.location"

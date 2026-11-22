@@ -105,6 +105,21 @@
       [
         "not",
         "$p.file.test"
+      ],
+      [
+        "none",
+        "$p.parent.attributes",
+        "a",
+        [
+          "some",
+          "$a.arguments",
+          "g",
+          [
+            "=",
+            "$g.value.value",
+            "$p.binding.name"
+          ]
+        ]
       ]
     ],
     "having": [

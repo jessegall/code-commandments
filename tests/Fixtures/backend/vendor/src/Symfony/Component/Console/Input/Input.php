@@ -27,5 +27,6 @@ abstract class Input implements \Symfony\Component\Console\Input\InputInterface,
     public function hasOption(string $name): bool {}
     public function escapeToken(string $token): string {}
     public function setStream($stream): void {}
+    /** @return resource */
     public function getStream() {}
 }

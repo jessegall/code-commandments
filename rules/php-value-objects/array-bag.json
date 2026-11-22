@@ -25,7 +25,8 @@
     "suggestion": "A value object (a data class, a record, a struct) built once from the incoming map.",
     "reporting": {
       "crossFile": true
-    }
+    },
+    "unpublished": true
   },
   "find": {
     "select": "parameter",

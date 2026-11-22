@@ -627,7 +627,7 @@ final class Types
         $methods = [];
         foreach ($reflection->getMethods() as $method) {
             if ($method->getDeclaringClass()->getName() === $name) {
-                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), null), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract()];
+                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), null) ?? self::documentedReturn($method->getDocComment()), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract()];
             }
         }
         $properties = [];
@@ -655,6 +655,34 @@ final class Types
             'properties' => $properties,
             'constants' => $constants,
         ];
+    }
+
+    /**
+     * The type a library method's doc comment returns when it writes no native one, read only where no import is needed
+     * to name it: a fully qualified class, or static, self and $this, which name the receiver. A generic argument is
+     * dropped, and `|null` makes it nullable.
+     */
+    private static function documentedReturn(string|false $doc): ?array
+    {
+        if ($doc === false || preg_match('/@return\s+(\S+)/', $doc, $found) !== 1) {
+            return null;
+        }
+        $written = $found[1];
+        while (preg_match('/<[^<>]*>/', $written) === 1) {
+            $written = (string) preg_replace('/<[^<>]*>/', '', $written);
+        }
+        $parts = explode('|', $written);
+        $nullable = in_array('null', $parts, true) ? ['nullable' => true] : [];
+        $named = array_values(array_diff($parts, ['null']));
+        if (count($named) !== 1) {
+            return null;
+        }
+
+        return match (true) {
+            in_array(strtolower($named[0]), ['static', 'self', '$this'], true) => ['keyword' => 'static'] + $nullable,
+            preg_match('/^\\\\[A-Za-z_][\\\\\w]*$/', $named[0]) === 1 => ['name' => ltrim($named[0], '\\')] + $nullable,
+            default => null,
+        };
     }
 
     private function reflectedType(?ReflectionType $type, ?string $class): ?array

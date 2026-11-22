@@ -28,6 +28,7 @@ class CreationContextFactory
     public function withCast(string $castable, \Spatie\LaravelData\Casts\Cast|string $cast): \Spatie\LaravelData\Support\Creation\CreationContextFactory {}
     public function withCastCollection(\Spatie\LaravelData\Support\Creation\GlobalCastsCollection $casts): \Spatie\LaravelData\Support\Creation\CreationContextFactory {}
     public function get(): \Spatie\LaravelData\Support\Creation\CreationContext {}
+    /** @return TData */
     public function from(mixed ...$payloads) {}
     public function collect(mixed $items, ?string $into = NULL): \Spatie\LaravelData\DataCollection|\Spatie\LaravelData\PaginatedDataCollection|\Spatie\LaravelData\CursorPaginatedDataCollection|\Illuminate\Support\Enumerable|\Illuminate\Pagination\AbstractPaginator|\Illuminate\Contracts\Pagination\Paginator|\Illuminate\Pagination\AbstractCursorPaginator|\Illuminate\Contracts\Pagination\CursorPaginator|\Illuminate\Support\LazyCollection|\Illuminate\Support\Collection|array {}
 }

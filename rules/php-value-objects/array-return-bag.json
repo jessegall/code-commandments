@@ -23,7 +23,8 @@
     "suggestion": "Return a value object with those fields (a data class, a record, a struct) instead of the keyed literal.",
     "reporting": {
       "crossFile": true
-    }
+    },
+    "unpublished": true
   },
   "definitions": {
     "stringKeys": {

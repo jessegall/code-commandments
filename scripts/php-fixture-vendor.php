@@ -4,12 +4,12 @@
  * Writes the PHP fixture's vendor: signature-only stubs of the framework classes it names, reflected from a real
  * project's vendor, so the bridge resolves the fixture's framework calls the way it does in a real project.
  *
- * php scripts/php-fixture-vendor.php <a real project's vendor/autoload.php> <roots file> <out folder>
+ * php scripts/php-fixture-vendor.php <a real project's vendor/autoload.php> <roots file> <out folder> <the fixture's composer.lock>
  */
 
 declare(strict_types=1);
 
-[, $autoload, $rootsFile, $out] = $argv;
+[, $autoload, $rootsFile, $out, $lock] = $argv;
 require $autoload;
 
 $roots = array_values(array_filter(array_map('trim', file($rootsFile)), static fn (string $line): bool => $line !== ''));
@@ -65,6 +65,21 @@ spl_autoload_register(static function (string $class): void {
 });
 
 PHP);
+$stubs = [];
+foreach ($wanted as $reflection) {
+    $stubs[] = hash_file('sha256', $out.'/src/'.str_replace('\\', '/', $reflection->getName()).'.php');
+}
+sort($stubs);
+$source = json_decode((string) file_get_contents(dirname($autoload).'/composer/installed.json'), true);
+$locked = array_column(json_decode((string) file_get_contents($lock), true)['packages'] ?? [], 'name');
+$packages = array_values(array_map(
+    static fn (array $package): array => ['name' => $package['name'], 'version' => $package['version']],
+    array_filter($source['packages'] ?? $source, static fn (array $package): bool => in_array($package['name'], $locked, true)),
+));
+if (! is_dir($out.'/composer')) {
+    mkdir($out.'/composer', 0o755, true);
+}
+file_put_contents($out.'/composer/installed.json', json_encode(['packages' => $packages, 'stubs' => hash('sha256', implode('', $stubs))], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
 fwrite(STDOUT, count($wanted)." classes written\n");
 
 /** @return list<string> */
@@ -189,6 +204,9 @@ function stub(ReflectionClass $class): string
         $modifiers = trim(($abstract ? 'abstract ' : '').($method->isFinal() ? 'final ' : '').$visibility.($method->isStatic() ? ' static' : ''));
         $returns = typeText($method->getReturnType() ?? $method->getTentativeReturnType());
         $signature = "    {$modifiers} function ".($method->returnsReference() ? '&' : '').$method->getName().'('.implode(', ', array_map(parameter(...), $method->getParameters())).')'.($returns !== '' ? ': '.$returns : '');
+        if ($returns === '' && preg_match('/@return\s+(\S+)/', (string) $method->getDocComment(), $documented) === 1) {
+            $lines[] = "    /** @return {$documented[1]} */";
+        }
         $lines[] = $signature.($method->isAbstract() ? ';' : ' {}');
     }
     $lines[] = '}';

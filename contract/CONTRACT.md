@@ -53,6 +53,7 @@ beside its stream's `language`. A rule that crosses languages joins two streams 
 | `module` | the language names modules | the module the file is: Python `shop.cart`, Go's package import path | compiler |
 | `reads` | the header says `"reads": true` | the other files whose contents shaped this tree, configuration and lockfiles included. A kept line stands while its own file and every one of these hold the same contents; this is what lets every checkout share one cache keyed on contents | index |
 | `resolver` | a compiler exists for the language | `{"tool", "ran"}`: `php-parser`, `mypy`, `roslyn`, `tsc` or `go/types`, and whether it ran on this file | compiler |
+| `unread` | the bridge's parser failed on the file | why: the file is written with an `incomplete` root and no tree, so a run names it as not judged and every other file is still read | parser |
 | `root` | always | the file's `file` node | parser |
 | `comments` | always | every comment, in source order (see *Comments*) | parser |
 | `types` | nodes name their type by index | the distinct resolved types the file's nodes carry, each written once; a node's `resolvedType` is an index into it | compiler |

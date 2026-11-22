@@ -23,6 +23,7 @@ class Concurrent implements \ArrayAccess, \IteratorAggregate, \Traversable
     public static function useCache(\JesseGall\Concurrent\Contracts\CacheDriver $cache): void {}
     public static function useLock(\JesseGall\Concurrent\Contracts\LockDriver $lock): void {}
     public static function resetDrivers(): void {}
+    /** @return TValue|void */
     public function __invoke(mixed $value = NULL) {}
     public function __call(string $name, array $arguments) {}
     public function __get(string $name) {}

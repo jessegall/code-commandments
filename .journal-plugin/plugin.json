@@ -1198,19 +1198,6 @@
             ],
             "detail": true
         },
-        "sin_keyed-lookup-envy": {
-            "title": "keyed-lookup-envy",
-            "help": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator",
-            "type": "flag",
-            "default": "true",
-            "group": "php/tell-dont-ask",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
         "sin_middle-man": {
             "title": "middle-man",
             "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.",
@@ -1334,45 +1321,6 @@
             "type": "flag",
             "default": "true",
             "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_array-bag": {
-            "title": "array-bag",
-            "help": "Reading a named field by string key off a loose map or array parameter instead of giving the record a type: the type was never defined.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_array-bag-parameter": {
-            "title": "array-bag-parameter",
-            "help": "A parameter typed as a loose map or array that callers fill with string-keyed records: the method never defined the type its fields belong to.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_array-return-bag": {
-            "title": "array-return-bag",
-            "help": "Returning a multi-field string-keyed array literal (a bag that should be a value object)",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
             "when": [
                 {
                     "language_php": true

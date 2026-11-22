@@ -33,9 +33,12 @@ class Command implements \Symfony\Component\Console\Command\SignalableCommandInt
     public function getHelperSet(): ?\Symfony\Component\Console\Helper\HelperSet {}
     public function getApplication(): ?\Symfony\Component\Console\Application {}
     public function isEnabled(): bool {}
+    /** @return void */
     protected function configure() {}
     protected function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int {}
+    /** @return void */
     protected function interact(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output) {}
+    /** @return void */
     protected function initialize(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output) {}
     public function run(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int {}
     public function complete(\Symfony\Component\Console\Completion\CompletionInput $input, \Symfony\Component\Console\Completion\CompletionSuggestions $suggestions): void {}

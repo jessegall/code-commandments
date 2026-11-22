@@ -22,6 +22,7 @@ class Response implements \Illuminate\Contracts\Support\Responsable
     public function withViewData($key, $value = NULL): \Inertia\Response {}
     public function rootView(string $rootView): \Inertia\Response {}
     public function flash(\BackedEnum|\UnitEnum|array|string $key, mixed $value = NULL): \Inertia\Response {}
+    /** @return \Symfony\Component\HttpFoundation\Response */
     public function toResponse($request) {}
     protected function resolveClearHistory(\Illuminate\Http\Request $request): array {}
     protected function resolveEncryptHistory(\Illuminate\Http\Request $request): array {}

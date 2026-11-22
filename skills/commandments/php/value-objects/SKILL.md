@@ -55,7 +55,7 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

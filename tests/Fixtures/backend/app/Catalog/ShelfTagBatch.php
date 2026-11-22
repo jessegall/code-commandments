@@ -37,6 +37,6 @@ final class ShelfTagBatch
      */
     public function products(array $rows): array
     {
-        return array_map(fn (array $row): ProductData => ProductData::from($row), $rows);
+        return array_map(fn (array $row) => ProductData::from($row), $rows);
     }
 }

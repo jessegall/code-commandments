@@ -2472,6 +2472,9 @@
         "Laravel\\Mcp\\Server\\Tool": [
           "rules",
           "schema"
+        ],
+        "Illuminate\\Http\\Resources\\Json\\JsonResource": [
+          "toArray"
         ]
       },
       "tag": "contract-method",
@@ -3019,6 +3022,42 @@
     {
       "name": "migration",
       "type": "Illuminate\\Database\\Migrations\\Migration"
+    },
+    {
+      "name": "framework-config-file",
+      "type": "services"
+    },
+    {
+      "name": "path-helper",
+      "type": "base_path"
+    },
+    {
+      "name": "path-helper",
+      "type": "app_path"
+    },
+    {
+      "name": "path-helper",
+      "type": "storage_path"
+    },
+    {
+      "name": "path-helper",
+      "type": "resource_path"
+    },
+    {
+      "name": "path-helper",
+      "type": "config_path"
+    },
+    {
+      "name": "path-helper",
+      "type": "database_path"
+    },
+    {
+      "name": "path-helper",
+      "type": "public_path"
+    },
+    {
+      "name": "path-helper",
+      "type": "lang_path"
     }
   ],
   "forwards": [

@@ -169,28 +169,32 @@
         ]
       ]
     },
-    "privateElsewhere": {
+    "ownVocabulary": {
       "args": [
         "d",
+        "c",
         "a"
       ],
       "expr": [
         "and",
         [
           "=",
-          "$d.kind",
-          "declarator"
-        ],
-        [
-          "=",
-          "$d.parent.effective.visibility",
-          "private"
+          [
+            "enclosing",
+            "$d",
+            "type"
+          ],
+          [
+            "enclosing",
+            "$c",
+            "type"
+          ]
         ],
         [
           "!=",
           [
             "enclosing",
-            "$d",
+            "$c",
             "type"
           ],
           [
@@ -294,11 +298,12 @@
               [
                 "proven",
                 [
-                  "privateElsewhere",
+                  "ownVocabulary",
                   [
                     "declarationOf",
                     "$g.value"
                   ],
+                  "$c",
                   "$a"
                 ]
               ]
@@ -348,6 +353,21 @@
                 "=",
                 "$w",
                 "$a.value.value"
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "ownVocabulary",
+                  [
+                    "declarationOf",
+                    "$g.value"
+                  ],
+                  "$c",
+                  "$a"
+                ]
               ]
             ]
           ]
