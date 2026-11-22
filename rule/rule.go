@@ -116,6 +116,7 @@ var parameterTypes = map[string]func(any) bool{
 type definition struct {
 	Args []string `json:"args"`
 	Expr Expr     `json:"expr"`
+	Kept bool     `json:"kept,omitempty"`
 }
 
 // find is the query: select the nodes to judge and bind each to as, keep those where holds, bind let's names in order,
@@ -470,7 +471,7 @@ var knownKeys = []string{
 	"$schema", "engine", "sin", "parameters", "type", "default", "definitions", "find", "requires", "ecosystem", "version",
 	"scaffolds", "path", "stub", "frontend", "reporting", "crossFile", "runsLast", "requiresBestDesign", "advice",
 	"unpublished", "judges", "tags", "name", "aliases", "skill", "description",
-	"rule", "suggestion", "args", "expr", "select", "as", "where", "let", "having", "emit", "from", "pipeline", "relations",
+	"rule", "suggestion", "args", "expr", "kept", "select", "as", "where", "let", "having", "emit", "from", "pipeline", "relations",
 }
 
 // formatOf refuses a file in any format but commandments:neutral-rule/v2, naming the old step it is written with.

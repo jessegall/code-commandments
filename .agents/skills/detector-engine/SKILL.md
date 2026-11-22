@@ -55,6 +55,15 @@ schema` prints every operator: logic (`and`, `or`, `not`, `case`), lists (`some`
 > Smell test: if you are about to compare a name with a list, or `startsWith` a class name, stop: the tree's
 > kind, role or resolved type already answers it. A name check is a smell to justify, not a default.
 
+## What a judging keeps
+
+A definition sees only its own arguments, so the evaluator keeps its answer for the whole judging by the values it is
+handed. It does so by itself for a definition that reads the whole program (`referrers`, `overriders`, `subtypes`,
+`programEnums`, `programTexts`, or a definition that calls one), and for one written `"kept": true`. So gather what
+repeats per site into a definition taking what it depends on: a callee's calls as `callsOf(callee)`, a type's chain as
+`chainOf(declared)`. Write `kept` only where many sites ask with the same arguments; a definition asked once per node
+gains nothing from it and costs memory.
+
 ## Testing
 
 `commandments rule try <file> <path> --work` runs one rule and counts its cost; `fixture/rules_test.go`

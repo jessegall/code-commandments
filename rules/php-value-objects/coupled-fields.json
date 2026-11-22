@@ -706,6 +706,99 @@
         "t"
       ],
       "expr": [
+        "clumpAmong",
+        "$t",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "members",
+                  "$t"
+                ],
+                "m",
+                [
+                  "=",
+                  "$m.kind",
+                  "function"
+                ]
+              ],
+              "m",
+              [
+                "bodyAndBelow",
+                "$m"
+              ]
+            ]
+          ],
+          "u",
+          [
+            "and",
+            [
+              "=",
+              "$u.kind",
+              "construction"
+            ],
+            [
+              "!=",
+              "$u.resolved.name",
+              "$t.symbol"
+            ]
+          ]
+        ]
+      ]
+    },
+    "handedIn": {
+      "args": [
+        "u",
+        "n"
+      ],
+      "expr": [
+        "some",
+        "$u.arguments",
+        "g",
+        [
+          "and",
+          [
+            "tree.selfField",
+            "$g.value"
+          ],
+          [
+            "=",
+            [
+              "readName",
+              "$g.value"
+            ],
+            "$n"
+          ]
+        ]
+      ]
+    },
+    "valueField": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "!=",
+        [
+          "typeCategory",
+          [
+            "typeOf",
+            "$m"
+          ]
+        ],
+        "named"
+      ]
+    },
+    "clumpAmong": {
+      "args": [
+        "t",
+        "built"
+      ],
+      "expr": [
         "some",
         [
           "ownFields",
@@ -765,43 +858,10 @@
                 "count",
                 [
                   "filter",
-                  [
-                    "flatten",
-                    [
-                      "map",
-                      [
-                        "filter",
-                        [
-                          "members",
-                          "$t"
-                        ],
-                        "m",
-                        [
-                          "=",
-                          "$m.kind",
-                          "function"
-                        ]
-                      ],
-                      "m",
-                      [
-                        "bodyAndBelow",
-                        "$m"
-                      ]
-                    ]
-                  ],
+                  "$built",
                   "u",
                   [
                     "and",
-                    [
-                      "=",
-                      "$u.kind",
-                      "construction"
-                    ],
-                    [
-                      "!=",
-                      "$u.resolved.name",
-                      "$t.symbol"
-                    ],
                     [
                       "handedIn",
                       "$u",
@@ -825,48 +885,6 @@
             ]
           ]
         ]
-      ]
-    },
-    "handedIn": {
-      "args": [
-        "u",
-        "n"
-      ],
-      "expr": [
-        "some",
-        "$u.arguments",
-        "g",
-        [
-          "and",
-          [
-            "tree.selfField",
-            "$g.value"
-          ],
-          [
-            "=",
-            [
-              "readName",
-              "$g.value"
-            ],
-            "$n"
-          ]
-        ]
-      ]
-    },
-    "valueField": {
-      "args": [
-        "m"
-      ],
-      "expr": [
-        "!=",
-        [
-          "typeCategory",
-          [
-            "typeOf",
-            "$m"
-          ]
-        ],
-        "named"
       ]
     }
   },

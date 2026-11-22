@@ -75,6 +75,7 @@ func Schema() []byte {
 					"properties": object{
 						"args": object{"type": "array", "items": object{"type": "string"}, "description": "The names its operands are bound to, read inside expr as $name."},
 						"expr": expression,
+						"kept": object{"type": "boolean", "description": "Keep its answer for the whole judging by the values it is handed, for a definition many sites ask with the same arguments. One that reads the whole program is kept without it."},
 					},
 				},
 			},

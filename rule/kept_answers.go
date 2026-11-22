@@ -9,12 +9,12 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// keptAnswers holds, for one judging, the answer of each definition that reads the whole program, by the values it
-// was handed and the language of the site asking: a definition sees only its own arguments, so the same arguments give
-// the same answer, and a callee's every call is gathered once instead of once for each of its calls.
+// keptAnswers holds, for one judging, the answer of each definition that reads the whole program or is written kept, by
+// the values it was handed and the language of the site asking: a definition sees only its own arguments, so the same
+// arguments give the same answer, and a callee's calls or a type's supertypes are gathered once, not once per site.
 type keptAnswers struct {
-	wholeTree map[string]bool
-	answers   sync.Map
+	kept    map[string]bool
+	answers sync.Map
 }
 
 var answersAsked atomic.Int64
@@ -46,18 +46,25 @@ func keepingAnswers(definitions map[string]definition) *keptAnswers {
 		}
 	}
 
-	return &keptAnswers{wholeTree: reads}
+	for name, defined := range definitions {
+		reads[name] = reads[name] || defined.Kept
+	}
+
+	return &keptAnswers{kept: reads}
 }
 
 func (k *keptAnswers) answer(name string, site engine.Match, arguments []value, ask func() value) value {
 	key, keyed := k.keyOf(name, site, arguments)
 	if !keyed {
+		engine.CountedCheck()
+
 		return ask()
 	}
 	if kept, found := k.answers.Load(key); found {
 		return kept.(value)
 	}
 	answersAsked.Add(1)
+	engine.CountedCheck()
 	answered := ask()
 	k.answers.Store(key, answered)
 
@@ -65,7 +72,7 @@ func (k *keptAnswers) answer(name string, site engine.Match, arguments []value, 
 }
 
 func (k *keptAnswers) keyOf(name string, site engine.Match, arguments []value) (answerKey, bool) {
-	if k == nil || !k.wholeTree[name] || len(arguments) > len(answerKey{}.arguments) {
+	if k == nil || !k.kept[name] || len(arguments) > len(answerKey{}.arguments) {
 		return answerKey{}, false
 	}
 	key := answerKey{definition: name}

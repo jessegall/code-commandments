@@ -49,6 +49,10 @@ func Since(before Work) Work {
 	}
 }
 
+func CountedCheck() {
+	checks.Add(1)
+}
+
 func CountedAnalysis() {
 	analyses.Add(1)
 }

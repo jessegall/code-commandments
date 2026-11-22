@@ -67,7 +67,7 @@ func compiled(read file) file {
 	made := read
 	made.Definitions = map[string]definition{}
 	for name, defined := range read.Definitions {
-		made.Definitions[name] = definition{defined.Args, ordered(defined.Expr, read.Definitions)}
+		made.Definitions[name] = definition{defined.Args, ordered(defined.Expr, read.Definitions), defined.Kept}
 	}
 	for _, written := range []**Expr{&made.Find.Where, &made.Find.Having} {
 		if *written != nil {

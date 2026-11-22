@@ -182,7 +182,7 @@ func sharedRelation(each Source) (relation, bool, error) {
 		brought.languages = judgedLanguages(judged)
 	}
 	for name, defined := range read.Definitions {
-		brought.definitions[prefix+name] = definition{defined.Args, renamed(defined.Expr, prefix, read.Definitions)}
+		brought.definitions[prefix+name] = definition{defined.Args, renamed(defined.Expr, prefix, read.Definitions), defined.Kept}
 	}
 
 	return brought, true, nil
@@ -288,7 +288,7 @@ func imported(call, defined string, own map[string]definition) map[string]defini
 			return
 		}
 		body := own[name]
-		taken[prefix+name] = definition{body.Args, renamed(body.Expr, prefix, own)}
+		taken[prefix+name] = definition{body.Args, renamed(body.Expr, prefix, own), body.Kept}
 		body.Expr.Each(func(each Expr) {
 			if _, local := own[each.Operator]; local {
 				bring(each.Operator)
