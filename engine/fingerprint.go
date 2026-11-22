@@ -102,6 +102,7 @@ type fingerprintWalk struct {
 	recovered bool
 	entered   bool
 	standsAs  *string
+	inlining  map[int]bool
 }
 
 // role is the node's role in its parent, left out for the subtree's own root: where a subtree sits is not what it is.
@@ -170,9 +171,15 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 
 		return
 	case w.how.Mode == "inlined" && node.Kind == "reference" && len(node.Linked("binding")) == 1:
-		if value, once := m.assignedOnce(node.Linked("binding")[0]); once {
+		binding := node.Linked("binding")[0]
+		if value, once := m.assignedOnce(binding); once && !w.inlining[binding] {
+			if w.inlining == nil {
+				w.inlining = map[int]bool{}
+			}
+			w.inlining[binding] = true
 			w.standsAs = &role
 			w.write(out, value)
+			delete(w.inlining, binding)
 
 			return
 		}

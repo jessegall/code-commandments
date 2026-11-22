@@ -142,11 +142,16 @@ func TestAWrittenFileResolvesWhatAFileOnlyReadDeclares(t *testing.T) {
 	t.Fatal("Shelf.php was not written")
 }
 
-func TestAnAnonymousClassLendsItsMembersNoSymbol(t *testing.T) {
+func TestAnAnonymousClassGivesItsMembersItsOwnSymbol(t *testing.T) {
 	folder := written(t, map[string]string{"Outer.php": "<?php\nnamespace Shop;\nclass Outer { public function make() { return new class { public function inner() {} }; } }\n"})
 	file := bridged(t, folder).Files[0]
-	if inner := find(file, func(n *contract.Node) bool { return n.Kind == "function" && named(n, "inner") }); inner.Symbol != "" {
-		t.Errorf("the anonymous class's method is %s", inner.Symbol)
+	inner := find(file, func(n *contract.Node) bool { return n.Kind == "function" && named(n, "inner") })
+	if inner == nil || !strings.HasPrefix(inner.Symbol, `Shop\class@anonymous@Outer.php:`) || !strings.HasSuffix(inner.Symbol, "::inner") {
+		t.Errorf("the anonymous class's method is %v, not a member of the anonymous class", inner)
+	}
+	anonymous := find(file, func(n *contract.Node) bool { return n.Kind == "type" && n.Facts != nil && n.Name == "" })
+	if anonymous == nil || anonymous.Symbol == "" {
+		t.Errorf("the anonymous class has no symbol of its own: %v", anonymous)
 	}
 }
 

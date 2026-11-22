@@ -87,3 +87,40 @@ class Ledger {
 		t.Errorf("the field reads after an anonymous class are typed %q, not App\\Clock twice", typed)
 	}
 }
+
+func TestAPhpArrayOrScalarIsTypedAsCopiedByValue(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+class Registry {
+    private array $entries = [];
+    private Registry $parent;
+    public function entries(): array { return $this->entries; }
+    public function parent(): Registry { return $this->parent; }
+}
+`)
+	copied := map[string]bool{}
+	for _, access := range codebase.WhereKind("access").Get() {
+		member, _ := access.Single("member")
+		copied[member.Node().Name] = access.Typed().IsValueType()
+	}
+	if !copied["entries"] || copied["parent"] {
+		t.Errorf("an array field and an object field read as copied by value %v, not only the array", copied)
+	}
+}
+
+func TestAnInlinedFingerprintOfAValueThatReadsItsOwnBindingEnds(t *testing.T) {
+	codebase := phpSource(t, `<?php
+namespace App;
+class Slugger {
+    public function slug(string $text): string {
+        $text = trim($text);
+        return $text;
+    }
+}
+`)
+	for _, function := range codebase.WhereKind("function").Get() {
+		if written, _ := function.FingerprintAs(engine.Fingerprinting{Mode: "inlined"}); written == "" {
+			t.Errorf("the inlined fingerprint of %s is empty", function.Node().Name)
+		}
+	}
+}

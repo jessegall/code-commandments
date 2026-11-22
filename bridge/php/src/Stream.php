@@ -40,7 +40,7 @@ final readonly class Stream
         $judged = array_values(array_filter($files, $this->request->judges(...)));
         foreach ($files as $path) {
             $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
-            $types->declare($this->read($this->request->contents[$path] ?? (string) file_get_contents($path), $parser)[1], $path);
+            $types->declare($this->read($this->request->contents[$path] ?? (string) file_get_contents($path), $parser, $path)[1], $path);
         }
         $autoload = $this->autoload();
         if ($autoload !== null && $this->loadFailure($autoload) === '') {
@@ -49,7 +49,7 @@ final readonly class Stream
         }
         foreach ($judged as $path) {
             $code = $this->request->contents[$path] ?? (string) file_get_contents($path);
-            [, $statements, $errors, $tokens] = $this->read($code, $parser);
+            [, $statements, $errors, $tokens] = $this->read($code, $parser, $path);
             $types->infer($statements, $path);
             $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types);
             $this->line($out, ['file' => $file]);
@@ -67,11 +67,11 @@ final readonly class Stream
      *
      * @return array{string, list<\PhpParser\Node>, Collecting, array}
      */
-    private function read(string $code, Parser $parser): array
+    private function read(string $code, Parser $parser, string $path): array
     {
         $errors = new Collecting();
         $statements = $parser->parse($code, $errors) ?? [];
-        $statements = (new NodeTraverser(new NameResolver($errors, ['preserveOriginalNames' => true])))->traverse($statements);
+        $statements = (new NodeTraverser(new NameResolver($errors, ['preserveOriginalNames' => true]), new AnonymousClassNames(basename($path))))->traverse($statements);
 
         return [$code, $statements, $errors, $parser->getTokens()];
     }

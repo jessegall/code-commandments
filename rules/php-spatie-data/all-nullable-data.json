@@ -58,6 +58,34 @@
           "Spatie\\LaravelData\\Optional"
         ]
       ]
+    },
+    "declaresNull": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "and",
+        [
+          "spatie.nullable",
+          "$s.declaredType"
+        ],
+        [
+          "not",
+          [
+            "and",
+            [
+              "=",
+              "$s.declaredType.form",
+              "keyword"
+            ],
+            [
+              "=",
+              "$s.declaredType.name",
+              "mixed"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -79,6 +107,10 @@
     ],
     "having": [
       "and",
+      [
+        "nonempty",
+        "$t.name"
+      ],
       [
         "spatie.isData",
         "$t"
@@ -108,6 +140,15 @@
         [
           "spatie.nullable",
           "$s.declaredType"
+        ]
+      ],
+      [
+        "some",
+        "$slots",
+        "s",
+        [
+          "declaresNull",
+          "$s"
         ]
       ],
       [

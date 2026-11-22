@@ -84,6 +84,8 @@ final class Translator
      */
     private array $typeSpans = [];
 
+    private const COPIED_KEYWORDS = ['array', 'string', 'int', 'float', 'bool', 'true', 'false'];
+
     private const COMPARISONS = [
         'Expr_BinaryOp_Identical' => 'identical', 'Expr_BinaryOp_NotIdentical' => 'not-identical', 'Expr_BinaryOp_Equal' => 'equal',
         'Expr_BinaryOp_NotEqual' => 'not-equal', 'Expr_BinaryOp_Smaller' => 'less', 'Expr_BinaryOp_SmallerOrEqual' => 'less-or-equal',
@@ -927,6 +929,7 @@ final class Translator
             'name' => $type['name'] ?? $type['keyword'] ?? null,
             'nullable' => (bool) ($type['nullable'] ?? false),
             'origin' => 'compiler',
+            'valueType' => in_array($type['keyword'] ?? null, self::COPIED_KEYWORDS, true) ? true : null,
         ], static fn (mixed $value): bool => $value !== null);
         $at = array_search($written, $this->types, true);
         if ($at === false) {

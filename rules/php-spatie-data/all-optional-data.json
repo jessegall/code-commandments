@@ -148,6 +148,62 @@
           ]
         ]
       ]
+    },
+    "mergedAsArray": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "some",
+        [
+          "referrers",
+          "$t"
+        ],
+        "tr",
+        [
+          "and",
+          [
+            "=",
+            "$tr.role",
+            "declaredType"
+          ],
+          [
+            "=",
+            "$tr.parent.kind",
+            "parameter"
+          ],
+          [
+            "!=",
+            [
+              "enclosing",
+              "$tr",
+              "type"
+            ],
+            "$t"
+          ],
+          [
+            "some",
+            [
+              "referrers",
+              "$tr.parent.binding"
+            ],
+            "u",
+            [
+              "and",
+              [
+                "=",
+                "$u.parent.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$u.parent.member.name",
+                "toArray"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -225,6 +281,10 @@
               "appliedPerField",
               "$t",
               "$slots"
+            ],
+            [
+              "mergedAsArray",
+              "$t"
             ]
           ]
         ]

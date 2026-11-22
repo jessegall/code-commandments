@@ -254,8 +254,25 @@
               [
                 "count",
                 [
-                  "referrers",
-                  "$f"
+                  "filter",
+                  [
+                    "referrers",
+                    "$f"
+                  ],
+                  "c",
+                  [
+                    "and",
+                    [
+                      "in",
+                      "$c.kind",
+                      "call",
+                      "construction"
+                    ],
+                    [
+                      "not",
+                      "$c.file.test"
+                    ]
+                  ]
                 ]
               ],
               1
@@ -263,18 +280,29 @@
             [
               "every",
               [
-                "referrers",
-                "$f"
+                "filter",
+                [
+                  "referrers",
+                  "$f"
+                ],
+                "c",
+                [
+                  "and",
+                  [
+                    "in",
+                    "$c.kind",
+                    "call",
+                    "construction"
+                  ],
+                  [
+                    "not",
+                    "$c.file.test"
+                  ]
+                ]
               ],
               "o",
               [
                 "and",
-                [
-                  "in",
-                  "$o.kind",
-                  "call",
-                  "construction"
-                ],
                 [
                   ">",
                   [
