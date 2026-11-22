@@ -85,9 +85,17 @@
                   "eq"
                 ],
                 [
-                  "=",
-                  "$g.value.value",
-                  "false"
+                  "or",
+                  [
+                    "=",
+                    "$g.value.value",
+                    "false"
+                  ],
+                  [
+                    "=",
+                    "$g.value.value",
+                    false
+                  ]
                 ]
               ]
             ]
@@ -184,9 +192,17 @@
                     "init"
                   ],
                   [
-                    "=",
-                    "$g.value.value",
-                    "false"
+                    "or",
+                    [
+                      "=",
+                      "$g.value.value",
+                      "false"
+                    ],
+                    [
+                      "=",
+                      "$g.value.value",
+                      false
+                    ]
                   ]
                 ]
               ]

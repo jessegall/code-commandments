@@ -831,7 +831,7 @@ func (e evaluation) typeDeclared(v value) (engine.Match, bool) {
 func (e evaluation) subtypesBySupertype() map[string][]engine.Match {
 	return engine.Analysis(e.codebase, subtypesKey{}, func(*engine.Codebase) map[string][]engine.Match {
 		below := map[string][]engine.Match{}
-		for _, each := range e.codebase.WhereKind("type").Get() {
+		for _, each := range e.codebase.WhereKindReadAsContext("type").Get() {
 			above, _ := e.supertypes(each)
 			for _, symbol := range above {
 				below[symbol] = append(below[symbol], each)

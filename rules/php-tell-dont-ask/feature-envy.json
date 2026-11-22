@@ -433,18 +433,21 @@
         ],
         "u",
         [
-          "and",
+          "proven",
           [
-            "=",
-            "$u.kind",
-            "reference"
-          ],
-          [
-            "sameSymbol",
-            "$u",
+            "and",
             [
-              "elementOf",
-              "$h"
+              "=",
+              "$u.kind",
+              "reference"
+            ],
+            [
+              "sameSymbol",
+              "$u",
+              [
+                "elementOf",
+                "$h"
+              ]
             ]
           ]
         ]

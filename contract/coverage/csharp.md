@@ -22,7 +22,6 @@ and calls inside are still read) or translates with a loss, and why.
 | Item | Why |
 |---|---|
 | `fact/*/conversion` | `conversion` is the `!r` of Python's f-string. A C# `{x:F2}` format clause or `{x,10}` alignment is formatting, not a conversion of the value; if you read it as owed, the place is the `InterpolatedStringExpressionSyntax` arm of `Translated()`. |
-| `fact/argument/spread` | C# has no call-site spread; `..` exists only inside a collection expression (an `entry`, proven by a sample below). |
 | `fact/arm/fallsThrough` | C# forbids falling out of a `case`; stacked labels (`case 1: case 2:`) are one arm with two patterns. |
 | `fact/break/depth` | PHP's `break 2`. |
 | `fact/continue/depth` | PHP's `break 2`. |

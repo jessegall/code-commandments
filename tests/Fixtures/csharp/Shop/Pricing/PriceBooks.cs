@@ -1,10 +1,10 @@
 namespace Shop.Pricing;
 
+public sealed record PriceTier(decimal Amount);
+
 public sealed class PriceBook
 {
-    public string Currency { get; init; } = "EUR";
-
-    public Dictionary<int, decimal> PricesByProduct { get; } = new();
+    public Dictionary<int, PriceTier> Tiers { get; } = new();
 }
 
 public static class Quotes
@@ -12,8 +12,8 @@ public static class Quotes
     // @sin ParamResolvedFromParam
     public static string Quote(PriceBook book, int productId, int units)
     {
-        var price = book.PricesByProduct[productId];
+        var tier = book.Tiers[productId];
 
-        return $"{units * price:0.00} {book.Currency}";
+        return $"{units * tier.Amount:0.00}";
     }
 }

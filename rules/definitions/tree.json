@@ -398,6 +398,13 @@
             "reference"
           ],
           [
+            "not",
+            [
+              "isSelf",
+              "$x"
+            ]
+          ],
+          [
             "exists",
             [
               "declarationOf",

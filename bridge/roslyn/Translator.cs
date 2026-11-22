@@ -717,6 +717,9 @@ public sealed partial class ContractWriter
                 .HoldsAll("arguments", call.ArgumentList.Arguments.Select(Argument)),
             ObjectCreationExpressionSyntax creation => Construction(creation, creation.Type, creation.ArgumentList, creation.Initializer),
             ImplicitObjectCreationExpressionSyntax creation => Construction(creation, null, creation.ArgumentList, creation.Initializer),
+            WithExpressionSyntax copy => New("construction", copy).HoldsAll("arguments", new[] { New("argument", copy.Expression).Fact("spread", "keyed").Holds("value", Expression(copy.Expression)) }
+                .Concat(copy.Initializer.Expressions.OfType<AssignmentExpressionSyntax>().Where(each => each.Left is IdentifierNameSyntax)
+                    .Select(each => New("argument", each).Fact("label", ((IdentifierNameSyntax)each.Left).Identifier.ValueText).Holds("value", Expression(each.Right))))),
             AnonymousObjectCreationExpressionSyntax anonymous => New("collection", anonymous).Fact("form", "object").HoldsAll("entries", anonymous.Initializers.Select(member => New("entry", member)
                 .Holds("key", member.NameEquals is null ? null : Reference(member.NameEquals.Name, member.NameEquals.Name.Identifier.ValueText))
                 .Holds("value", Expression(member.Expression)))),
@@ -734,7 +737,7 @@ public sealed partial class ContractWriter
             AssignmentExpressionSyntax assignment => Assignment(assignment),
             BinaryExpressionSyntax binary => Binary(binary),
             PrefixUnaryExpressionSyntax prefix => Prefix(prefix),
-            PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven => New("unary", forgiven).Fact("operator", "assert-present").Holds("operand", Expression(forgiven.Operand)),
+            PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven => New("unary", forgiven).Fact("operator", "assert-present").Holds("operand", Typed(Expression(forgiven.Operand), model.GetTypeInfo(forgiven.Operand).Type)),
             PostfixUnaryExpressionSyntax postfix => New("assignment", postfix)
                 .Fact("mode", postfix.IsKind(SyntaxKind.PostIncrementExpression) ? "increment" : "decrement")
                 .HoldsAll("targets", [Expression(postfix.Operand)]),

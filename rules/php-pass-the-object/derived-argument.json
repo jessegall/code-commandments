@@ -331,12 +331,6 @@
         [
           "and",
           [
-            "in",
-            "$c.callee.subject.form",
-            "self",
-            "static"
-          ],
-          [
             "has",
             [
               "functionRole",
@@ -347,6 +341,21 @@
               ]
             ],
             "named-constructor"
+          ],
+          [
+            "or",
+            [
+              "in",
+              "$c.callee.subject.form",
+              "self",
+              "static"
+            ],
+            [
+              "in",
+              "$c.type.name",
+              "self",
+              "static"
+            ]
           ]
         ]
       ]

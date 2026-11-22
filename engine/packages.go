@@ -3,6 +3,7 @@ package engine
 import (
 	"encoding/json"
 	"encoding/xml"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -171,15 +172,12 @@ func readManifests(folder string, versions map[string]map[string]string) {
 			versions[ecosystem][name] = strings.TrimPrefix(version, "v")
 		}
 	}
-	if text, err := os.ReadFile(filepath.Join(folder, "composer.lock")); err == nil && versions[Composer] == nil {
-		var lock struct {
-			Packages    []struct{ Name, Version string } `json:"packages"`
-			PackagesDev []struct{ Name, Version string } `json:"packages-dev"`
-		}
-		if json.Unmarshal(text, &lock) == nil {
-			versions[Composer] = map[string]string{}
-			for _, each := range slices.Concat(lock.Packages, lock.PackagesDev) {
-				add(Composer, each.Name, each.Version)
+	if held, read := composerPackages(folder); read && versions[Composer] == nil {
+		versions[Composer] = map[string]string{}
+		for _, each := range held {
+			add(Composer, each.Name, each.Version)
+			for _, stands := range slices.Concat(slices.Collect(maps.Keys(each.Replace)), slices.Collect(maps.Keys(each.Provide))) {
+				add(Composer, stands, each.Version)
 			}
 		}
 	}
@@ -417,4 +415,49 @@ func ExemptionTags() []ExemptionTag {
 	slices.SortFunc(tags, func(a, b ExemptionTag) int { return strings.Compare(a.Tag+a.Package, b.Tag+b.Package) })
 
 	return tags
+}
+
+type composerPackage struct {
+	Name    string            `json:"name"`
+	Version string            `json:"version"`
+	Replace map[string]string `json:"replace"`
+	Provide map[string]string `json:"provide"`
+}
+
+// composerPackages are the packages a folder's composer.lock and vendor/composer/installed.json name, the second
+// written either as composer 2's {"packages": [...]} or composer 1's bare list.
+func composerPackages(folder string) ([]composerPackage, bool) {
+	var held []composerPackage
+	read := false
+	if text, err := os.ReadFile(filepath.Join(folder, "composer.lock")); err == nil {
+		var lock struct {
+			Packages    []composerPackage `json:"packages"`
+			PackagesDev []composerPackage `json:"packages-dev"`
+		}
+		if json.Unmarshal(text, &lock) == nil {
+			held, read = slices.Concat(lock.Packages, lock.PackagesDev), true
+		}
+	}
+	if text, err := os.ReadFile(filepath.Join(folder, "vendor", "composer", "installed.json")); err == nil {
+		var installed struct {
+			Packages []composerPackage `json:"packages"`
+		}
+		var listed []composerPackage
+		if json.Unmarshal(text, &installed) == nil {
+			held, read = append(held, installed.Packages...), true
+		} else if json.Unmarshal(text, &listed) == nil {
+			held, read = append(held, listed...), true
+		}
+	}
+
+	return held, read
+}
+
+// PackagesIn is every package a folder's own manifests say the project holds, by ecosystem, each with its version
+// where the manifest states one.
+func PackagesIn(folder string) map[string]map[string]string {
+	versions := map[string]map[string]string{}
+	readManifests(folder, versions)
+
+	return versions
 }

@@ -2,9 +2,6 @@
 package sins
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -74,33 +71,4 @@ func (d Definition) Scopes(query string) bool {
 
 func (d Definition) Names() []string {
 	return append([]string{d.Name}, d.Formerly...)
-}
-
-func (p Package) InstalledIn(root string) bool {
-	if p.Ecosystem != Composer {
-		return true
-	}
-	content, err := os.ReadFile(filepath.Join(root, "vendor", "composer", "installed.json"))
-	if err != nil {
-		return false
-	}
-	var installed struct {
-		Packages []struct {
-			Name    string            `json:"name"`
-			Replace map[string]string `json:"replace"`
-			Provide map[string]string `json:"provide"`
-		} `json:"packages"`
-	}
-	if json.Unmarshal(content, &installed) != nil {
-		return true
-	}
-	for _, each := range installed.Packages {
-		_, replaced := each.Replace[p.Name]
-		_, provided := each.Provide[p.Name]
-		if each.Name == p.Name || replaced || provided {
-			return true
-		}
-	}
-
-	return false
 }

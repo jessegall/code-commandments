@@ -61,9 +61,81 @@
               "$c.parent.nullConditional",
               true
             ]
+          ],
+          "declarator": [
+            "some",
+            [
+              "referrers",
+              "$c.parent.binding"
+            ],
+            "r",
+            [
+              "absentThrows",
+              "$r"
+            ]
           ]
         },
         false
+      ]
+    },
+    "absentThrows": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$r.parent.kind",
+          "comparison"
+        ],
+        [
+          "in",
+          "$r.parent.operator",
+          "equal",
+          "identical"
+        ],
+        [
+          "some",
+          "$r.parent.operands",
+          "o",
+          [
+            "and",
+            [
+              "=",
+              "$o.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$o.literalKind",
+              "null"
+            ]
+          ]
+        ],
+        [
+          "=",
+          "$r.parent.role",
+          "condition"
+        ],
+        [
+          "=",
+          "$r.parent.parent.kind",
+          "if"
+        ],
+        [
+          "some",
+          [
+            "tree.insideOf",
+            "$r.parent.parent.then"
+          ],
+          "t",
+          [
+            "=",
+            "$t.kind",
+            "throw"
+          ]
+        ]
       ]
     }
   },

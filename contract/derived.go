@@ -6,8 +6,14 @@ func derive(file *File) {
 	for _, node := range file.nodes {
 		if declares(node) {
 			written, made := node.Facts.Effective, effective(node, file.Language)
-			if written != nil && written.Visibility != "" {
-				made.Visibility = written.Visibility
+			if written != nil {
+				if written.Visibility != "" {
+					made.Visibility = written.Visibility
+				}
+				made.Static = made.Static || written.Static
+				made.Abstract = made.Abstract || written.Abstract
+				made.Final = made.Final || written.Final
+				made.Readonly = made.Readonly || written.Readonly
 			}
 			node.Own().Effective = made
 		}

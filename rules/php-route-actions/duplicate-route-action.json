@@ -264,28 +264,18 @@
       {
         "join": "laravel-route-actions",
         "as": "own",
+        "mode": "semi",
         "on": {
           "action": "$key"
         }
       },
       {
-        "where": [
-          "exists",
-          "$own"
-        ]
-      },
-      {
         "join": "laravel-route-actions",
         "as": "registered",
+        "mode": "anti",
         "on": {
           "action": "$delegate"
         }
-      },
-      {
-        "reject": [
-          "exists",
-          "$registered"
-        ]
       },
       {
         "groupBy": "$operation"

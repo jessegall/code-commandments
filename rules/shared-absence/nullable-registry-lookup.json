@@ -67,54 +67,67 @@
             "assignment"
           ],
           [
-            "some",
+            "=",
             [
-              "ownDescendants",
+              "count",
               [
-                "enclosing",
-                "$c",
-                "function"
+                "ownDescendants",
+                [
+                  "enclosing",
+                  "$c",
+                  "function"
+                ],
+                "throw"
               ]
             ],
-            "x",
+            0
+          ],
+          [
+            "some",
+            "$c.parent.targets",
+            "t",
             [
-              "and",
+              "some",
               [
-                "=",
-                "$x.kind",
-                "comparison"
-              ],
-              [
-                "some",
-                "$x.operands",
-                "o",
+                "ownDescendants",
                 [
-                  "tree.nullish",
-                  "$o"
+                  "enclosing",
+                  "$c",
+                  "function"
                 ]
               ],
+              "x",
               [
-                "some",
-                "$x.operands",
-                "o",
+                "and",
                 [
-                  "and",
+                  "=",
+                  "$x.kind",
+                  "comparison"
+                ],
+                [
+                  "some",
+                  "$x.operands",
+                  "o",
                   [
-                    "=",
-                    "$o.kind",
-                    "reference"
-                  ],
+                    "tree.nullish",
+                    "$o"
+                  ]
+                ],
+                [
+                  "some",
+                  "$x.operands",
+                  "o",
                   [
-                    "=",
-                    "$o.name",
+                    "and",
                     [
-                      "get",
-                      [
-                        "at",
-                        "$c.parent.targets",
-                        0
-                      ],
-                      "name"
+                      "=",
+                      "$o.kind",
+                      "reference"
+                    ],
+                    [
+                      "=",
+                      "$o.name",
+                      "$t.name"
                     ]
                   ]
                 ]

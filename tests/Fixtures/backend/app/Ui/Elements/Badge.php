@@ -4,7 +4,7 @@ namespace Shop\Ui\Elements;
 
 use JesseGall\CodeCommandments\Sins\Backend\NamespaceDependency;
 use JesseGall\CodeCommandments\Testing\Fixed;
-use JesseGall\CodeCommandments\Testing\Sinful;
+// @sin NamespaceDependency
 use Shop\Ui\Shared\Panel;
 use Shop\Ui\Tokens\Accent;
 
@@ -20,7 +20,6 @@ final class Badge
      * Panel — the thing Shared assembles FROM badges. Elements can no longer be read, reused or
      * moved without Shared coming along.
      */
-    #[Sinful(NamespaceDependency::class)]
     public function inPanel(): Panel
     {
         return new Panel($this->label);

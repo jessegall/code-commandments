@@ -116,7 +116,7 @@
           ],
           [
             "=",
-            "$x.parent.nullConditional",
+            "$x.nullConditional",
             true
           ]
         ]

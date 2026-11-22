@@ -79,3 +79,12 @@ public static class Shapes
         }
     }
 }
+
+public static class Resizes
+{
+    public static Circle Grown(Circle circle) =>
+        // @contract kind/construction at 9
+        // @contract fact/argument/spread at 9 = "keyed"
+        // @contract fact/argument/label at 23 = "Radius"
+        circle with { Radius = 2 };
+}

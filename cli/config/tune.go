@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/engine"
 	"maps"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
@@ -51,8 +53,15 @@ type Installed func(sins.Package) bool
 func InstalledIn(folder string) Installed {
 	root := composerProjectOf(folder)
 
+	held := engine.PackagesIn(root)
+
 	return func(required sins.Package) bool {
-		return required.InstalledIn(root)
+		if required.Ecosystem != sins.Composer {
+			return true
+		}
+		_, installed := held[string(required.Ecosystem)][strings.ToLower(required.Name)]
+
+		return installed
 	}
 }
 

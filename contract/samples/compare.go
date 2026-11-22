@@ -345,6 +345,9 @@ func WithoutMarkers(language contract.Language, source []byte, file *contract.Fi
 	}
 	kept := *file
 	kept.Comments = slices.DeleteFunc(slices.Clone(file.Comments), func(comment contract.Comment) bool { return starts[comment.Span.Start] })
+	for at := range kept.Comments {
+		kept.Comments[at].ID = at
+	}
 
 	return &kept
 }

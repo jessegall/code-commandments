@@ -263,6 +263,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`construction`**: `type?` (the type written after `new`, or an anonymous class's `type`), `callee?` (a
   call of a class: Python `Money(...)`, which the compiler resolves to a construction; its type arguments are the
   written type's own, `List<int>`), `arguments[]`, `initializer?` (a C# object or collection initializer, a `collection`). Fact `target`.
+  C#'s `x with { A = 1 }` is a construction of `x`'s type: its first argument is `x` with `spread` `keyed`, then one
+  labelled argument per member it sets.
 - **`argument`**: `value`. Facts `label?` (a named argument's name), `passing` (`value`, `reference`, `out`,
   `in`), `spread` (`none`, `positional`, `keyed`).
 - **`access`**: `subject`, `member` (a `reference` naming the member). Facts `form` (`instance`, `static`),

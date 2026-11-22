@@ -21,7 +21,7 @@ from mypy.errors import CompileError
 from mypy.nodes import GDEF, MDEF, CallExpr, Decorator, Expression, FakeInfo, FuncBase, MemberExpr, MypyFile, NameExpr, OverloadedFuncDef, RefExpr, TypeInfo, Var
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
-from mypy.types import AnyType, FunctionLike, Instance, LiteralType, NoneType, ProperType, TupleType, Type, TypeVarType, UnionType, get_proper_type
+from mypy.types import AnyType, FunctionLike, Instance, LiteralType, NoneType, ProperType, TupleType, Type, TypeVarType, UnionType, get_proper_type, TypeType
 from mypy.typestate import reset_global_state
 from mypy.util import decode_python_encoding
 
@@ -358,6 +358,8 @@ def member_declaration(member: MemberExpr, types: dict[Expression, Type]) -> str
     if bound is not None and getattr(bound, "fullname", ""):
         return bound.fullname
     subject = get_proper_type(types[member.expr]) if member.expr in types else None
+    if isinstance(subject, TypeType):
+        subject = get_proper_type(subject.item)
     owner = subject.type if isinstance(subject, Instance) else subject.type_object() if isinstance(subject, FunctionLike) and subject.is_type_obj() else None
     declared = owner.get(member.name) if owner is not None else None
     return declared.node.fullname if declared is not None and declared.node is not None and getattr(declared.node, "fullname", "") else None

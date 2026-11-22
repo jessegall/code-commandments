@@ -86,7 +86,7 @@ final class Types
         $methods = [];
         $properties = [];
         foreach ($class->getMethods() as $method) {
-            $methods[strtolower($method->name->toString())] = ['name' => $method->name->toString(), 'returns' => $this->written($method->returnType, $name), 'static' => $method->isStatic()];
+            $methods[strtolower($method->name->toString())] = ['name' => $method->name->toString(), 'returns' => $this->written($method->returnType, null), 'static' => $method->isStatic()];
             if ($method->name->toLowerString() === '__construct') {
                 foreach ($method->params as $parameter) {
                     if ($parameter->flags !== 0 && $parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
@@ -352,7 +352,7 @@ final class Types
         if ($type instanceof Node\Name) {
             $name = $type->toString();
 
-            return in_array(strtolower($name), ['self', 'static'], true) ? ($class !== null ? ['name' => $class] : null) : ['name' => $name];
+            return in_array(strtolower($name), ['self', 'static'], true) ? ($class !== null ? ['name' => $class] : ['keyword' => strtolower($name)]) : ['name' => $name];
         }
 
         return null;
@@ -387,7 +387,7 @@ final class Types
         $call->setAttribute('target', ['symbol' => "{$declaring}::{$method['name']}", 'type' => $declaring, 'name' => $method['name']]);
         $returns = $method['returns'];
         if ($returns !== null && isset($returns['keyword']) && in_array($returns['keyword'], ['self', 'static'], true)) {
-            return ['name' => $receiver] + array_intersect_key($returns, ['nullable' => true]);
+            return ['name' => $receiver ?? $declaring] + array_intersect_key($returns, ['nullable' => true]);
         }
 
         return $returns;
@@ -584,7 +584,7 @@ final class Types
         $methods = [];
         foreach ($reflection->getMethods() as $method) {
             if ($method->getDeclaringClass()->getName() === $name) {
-                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), $name), 'static' => $method->isStatic()];
+                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), null), 'static' => $method->isStatic()];
             }
         }
         $properties = [];
@@ -620,9 +620,13 @@ final class Types
         }
         $nullable = $type->allowsNull() && $type->getName() !== 'null' && $type->getName() !== 'mixed' ? ['nullable' => true] : [];
         if ($type->isBuiltin()) {
-            return in_array($type->getName(), ['self', 'static'], true) ? ['name' => $class] + $nullable : ['keyword' => $type->getName()] + $nullable;
+            return in_array($type->getName(), ['self', 'static'], true) && $class !== null ? ['name' => $class] + $nullable : ['keyword' => $type->getName()] + $nullable;
         }
 
-        return ['name' => in_array(strtolower($type->getName()), ['self', 'static'], true) ? $class : $type->getName()] + $nullable;
+        if (in_array(strtolower($type->getName()), ['self', 'static'], true)) {
+            return ($class !== null ? ['name' => $class] : ['keyword' => strtolower($type->getName())]) + $nullable;
+        }
+
+        return ['name' => $type->getName()] + $nullable;
     }
 }

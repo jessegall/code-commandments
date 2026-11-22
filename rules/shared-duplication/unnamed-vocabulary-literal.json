@@ -87,6 +87,73 @@
         },
         null
       ]
+    },
+    "memberWord": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "case",
+        "$m.kind",
+        {
+          "enum-case": [
+            "writtenLiteral",
+            "$m.value"
+          ],
+          "constant": [
+            "writtenLiteral",
+            [
+              "at",
+              [
+                "map",
+                "$m.declarators",
+                "d",
+                "$d.initializer"
+              ],
+              0
+            ]
+          ],
+          "field": [
+            "writtenLiteral",
+            [
+              "at",
+              [
+                "map",
+                "$m.declarators",
+                "d",
+                "$d.initializer"
+              ],
+              0
+            ]
+          ]
+        },
+        null
+      ]
+    },
+    "typeWords": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          "$t.writtenMembers",
+          "m",
+          [
+            "in",
+            "$m.kind",
+            "enum-case",
+            "constant",
+            "field"
+          ]
+        ],
+        "m",
+        [
+          "memberWord",
+          "$m"
+        ]
+      ]
     }
   },
   "find": {
@@ -143,36 +210,86 @@
       ]
     ],
     "having": [
-      "some",
-      "$siblings",
-      "c",
+      "or",
       [
         "some",
-        "$c.arguments",
-        "g",
+        "$siblings",
+        "c",
         [
-          "and",
+          "some",
+          "$c.arguments",
+          "g",
           [
-            "=",
+            "and",
             [
-              "position",
-              "$g"
+              "=",
+              [
+                "position",
+                "$g"
+              ],
+              "$at"
             ],
-            "$at"
-          ],
-          [
-            "in",
-            "$g.value.kind",
-            "reference",
-            "access"
-          ],
-          [
-            "=",
             [
-              "constantWord",
-              "$g.value"
+              "in",
+              "$g.value.kind",
+              "reference",
+              "access"
             ],
-            "$a.value.value"
+            [
+              "=",
+              [
+                "constantWord",
+                "$g.value"
+              ],
+              "$a.value.value"
+            ]
+          ]
+        ]
+      ],
+      [
+        "some",
+        "$siblings",
+        "c",
+        [
+          "some",
+          "$c.arguments",
+          "g",
+          [
+            "and",
+            [
+              "=",
+              [
+                "position",
+                "$g"
+              ],
+              "$at"
+            ],
+            [
+              "in",
+              "$g.value.kind",
+              "reference",
+              "access"
+            ],
+            [
+              "some",
+              [
+                "typeWords",
+                [
+                  "enclosing",
+                  [
+                    "declarationOf",
+                    "$g.value"
+                  ],
+                  "type"
+                ]
+              ],
+              "w",
+              [
+                "=",
+                "$w",
+                "$a.value.value"
+              ]
+            ]
           ]
         ]
       ]
