@@ -31,12 +31,13 @@ func (r Rule) Trace(codebase *engine.Codebase, file string, first, last int) ([]
 		return nil, fmt.Errorf("%s reads rows through a pipeline; a trace follows a find that selects nodes", r.Name())
 	}
 	kinds, _ := selected(written.Select)
+	relations := rows{evaluation{definitions: asked.Definitions, parameters: r.parameters(), codebase: codebase}, codebase, written.Relations, map[string][]value{}}.relationRows
 	var traced []Traced
 	ask := func(site engine.Match, selectedValue value) {
 		if site.Line() < first || site.Line() > last || !strings.HasSuffix(site.File(), file) {
 			return
 		}
-		judging := evaluation{definitions: asked.Definitions, site: site, parameters: r.parameters(), codebase: codebase}
+		judging := evaluation{definitions: asked.Definitions, site: site, parameters: r.parameters(), codebase: codebase, relations: relations}
 		steps, whereHeld := judging.steps(written, selectedValue)
 		traced = append(traced, Traced{site, steps, whereHeld})
 	}

@@ -232,9 +232,12 @@
             0
           ],
           [
-            "!=",
-            "$owner.form",
-            "trait"
+            "not",
+            [
+              "boundThroughUsers",
+              "$p.parent",
+              "$owner"
+            ]
           ]
         ],
         [
@@ -507,5 +510,104 @@
         ]
       ]
     ]
+  },
+  "definitions": {
+    "boundThroughUsers": {
+      "args": [
+        "f",
+        "owner"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$owner.form",
+          "trait"
+        ],
+        [
+          "some",
+          [
+            "filter",
+            [
+              "map",
+              [
+                "referrers",
+                "$owner"
+              ],
+              "u",
+              [
+                "enclosing",
+                "$u",
+                "type"
+              ]
+            ],
+            "c",
+            [
+              "and",
+              [
+                "exists",
+                "$c"
+              ],
+              [
+                "!=",
+                "$c",
+                "$owner"
+              ]
+            ]
+          ],
+          "c",
+          [
+            "some",
+            [
+              "filter",
+              [
+                "map",
+                [
+                  "knownSupertypes",
+                  "$c"
+                ],
+                "s",
+                [
+                  "typeDeclaration",
+                  "$s"
+                ]
+              ],
+              "t",
+              [
+                "and",
+                [
+                  "exists",
+                  "$t"
+                ],
+                [
+                  "!=",
+                  "$t",
+                  "$owner"
+                ]
+              ]
+            ],
+            "t",
+            [
+              "some",
+              "$t.writtenMembers",
+              "m",
+              [
+                "and",
+                [
+                  "=",
+                  "$m.kind",
+                  "function"
+                ],
+                [
+                  "=",
+                  "$m.name",
+                  "$f.name"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
   }
 }
