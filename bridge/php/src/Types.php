@@ -86,7 +86,7 @@ final class Types
         $methods = [];
         $properties = [];
         foreach ($class->getMethods() as $method) {
-            $methods[strtolower($method->name->toString())] = ['name' => $method->name->toString(), 'returns' => $this->written($method->returnType, null), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract()];
+            $methods[strtolower($method->name->toString())] = ['name' => $method->name->toString(), 'returns' => $this->written($method->returnType, null), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract(), 'returnsClassOf' => self::classStringTemplate($method->getDocComment()?->getText() ?? false, array_map(static fn (Node\Param $parameter): string => $parameter->var instanceof Expr\Variable && is_string($parameter->var->name) ? $parameter->var->name : '', $method->params))];
             if ($method->name->toLowerString() === '__construct') {
                 foreach ($method->params as $parameter) {
                     if ($parameter->flags !== 0 && $parameter->var instanceof Expr\Variable && is_string($parameter->var->name)) {
@@ -563,6 +563,14 @@ final class Types
         $method = $this->methods($declaring)[strtolower($name)];
         $call->setAttribute('target', ['symbol' => "{$declaring}::{$method['name']}", 'type' => $declaring, 'name' => $method['name']]);
         $returns = $method['returns'];
+        $template = $method['returnsClassOf'] ?? null;
+        $argument = $template !== null ? $call->args[$template['position']] ?? null : null;
+        if ($argument instanceof Node\Arg && $argument->value instanceof Expr\ClassConstFetch && $argument->value->class instanceof Node\Name && $argument->value->name instanceof Node\Identifier && $argument->value->name->toLowerString() === 'class') {
+            $passed = $this->named($argument->value->class, $class);
+            if ($passed !== null) {
+                return ['name' => $passed] + ($template['nullable'] ? ['nullable' => true] : []);
+            }
+        }
         if ($returns !== null && isset($returns['keyword']) && in_array($returns['keyword'], ['self', 'static'], true)) {
             return ['name' => $receiver ?? $declaring] + array_intersect_key($returns, ['nullable' => true]);
         }
@@ -820,7 +828,7 @@ final class Types
         $methods = [];
         foreach ($reflection->getMethods() as $method) {
             if ($method->getDeclaringClass()->getName() === $name) {
-                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), null) ?? self::documentedReturn($method->getDocComment()), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract()];
+                $methods[strtolower($method->getName())] = ['name' => $method->getName(), 'returns' => $this->reflectedType($method->getReturnType(), null) ?? self::documentedReturn($method->getDocComment()), 'static' => $method->isStatic(), 'abstract' => $method->isAbstract(), 'returnsClassOf' => self::classStringTemplate($method->getDocComment(), array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $method->getParameters()))];
             }
         }
         $properties = [];
@@ -856,6 +864,34 @@ final class Types
      * to name it: a fully qualified class, or static, self and $this, which name the receiver. A generic argument is
      * dropped, and `|null` makes it nullable.
      */
+    /**
+     * Where a method's doc comment makes it return the class one parameter names (`@template T`,
+     * `@param class-string<T> $class`, `@return T`): that parameter's position, and whether the return admits null.
+     *
+     * @param  list<string>  $parameters
+     * @return array{position: int, nullable: bool}|null
+     */
+    private static function classStringTemplate(string|false $doc, array $parameters): ?array
+    {
+        if ($doc === false || preg_match_all('/@template\s+(\w+)/', $doc, $templates) === 0) {
+            return null;
+        }
+        foreach ($templates[1] as $template) {
+            if (preg_match('/@param\s+class-string<' . $template . '>\s+\$(\w+)/', $doc, $parameter) !== 1) {
+                continue;
+            }
+            if (preg_match('/@return\s+(\?)?' . $template . '(\|null)?(?![\w<])/', $doc, $returned) !== 1) {
+                continue;
+            }
+            $position = array_search($parameter[1], $parameters, true);
+            if ($position !== false) {
+                return ['position' => $position, 'nullable' => ($returned[1] ?? '') !== '' || ($returned[2] ?? '') !== ''];
+            }
+        }
+
+        return null;
+    }
+
     private static function documentedReturn(string|false $doc): ?array
     {
         if ($doc === false || preg_match('/@return\s+((?:[^\s<]|<[^>]*>)+)/', $doc, $found) !== 1) {
