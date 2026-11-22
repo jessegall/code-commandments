@@ -27,6 +27,14 @@ final class TillModules
     }
 
     #[Righteous(UndeclaredMember::class)]
+    public function footerOf(TillModule $module): string
+    {
+        assert($module instanceof ReceiptPrinter);
+
+        return $module->footer();
+    }
+
+    #[Righteous(UndeclaredMember::class)]
     public function receiptFooter(): string
     {
         return $this->module(ReceiptPrinter::class)->footer();
@@ -34,12 +42,36 @@ final class TillModules
 }
 
 /**
+ * A device a till can be fitted with.
+ */
+interface TillModule
+{
+    public function serial(): string;
+}
+
+/**
  * The printer a till prints its receipts on.
  */
-final class ReceiptPrinter
+final class ReceiptPrinter implements TillModule
 {
+    public function serial(): string
+    {
+        return 'RP-1';
+    }
+
     public function footer(): string
     {
         return 'Thank you for shopping';
+    }
+}
+
+/**
+ * The drawer a till keeps its cash in.
+ */
+final class CashDrawer implements TillModule
+{
+    public function serial(): string
+    {
+        return 'CD-1';
     }
 }

@@ -981,7 +981,7 @@ final class Translator
             $expression instanceof Expr\FuncCall => $this->owning('call', $expression, [
                 'callee' => $expression->name instanceof Node\Name ? $this->name($expression->name) : $this->expression($expression->name),
                 'arguments' => $this->arguments($expression),
-            ]),
+            ], ['form' => $expression->name instanceof Node\Name && $expression->name->getLast() === 'assert' && ! $expression->name->isQualified() ? 'assertion' : null]),
             $expression instanceof Expr\MethodCall, $expression instanceof Expr\NullsafeMethodCall => $this->owning('call', $expression, [
                 'callee' => $this->access($expression, $expression->var, $expression->name, 'instance', $expression instanceof Expr\NullsafeMethodCall),
                 'arguments' => $this->arguments($expression),

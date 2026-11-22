@@ -388,6 +388,11 @@ func pathConditions(site engine.Match) ([]value, bool) {
 				if guard.Node().Kind == "if" && !guard.Child("else").Exists() && completes(guard.Child("then")) == engine.False {
 					add(guard.Child("condition"), false)
 				}
+				if asserted := guard.Child("expression"); asserted.Node() != nil && asserted.Node().Kind == "call" && asserted.Node().Form == "assertion" {
+					if arguments := asserted.ChildrenIn("arguments"); len(arguments) > 0 {
+						add(arguments[0].Child("value"), true)
+					}
+				}
 			}
 		}
 	}
