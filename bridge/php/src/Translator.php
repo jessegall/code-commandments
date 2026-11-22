@@ -1452,7 +1452,15 @@ final class Translator
     private static function docTag(string $name, string $rest): array
     {
         $tag = ['name' => $name, 'text' => trim($rest)];
-        if (preg_match('/^(?:(?:phpstan|psalm)-)?(param|var|return|returns|property|property-read|property-write|throws|method)$/', $name) !== 1) {
+        if (preg_match('/^(?:(?:phpstan|psalm)-)?method$/', $name) === 1) {
+            if (preg_match('/^(?:static\s+)?(?:((?:[^\s<({]|<[^>]*>)+)\s+)?(\w+)\s*\((.*)$/s', trim($rest), $method) === 1) {
+                $tag['type'] = $method[1];
+                $tag['subject'] = $method[2];
+            }
+
+            return $tag;
+        }
+        if (preg_match('/^(?:(?:phpstan|psalm)-)?(param|var|return|returns|property|property-read|property-write|throws)$/', $name) !== 1) {
             return $tag;
         }
         if (preg_match('/^((?:[^\s<({]|<[^>]*>|\([^)]*\)|\{[^}]*\})+)\s*(\$\w+)?\s*(.*)$/s', trim($rest), $typed) === 1 && ! str_starts_with($typed[1], '$')) {

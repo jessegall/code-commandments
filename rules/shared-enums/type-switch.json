@@ -359,6 +359,62 @@
           ]
         ]
       ]
+    },
+    "oneReturn": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "count",
+            "$b.statements"
+          ],
+          1
+        ],
+        [
+          "some",
+          "$b.statements",
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "return"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$s.values"
+              ],
+              1
+            ]
+          ]
+        ]
+      ]
+    },
+    "returnedOf": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "at",
+        [
+          "map",
+          "$b.statements",
+          "s",
+          [
+            "at",
+            "$s.values",
+            0
+          ]
+        ],
+        0
+      ]
     }
   },
   "find": {
@@ -871,6 +927,48 @@
                   ],
                   "exact"
                 ]
+              ]
+            ]
+          ]
+        },
+        true
+      ],
+      [
+        "case",
+        "$b.kind",
+        {
+          "if": [
+            "not",
+            [
+              "and",
+              [
+                "every",
+                "$rungs",
+                "r",
+                [
+                  "oneReturn",
+                  "$r.then"
+                ]
+              ],
+              [
+                "=",
+                [
+                  "distinctCount",
+                  [
+                    "map",
+                    "$rungs",
+                    "r",
+                    [
+                      "fingerprint",
+                      [
+                        "returnedOf",
+                        "$r.then"
+                      ],
+                      "exact"
+                    ]
+                  ]
+                ],
+                1
               ]
             ]
           ]

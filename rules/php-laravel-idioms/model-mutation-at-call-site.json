@@ -192,14 +192,8 @@
           ],
           "f",
           [
-            "some",
-            "$f.obligations",
-            "o",
-            [
-              "=",
-              "$o.origin",
-              "external"
-            ]
+            "nonempty",
+            "$f.obligations"
           ]
         ]
       ]

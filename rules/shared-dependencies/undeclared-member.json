@@ -90,6 +90,53 @@
           ]
         ]
       ]
+    },
+    "documentedBy": {
+      "args": [
+        "d",
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "commentsOf",
+          "$d"
+        ],
+        "c",
+        [
+          "some",
+          [
+            "get",
+            "$c",
+            "tags"
+          ],
+          "g",
+          [
+            "and",
+            [
+              "in",
+              [
+                "get",
+                "$g",
+                "name"
+              ],
+              "method",
+              "property",
+              "property-read",
+              "property-write"
+            ],
+            [
+              "=",
+              [
+                "get",
+                "$g",
+                "subject"
+              ],
+              "$n"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -423,6 +470,23 @@
               ]
             ]
           ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "flatten",
+          [
+            "list",
+            "$chain",
+            "$mixinDecls"
+          ]
+        ],
+        "d",
+        [
+          "documentedBy",
+          "$d",
+          "$a.member.name"
         ]
       ]
     ],

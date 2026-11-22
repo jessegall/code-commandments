@@ -72,6 +72,17 @@
             "$top.parent.kind",
             "expression-statement"
           ]
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "exemptedBy",
+              "single-use-builder",
+              "$c"
+            ]
+          ]
         ]
       ]
     },

@@ -441,3 +441,26 @@ func TestRepeatedFolderPathReadsTheFolderAnInterpolatedPathSpells(t *testing.T) 
 		"app/Prune.php":   writer("Prune", "drop"),
 	}), "app/Backup.php:7", "app/Prune.php:7", "app/Restore.php:7")
 }
+
+func TestUndeclaredMemberReadsTheMembersADocCommentDocuments(t *testing.T) {
+	found := judged(t, "rules/shared-dependencies/undeclared-member.json", map[string]string{"Ledger.php": `<?php
+namespace App;
+/**
+ * @method setUser(User $user)
+ * @method static int count()
+ * @property string $label
+ */
+interface Ledger {
+    public function total(): int;
+}
+final class Books {
+    public function open(Ledger $ledger): int {
+        $ledger->setUser(null);
+        echo $ledger->label;
+        $ledger->unknown();
+        return $ledger->total();
+    }
+}
+`})
+	expect(t, "php", found, "Ledger.php:15")
+}

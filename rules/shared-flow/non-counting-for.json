@@ -147,7 +147,11 @@
             "in",
             "$s.operator",
             "add",
-            "subtract"
+            "subtract",
+            "multiply",
+            "divide",
+            "shift-left",
+            "shift-right"
           ]
         ],
         [

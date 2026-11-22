@@ -52,6 +52,10 @@
     "why": "A type the framework instantiates itself, without the container."
   },
   {
+    "tag": "single-use-builder",
+    "why": "A Filament component sits in one schema only, so a second make() cannot reuse the first object."
+  },
+  {
     "tag": "test-data",
     "why": "A class that builds test or seed data, which reads and fills other objects' fields by design."
   },

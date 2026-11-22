@@ -9,5 +9,15 @@
       "name": "package-route-name",
       "type": "filament."
     }
+  ],
+  "exemptions": [
+    {
+      "classes": [
+        "Filament\\Forms\\Components\\Field",
+        "Filament\\Infolists\\Components\\Entry"
+      ],
+      "tag": "single-use-builder",
+      "why": "A Filament component sits in one schema only, so a second make() cannot reuse the first object."
+    }
   ]
 }

@@ -65,9 +65,19 @@
                 0
               ],
               [
-                "messageText",
-                "$g.value",
-                "$d"
+                "=",
+                "$g.value.kind",
+                "literal"
+              ],
+              [
+                "=",
+                "$g.value.literalKind",
+                "string"
+              ],
+              [
+                "contains",
+                "$g.value.value",
+                " "
               ]
             ]
           ]

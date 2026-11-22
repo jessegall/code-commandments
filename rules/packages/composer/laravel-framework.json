@@ -2520,6 +2520,13 @@
       ],
       "tag": "test-data",
       "why": "A seeder or a model factory builds rows for tests and seeding: filling another object's fields is its job."
+    },
+    {
+      "classes": [
+        "Illuminate\\Validation\\ValidationException"
+      ],
+      "tag": "validation-response",
+      "why": "The constructor takes a validator, a response and an error bag and has no parameter for the caught failure."
     }
   ],
   "identities": [
