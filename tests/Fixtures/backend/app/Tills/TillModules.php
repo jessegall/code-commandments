@@ -47,6 +47,22 @@ final class TillModules
     }
 
     #[Righteous(UndeclaredMember::class)]
+    public function requiredFooterOf(TillModule $module): string
+    {
+        abort_unless($module instanceof ReceiptPrinter, 409);
+
+        return $module->footer();
+    }
+
+    #[Righteous(UndeclaredMember::class)]
+    public function printerFooterOf(TillModule $module): string
+    {
+        abort_if(! $module instanceof ReceiptPrinter, 409);
+
+        return $module->footer();
+    }
+
+    #[Righteous(UndeclaredMember::class)]
     public function wake(RemoteModule $remote): void
     {
         $remote->wake();

@@ -3179,6 +3179,22 @@
     {
       "name": "event-service-provider",
       "type": "Illuminate\\Foundation\\Support\\Providers\\EventServiceProvider"
+    },
+    {
+      "name": "asserts-argument",
+      "type": "abort_unless"
+    },
+    {
+      "name": "asserts-argument",
+      "type": "throw_unless"
+    },
+    {
+      "name": "refutes-argument",
+      "type": "abort_if"
+    },
+    {
+      "name": "refutes-argument",
+      "type": "throw_if"
     }
   ],
   "forwards": [

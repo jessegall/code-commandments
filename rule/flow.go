@@ -398,9 +398,9 @@ func pathConditions(site engine.Match) ([]value, bool) {
 				if guard.Node().Kind == "if" && !guard.Child("else").Exists() && completes(guard.Child("then")) == engine.False {
 					add(guard.Child("condition"), false)
 				}
-				if asserted := guard.Child("expression"); asserted.Node() != nil && asserted.Node().Kind == "call" && asserted.Node().Form == "assertion" {
-					if arguments := asserted.ChildrenIn("arguments"); len(arguments) > 0 {
-						add(arguments[0].Child("value"), true)
+				if holds, asserts := assertion(guard.Child("expression")); asserts {
+					if arguments := guard.Child("expression").ChildrenIn("arguments"); len(arguments) > 0 {
+						add(arguments[0].Child("value"), holds)
 					}
 				}
 			}
@@ -408,6 +408,28 @@ func pathConditions(site engine.Match) ([]value, bool) {
 	}
 
 	return conditions, true
+}
+
+func assertion(call engine.Match) (holds bool, asserts bool) {
+	node := call.Node()
+	if node == nil || node.Kind != "call" {
+		return false, false
+	}
+	if node.Form == "assertion" {
+		return true, true
+	}
+	callee := call.Child("callee").Node()
+	if callee == nil || callee.Kind != "reference" || callee.Refers == "" {
+		return false, false
+	}
+	if slices.Contains(engine.PackageIdentitiesNamed("asserts-argument"), callee.Refers) {
+		return true, true
+	}
+	if slices.Contains(engine.PackageIdentitiesNamed("refutes-argument"), callee.Refers) {
+		return false, true
+	}
+
+	return false, false
 }
 
 func readsOnlyVariables(condition engine.Match) bool {
