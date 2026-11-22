@@ -536,6 +536,46 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$a.role",
+            "callee"
+          ],
+          [
+            "some",
+            [
+              "allOf",
+              "$declared"
+            ],
+            "d",
+            [
+              "some",
+              "$d.writtenMembers",
+              "m",
+              [
+                "and",
+                [
+                  "=",
+                  "$m.kind",
+                  "function"
+                ],
+                [
+                  "has",
+                  [
+                    "identities",
+                    "dynamic-method-reader"
+                  ],
+                  "$m.name"
+                ]
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$a"

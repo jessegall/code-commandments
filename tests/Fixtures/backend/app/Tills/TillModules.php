@@ -35,6 +35,12 @@ final class TillModules
     }
 
     #[Righteous(UndeclaredMember::class)]
+    public function wake(RemoteModule $remote): void
+    {
+        $remote->wake();
+    }
+
+    #[Righteous(UndeclaredMember::class)]
     public function receiptFooter(): string
     {
         return $this->module(ReceiptPrinter::class)->footer();
@@ -73,5 +79,19 @@ final class CashDrawer implements TillModule
     public function serial(): string
     {
         return 'CD-1';
+    }
+}
+
+/**
+ * A module on another till, reached by forwarding each call over the shop's network.
+ */
+final class RemoteModule
+{
+    /**
+     * @param  list<mixed>  $arguments
+     */
+    public function __call(string $method, array $arguments): mixed
+    {
+        return [$method, $arguments];
     }
 }

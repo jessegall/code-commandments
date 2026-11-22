@@ -2,7 +2,7 @@
   "package": "php",
   "ecosystem": "standard",
   "versions": "",
-  "provenance": "PHP's own date interface, which every date class implements (engine/php/spatie nativeCastTypes), and the magic method that answers any property read",
+  "provenance": "PHP's own date interface, which every date class implements (engine/php/spatie nativeCastTypes), and the magic methods that answer any property read and any method call",
   "entries": [],
   "identities": [
     {
@@ -12,6 +12,10 @@
     {
       "name": "dynamic-member-reader",
       "type": "__get"
+    },
+    {
+      "name": "dynamic-method-reader",
+      "type": "__call"
     },
     {
       "name": "newline",
