@@ -9,8 +9,8 @@ use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitorAbstract;
 
 /**
- * Gives a parameter, and a class's undeclared properties, the class a doc comment documents for them, read in the
- * file's own namespace and imports.
+ * Gives a parameter, a class's undeclared properties and the variables an inline @var names the class a doc comment
+ * documents for them, read in the file's own namespace and imports.
  */
 final class DocumentedTypes extends NodeVisitorAbstract
 {
@@ -22,6 +22,18 @@ final class DocumentedTypes extends NodeVisitorAbstract
     {
         if ($node instanceof Node\Stmt\ClassLike && ($doc = $node->getDocComment()) !== null) {
             $node->setAttribute('documentedProperties', $this->documented('@property(?:-read)?', $doc->getText()));
+
+            return null;
+        }
+        if ($node instanceof Node\Stmt && ! $node instanceof Node\FunctionLike && ($doc = $node->getDocComment()) !== null) {
+            $variables = $this->documented('@var', $doc->getText());
+            $assigned = $node instanceof Node\Stmt\Expression && $node->expr instanceof Node\Expr\Assign && $node->expr->var instanceof Node\Expr\Variable && is_string($node->expr->var->name) ? $node->expr->var->name : null;
+            if ($assigned !== null && $variables === [] && preg_match('/@var\s+(\??)([\\\\A-Za-z_][\\\\A-Za-z0-9_]*)(\|null)?\s*(?:\*\/|\s)/', $doc->getText(), $only) === 1 && ! in_array(strtolower($only[2]), self::BUILT_IN, true)) {
+                $variables[$assigned] = ['name' => $this->names->getNameContext()->getResolvedClassName(new Node\Name($only[2]))->toString()] + ($only[1] !== '' || $only[3] !== '' ? ['nullable' => true] : []);
+            }
+            if ($variables !== []) {
+                $node->setAttribute('documentedVariables', $variables);
+            }
 
             return null;
         }

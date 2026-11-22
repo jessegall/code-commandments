@@ -396,6 +396,34 @@ class Board { use Sorts; public function sort(array $rows): array { return $rows
 	}
 }
 
+func TestAVariableAnInlineVarDocumentsIsTypedAsTheClassItNames(t *testing.T) {
+	folder := written(t, map[string]string{"Till.php": `<?php
+namespace App;
+use App\Stock\Order;
+final class Till {
+    public function close(array $found): int {
+        /** @var Order $order */
+        $order = $this->find();
+        /** @var Order */
+        $other = $this->find();
+        return $order->total() + $other->total();
+    }
+    private function find() { return null; }
+}
+`, "Stock/Order.php": "<?php\nnamespace App\\Stock;\nfinal class Order { public function total(): int { return 0; } }\n"})
+	var targets []string
+	for _, file := range bridged(t, folder).Files {
+		for _, node := range file.Nodes() {
+			if node.Target != nil && strings.HasSuffix(node.Target.Symbol, "::total") {
+				targets = append(targets, node.Target.Symbol)
+			}
+		}
+	}
+	if !slices.Equal(targets, []string{`App\Stock\Order::total`, `App\Stock\Order::total`}) {
+		t.Errorf("the calls on the documented variables resolve to %v, not Order::total twice", targets)
+	}
+}
+
 func TestACallToAClassTheAutoloaderLoadsByItsWrittenCaseIsResolved(t *testing.T) {
 	folder := written(t, map[string]string{
 		"vendor/autoload.php": `<?php

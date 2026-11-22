@@ -448,6 +448,21 @@
           ]
         ],
         0
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$a.role",
+            "callee"
+          ],
+          [
+            "nonempty",
+            "$a.parent.target.symbol"
+          ]
+        ]
       ]
     ],
     "let": [

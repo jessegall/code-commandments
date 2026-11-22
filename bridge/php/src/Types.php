@@ -247,6 +247,11 @@ final class Types
                 if ($node instanceof Node\UseItem && ($file = $this->types->fileOf($node->name->toString())) !== null) {
                     $node->setAttribute('resolves', $file);
                 }
+                if ($node instanceof Stmt && ($documented = $node->getAttribute('documentedVariables')) !== null) {
+                    foreach ($documented as $name => $type) {
+                        $this->scopes[array_key_last($this->scopes)]['variables'][$name] = $type;
+                    }
+                }
                 if ($node instanceof Stmt\ClassMethod && $this->class !== null) {
                     $node->setAttribute('obligations', $this->types->obligations($this->class, $node->name->toString()));
                 }
@@ -277,6 +282,11 @@ final class Types
 
             public function leaveNode(Node $node): null
             {
+                if ($node instanceof Stmt && ($documented = $node->getAttribute('documentedVariables')) !== null) {
+                    foreach ($documented as $name => $type) {
+                        $this->scopes[array_key_last($this->scopes)]['variables'][$name] = $type;
+                    }
+                }
                 if ($node instanceof Expr) {
                     $scope = array_key_last($this->scopes);
                     $type = $this->types->typeOf($node, $this->class, $this->scopes[$scope]['variables']);

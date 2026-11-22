@@ -454,6 +454,22 @@ func TestRepeatedFolderPathMeetsAFolderWrittenWholeAndOnesAFileNameCompletes(t *
 	}), "app/Ensure.php:7", "app/Record.php:7", "app/Restore.php:7")
 }
 
+func TestUndeclaredMemberLeavesACallTheBridgeResolvedWhateverItsCase(t *testing.T) {
+	found := judged(t, "rules/shared-dependencies/undeclared-member.json", map[string]string{"Door.php": `<?php
+namespace App;
+final class Door {
+    public function unlock(): void {}
+}
+final class Porter {
+    public function open(Door $door): void {
+        $door->unLock();
+        $door->knock();
+    }
+}
+`})
+	expect(t, "php", found, "Door.php:9")
+}
+
 func TestUndeclaredMemberReadsTheMembersADocCommentDocuments(t *testing.T) {
 	found := judged(t, "rules/shared-dependencies/undeclared-member.json", map[string]string{"Ledger.php": `<?php
 namespace App;
