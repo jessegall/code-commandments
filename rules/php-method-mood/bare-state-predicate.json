@@ -95,6 +95,17 @@
         "reads",
         "$f.name",
         "bare-state"
+      ],
+      [
+        "not",
+        [
+          "contains",
+          [
+            "snakeCase",
+            "$f.name"
+          ],
+          "_"
+        ]
       ]
     ],
     "having": [

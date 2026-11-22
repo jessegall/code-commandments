@@ -1026,6 +1026,11 @@
                           "$w",
                           "$x.member.name"
                         ]
+                      ],
+                      [
+                        "!=",
+                        "$x.parent.kind",
+                        "access"
                       ]
                     ]
                   ],

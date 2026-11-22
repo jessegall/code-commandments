@@ -410,6 +410,110 @@
           ]
         ]
       ]
+    },
+    "callsOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "filter",
+        [
+          "referrers",
+          "$d"
+        ],
+        "o",
+        [
+          "and",
+          [
+            "in",
+            "$o.kind",
+            "call",
+            "construction"
+          ],
+          [
+            "not",
+            "$o.file.test"
+          ]
+        ]
+      ]
+    },
+    "allDerived": {
+      "args": [
+        "d",
+        "at"
+      ],
+      "expr": [
+        "every",
+        [
+          "callsOf",
+          "$d"
+        ],
+        "o",
+        [
+          "derived",
+          [
+            "values",
+            "$o"
+          ],
+          "$at"
+        ]
+      ]
+    },
+    "membersAt": {
+      "args": [
+        "d",
+        "at"
+      ],
+      "expr": [
+        "distinct",
+        [
+          "map",
+          [
+            "callsOf",
+            "$d"
+          ],
+          "o",
+          [
+            "pieceMember",
+            [
+              "values",
+              "$o"
+            ],
+            "$at"
+          ]
+        ]
+      ]
+    },
+    "rootTypesAt": {
+      "args": [
+        "d",
+        "at"
+      ],
+      "expr": [
+        "distinctCount",
+        [
+          "map",
+          [
+            "callsOf",
+            "$d"
+          ],
+          "o",
+          [
+            "textOf",
+            [
+              "typeOf",
+              [
+                "pieceRoot",
+                [
+                  "values",
+                  "$o"
+                ],
+                "$at"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -460,33 +564,6 @@
     ],
     "let": [
       [
-        "calls",
-        [
-          "filter",
-          [
-            "referrers",
-            [
-              "declarationOf",
-              "$c"
-            ]
-          ],
-          "o",
-          [
-            "and",
-            [
-              "in",
-              "$o.kind",
-              "call",
-              "construction"
-            ],
-            [
-              "not",
-              "$o.file.test"
-            ]
-          ]
-        ]
-      ],
-      [
         "callee",
         [
           "declarationOf",
@@ -500,7 +577,10 @@
         ">=",
         [
           "count",
-          "$calls"
+          [
+            "callsOf",
+            "$callee"
+          ]
         ],
         1
       ],
@@ -511,45 +591,36 @@
         [
           "and",
           [
-            "every",
-            "$calls",
-            "o",
+            "allDerived",
+            "$callee",
             [
-              "and",
+              "position",
+              "$g"
+            ]
+          ],
+          [
+            "every",
+            [
+              "membersAt",
+              "$callee",
               [
-                "derived",
+                "position",
+                "$g"
+              ]
+            ],
+            "m",
+            [
+              "=",
+              "$m",
+              [
+                "pieceMember",
                 [
                   "values",
-                  "$o"
+                  "$c"
                 ],
                 [
                   "position",
                   "$g"
-                ]
-              ],
-              [
-                "=",
-                [
-                  "pieceMember",
-                  [
-                    "values",
-                    "$o"
-                  ],
-                  [
-                    "position",
-                    "$g"
-                  ]
-                ],
-                [
-                  "pieceMember",
-                  [
-                    "values",
-                    "$c"
-                  ],
-                  [
-                    "position",
-                    "$g"
-                  ]
                 ]
               ]
             ]
@@ -557,28 +628,11 @@
           [
             "=",
             [
-              "distinctCount",
+              "rootTypesAt",
+              "$callee",
               [
-                "map",
-                "$calls",
-                "o",
-                [
-                  "textOf",
-                  [
-                    "typeOf",
-                    [
-                      "pieceRoot",
-                      [
-                        "values",
-                        "$o"
-                      ],
-                      [
-                        "position",
-                        "$g"
-                      ]
-                    ]
-                  ]
-                ]
+                "position",
+                "$g"
               ]
             ],
             1

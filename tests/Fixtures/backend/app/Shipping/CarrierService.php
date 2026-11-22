@@ -23,7 +23,7 @@ enum CarrierService: string
     private const SIGNED_FOR = [self::Insured, self::Pallet];
 
     #[Sinful(BareStatePredicate::class)]
-    public function needsSignature(): bool
+    public function needs(): bool
     {
         return in_array($this, self::SIGNED_FOR, true);
     }

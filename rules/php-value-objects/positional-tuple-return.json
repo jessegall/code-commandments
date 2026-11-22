@@ -141,6 +141,60 @@
           "list"
         ]
       ]
+    },
+    "classRef": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$x.member.name",
+          "class"
+        ]
+      ]
+    },
+    "classSpec": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "classRef",
+          "$x"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "collection"
+          ],
+          [
+            "some",
+            [
+              "list",
+              [
+                "at",
+                "$x.entries",
+                0
+              ]
+            ],
+            "f",
+            [
+              "classRef",
+              "$f.value"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -339,29 +393,36 @@
               "$entries",
               "e",
               [
-                "and",
-                [
-                  "=",
-                  "$e.value.kind",
-                  "access"
-                ],
-                [
-                  "=",
-                  "$e.value.member.name",
-                  "class"
-                ]
+                "classSpec",
+                "$e.value"
               ]
             ]
           ],
           [
             "not",
             [
-              "in",
-              "$fn.form",
-              "closure",
-              "arrow",
-              "lambda"
+              "and",
+              [
+                "in",
+                "$fn.form",
+                "closure",
+                "arrow",
+                "lambda"
+              ],
+              [
+                "=",
+                "$fn.parent.kind",
+                "argument"
+              ]
             ]
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$fn.obligations"
+            ],
+            0
           ]
         ],
         "function": [

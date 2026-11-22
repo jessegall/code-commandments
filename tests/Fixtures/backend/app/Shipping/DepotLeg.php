@@ -28,10 +28,10 @@ final class DepotLeg extends Leg
     }
 
     /**
-     * Whether the leg needs a depot picked before it leaves.
+     * Whether the leg stops at a depot before it leaves.
      */
     #[Sinful(BareStatePredicate::class)]
-    public function needsDepot(): bool
+    public function stops(): bool
     {
         return $this->stops > 0;
     }

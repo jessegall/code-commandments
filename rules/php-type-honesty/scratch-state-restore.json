@@ -237,145 +237,148 @@
       ]
     ],
     "having": [
-      "some",
-      "$assigned",
-      "back",
+      "and",
       [
-        "and",
+        "some",
+        "$assigned",
+        "back",
         [
-          "restores",
-          "$back",
-          "$saved"
-        ],
-        [
-          "some",
-          "$assigned",
-          "w",
+          "and",
           [
-            "and",
-            [
-              "<",
-              "$w.line",
-              "$back.line"
-            ],
-            [
-              "not",
-              [
-                "restores",
-                "$w",
-                "$saved"
-              ]
-            ]
-          ]
-        ],
-        [
-          "not",
+            "restores",
+            "$back",
+            "$saved"
+          ],
           [
             "some",
-            [
-              "ownDescendants",
-              [
-                "enclosing",
-                "$d",
-                "function"
-              ]
-            ],
-            "x",
+            "$assigned",
+            "w",
             [
               "and",
               [
-                ">",
-                "$x.line",
-                "$d.line"
-              ],
-              [
                 "<",
-                "$x.line",
+                "$w.line",
                 "$back.line"
               ],
               [
-                "or",
+                "not",
                 [
-                  "=",
-                  "$x.kind",
-                  "yield"
+                  "restores",
+                  "$w",
+                  "$saved"
+                ]
+              ]
+            ]
+          ],
+          [
+            "not",
+            [
+              "some",
+              [
+                "ownDescendants",
+                [
+                  "enclosing",
+                  "$d",
+                  "function"
+                ]
+              ],
+              "x",
+              [
+                "and",
+                [
+                  ">",
+                  "$x.line",
+                  "$d.line"
                 ],
                 [
-                  "and",
+                  "<",
+                  "$x.line",
+                  "$back.line"
+                ],
+                [
+                  "or",
                   [
                     "=",
                     "$x.kind",
-                    "call"
+                    "yield"
                   ],
                   [
-                    "=",
-                    "$x.callee.kind",
-                    "reference"
-                  ],
-                  [
-                    "some",
-                    [
-                      "list",
-                      [
-                        "declarationOf",
-                        "$x.callee"
-                      ]
-                    ],
-                    "q",
+                    "and",
                     [
                       "=",
-                      "$q.parent.kind",
-                      "parameter"
-                    ]
-                  ]
-                ],
-                [
-                  "and",
-                  [
-                    "=",
-                    "$x.kind",
-                    "call"
-                  ],
-                  [
-                    "some",
-                    "$x.arguments",
-                    "g",
+                      "$x.kind",
+                      "call"
+                    ],
+                    [
+                      "=",
+                      "$x.callee.kind",
+                      "reference"
+                    ],
                     [
                       "some",
                       [
                         "list",
                         [
                           "declarationOf",
-                          "$g.value"
+                          "$x.callee"
                         ]
                       ],
                       "q",
                       [
-                        "and",
+                        "=",
+                        "$q.parent.kind",
+                        "parameter"
+                      ]
+                    ]
+                  ],
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$x.kind",
+                      "call"
+                    ],
+                    [
+                      "some",
+                      "$x.arguments",
+                      "g",
+                      [
+                        "some",
                         [
-                          "=",
-                          "$q.parent.kind",
-                          "parameter"
-                        ],
-                        [
-                          "proven",
+                          "list",
                           [
-                            "some",
+                            "declarationOf",
+                            "$g.value"
+                          ]
+                        ],
+                        "q",
+                        [
+                          "and",
+                          [
+                            "=",
+                            "$q.parent.kind",
+                            "parameter"
+                          ],
+                          [
+                            "proven",
                             [
-                              "typeMembers",
+                              "some",
                               [
-                                "typeOf",
-                                "$q.parent"
-                              ]
-                            ],
-                            "m",
-                            [
-                              "=",
-                              [
-                                "typeCategory",
-                                "$m"
+                                "typeMembers",
+                                [
+                                  "typeOf",
+                                  "$q.parent"
+                                ]
                               ],
-                              "function"
+                              "m",
+                              [
+                                "=",
+                                [
+                                  "typeCategory",
+                                  "$m"
+                                ],
+                                "function"
+                              ]
                             ]
                           ]
                         ]
@@ -383,6 +386,57 @@
                     ]
                   ]
                 ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$d",
+            "type"
+          ]
+        ],
+        "t",
+        [
+          "some",
+          "$t.writtenMembers",
+          "m",
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                "$m.kind",
+                "field"
+              ],
+              [
+                "some",
+                "$m.declarators",
+                "dd",
+                [
+                  "=",
+                  "$dd.binding.name",
+                  "$field"
+                ]
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$m.kind",
+                "parameter"
+              ],
+              [
+                "=",
+                "$m.binding.name",
+                "$field"
               ]
             ]
           ]

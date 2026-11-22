@@ -33,7 +33,7 @@ final class ReceiptPrinter
     }
 
     #[Sinful(BareStatePredicate::class)]
-    public function needsInk(): bool
+    public function fades(): bool
     {
         if ($this->driver instanceof ReportsInk) {
             return $this->driver->inkLow();

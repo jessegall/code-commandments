@@ -306,14 +306,30 @@
                 ]
               },
               [
-                "flatten",
+                "filter",
                 [
-                  "map",
-                  "$d.parent.parent.writtenMembers",
-                  "m",
+                  "flatten",
                   [
-                    "ownDescendants",
-                    "$m.body"
+                    "map",
+                    "$d.parent.parent.writtenMembers",
+                    "m",
+                    [
+                      "ownDescendants",
+                      "$m.body"
+                    ]
+                  ]
+                ],
+                "x",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$x.kind",
+                    "access"
+                  ],
+                  [
+                    "isSelf",
+                    "$x.subject"
                   ]
                 ]
               ]

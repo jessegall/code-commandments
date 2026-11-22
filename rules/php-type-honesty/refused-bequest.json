@@ -110,6 +110,42 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "map",
+            "$f.obligations",
+            "o",
+            [
+              "declarationBySymbol",
+              "$o.symbol"
+            ]
+          ],
+          "p",
+          [
+            "and",
+            [
+              "exists",
+              "$p.body"
+            ],
+            [
+              "some",
+              [
+                "ownDescendants",
+                "$p.body"
+              ],
+              "x",
+              [
+                "=",
+                "$x.kind",
+                "throw"
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$f"

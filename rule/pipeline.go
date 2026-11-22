@@ -185,7 +185,7 @@ type rows struct {
 // judgeRows runs a find that reads rows: its source, then each stage in order. What an emit stage names is a finding,
 // each anchor once.
 func judgeRows(asked file, codebase *engine.Codebase, parameters value) Judged {
-	run := rows{evaluation{definitions: asked.Definitions, parameters: parameters, codebase: codebase}, codebase, asked.Find.Relations, map[string][]value{}}
+	run := rows{evaluation{definitions: asked.Definitions, parameters: parameters, codebase: codebase, kept: keepingAnswers(asked.Definitions)}, codebase, asked.Find.Relations, map[string][]value{}}
 	run.evaluation.relations = run.relationRows
 	written := asked.Find
 	started := run.from(written.From, written.As)

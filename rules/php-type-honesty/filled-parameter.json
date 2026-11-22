@@ -120,15 +120,90 @@
                 "$v.name"
               ],
               [
-                "in",
+                "=",
                 "$x.parent.kind",
-                "return",
-                "argument"
+                "return"
               ],
               [
                 ">",
                 "$x.line",
                 "$c.line"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "exitsAfter": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          "$c.parent"
+        ],
+        "s",
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "expression-statement"
+          ],
+          [
+            "some",
+            [
+              "siblings",
+              "$s"
+            ],
+            "n",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "position",
+                  "$n"
+                ],
+                [
+                  "sum",
+                  [
+                    "list",
+                    [
+                      "position",
+                      "$s"
+                    ],
+                    1
+                  ]
+                ]
+              ],
+              [
+                "or",
+                [
+                  "in",
+                  "$n.kind",
+                  "continue",
+                  "break",
+                  "throw"
+                ],
+                [
+                  "and",
+                  [
+                    "=",
+                    "$n.kind",
+                    "return"
+                  ],
+                  [
+                    "=",
+                    [
+                      "count",
+                      "$n.values"
+                    ],
+                    0
+                  ]
+                ]
               ]
             ]
           ]
@@ -235,17 +310,97 @@
         ],
         "c",
         [
-          "readsAfter",
-          "$c",
+          "and",
           [
-            "tree.valueAt",
-            "$c",
+            "not",
             [
-              "position",
-              "$parameter"
+              "exitsAfter",
+              "$c"
             ]
           ],
-          "$target.member.name"
+          [
+            "readsAfter",
+            "$c",
+            [
+              "tree.valueAt",
+              "$c",
+              [
+                "position",
+                "$parameter"
+              ]
+            ],
+            "$target.member.name"
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "ownDescendants",
+          "$function.body"
+        ],
+        "k",
+        [
+          "and",
+          [
+            "=",
+            "$k.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$k.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$k.callee.subject.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$k.callee.subject.name",
+            "$target.subject.name"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "typeDeclaration",
+              "$parameter.declaredType.refers"
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "some",
+              "$t.writtenMembers",
+              "m",
+              [
+                "and",
+                [
+                  "=",
+                  "$m.kind",
+                  "function"
+                ],
+                [
+                  "=",
+                  "$m.name",
+                  "__set"
+                ]
+              ]
+            ]
+          ]
         ]
       ]
     ],

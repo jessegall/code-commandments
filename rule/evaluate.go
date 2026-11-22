@@ -94,6 +94,7 @@ type evaluation struct {
 	// relations is the rows of a relation the find builds, by its name, for an expression that reads them.
 	relations func(name string) []value
 	graphs    *sync.Map
+	kept      *keptAnswers
 }
 
 // Judge asks the rule of every node it selects: selection first, then where, then the let bindings in order, then
@@ -105,9 +106,9 @@ func (r Rule) Judge(codebase *engine.Codebase) Judged {
 		return judgeRows(asked, codebase, r.parameters())
 	}
 	run := rows{evaluation{definitions: asked.Definitions, parameters: r.parameters(), codebase: codebase}, codebase, written.Relations, map[string][]value{}}
-	parameters, relations, graphs := r.parameters(), run.relationRows, &sync.Map{}
+	parameters, relations, graphs, kept := r.parameters(), run.relationRows, &sync.Map{}, keepingAnswers(asked.Definitions)
 	asking := func(site engine.Match) evaluation {
-		return evaluation{definitions: asked.Definitions, site: site, parameters: parameters, codebase: codebase, relations: relations, graphs: graphs}
+		return evaluation{definitions: asked.Definitions, site: site, parameters: parameters, codebase: codebase, relations: relations, graphs: graphs, kept: kept}
 	}
 	var judged Judged
 	note := func(site, emitted engine.Match, verdict engine.Truth) {
@@ -203,11 +204,13 @@ func (e evaluation) evaluate(expression Expr, bound bindings) value {
 	case expression.IsCall():
 		if defined, isDefinition := e.definitions[expression.Operator]; isDefinition {
 			own := bindings{}
+			arguments := make([]value, len(defined.Args))
 			for at, name := range defined.Args {
-				own = own.with(name, e.evaluate(expression.Operands[at], bound))
+				arguments[at] = e.evaluate(expression.Operands[at], bound)
+				own = own.with(name, arguments[at])
 			}
 
-			return e.evaluate(defined.Expr, own)
+			return e.kept.answer(expression.Operator, e.site, arguments, func() value { return e.evaluate(defined.Expr, own) })
 		}
 
 		return e.apply(expression, bound)

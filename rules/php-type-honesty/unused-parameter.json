@@ -219,6 +219,22 @@
               "$owner.interfaces"
             ],
             0
+          ],
+          [
+            "=",
+            [
+              "count",
+              [
+                "overriders",
+                "$p.parent"
+              ]
+            ],
+            0
+          ],
+          [
+            "!=",
+            "$owner.form",
+            "trait"
           ]
         ],
         [

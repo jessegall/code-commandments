@@ -99,6 +99,34 @@
           "$y.kind",
           "yield"
         ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "ownAncestors",
+            "$c"
+          ],
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "collection"
+            ],
+            [
+              "within",
+              "$a",
+              [
+                "enclosing",
+                "$c",
+                "function"
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$c"

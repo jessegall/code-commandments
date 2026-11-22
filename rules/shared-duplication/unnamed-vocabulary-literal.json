@@ -169,10 +169,104 @@
         ]
       ]
     },
-    "ownVocabulary": {
+    "callsOf": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "filter",
+        [
+          "referrers",
+          "$d"
+        ],
+        "c",
+        [
+          "not",
+          "$c.file.test"
+        ]
+      ]
+    },
+    "constantsAt": {
       "args": [
         "d",
-        "c",
+        "at"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "callsOf",
+            "$d"
+          ],
+          "c",
+          [
+            "map",
+            [
+              "filter",
+              "$c.arguments",
+              "g",
+              [
+                "and",
+                [
+                  "=",
+                  [
+                    "position",
+                    "$g"
+                  ],
+                  "$at"
+                ],
+                [
+                  "in",
+                  "$g.value.kind",
+                  "reference",
+                  "access"
+                ]
+              ]
+            ],
+            "g",
+            [
+              "record",
+              "word",
+              [
+                "constantWord",
+                "$g.value"
+              ],
+              "words",
+              [
+                "typeWords",
+                [
+                  "enclosing",
+                  [
+                    "declarationOf",
+                    "$g.value"
+                  ],
+                  "type"
+                ]
+              ],
+              "declared",
+              [
+                "enclosing",
+                [
+                  "declarationOf",
+                  "$g.value"
+                ],
+                "type"
+              ],
+              "caller",
+              [
+                "enclosing",
+                "$c",
+                "type"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "vocabularyOfCaller": {
+      "args": [
+        "e",
         "a"
       ],
       "expr": [
@@ -180,22 +274,22 @@
         [
           "=",
           [
-            "enclosing",
-            "$d",
-            "type"
+            "get",
+            "$e",
+            "declared"
           ],
           [
-            "enclosing",
-            "$c",
-            "type"
+            "get",
+            "$e",
+            "caller"
           ]
         ],
         [
           "!=",
           [
-            "enclosing",
-            "$c",
-            "type"
+            "get",
+            "$e",
+            "caller"
           ],
           [
             "enclosing",
@@ -307,21 +401,10 @@
         ]
       ],
       [
-        "siblings",
+        "callee",
         [
-          "filter",
-          [
-            "referrers",
-            [
-              "declarationOf",
-              "$a.parent"
-            ]
-          ],
-          "c",
-          [
-            "not",
-            "$c.file.test"
-          ]
+          "declarationOf",
+          "$a.parent"
         ]
       ]
     ],
@@ -329,49 +412,31 @@
       "or",
       [
         "some",
-        "$siblings",
-        "c",
         [
-          "some",
-          "$c.arguments",
-          "g",
+          "constantsAt",
+          "$callee",
+          "$at"
+        ],
+        "e",
+        [
+          "and",
           [
-            "and",
+            "=",
             [
-              "=",
-              [
-                "position",
-                "$g"
-              ],
-              "$at"
+              "get",
+              "$e",
+              "word"
             ],
+            "$a.value.value"
+          ],
+          [
+            "not",
             [
-              "in",
-              "$g.value.kind",
-              "reference",
-              "access"
-            ],
-            [
-              "=",
+              "proven",
               [
-                "constantWord",
-                "$g.value"
-              ],
-              "$a.value.value"
-            ],
-            [
-              "not",
-              [
-                "proven",
-                [
-                  "ownVocabulary",
-                  [
-                    "declarationOf",
-                    "$g.value"
-                  ],
-                  "$c",
-                  "$a"
-                ]
+                "vocabularyOfCaller",
+                "$e",
+                "$a"
               ]
             ]
           ]
@@ -379,61 +444,36 @@
       ],
       [
         "some",
-        "$siblings",
-        "c",
         [
-          "some",
-          "$c.arguments",
-          "g",
+          "constantsAt",
+          "$callee",
+          "$at"
+        ],
+        "e",
+        [
+          "and",
           [
-            "and",
+            "some",
+            [
+              "get",
+              "$e",
+              "words"
+            ],
+            "w",
             [
               "=",
-              [
-                "position",
-                "$g"
-              ],
-              "$at"
-            ],
+              "$w",
+              "$a.value.value"
+            ]
+          ],
+          [
+            "not",
             [
-              "in",
-              "$g.value.kind",
-              "reference",
-              "access"
-            ],
-            [
-              "some",
+              "proven",
               [
-                "typeWords",
-                [
-                  "enclosing",
-                  [
-                    "declarationOf",
-                    "$g.value"
-                  ],
-                  "type"
-                ]
-              ],
-              "w",
-              [
-                "=",
-                "$w",
-                "$a.value.value"
-              ]
-            ],
-            [
-              "not",
-              [
-                "proven",
-                [
-                  "ownVocabulary",
-                  [
-                    "declarationOf",
-                    "$g.value"
-                  ],
-                  "$c",
-                  "$a"
-                ]
+                "vocabularyOfCaller",
+                "$e",
+                "$a"
               ]
             ]
           ]

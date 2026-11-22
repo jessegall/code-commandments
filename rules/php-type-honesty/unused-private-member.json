@@ -437,6 +437,21 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "exists",
+            "$owner"
+          ],
+          [
+            "=",
+            "$owner.form",
+            "trait"
+          ]
+        ]
       ]
     ],
     "emit": "$m"

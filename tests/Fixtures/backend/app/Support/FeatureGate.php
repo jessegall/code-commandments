@@ -25,7 +25,7 @@ final class FeatureGate
      * No argument, so it can only be describing the gate — which is what a question is for.
      */
     #[Sinful(BareStatePredicate::class)]
-    public function supportsTracking(): bool
+    public function tracks(): bool
     {
         return $this->environment !== 'testing';
     }
