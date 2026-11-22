@@ -2399,7 +2399,8 @@
         "Illuminate\\Database\\Eloquent\\Attributes\\ObservedBy",
         "Illuminate\\Database\\Eloquent\\Attributes\\ScopedBy",
         "Illuminate\\Database\\Eloquent\\Attributes\\CollectedBy",
-        "Illuminate\\Database\\Eloquent\\Attributes\\UsePolicy"
+        "Illuminate\\Database\\Eloquent\\Attributes\\UsePolicy",
+        "Illuminate\\Database\\Eloquent\\Attributes\\UseFactory"
       ],
       "methods": [
         "hasOne",
@@ -2418,6 +2419,9 @@
       "on": {
         "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
           "model"
+        ],
+        "Illuminate\\Database\\Eloquent\\Model": [
+          "dispatchesEvents"
         ]
       }
     },

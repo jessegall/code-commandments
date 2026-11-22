@@ -9,6 +9,116 @@
         "x"
       ],
       "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "heldTypes",
+            "$x"
+          ],
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "flatten",
+                  [
+                    "list",
+                    [
+                      "list",
+                      "$x"
+                    ],
+                    [
+                      "ownDescendants",
+                      "$x"
+                    ]
+                  ]
+                ],
+                "d",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$d.kind",
+                    "reference"
+                  ],
+                  [
+                    "exists",
+                    [
+                      "assignedOnce",
+                      "$d"
+                    ]
+                  ]
+                ]
+              ],
+              "d",
+              [
+                "heldTypes",
+                [
+                  "assignedOnce",
+                  "$d"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "declaredTypes": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$f.returnType"
+              ],
+              [
+                "descendants",
+                "$f.returnType",
+                "type-expression"
+              ]
+            ]
+          ],
+          "t",
+          [
+            "and",
+            [
+              "exists",
+              "$t"
+            ],
+            [
+              "=",
+              "$t.form",
+              "named"
+            ],
+            [
+              "proven",
+              [
+                "nonempty",
+                "$t.refers"
+              ]
+            ]
+          ]
+        ],
+        "t",
+        "$t.refers"
+      ]
+    },
+    "heldTypes": {
+      "args": [
+        "x"
+      ],
+      "expr": [
         "map",
         [
           "filter",
@@ -77,7 +187,7 @@
         ]
       ]
     },
-    "publicControllerMethod": {
+    "publicMethod": {
       "args": [
         "f"
       ],
@@ -102,79 +212,36 @@
             "private",
             "protected"
           ]
-        ],
-        [
-          "some",
-          [
-            "list",
-            [
-              "enclosing",
-              "$f",
-              "type"
-            ]
-          ],
-          "t",
-          [
-            "and",
-            [
-              "exists",
-              "$t"
-            ],
-            [
-              "assignable",
-              "$t",
-              "controller"
-            ]
-          ]
         ]
       ]
     },
-    "declaredTypes": {
+    "inController": {
       "args": [
         "f"
       ],
       "expr": [
-        "map",
+        "some",
         [
-          "filter",
+          "list",
           [
-            "flatten",
-            [
-              "list",
-              [
-                "list",
-                "$f.returnType"
-              ],
-              [
-                "descendants",
-                "$f.returnType",
-                "type-expression"
-              ]
-            ]
-          ],
-          "t",
-          [
-            "and",
-            [
-              "exists",
-              "$t"
-            ],
-            [
-              "=",
-              "$t.form",
-              "named"
-            ],
-            [
-              "proven",
-              [
-                "nonempty",
-                "$t.refers"
-              ]
-            ]
+            "enclosing",
+            "$f",
+            "type"
           ]
         ],
         "t",
-        "$t.refers"
+        [
+          "and",
+          [
+            "exists",
+            "$t"
+          ],
+          [
+            "assignable",
+            "$t",
+            "controller"
+          ]
+        ]
       ]
     }
   },
@@ -183,12 +250,38 @@
     "as": "r",
     "pipeline": [
       {
-        "where": [
-          "publicControllerMethod",
-          [
+        "project": {
+          "ret": "$r",
+          "fn": [
             "enclosing",
             "$r",
             "function"
+          ]
+        }
+      },
+      {
+        "where": [
+          "publicMethod",
+          "$fn"
+        ]
+      },
+      {
+        "join": "laravel-route-actions",
+        "on": {
+          "action": "$fn.symbol"
+        },
+        "as": "routed"
+      },
+      {
+        "where": [
+          "or",
+          [
+            "exists",
+            "$routed"
+          ],
+          [
+            "inController",
+            "$fn"
           ]
         ]
       },
@@ -201,7 +294,7 @@
               "flatten",
               [
                 "map",
-                "$r.values",
+                "$ret.values",
                 "v",
                 [
                   "typesIn",
@@ -211,11 +304,7 @@
             ],
             [
               "declaredTypes",
-              [
-                "enclosing",
-                "$r",
-                "function"
-              ]
+              "$fn"
             ]
           ]
         ]

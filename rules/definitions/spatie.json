@@ -24,8 +24,11 @@
               ],
               "s",
               [
-                "namesData",
-                "$s"
+                "proven",
+                [
+                  "namesData",
+                  "$s"
+                ]
               ]
             ]
           ],
@@ -335,20 +338,23 @@
           ]
         ],
         [
-          "some",
+          "proven",
           [
-            "typeMembers",
+            "some",
             [
-              "typeOf",
-              "$s"
-            ]
-          ],
-          "m",
-          [
-            "documentsData",
+              "typeMembers",
+              [
+                "typeOf",
+                "$s"
+              ]
+            ],
+            "m",
             [
-              "elementType",
-              "$m"
+              "documentsData",
+              [
+                "elementType",
+                "$m"
+              ]
             ]
           ]
         ]

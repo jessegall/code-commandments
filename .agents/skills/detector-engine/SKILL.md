@@ -55,6 +55,12 @@ schema` prints every operator: logic (`and`, `or`, `not`, `case`), lists (`some`
 > Smell test: if you are about to compare a name with a list, or `startsWith` a class name, stop: the tree's
 > kind, role or resolved type already answers it. A name check is a smell to justify, not a default.
 
+## Counting what is known
+
+A `filter` whose check is unknown for one item is unknown as a whole, and so is its `count`: one slot whose type the
+tree cannot place makes "two slots name Data" unknown for the whole class. Count only what is proven, with
+`["filter", list, "x", ["proven", check]]`, wherever an unknown item must not hide the known ones.
+
 ## What a judging keeps
 
 A definition sees only its own arguments, so the evaluator keeps its answer for the whole judging by the values it is

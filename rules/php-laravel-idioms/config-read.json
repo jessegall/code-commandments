@@ -241,8 +241,11 @@
                 ],
                 "x",
                 [
-                  "laravel.configRead",
-                  "$x"
+                  "proven",
+                  [
+                    "laravel.configRead",
+                    "$x"
+                  ]
                 ]
               ]
             ],
@@ -315,8 +318,11 @@
                 ],
                 "x",
                 [
-                  "laravel.configRead",
-                  "$x"
+                  "proven",
+                  [
+                    "laravel.configRead",
+                    "$x"
+                  ]
                 ]
               ]
             ]
