@@ -2544,6 +2544,13 @@
       ],
       "tag": "called-by-convention",
       "why": "A policy's public ability methods are called by the gate with the user and the model, whether they read them or not."
+    },
+    {
+      "classes": [
+        "Illuminate\\Database\\Eloquent\\Factories\\Factory"
+      ],
+      "tag": "association",
+      "why": "A model's factory is the other end of the pair the framework wires both ways (HasFactory, newFactory, the factory's $model): naming it carries no dependency direction."
     }
   ],
   "identities": [

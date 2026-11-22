@@ -31,7 +31,7 @@
                       "$x"
                     ],
                     [
-                      "ownDescendants",
+                      "outsideArguments",
                       "$x"
                     ]
                   ]
@@ -131,7 +131,7 @@
                 "$x"
               ],
               [
-                "ownDescendants",
+                "outsideArguments",
                 "$x"
               ]
             ]
@@ -240,6 +240,40 @@
             "assignable",
             "$t",
             "controller"
+          ]
+        ]
+      ]
+    },
+    "outsideArguments": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "filter",
+        [
+          "ownDescendants",
+          "$x"
+        ],
+        "d",
+        [
+          "none",
+          [
+            "ancestors",
+            "$d"
+          ],
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.kind",
+              "argument"
+            ],
+            [
+              "within",
+              "$a",
+              "$x"
+            ]
           ]
         ]
       ]

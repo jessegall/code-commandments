@@ -50,6 +50,9 @@ func TestAStrawmanIsToldFromARuntimeCondition(t *testing.T) {
 		"Names that do not resolve — a typo in a secret must not take the process down.":       false,
 		"Because Scrutor is not present in this solution, each rule is registered by hand.":    false,
 		"The raw condition string is not in this source's condition map.":                      false,
+		"The index is deliberately not unique. A replayed run walks the workflow again.":       false,
+		"Deliberately not invented — a fabricated testimonial is a lie about a business.":      false,
+		"Deletes rows from log_action that are not in this temporary table.":                   false,
 	} {
 		if DefendsAgainstStrawman(text) != defends {
 			t.Errorf("%q defends against a strawman: %v", text, !defends)

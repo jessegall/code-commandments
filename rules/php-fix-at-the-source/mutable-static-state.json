@@ -290,6 +290,100 @@
       [
         "not",
         [
+          "and",
+          [
+            "=",
+            "$a.mode",
+            "assign"
+          ],
+          [
+            "some",
+            [
+              "ownDescendants",
+              "$fn.body"
+            ],
+            "g",
+            [
+              "and",
+              [
+                "=",
+                "$g.kind",
+                "if"
+              ],
+              [
+                "<",
+                "$g.line",
+                "$a.line"
+              ],
+              [
+                "completes",
+                "$g.then"
+              ],
+              [
+                "some",
+                [
+                  "descendants",
+                  "$g.condition"
+                ],
+                "y",
+                [
+                  "tree.names",
+                  "$y",
+                  [
+                    "case",
+                    "$root.kind",
+                    {
+                      "access": "$root.member.name",
+                      "reference": "$root.name"
+                    },
+                    ""
+                  ]
+                ]
+              ],
+              [
+                "some",
+                [
+                  "descendants",
+                  "$g.then"
+                ],
+                "r",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$r.kind",
+                    "return"
+                  ],
+                  [
+                    "some",
+                    [
+                      "descendants",
+                      "$r"
+                    ],
+                    "y",
+                    [
+                      "tree.names",
+                      "$y",
+                      [
+                        "case",
+                        "$root.kind",
+                        {
+                          "access": "$root.member.name",
+                          "reference": "$root.name"
+                        },
+                        ""
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
           "=",
           "$a.mode",
           "fallback"

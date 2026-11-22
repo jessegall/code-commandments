@@ -6,3 +6,5 @@ spl_autoload_register(static function (string $class): void {
         require $path;
     }
 });
+
+require_once __DIR__.'/src/Illuminate/Collections/helpers.php';

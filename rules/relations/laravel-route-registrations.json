@@ -294,34 +294,37 @@
             [
               "case",
               [
-                "and",
-                [
-                  "contains",
-                  "$x",
-                  "@"
-                ],
-                [
-                  "nonempty",
-                  [
-                    "namespaceOf",
-                    "$c"
-                  ]
-                ]
+                "contains",
+                "$x",
+                "@"
               ],
               {
                 "true": [
-                  "concat",
+                  "replace",
                   [
-                    "namespaceOf",
-                    "$c"
+                    "case",
+                    [
+                      "nonempty",
+                      [
+                        "namespaceOf",
+                        "$c"
+                      ]
+                    ],
+                    {
+                      "true": [
+                        "concat",
+                        [
+                          "namespaceOf",
+                          "$c"
+                        ],
+                        "\\",
+                        "$x"
+                      ]
+                    },
+                    "$x"
                   ],
-                  "\\",
-                  [
-                    "replace",
-                    "$x",
-                    "@",
-                    "::"
-                  ]
+                  "@",
+                  "::"
                 ]
               },
               "$x"

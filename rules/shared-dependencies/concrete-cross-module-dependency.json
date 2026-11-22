@@ -76,6 +76,11 @@
               "assignable",
               "$b",
               "model"
+            ],
+            [
+              "assignable",
+              "$b",
+              "request"
             ]
           ]
         ]

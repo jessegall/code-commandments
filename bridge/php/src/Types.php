@@ -587,8 +587,16 @@ final class Types
         if (function_exists($global) || $call->name->isUnqualified()) {
             $call->setAttribute('target', ['symbol' => $global, 'name' => $global]);
         }
+        if (! function_exists($global)) {
+            return null;
+        }
+        try {
+            $function = new \ReflectionFunction($global);
+        } catch (Throwable) {
+            return null;
+        }
 
-        return null;
+        return $function->isInternal() ? null : $this->reflectedType($function->getReturnType(), null) ?? self::documentedReturn($function->getDocComment());
     }
 
     /**

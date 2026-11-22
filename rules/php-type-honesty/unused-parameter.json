@@ -232,6 +232,17 @@
             0
           ],
           [
+            "=",
+            [
+              "count",
+              [
+                "subtypes",
+                "$owner"
+              ]
+            ],
+            0
+          ],
+          [
             "not",
             [
               "boundThroughUsers",

@@ -3,19 +3,18 @@
 namespace Shop\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use JesseGall\CodeCommandments\Sins\Backend\Laravel\RepeatedQueryChain;
-use JesseGall\CodeCommandments\Testing\Fixed;
+use JesseGall\CodeCommandments\Sins\Backend\NamespaceCycle;
+use JesseGall\CodeCommandments\Testing\Righteous;
+use Shop\Database\Factories\GiftCardFactory;
 
 /**
- * A prepaid gift card, spent down at checkout and topped up at the till.
+ * A gift card a customer can spend at the till, made in tests by the factory it names.
  */
-class GiftCard extends Model
+#[Righteous(NamespaceCycle::class)]
+final class GiftCard extends Model
 {
-    protected $fillable = ['code', 'balance_cents'];
-
-    #[Fixed(RepeatedQueryChain::class)]
-    public static function lockedFor(int $cardId): self
+    protected static function newFactory(): GiftCardFactory
     {
-        return self::query()->whereKey($cardId)->lockForUpdate()->sole();
+        return GiftCardFactory::new();
     }
 }

@@ -238,6 +238,33 @@
                 "identity",
                 "collection"
               ]
+            ],
+            [
+              "=",
+              [
+                "fingerprint",
+                "$f.body",
+                "exact"
+              ],
+              [
+                "fingerprint",
+                "$x",
+                "exact"
+              ]
+            ],
+            [
+              "=",
+              [
+                "at",
+                [
+                  "map",
+                  "$x.arguments",
+                  "g",
+                  "$g.value.kind"
+                ],
+                0
+              ],
+              "reference"
             ]
           ]
         ]

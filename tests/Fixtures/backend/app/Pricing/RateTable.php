@@ -74,6 +74,17 @@ final class RoundedRates
     }
 
     #[Righteous(MutableStaticState::class)]
+    public static function floor(string $region, float $rate): float
+    {
+        if (isset(self::$rounded[$region . ':floor'])) {
+            return self::$rounded[$region . ':floor'];
+        }
+        self::$rounded[$region . ':floor'] = floor($rate);
+
+        return self::$rounded[$region . ':floor'];
+    }
+
+    #[Righteous(MutableStaticState::class)]
     public static function ceiling(string $region, float $rate): float
     {
         return self::$rounded[$region . ':ceiling'] ??= ceil($rate);

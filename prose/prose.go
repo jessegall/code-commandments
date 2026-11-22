@@ -34,10 +34,10 @@ var filler = []string{
 }
 
 var strawman = []phrase{
-	{pattern: words(`(?:intentionally|deliberately)\b[^.]{0,24}\b(?:not|never|no|empty|incomplete|omitted|unused)`)},
+	{pattern: words(`(?:intentionally|deliberately)\b[^.]{0,24}\b(?:not|never|no|empty|incomplete|omitted|unused)`), notBefore: goesOnToExplain},
 	{pattern: words(`(?:not|never)\b[^.]{0,40}\bon purpose`), notBefore: givesReason},
-	{pattern: words(`(?:is|are|'?s|'?re)\s+not\s+(?:in\s+this|here)`), notBefore: anothersContents},
-	{pattern: words(`not\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)`), notBefore: anothersContents},
+	{pattern: words(`(?:is|are|'?s|'?re)\s+not\s+(?:in\s+this|here)`), notAfter: relativeClause, notBefore: anothersContents},
+	{pattern: words(`not\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)`), notAfter: relativeClause, notBefore: anothersContents},
 }
 
 var (
@@ -47,6 +47,8 @@ var (
 	endsPhrase       = regexp.MustCompile(`^(?:\s*(?:[^\w\s]|$)|\s+(?:` + strings.Join(filler, "|") + `)\b)`)
 	anothersContents = regexp.MustCompile(`^\s+\w+'s`)
 	givesReason      = regexp.MustCompile(`(?i)^\s*,?\s+(?:as|because|since)\b`)
+	goesOnToExplain  = regexp.MustCompile(`(?is)^[^.]*?(?:—|–|\s-\s|\b(?:because|since|so that|otherwise)\b|\.\s+\p{Lu})`)
+	relativeClause   = endsWith(`that|which|who`)
 )
 
 // phrase is a pattern, and what must not stand right before or right after a match of it for the match to count.

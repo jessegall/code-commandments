@@ -978,6 +978,9 @@ func (e evaluation) assignable(v, named value) engine.Truth {
 	if declaration, declared := types.Declaration(resolved.Name); declared && !declaration.IsInDependency() {
 		return engine.False
 	}
+	if asked.KnowsEverySupertypeOf(resolved.Name) {
+		return engine.False
+	}
 
 	return engine.Unknown
 }

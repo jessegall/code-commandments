@@ -262,6 +262,26 @@ func (m Match) supertypesOf(symbol string, inScan func(Match) []Match, outside f
 	return nil
 }
 
+func (m Match) KnowsEverySupertypeOf(symbol string) bool {
+	if m.file == nil || symbol == "" {
+		return false
+	}
+	listed := outsideSymbols(m.file.Codebase(), m.file.Language())
+	chain := m.climb([]string{symbol}, func(owner string) []string {
+		return slices.Concat(m.extendsOf(owner), m.implementsOf(owner), m.usesOf(owner))
+	})
+
+	return !slices.ContainsFunc(chain, func(owner string) bool {
+		if _, found := listed[owner]; found {
+			return false
+		}
+
+		return !slices.ContainsFunc(m.file.Codebase().Declarations(owner), func(declaration Match) bool {
+			return declaration.file.Language() == m.file.Language()
+		})
+	})
+}
+
 func (m Match) OutsideKind(symbol string) string {
 	if m.file == nil {
 		return ""

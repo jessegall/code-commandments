@@ -24,6 +24,35 @@
     }
   },
   "definitions": {
+    "inMigration": {
+      "args": [
+        "l"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$l",
+            "type"
+          ]
+        ],
+        "t",
+        [
+          "and",
+          [
+            "exists",
+            "$t"
+          ],
+          [
+            "assignable",
+            "$t",
+            "migration"
+          ]
+        ]
+      ]
+    },
     "substantive": {
       "args": [
         "l"
@@ -237,6 +266,13 @@
                 "$l.role",
                 "body"
               ]
+            ]
+          ],
+          [
+            "not",
+            [
+              "inMigration",
+              "$l"
             ]
           ],
           [

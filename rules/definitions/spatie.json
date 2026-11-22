@@ -800,9 +800,21 @@
                   "$t.members",
                   "m",
                   [
-                    "=",
-                    "$m.form",
-                    "named"
+                    "and",
+                    [
+                      "=",
+                      "$m.form",
+                      "named"
+                    ],
+                    [
+                      "not",
+                      [
+                        "in",
+                        "$m.refers",
+                        "Spatie\\LaravelData\\Lazy",
+                        "Spatie\\LaravelData\\Optional"
+                      ]
+                    ]
                   ]
                 ]
               ],
@@ -818,9 +830,21 @@
                     "$t.members",
                     "m",
                     [
-                      "=",
-                      "$m.form",
-                      "named"
+                      "and",
+                      [
+                        "=",
+                        "$m.form",
+                        "named"
+                      ],
+                      [
+                        "not",
+                        [
+                          "in",
+                          "$m.refers",
+                          "Spatie\\LaravelData\\Lazy",
+                          "Spatie\\LaravelData\\Optional"
+                        ]
+                      ]
                     ]
                   ],
                   "m",
