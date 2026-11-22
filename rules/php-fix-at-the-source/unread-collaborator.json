@@ -147,10 +147,25 @@
               "type-expression"
             ],
             [
-              "exists",
+              "or",
               [
-                "typeDeclaration",
-                "$t.refers"
+                "exists",
+                [
+                  "typeDeclaration",
+                  "$t.refers"
+                ]
+              ],
+              [
+                "and",
+                [
+                  "=",
+                  "$d.file.language",
+                  "php"
+                ],
+                [
+                  "nonempty",
+                  "$t.refers"
+                ]
               ]
             ]
           ]

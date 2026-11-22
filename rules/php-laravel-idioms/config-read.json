@@ -214,26 +214,6 @@
           "$t"
         ],
         [
-          ">=",
-          [
-            "count",
-            [
-              "filter",
-              [
-                "descendants",
-                "$t",
-                "call"
-              ],
-              "x",
-              [
-                "laravel.configRead",
-                "$x"
-              ]
-            ]
-          ],
-          3
-        ],
-        [
           "none",
           [
             "descendants",
@@ -244,6 +224,102 @@
           [
             "foreignCall",
             "$x"
+          ]
+        ],
+        [
+          "or",
+          [
+            ">=",
+            [
+              "count",
+              [
+                "filter",
+                [
+                  "descendants",
+                  "$t",
+                  "call"
+                ],
+                "x",
+                [
+                  "laravel.configRead",
+                  "$x"
+                ]
+              ]
+            ],
+            3
+          ],
+          [
+            "and",
+            [
+              ">",
+              [
+                "count",
+                [
+                  "filter",
+                  "$t.writtenMembers",
+                  "m",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$m.kind",
+                      "function"
+                    ],
+                    [
+                      "!=",
+                      "$m.form",
+                      "constructor"
+                    ],
+                    [
+                      "=",
+                      "$m.effective.visibility",
+                      "public"
+                    ]
+                  ]
+                ]
+              ],
+              0
+            ],
+            [
+              "every",
+              [
+                "filter",
+                "$t.writtenMembers",
+                "m",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$m.kind",
+                    "function"
+                  ],
+                  [
+                    "!=",
+                    "$m.form",
+                    "constructor"
+                  ],
+                  [
+                    "=",
+                    "$m.effective.visibility",
+                    "public"
+                  ]
+                ]
+              ],
+              "m",
+              [
+                "some",
+                [
+                  "descendants",
+                  "$m",
+                  "call"
+                ],
+                "x",
+                [
+                  "laravel.configRead",
+                  "$x"
+                ]
+              ]
+            ]
           ]
         ]
       ]

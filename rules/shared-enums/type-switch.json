@@ -819,6 +819,63 @@
             ]
           ]
         ]
+      ],
+      [
+        "case",
+        "$b.kind",
+        {
+          "if": [
+            "none",
+            [
+              "before",
+              "$b"
+            ],
+            "s",
+            [
+              "and",
+              [
+                "=",
+                "$s.kind",
+                "if"
+              ],
+              [
+                "typeTested",
+                "$s.condition"
+              ],
+              [
+                "=",
+                [
+                  "fingerprint",
+                  [
+                    "subjectOf",
+                    [
+                      "first",
+                      [
+                        "list",
+                        "$s.condition"
+                      ]
+                    ],
+                    "$s"
+                  ],
+                  "exact"
+                ],
+                [
+                  "fingerprint",
+                  [
+                    "subjectOf",
+                    [
+                      "first",
+                      "$tests"
+                    ],
+                    "$b"
+                  ],
+                  "exact"
+                ]
+              ]
+            ]
+          ]
+        },
+        true
       ]
     ],
     "emit": "$b"

@@ -38,8 +38,32 @@
           "construction"
         ],
         [
-          "scalar",
-          "$v.resolved"
+          "or",
+          [
+            "scalar",
+            "$v.resolved"
+          ],
+          [
+            "or",
+            [
+              "=",
+              "$v.kind",
+              "construction"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$v.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$v.callee.form",
+                "static"
+              ]
+            ]
+          ]
         ],
         [
           "exists",
@@ -224,6 +248,47 @@
           "$v.callee.subject"
         ]
       ]
+    },
+    "decodes": {
+      "args": [
+        "v",
+        "p"
+      ],
+      "expr": [
+        "and",
+        [
+          "exists",
+          [
+            "typeDeclaration",
+            "$p.declaredType.refers"
+          ]
+        ],
+        [
+          "or",
+          [
+            "=",
+            [
+              "typeDeclaration",
+              "$p.declaredType.refers"
+            ],
+            [
+              "typeDeclaration",
+              "$v.resolved.name"
+            ]
+          ],
+          [
+            "=",
+            [
+              "typeDeclaration",
+              "$p.declaredType.refers"
+            ],
+            [
+              "typeDeclaration",
+              "$v.target.type"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -261,6 +326,22 @@
         [
           "conversion",
           "$g.value"
+        ],
+        [
+          "not",
+          [
+            "some",
+            "$declared.parameters",
+            "p",
+            [
+              "proven",
+              [
+                "decodes",
+                "$g.value",
+                "$p"
+              ]
+            ]
+          ]
         ],
         [
           ">=",

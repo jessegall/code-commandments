@@ -169,6 +169,85 @@
           ]
         ]
       ]
+    },
+    "delegation": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "soleStatement",
+          "$f"
+        ],
+        [
+          "some",
+          [
+            "effective",
+            "$f.body"
+          ],
+          "s",
+          [
+            "and",
+            [
+              "=",
+              [
+                "count",
+                [
+                  "descendants",
+                  "$s",
+                  "call"
+                ]
+              ],
+              1
+            ],
+            [
+              "some",
+              [
+                "descendants",
+                "$s",
+                "call"
+              ],
+              "c",
+              [
+                "and",
+                [
+                  "=",
+                  "$c.callee.kind",
+                  "access"
+                ],
+                [
+                  "tree.selfField",
+                  "$c.callee.subject"
+                ],
+                [
+                  "every",
+                  "$c.arguments",
+                  "g",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$g.value.kind",
+                      "reference"
+                    ],
+                    [
+                      "some",
+                      "$f.parameters",
+                      "p",
+                      [
+                        "=",
+                        "$p.binding.name",
+                        "$g.value.name"
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -184,7 +263,7 @@
             "$f"
           ],
           [
-            "exactCopyExclusions",
+            "delegation",
             "$f"
           ],
           [
@@ -204,6 +283,21 @@
             "fingerprint",
             "$f.body",
             "exact"
+          ],
+          "trivial": [
+            "and",
+            [
+              "soleStatement",
+              "$f"
+            ],
+            [
+              "<",
+              [
+                "syntaxWeight",
+                "$f.body"
+              ],
+              24
+            ]
           ]
         }
       },
@@ -226,12 +320,32 @@
       },
       {
         "having": [
-          ">=",
+          "or",
           [
-            "count",
-            "$rows"
+            ">=",
+            [
+              "count",
+              "$rows"
+            ],
+            3
           ],
-          2
+          [
+            "and",
+            [
+              ">=",
+              [
+                "count",
+                "$rows"
+              ],
+              2
+            ],
+            [
+              "none",
+              "$rows",
+              "r",
+              "$r.trivial"
+            ]
+          ]
         ]
       },
       {

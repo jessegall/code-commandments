@@ -109,18 +109,30 @@
               "return": [
                 "=",
                 [
-                  "declaredText",
-                  "$f.returnType"
+                  "squash",
+                  [
+                    "declaredText",
+                    "$f.returnType"
+                  ]
                 ],
-                "$t.type"
+                [
+                  "squash",
+                  "$t.type"
+                ]
               ],
               "returns": [
                 "=",
                 [
-                  "declaredText",
-                  "$f.returnType"
+                  "squash",
+                  [
+                    "declaredText",
+                    "$f.returnType"
+                  ]
                 ],
-                "$t.type"
+                [
+                  "squash",
+                  "$t.type"
+                ]
               ]
             },
             [
@@ -137,15 +149,32 @@
                 [
                   "=",
                   [
-                    "declaredText",
-                    "$p.declaredType"
+                    "squash",
+                    [
+                      "declaredText",
+                      "$p.declaredType"
+                    ]
                   ],
-                  "$t.type"
+                  [
+                    "squash",
+                    "$t.type"
+                  ]
                 ]
               ]
             ]
           ]
         ]
+      ]
+    },
+    "squash": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "replace",
+        "$x",
+        " ",
+        ""
       ]
     }
   }

@@ -473,3 +473,22 @@ func TestAParameterIsTypedAsTheSubtypeItsDocCommentDocuments(t *testing.T) {
 		t.Errorf("a documented class that is no subtype of the written one narrowed the parameter: %q", targets)
 	}
 }
+
+func TestAPropertyAClassDocumentsIsTypedAsTheClassItNames(t *testing.T) {
+	folder := written(t, map[string]string{
+		"app/Money.php": "<?php\nnamespace App\\Values;\nfinal class Money { public function cents(): int { return 0; } }\n",
+		"app/Order.php": "<?php\nnamespace App;\nuse App\\Values\\Money;\n/**\n * @property Money $total\n * @property int $count\n */\nclass Order { public function __get(string $name): mixed { return null; } }\n" +
+			"final class Till { public function due(Order $order): int { return $order->total->cents(); } }\n",
+	})
+	var targets []string
+	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
+		for _, node := range file.Nodes() {
+			if node.Target != nil {
+				targets = append(targets, node.Target.Symbol)
+			}
+		}
+	}
+	if !slices.Contains(targets, `App\Values\Money::cents`) {
+		t.Errorf("a call on a documented property reaches %q, and App\\Values\\Money::cents is not among them", targets)
+	}
+}

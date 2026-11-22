@@ -113,6 +113,11 @@ final class Types
                 $cases[] = $statement->name->toString();
             }
         }
+        foreach ($class->getAttribute('documentedProperties', []) as $documented => $type) {
+            if (! array_key_exists($documented, $properties)) {
+                $properties[$documented] = $type;
+            }
+        }
         $traits = [];
         foreach ($class->getTraitUses() as $use) {
             foreach ($use->traits as $trait) {

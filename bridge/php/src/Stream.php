@@ -88,7 +88,7 @@ final readonly class Stream
         $errors = new Collecting();
         $statements = $parser->parse($code, $errors) ?? [];
         $names = new NameResolver($errors, ['preserveOriginalNames' => true]);
-        $statements = (new NodeTraverser($names, new DocumentedParameters($names), new AnonymousClassNames(basename($path))))->traverse($statements);
+        $statements = (new NodeTraverser($names, new DocumentedTypes($names), new AnonymousClassNames(basename($path))))->traverse($statements);
 
         return [$code, $statements, $errors, $parser->getTokens()];
     }
