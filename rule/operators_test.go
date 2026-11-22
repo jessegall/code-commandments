@@ -158,6 +158,7 @@ func TestTheTreeOperatorsWalkAndCompareTheSampleTrees(t *testing.T) {
 		{"selectors", "python", `{"select":"call","as":"c","where":["=",["get",["consumer","$c"],"use"],"discarded"]}`, 1},
 		{"selectors", "python", `{"select":"if","as":"i","where":["exists",["matchesShape","$i",{"kind":"if","condition":{"kind":"logical","operator":"and","left":"?a","right":"?b"}}]]}`, 1},
 		{"selectors", "python", `{"select":"if","as":"i","where":["dominates","$i.condition",["first","$i.then.statements"]]}`, 1},
+		{"selectors", "python", `{"select":"if","as":"i","where":["and",["=","$i.condition.operator","and"],["some",["pathConditions",["first","$i.then.statements"]],"c",["and",["=",["get","$c","condition"],"$i.condition.right"],["=",["get","$c","holds"],true]]]]}`, 1},
 		{"selectors", "python", `{"select":"if","as":"i","where":["not",["dominates",["first","$i.then.statements"],"$i.condition"]]}`, 1},
 		{"selectors", "python", `{"select":"function","as":"f","where":["=",["fingerprint","$f","renamed"],["fingerprint","$f","renamed"]]}`, 2},
 		{"selectors", "python", `{"select":"function","as":"f","where":["occurs","$f",["first",["filter",["descendants","$f","access"],"x",["=","$x.member.name","total"]]],"exact"]}`, 1},

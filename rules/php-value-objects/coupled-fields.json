@@ -16,8 +16,8 @@
       "python-coupled-fields"
     ],
     "skill": "php/value-objects",
-    "description": "A class's own fields always change and get checked together \u2014 one concept split across several fields \u2014 and should be folded into a single value object.",
-    "rule": "Fields that always change together are really one type \u2014 extract them into a value object and use it directly; don't keep a field that just duplicates a nested object's property.",
+    "description": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.",
+    "rule": "Fields that always change together are really one type — extract them into a value object and use it directly; don't keep a field that just duplicates a nested object's property.",
     "suggestion": "Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property.",
     "reporting": {
       "crossFile": true
@@ -667,32 +667,57 @@
     ],
     "as": "f",
     "where": [
-      "or",
+      "and",
       [
-        "and",
+        "not",
+        "$f.file.test"
+      ],
+      [
+        "not",
         [
-          "=",
-          "$f.kind",
-          "function"
-        ],
-        [
-          "tree.method",
-          "$f"
+          "spatie.isData",
+          [
+            "case",
+            "$f.kind",
+            {
+              "type": "$f"
+            },
+            [
+              "enclosing",
+              "$f",
+              "type"
+            ]
+          ]
         ]
       ],
       [
-        "and",
+        "or",
         [
-          "=",
-          "$f.kind",
-          "type"
+          "and",
+          [
+            "=",
+            "$f.kind",
+            "function"
+          ],
+          [
+            "tree.method",
+            "$f"
+          ]
         ],
         [
-          "in",
-          "$f.form",
-          "class",
-          "struct",
-          "record"
+          "and",
+          [
+            "=",
+            "$f.kind",
+            "type"
+          ],
+          [
+            "in",
+            "$f.form",
+            "class",
+            "struct",
+            "record"
+          ]
         ]
       ]
     ],

@@ -43,7 +43,7 @@
         ">",
         [
           "count",
-          "$c.documents.parameters"
+          "$c.tags"
         ],
         0
       ],

@@ -30,15 +30,24 @@
     ],
     "as": "f",
     "where": [
-      "=",
-      "$f.parent.kind",
-      "comparison"
+      "exists",
+      [
+        "comparisonOf",
+        "$f"
+      ]
     ],
     "let": [
       [
         "replacement",
         [
           "replacementOf",
+          "$f"
+        ]
+      ],
+      [
+        "compared",
+        [
+          "comparisonOf",
           "$f"
         ]
       ]
@@ -84,7 +93,7 @@
       ],
       [
         "every",
-        "$f.parent.operators",
+        "$compared.operators",
         "o",
         [
           "in",
@@ -101,7 +110,7 @@
       ],
       [
         "some",
-        "$f.parent.operands",
+        "$compared.operands",
         "side",
         [
           "and",
@@ -137,6 +146,54 @@
     "emit": "$f"
   },
   "definitions": {
+    "comparisonOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.parent.kind",
+        {
+          "comparison": "$x.parent",
+          "assignment": [
+            "case",
+            [
+              "and",
+              [
+                "=",
+                [
+                  "count",
+                  "$x.parent.values"
+                ],
+                1
+              ],
+              [
+                "=",
+                "$x.parent.parent.kind",
+                "comparison"
+              ]
+            ],
+            {
+              "true": "$x.parent.parent"
+            },
+            null
+          ],
+          "cast": [
+            "case",
+            [
+              "=",
+              "$x.parent.parent.kind",
+              "comparison"
+            ],
+            {
+              "true": "$x.parent.parent"
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
     "replacementOf": {
       "args": [
         "x"

@@ -31,9 +31,8 @@
         "$c.file.test"
       ],
       [
-        "=",
-        "$c.parent.kind",
-        "return"
+        "returned",
+        "$c"
       ],
       [
         "hasEffect",
@@ -112,6 +111,76 @@
           "cast": "$v.operand"
         },
         "$v"
+      ]
+    },
+    "returned": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$x.parent.kind",
+          "return"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "fallback"
+          ],
+          [
+            "=",
+            "$x.role",
+            "subject"
+          ],
+          [
+            "=",
+            "$x.parent.parent.kind",
+            "return"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "index"
+          ],
+          [
+            "=",
+            "$x.role",
+            "subject"
+          ],
+          [
+            "or",
+            [
+              "=",
+              "$x.parent.parent.kind",
+              "return"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$x.parent.parent.kind",
+                "fallback"
+              ],
+              [
+                "=",
+                "$x.parent.role",
+                "subject"
+              ],
+              [
+                "=",
+                "$x.parent.parent.parent.kind",
+                "return"
+              ]
+            ]
+          ]
+        ]
       ]
     }
   }

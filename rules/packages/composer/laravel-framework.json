@@ -3015,6 +3015,10 @@
     {
       "name": "service-locator",
       "type": "session"
+    },
+    {
+      "name": "migration",
+      "type": "Illuminate\\Database\\Migrations\\Migration"
     }
   ],
   "forwards": [

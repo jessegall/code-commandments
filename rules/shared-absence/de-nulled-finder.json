@@ -137,6 +137,24 @@
           ]
         ]
       ]
+    },
+    "mixedType": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$t.form",
+          "keyword"
+        ],
+        [
+          "=",
+          "$t.name",
+          "mixed"
+        ]
+      ]
     }
   },
   "find": {
@@ -149,6 +167,16 @@
         [
           "typeOf",
           "$f"
+        ]
+      ],
+      [
+        "not",
+        [
+          "mixedType",
+          [
+            "typeOf",
+            "$f"
+          ]
         ]
       ],
       [

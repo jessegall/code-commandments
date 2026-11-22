@@ -127,6 +127,51 @@
           ]
         ]
       ]
+    },
+    "groupsSiblings": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "every",
+        "$m.declarators",
+        "d",
+        [
+          "and",
+          [
+            "=",
+            "$d.initializer.kind",
+            "collection"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$d.initializer.entries"
+            ],
+            0
+          ],
+          [
+            "every",
+            "$d.initializer.entries",
+            "e",
+            [
+              "and",
+              [
+                "=",
+                "$e.value.kind",
+                "access"
+              ],
+              [
+                "in",
+                "$e.value.subject.name",
+                "self",
+                "static"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -205,17 +250,47 @@
             "$m"
           ],
           [
-            ">",
+            "or",
             [
-              "count",
+              ">",
               [
-                "literalDeclarators",
-                "$m"
-              ]
+                "count",
+                [
+                  "literalDeclarators",
+                  "$m"
+                ]
+              ],
+              0
             ],
-            0
+            [
+              "groupsSiblings",
+              "$m"
+            ]
           ]
         ]
+      ],
+      [
+        ">=",
+        [
+          "count",
+          [
+            "filter",
+            "$members",
+            "m",
+            [
+              ">",
+              [
+                "count",
+                [
+                  "literalDeclarators",
+                  "$m"
+                ]
+              ],
+              0
+            ]
+          ]
+        ],
+        2
       ]
     ],
     "emit": "$t"

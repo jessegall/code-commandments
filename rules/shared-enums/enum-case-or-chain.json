@@ -185,6 +185,55 @@
     "having": [
       "and",
       [
+        "not",
+        [
+          "proven",
+          [
+            "and",
+            [
+              "=",
+              [
+                "tree.ownSymbol",
+                [
+                  "enclosing",
+                  "$l",
+                  "type"
+                ]
+              ],
+              [
+                "first",
+                "$owners"
+              ]
+            ],
+            [
+              "=",
+              "$l.parent.kind",
+              "return"
+            ],
+            [
+              "some",
+              [
+                "list",
+                [
+                  "enclosing",
+                  "$l",
+                  "function"
+                ]
+              ],
+              "f",
+              [
+                "=",
+                [
+                  "count",
+                  "$f.body.statements"
+                ],
+                1
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
         ">=",
         [
           "count",

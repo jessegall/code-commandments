@@ -318,3 +318,30 @@ func TestAClassAFileOfTheScanDeclaresIsNeverLoaded(t *testing.T) {
 func named(node *contract.Node, name string) bool {
 	return node.Facts != nil && node.Name == name
 }
+
+func TestADocReferenceToSelfOrParentResolvesToTheClassItIsWrittenOn(t *testing.T) {
+	folder := written(t, map[string]string{"Ledger.php": `<?php
+namespace App;
+class Book { public function close(): void {} }
+/**
+ * Balanced by {@see self::balance()}.
+ */
+class Ledger extends Book {
+    public function balance(): int { return 0; }
+    /**
+     * Ends with {@see parent::close()} and {@see static::balance()}.
+     */
+    public function close(): void {}
+}
+`})
+	var resolved []string
+	for _, comment := range bridged(t, folder).Files[0].Comments {
+		for _, ref := range comment.Refs {
+			resolved = append(resolved, ref.Symbol)
+		}
+	}
+	wanted := []string{`App\Ledger::balance`, `App\Book::close`, `App\Ledger::balance`}
+	if strings.Join(resolved, " ") != strings.Join(wanted, " ") {
+		t.Errorf("the doc references resolve to %q, not %q", resolved, wanted)
+	}
+}

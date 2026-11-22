@@ -572,6 +572,10 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        "$owner.file.test"
       ]
     ],
     "emit": "$r"

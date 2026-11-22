@@ -171,27 +171,34 @@
     ],
     "as": "d",
     "where": [
-      "case",
-      "$d.kind",
-      {
-        "parameter": [
-          "blank",
-          "$d.default"
-        ],
-        "declarator": [
-          "and",
-          [
-            "=",
-            "$d.parent.kind",
-            "field"
-          ],
-          [
+      "and",
+      [
+        "not",
+        "$d.file.test"
+      ],
+      [
+        "case",
+        "$d.kind",
+        {
+          "parameter": [
             "blank",
-            "$d.initializer"
+            "$d.default"
+          ],
+          "declarator": [
+            "and",
+            [
+              "=",
+              "$d.parent.kind",
+              "field"
+            ],
+            [
+              "blank",
+              "$d.initializer"
+            ]
           ]
-        ]
-      },
-      false
+        },
+        false
+      ]
     ],
     "let": [
       [

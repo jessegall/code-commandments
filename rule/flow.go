@@ -353,8 +353,14 @@ func pathConditions(site engine.Match) ([]value, bool) {
 		return nil, false
 	}
 	var conditions []value
-	add := func(condition engine.Match, holds bool) {
+	var add func(condition engine.Match, holds bool)
+	add = func(condition engine.Match, holds bool) {
 		conditions = append(conditions, known(record{"condition": known(condition), "holds": truthValue(engine.TruthOf(holds))}))
+		joined := condition.Node()
+		if joined.Kind == "logical" && ((holds && joined.Operator == "and") || (!holds && joined.Operator == "or")) {
+			add(condition.Child("left"), holds)
+			add(condition.Child("right"), holds)
+		}
 	}
 	for at := site; at.Parent().Exists() && !at.Node().Is("function-like"); at = at.Parent() {
 		parent := at.Parent()

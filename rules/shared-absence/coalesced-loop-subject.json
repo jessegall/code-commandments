@@ -30,14 +30,43 @@
     "where": [
       "and",
       [
-        "=",
-        "$f.role",
-        "iterable"
-      ],
-      [
-        "=",
-        "$f.parent.kind",
-        "loop"
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$f.role",
+            "iterable"
+          ],
+          [
+            "=",
+            "$f.parent.kind",
+            "loop"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$f.parent.kind",
+            "argument"
+          ],
+          [
+            "=",
+            "$f.parent.parent.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$f.parent.parent.role",
+            "iterable"
+          ],
+          [
+            "=",
+            "$f.parent.parent.parent.kind",
+            "loop"
+          ]
+        ]
       ],
       [
         "case",

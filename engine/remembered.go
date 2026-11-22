@@ -187,7 +187,10 @@ func (r *Remembered) finding(codebase *Codebase, find func(*Codebase) []Match, p
 		return answered
 	}
 
-	matches := find(codebase.Reporting(slices.Collect(maps.Keys(asked))...))
+	matches := slices.DeleteFunc(find(codebase.Reporting(slices.Collect(maps.Keys(asked))...)), func(match Match) bool {
+		_, inAsked := asked[match.File()]
+		return !inAsked
+	})
 	r.remember(asked, matches)
 	answered = append(answered, matches...)
 

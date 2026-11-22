@@ -200,7 +200,29 @@
             0
           ]
         },
-        "$v.callee.subject"
+        [
+          "case",
+          [
+            "and",
+            [
+              "=",
+              [
+                "count",
+                "$v.arguments"
+              ],
+              0
+            ],
+            [
+              "=",
+              "$v.callee.form",
+              "static"
+            ]
+          ],
+          {
+            "true": null
+          },
+          "$v.callee.subject"
+        ]
       ]
     }
   },

@@ -66,6 +66,10 @@
           "$f.body.statements"
         ],
         1
+      ],
+      [
+        "not",
+        "$f.file.test"
       ]
     ],
     "having": [

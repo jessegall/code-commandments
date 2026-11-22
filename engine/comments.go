@@ -29,7 +29,7 @@ func (c *Codebase) Comments() []Commented {
 
 func (c *Codebase) CommentRuns() []Commented {
 	var comments []Commented
-	for _, file := range c.opened() {
+	for _, file := range c.owned() {
 		for _, comment := range file.File.Comments {
 			current := Commented{Comment: comment, File: file}
 			if current.Prose() == "" {

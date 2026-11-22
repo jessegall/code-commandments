@@ -80,7 +80,7 @@ final class Translator
     private array $aliases = [];
 
     /**
-     * @var list<array{int, int, string}>
+     * @var list<array{int, int, string, ?string}> each type's span from its doc comment on, its symbol and its parent's
      */
     private array $typeSpans = [];
 
@@ -501,7 +501,7 @@ final class Translator
         };
         $made = $this->of('type', $type, ['name' => $type->name?->toString(), 'symbol' => $symbol, 'form' => $form, 'modifiers' => $this->modifiers($type)]);
         if ($symbol !== null) {
-            $this->typeSpans[] = [$this->start($type), $this->end($type), $symbol];
+            $this->typeSpans[] = [$type->getDocComment()?->getStartFilePos() ?? $this->start($type), $this->end($type), $symbol, $type instanceof Stmt\Class_ ? $type->extends?->toString() : null];
         }
         $parts = [];
         $extends = match (true) {
@@ -1327,9 +1327,11 @@ final class Translator
     {
         preg_match_all('/@(?:see|link)\s+(\\\\?[A-Za-z_][\\\\\w]*)(?:::(\$?\w+))?(\(\))?(?=[\s.,;)}]|$)/', $text, $found, PREG_SET_ORDER);
         $enclosing = null;
-        foreach ($this->typeSpans as [$start, $end, $symbol]) {
+        $enclosingParent = null;
+        foreach ($this->typeSpans as [$start, $end, $symbol, $parent]) {
             if ($start <= $at && $at < $end) {
                 $enclosing = $symbol;
+                $enclosingParent = $parent;
             }
         }
         $refs = [];
@@ -1337,7 +1339,12 @@ final class Translator
             $written = $one[1];
             $member = isset($one[2]) && $one[2] !== '' ? ltrim($one[2], '$') : null;
             $ofThis = ($one[3] ?? '') !== '' && ! str_contains($written, '\\') && $member === null && $enclosing !== null;
-            $class = $ofThis ? $enclosing : $this->qualified($written);
+            $class = match (true) {
+                $ofThis => $enclosing,
+                in_array(strtolower($written), ['self', 'static'], true) && $enclosing !== null => $enclosing,
+                strtolower($written) === 'parent' && $enclosingParent !== null => $enclosingParent,
+                default => $this->qualified($written),
+            };
             $member = $ofThis ? $written : $member;
             $declared = $this->known?->declared($class);
             $ref = ['text' => $written.($member !== null && ! $ofThis ? '::'.$member : '')];

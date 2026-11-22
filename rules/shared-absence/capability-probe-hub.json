@@ -86,6 +86,25 @@
         ]
       ]
     },
+    "answersIn": {
+      "args": [
+        "x",
+        "t"
+      ],
+      "expr": [
+        "some",
+        [
+          "tree.insideOf",
+          "$x"
+        ],
+        "y",
+        [
+          "answers",
+          "$y",
+          "$t"
+        ]
+      ]
+    },
     "probesSelf": {
       "args": [
         "t"
@@ -181,7 +200,7 @@
             ],
             "x",
             [
-              "answers",
+              "answersIn",
               "$x",
               [
                 "first",
@@ -343,6 +362,142 @@
         ""
       ]
     },
+    "negatedTest": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "case",
+        "$s.condition.kind",
+        {
+          "unary": "$s.condition.operand"
+        },
+        "$s.condition"
+      ]
+    },
+    "probeGuard": {
+      "args": [
+        "s",
+        "r"
+      ],
+      "expr": [
+        "case",
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "if"
+          ],
+          [
+            "not",
+            [
+              "exists",
+              "$s.else"
+            ]
+          ],
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                "$s.condition.kind",
+                "unary"
+              ],
+              [
+                "=",
+                "$s.condition.operator",
+                "not"
+              ]
+            ],
+            [
+              "=",
+              "$s.condition.negated",
+              true
+            ]
+          ],
+          [
+            "probesSelf",
+            [
+              "negatedTest",
+              "$s"
+            ]
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$s.then.statements"
+            ],
+            1
+          ],
+          [
+            "=",
+            "$s.then.kind",
+            "block"
+          ],
+          [
+            "=",
+            [
+              "kindOf",
+              [
+                "at",
+                "$s.then.statements",
+                0
+              ]
+            ],
+            "return"
+          ],
+          [
+            "fallbackValue",
+            [
+              "valueOf",
+              [
+                "at",
+                "$s.then.statements",
+                0
+              ]
+            ]
+          ],
+          [
+            "=",
+            "$r.kind",
+            "return"
+          ],
+          [
+            "some",
+            [
+              "tree.insideOf",
+              [
+                "valueOf",
+                "$r"
+              ]
+            ],
+            "y",
+            [
+              "answersBound",
+              "$y",
+              [
+                "negatedTest",
+                "$s"
+              ],
+              ""
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "memberName",
+            [
+              "negatedTest",
+              "$s"
+            ]
+          ]
+        },
+        ""
+      ]
+    },
     "probed": {
       "args": [
         "m"
@@ -412,16 +567,50 @@
           ],
           {
             "true": [
-              "probeIf",
+              "case",
               [
-                "at",
-                "$m.body.statements",
-                0
+                "nonempty",
+                [
+                  "probeIf",
+                  [
+                    "at",
+                    "$m.body.statements",
+                    0
+                  ],
+                  [
+                    "at",
+                    "$m.body.statements",
+                    1
+                  ]
+                ]
               ],
+              {
+                "true": [
+                  "probeIf",
+                  [
+                    "at",
+                    "$m.body.statements",
+                    0
+                  ],
+                  [
+                    "at",
+                    "$m.body.statements",
+                    1
+                  ]
+                ]
+              },
               [
-                "at",
-                "$m.body.statements",
-                1
+                "probeGuard",
+                [
+                  "at",
+                  "$m.body.statements",
+                  0
+                ],
+                [
+                  "at",
+                  "$m.body.statements",
+                  1
+                ]
               ]
             ]
           },

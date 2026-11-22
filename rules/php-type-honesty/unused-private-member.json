@@ -80,9 +80,37 @@
             "$a.targets",
             "t",
             [
-              "within",
-              "$r",
-              "$t"
+              "and",
+              [
+                "within",
+                "$r",
+                "$t"
+              ],
+              [
+                "not",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$t.kind",
+                    "access"
+                  ],
+                  [
+                    "not",
+                    [
+                      "tree.selfField",
+                      "$t"
+                    ]
+                  ],
+                  [
+                    "not",
+                    [
+                      "isSelf",
+                      "$t.subject"
+                    ]
+                  ]
+                ]
+              ]
             ]
           ]
         ]

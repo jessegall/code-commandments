@@ -42,37 +42,51 @@
       ],
       "expr": [
         "case",
-        "$d.kind",
-        {
-          "binding": [
-            "case",
-            "$d.parent.kind",
-            {
-              "declarator": [
-                "writtenLiteral",
-                "$d.parent.initializer"
-              ],
-              "assignment": [
-                "writtenLiteral",
-                [
-                  "at",
-                  "$d.parent.values",
-                  0
-                ]
-              ]
-            },
-            null
-          ],
-          "declarator": [
-            "writtenLiteral",
-            "$d.initializer"
-          ],
-          "enum-case": [
-            "writtenLiteral",
-            "$d.value"
+        [
+          "exists",
+          [
+            "enclosing",
+            "$d",
+            "function"
           ]
+        ],
+        {
+          "true": null
         },
-        null
+        [
+          "case",
+          "$d.kind",
+          {
+            "binding": [
+              "case",
+              "$d.parent.kind",
+              {
+                "declarator": [
+                  "writtenLiteral",
+                  "$d.parent.initializer"
+                ],
+                "assignment": [
+                  "writtenLiteral",
+                  [
+                    "at",
+                    "$d.parent.values",
+                    0
+                  ]
+                ]
+              },
+              null
+            ],
+            "declarator": [
+              "writtenLiteral",
+              "$d.initializer"
+            ],
+            "enum-case": [
+              "writtenLiteral",
+              "$d.value"
+            ]
+          },
+          null
+        ]
       ]
     },
     "writtenLiteral": {
@@ -152,6 +166,38 @@
         [
           "memberWord",
           "$m"
+        ]
+      ]
+    },
+    "privateElsewhere": {
+      "args": [
+        "d",
+        "a"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$d.kind",
+          "declarator"
+        ],
+        [
+          "=",
+          "$d.parent.effective.visibility",
+          "private"
+        ],
+        [
+          "!=",
+          [
+            "enclosing",
+            "$d",
+            "type"
+          ],
+          [
+            "enclosing",
+            "$a",
+            "type"
+          ]
         ]
       ]
     }
@@ -242,6 +288,20 @@
                 "$g.value"
               ],
               "$a.value.value"
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "privateElsewhere",
+                  [
+                    "declarationOf",
+                    "$g.value"
+                  ],
+                  "$a"
+                ]
+              ]
             ]
           ]
         ]

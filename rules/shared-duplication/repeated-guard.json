@@ -184,9 +184,10 @@
         "where": [
           "and",
           [
-            "=",
+            "in",
             "$l.operator",
-            "and"
+            "and",
+            "or"
           ],
           [
             "!=",

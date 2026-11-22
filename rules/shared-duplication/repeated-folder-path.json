@@ -93,11 +93,31 @@
           "keys": [
             "map",
             [
-              "range",
-              1,
+              "filter",
               [
-                "count",
-                "$spelled.folder"
+                "range",
+                1,
+                [
+                  "count",
+                  "$spelled.folder"
+                ]
+              ],
+              "d",
+              [
+                "or",
+                [
+                  ">=",
+                  "$d",
+                  2
+                ],
+                [
+                  "=",
+                  "$d",
+                  [
+                    "count",
+                    "$spelled.folder"
+                  ]
+                ]
               ]
             ],
             "d",

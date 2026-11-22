@@ -504,6 +504,29 @@
         "not",
         [
           "every",
+          [
+            "dispatchArms",
+            "$b"
+          ],
+          "a",
+          [
+            "=",
+            [
+              "tree.kindOf",
+              [
+                "get",
+                "$a",
+                "body"
+              ]
+            ],
+            "construction"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "every",
           "$tests",
           "t",
           [

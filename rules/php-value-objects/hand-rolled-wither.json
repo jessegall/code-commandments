@@ -55,6 +55,16 @@
           "$f.body.statements"
         ],
         1
+      ],
+      [
+        "none",
+        "$f.modifiers",
+        "m",
+        [
+          "=",
+          "$m",
+          "static"
+        ]
       ]
     ],
     "let": [

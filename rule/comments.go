@@ -11,6 +11,17 @@ const commentSource = "comment"
 // commentsOf is every comment run of the codebase as the record a rule reads: its prose, its form, the node it
 // documents and that node's own words, whether its references dangle, and the node a finding about it reports at.
 func commentsOf(codebase *engine.Codebase) []record {
+	var reported []record
+	for _, comment := range commentsOfPart(codebase) {
+		if located, _ := nodeOf(comment["location"]); codebase.Reports(located.Source()) {
+			reported = append(reported, comment)
+		}
+	}
+
+	return reported
+}
+
+func commentsOfPart(codebase *engine.Codebase) []record {
 	whole := codebase.Whole()
 	every := everyComment(whole)
 	if whole == codebase {

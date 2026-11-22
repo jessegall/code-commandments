@@ -52,3 +52,16 @@ func TestAPartHoldsOnlyItsOwnLanguage(t *testing.T) {
 		t.Errorf("the Python part of a tree of one Python file holds %d files", held)
 	}
 }
+
+func TestAnAnalysisFirstAskedByANarrowedReaderHoldsEveryFile(t *testing.T) {
+	tree := treeOf(t, "src/one.py", "src/two.py")
+	key := struct{ name string }{"files a whole-program analysis saw"}
+	count := func(c *engine.Codebase) int { return c.WhereKind("file").Count() }
+
+	first := engine.Analysis(tree.Reporting(tree.Files()[0].Path), key, count)
+	second := engine.Analysis(tree.Reporting(tree.Files()[1].Path), key, count)
+
+	if first != 2 || second != 2 {
+		t.Errorf("an analysis asked by readers narrowed to one file each saw %d and %d of the 2 files", first, second)
+	}
+}

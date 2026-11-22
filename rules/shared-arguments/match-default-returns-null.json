@@ -164,6 +164,25 @@
               "$v.resolved.nullable",
               true
             ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$v.kind",
+              "conditional"
+            ],
+            [
+              "or",
+              [
+                "absent",
+                "$v.consequent"
+              ],
+              [
+                "absent",
+                "$v.alternative"
+              ]
+            ]
           ]
         ]
       ]
@@ -187,6 +206,11 @@
         "!=",
         "$a.parent.subject.literalKind",
         "boolean"
+      ],
+      [
+        "!=",
+        "$a.parent.parent.kind",
+        "expression-statement"
       ]
     ],
     "let": [

@@ -109,6 +109,16 @@
         ]
       ],
       [
+        "=",
+        "$a.member.form",
+        "name"
+      ],
+      [
+        "!=",
+        "$a.member.name",
+        "class"
+      ],
+      [
         "!=",
         [
           "count",

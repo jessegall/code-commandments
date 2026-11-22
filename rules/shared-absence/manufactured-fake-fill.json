@@ -61,27 +61,6 @@
               "$x.value",
               0
             ]
-          ],
-          [
-            "and",
-            [
-              "=",
-              "$x.literalKind",
-              "boolean"
-            ],
-            [
-              "or",
-              [
-                "=",
-                "$x.value",
-                "false"
-              ],
-              [
-                "=",
-                "$x.value",
-                false
-              ]
-            ]
           ]
         ]
       ]
@@ -174,10 +153,46 @@
             {
               "true": "$f.consequent"
             },
-            "$f.alternative"
+            [
+              "case",
+              [
+                "valueTested",
+                "$f"
+              ],
+              {
+                "true": "$f.alternative"
+              },
+              null
+            ]
           ]
         },
         null
+      ]
+    },
+    "valueTested": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "some",
+        [
+          "tree.insideOf",
+          "$f.condition"
+        ],
+        "x",
+        [
+          "=",
+          [
+            "fingerprint",
+            "$x",
+            "exact"
+          ],
+          [
+            "fingerprint",
+            "$f.consequent",
+            "exact"
+          ]
+        ]
       ]
     },
     "absenceTested": {
@@ -227,10 +242,17 @@
     ],
     "as": "f",
     "where": [
-      "emptyScalar",
+      "and",
       [
-        "defaulted",
-        "$f"
+        "not",
+        "$f.file.test"
+      ],
+      [
+        "emptyScalar",
+        [
+          "defaulted",
+          "$f"
+        ]
       ]
     ],
     "let": [

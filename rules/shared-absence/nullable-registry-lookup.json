@@ -145,114 +145,121 @@
     ],
     "as": "r",
     "where": [
-      "or",
+      "and",
       [
-        "and",
-        [
-          "=",
-          "$r.kind",
-          "index"
-        ],
-        [
-          "tree.selfField",
-          "$r.subject"
-        ],
-        [
-          "or",
-          [
-            "and",
-            [
-              "=",
-              "$r.parent.kind",
-              "return"
-            ],
-            [
-              "=",
-              [
-                "typeCategory",
-                [
-                  "typeOf",
-                  "$r.subject"
-                ]
-              ],
-              "map"
-            ]
-          ],
-          [
-            "and",
-            [
-              "=",
-              "$r.parent.kind",
-              "fallback"
-            ],
-            [
-              "=",
-              "$r.role",
-              "subject"
-            ],
-            [
-              "tree.nullish",
-              "$r.parent.replacement"
-            ],
-            [
-              "=",
-              "$r.parent.parent.kind",
-              "return"
-            ]
-          ]
-        ]
+        "not",
+        "$r.file.test"
       ],
       [
-        "and",
+        "or",
         [
-          "=",
-          "$r.kind",
-          "call"
-        ],
-        [
-          "exists",
+          "and",
           [
-            "keyedStoreRead",
-            "$r"
+            "=",
+            "$r.kind",
+            "index"
+          ],
+          [
+            "tree.selfField",
+            "$r.subject"
+          ],
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "return"
+              ],
+              [
+                "=",
+                [
+                  "typeCategory",
+                  [
+                    "typeOf",
+                    "$r.subject"
+                  ]
+                ],
+                "map"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "fallback"
+              ],
+              [
+                "=",
+                "$r.role",
+                "subject"
+              ],
+              [
+                "tree.nullish",
+                "$r.parent.replacement"
+              ],
+              [
+                "=",
+                "$r.parent.parent.kind",
+                "return"
+              ]
+            ]
           ]
         ],
         [
-          "tree.selfField",
+          "and",
           [
-            "get",
+            "=",
+            "$r.kind",
+            "call"
+          ],
+          [
+            "exists",
             [
               "keyedStoreRead",
               "$r"
-            ],
-            "store"
-          ]
-        ],
-        [
-          "=",
-          "$r.parent.kind",
-          "return"
-        ],
-        [
-          "or",
-          [
-            "=",
-            [
-              "count",
-              "$r.arguments"
-            ],
-            1
+            ]
           ],
           [
-            "tree.nullish",
+            "tree.selfField",
             [
-              "at",
+              "get",
               [
-                "map",
-                "$r.arguments",
-                "a",
-                "$a.value"
+                "keyedStoreRead",
+                "$r"
+              ],
+              "store"
+            ]
+          ],
+          [
+            "=",
+            "$r.parent.kind",
+            "return"
+          ],
+          [
+            "or",
+            [
+              "=",
+              [
+                "count",
+                "$r.arguments"
               ],
               1
+            ],
+            [
+              "tree.nullish",
+              [
+                "at",
+                [
+                  "map",
+                  "$r.arguments",
+                  "a",
+                  "$a.value"
+                ],
+                1
+              ]
             ]
           ]
         ]

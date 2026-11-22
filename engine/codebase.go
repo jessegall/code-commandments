@@ -91,7 +91,7 @@ func Analysis[T any](c *Codebase, key any, build func(*Codebase) T) T {
 	held, carried := c.carriedFrom(key)
 	if !carried {
 		CountedAnalysis()
-		held = build(c)
+		held = build(c.unnarrowed())
 	}
 	slot.held.Store(&held)
 
@@ -245,6 +245,17 @@ func (c *Codebase) narrowedTo(languages []contract.Language) *Codebase {
 	return part
 }
 
+func (c *Codebase) unnarrowed() *Codebase {
+	if len(c.reporting) == 0 {
+		return c
+	}
+
+	part := *c
+	part.reporting = nil
+
+	return &part
+}
+
 func (c *Codebase) Reporting(paths ...string) *Codebase {
 	narrowed := map[string]bool{}
 	for _, path := range paths {
@@ -257,13 +268,17 @@ func (c *Codebase) Reporting(paths ...string) *Codebase {
 	return &part
 }
 
-func (c *Codebase) opened() []*File {
-	owned := Analysis(c, reportingFiles{}, func(c *Codebase) []*File {
+func (c *Codebase) owned() []*File {
+	return Analysis(c, reportingFiles{}, func(c *Codebase) []*File {
 		if !slices.ContainsFunc(c.files, func(file *File) bool { return file.dependency }) {
 			return c.files
 		}
 		return slices.DeleteFunc(slices.Clone(c.files), func(file *File) bool { return file.dependency })
 	})
+}
+
+func (c *Codebase) opened() []*File {
+	owned := c.owned()
 	CountedWalk(len(owned))
 	if len(c.reporting) == 0 {
 		return owned

@@ -61,6 +61,43 @@
           ]
         ]
       ]
+    },
+    "tested": {
+      "args": [
+        "c",
+        "v"
+      ],
+      "expr": [
+        "and",
+        [
+          "not",
+          [
+            "tree.emptyCollection",
+            "$v"
+          ]
+        ],
+        [
+          "some",
+          [
+            "tree.insideOf",
+            "$c.condition"
+          ],
+          "t",
+          [
+            "=",
+            [
+              "fingerprint",
+              "$t",
+              "exact"
+            ],
+            [
+              "fingerprint",
+              "$v",
+              "exact"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -100,8 +137,16 @@
             "$e.value.alternative"
           ],
           [
-            "filled",
-            "$e.value.consequent"
+            "or",
+            [
+              "filled",
+              "$e.value.consequent"
+            ],
+            [
+              "tested",
+              "$e.value",
+              "$e.value.consequent"
+            ]
           ]
         ],
         [
@@ -111,8 +156,16 @@
             "$e.value.consequent"
           ],
           [
-            "filled",
-            "$e.value.alternative"
+            "or",
+            [
+              "filled",
+              "$e.value.alternative"
+            ],
+            [
+              "tested",
+              "$e.value",
+              "$e.value.alternative"
+            ]
           ]
         ]
       ]

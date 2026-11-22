@@ -106,9 +106,13 @@
         "$site"
       ],
       [
-        "!=",
-        "$site.file.purpose",
-        "test-fixture"
+        "not",
+        [
+          "in",
+          "$site.file.purpose",
+          "test",
+          "test-fixture"
+        ]
       ],
       [
         "case",

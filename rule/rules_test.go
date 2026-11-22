@@ -268,3 +268,28 @@ func TestAppResolvingAServiceInsideAClassIsContainerReach(t *testing.T) {
 		"src/Payments.php": "<?php\nnamespace Shop;\n\nfinal class Payments\n{\n    public function charge(): void\n    {\n    }\n}\n",
 	}), "src/Checkout.php:8")
 }
+
+func TestACommentRuleAskedOfOneFileAfterAnotherFindsTheSecondFilesComments(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	stacked := "<?php\nnamespace App;\nclass %s {\n    /**\n     * Opens it.\n     */\n    /**\n     * Opens it again.\n     */\n    public function open(): void {}\n}\n"
+	for _, name := range []string{"First", "Second"} {
+		if err := os.WriteFile(filepath.Join(root, name+".php"), fmt.Appendf(nil, stacked, name), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	index := slices.IndexFunc(rules.All(), func(each rule.Detector) bool { return each.Sin().Definition().Name == "stacked-docblock" })
+	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"First", "Second"} {
+		path := filepath.Join(root, name+".php")
+		found := rules.All()[index].Find(codebase.Reporting(path))
+		if len(found) == 0 || found[0].File() != path {
+			t.Errorf("stacked-docblock asked of %s alone finds %d sites there", name, len(found))
+		}
+	}
+}

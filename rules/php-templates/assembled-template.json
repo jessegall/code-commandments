@@ -44,54 +44,65 @@
       [
         "or",
         [
-          "some",
+          "and",
           [
-            "map",
+            "<=",
             [
-              "fragments",
-              "$c"
+              "count",
+              "$c.arguments"
             ],
-            "x",
-            [
-              "listOf",
-              "$x"
-            ]
+            2
           ],
-          "k",
           [
-            "and",
+            "some",
             [
-              "exists",
-              "$k"
-            ],
-            [
-              "=",
-              "$k.kind",
-              "collection"
-            ],
-            [
-              ">=",
+              "map",
               [
-                "count",
-                "$k.entries"
+                "fragments",
+                "$c"
               ],
-              3
-            ],
-            [
-              ">=",
+              "x",
               [
-                "count",
+                "listOf",
+                "$x"
+              ]
+            ],
+            "k",
+            [
+              "and",
+              [
+                "exists",
+                "$k"
+              ],
+              [
+                "=",
+                "$k.kind",
+                "collection"
+              ],
+              [
+                ">=",
                 [
-                  "filter",
-                  "$k.entries",
-                  "e",
-                  [
-                    "spelledText",
-                    "$e.value"
-                  ]
-                ]
+                  "count",
+                  "$k.entries"
+                ],
+                3
               ],
-              2
+              [
+                ">=",
+                [
+                  "count",
+                  [
+                    "filter",
+                    "$k.entries",
+                    "e",
+                    [
+                      "spelledText",
+                      "$e.value"
+                    ]
+                  ]
+                ],
+                2
+              ]
             ]
           ]
         ],

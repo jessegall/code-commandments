@@ -186,6 +186,21 @@
         "$implementing",
         "i",
         [
+          "none",
+          "$i.modifiers",
+          "m",
+          [
+            "=",
+            "$m",
+            "abstract"
+          ]
+        ]
+      ],
+      [
+        "every",
+        "$implementing",
+        "i",
+        [
           "not",
           "$i.file.test"
         ]

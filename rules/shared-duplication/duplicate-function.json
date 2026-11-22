@@ -140,6 +140,35 @@
           "$f"
         ]
       ]
+    },
+    "inMigration": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ],
+        "t",
+        [
+          "and",
+          [
+            "exists",
+            "$t"
+          ],
+          [
+            "assignable",
+            "$t",
+            "migration"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -156,6 +185,10 @@
           ],
           [
             "exactCopyExclusions",
+            "$f"
+          ],
+          [
+            "inMigration",
             "$f"
           ]
         ]

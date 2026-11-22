@@ -137,6 +137,72 @@
             "$x.nullConditional",
             true
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "access"
+          ],
+          [
+            "tree.names",
+            "$x.subject",
+            "$n"
+          ],
+          [
+            "=",
+            "$x.nullConditional",
+            true
+          ]
+        ]
+      ]
+    },
+    "invokes": {
+      "args": [
+        "c",
+        "n"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.kind",
+          "call"
+        ],
+        [
+          "or",
+          [
+            "tree.names",
+            "$c.callee",
+            "$n"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$c.callee.kind",
+              "fallback"
+            ],
+            [
+              "tree.names",
+              "$c.callee.subject",
+              "$n"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$c.callee.kind",
+              "access"
+            ],
+            [
+              "tree.names",
+              "$c.callee.subject",
+              "$n"
+            ]
+          ]
         ]
       ]
     },
@@ -309,7 +375,7 @@
       [
         "body",
         [
-          "ownDescendants",
+          "descendants",
           "$p.parent.body"
         ]
       ],
@@ -338,45 +404,29 @@
     "having": [
       "and",
       [
-        "some",
-        "$body",
-        "c",
+        "or",
         [
-          "and",
+          "some",
+          "$body",
+          "c",
           [
-            "=",
-            "$c.kind",
-            "call"
-          ],
+            "invokes",
+            "$c",
+            "$named"
+          ]
+        ],
+        [
+          "some",
+          "$body",
+          "c",
           [
-            "or",
+            "some",
+            "$aliases",
+            "m",
             [
-              "tree.names",
-              "$c.callee",
-              "$named"
-            ],
-            [
-              "and",
-              [
-                "=",
-                "$c.callee.kind",
-                "fallback"
-              ],
-              [
-                "tree.names",
-                "$c.callee.subject",
-                "$named"
-              ]
-            ],
-            [
-              "some",
-              "$aliases",
-              "m",
-              [
-                "tree.names",
-                "$c.callee",
-                "$m"
-              ]
+              "invokes",
+              "$c",
+              "$m"
             ]
           ]
         ]

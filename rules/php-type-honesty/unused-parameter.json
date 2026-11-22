@@ -91,6 +91,20 @@
         "!=",
         "$p.role",
         "receiver"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$p.parent.form",
+          "closure",
+          "arrow",
+          "lambda"
+        ]
+      ],
+      [
+        "not",
+        "$p.file.test"
       ]
     ],
     "having": [
