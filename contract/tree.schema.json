@@ -1958,7 +1958,8 @@
         "entries": "[]"
       },
       "facts": [
-        "form"
+        "form",
+        "target"
       ],
       "required": [
         "form"

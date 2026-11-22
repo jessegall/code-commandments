@@ -310,7 +310,9 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   `None` and PHP `null` are `null`. Go's `nil`, `true` and `false` are literals when the compiler resolves them
   to the universe, and references otherwise: a shadowed `nil` is an ordinary name.
 - **`default-value`**: C# `default` and `default(T)`. `writtenType?`. Fact `resolvedType` (the contextual type).
-- **`collection`**: `entries[]`, in order. Fact `form` (`list`, `array`, `set`, `map`, `tuple`, `object`).
+- **`collection`**: `entries[]`, in order. Fact `form` (`list`, `array`, `set`, `map`, `tuple`, `object`), and
+  `target` when the language calls it as a callable: PHP's `[Order::class, 'total']` and `[$this, 'total']` name
+  the method they call, as a call's `target` does.
 - **`entry`**: `key?`, `value`. Fact `expansion` (`none`, `positional`, `keyed`: `...$x`, `*x`, `**x`).
 - **`interpolation`**: `parts[]`, in order: `text` parts (fact `value`) and expressions. A PHP `"…$x…"`, a
   heredoc, a TypeScript template, a Python f-string, a C# `$"…"`. A format conversion is fact `conversion` on

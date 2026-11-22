@@ -460,6 +460,28 @@ final class Shift {
 	}
 }
 
+func TestAnArrayCallableNamesTheMethodItCalls(t *testing.T) {
+	folder := written(t, map[string]string{"Casters.php": `<?php
+namespace App;
+final class Caster { public static function castOrder(): array { return []; } }
+final class Casters {
+    public function register(): array {
+        return [[Caster::class, 'castOrder'], [$this, 'castOwn'], [Caster::class, 'missing'], ['a', 'b']];
+    }
+    private function castOwn(): array { return []; }
+}
+`})
+	var targets []string
+	for _, node := range bridged(t, folder).Files[0].Nodes() {
+		if node.Kind == "collection" && node.Target != nil {
+			targets = append(targets, node.Target.Symbol)
+		}
+	}
+	if !slices.Equal(targets, []string{`App\Caster::castOrder`, `App\Casters::castOwn`}) {
+		t.Errorf("the array callables name %v, not Caster::castOrder and Casters::castOwn", targets)
+	}
+}
+
 func TestACallToAClassTheAutoloaderLoadsByItsWrittenCaseIsResolved(t *testing.T) {
 	folder := written(t, map[string]string{
 		"vendor/autoload.php": `<?php

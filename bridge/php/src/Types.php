@@ -306,6 +306,9 @@ final class Types
                         $this->scopes[array_key_last($this->scopes)]['variables'][$name] = $type;
                     }
                 }
+                if ($node instanceof Expr\Array_) {
+                    $this->types->callableTarget($node, $this->class);
+                }
                 if ($node instanceof Expr) {
                     $scope = array_key_last($this->scopes);
                     $type = $this->types->typeOf($node, $this->class, $this->scopes[$scope]['variables']);
@@ -508,6 +511,25 @@ final class Types
         $new->setAttribute('target', ['symbol' => "{$declaring}::__construct", 'type' => $declaring, 'name' => '__construct']);
 
         return ['name' => $made];
+    }
+
+    /** An array callable, [Class::class, 'method'] or [$this, 'method'], names the method it calls as its target. */
+    public function callableTarget(Expr\Array_ $array, ?string $class): void
+    {
+        [$owner, $method] = count($array->items) === 2 ? $array->items : [null, null];
+        if ($owner === null || $method === null || $owner->key !== null || $method->key !== null || ! $method->value instanceof Node\Scalar\String_) {
+            return;
+        }
+        $named = match (true) {
+            $owner->value instanceof Expr\ClassConstFetch && $owner->value->name instanceof Node\Identifier && strtolower($owner->value->name->toString()) === 'class' && $owner->value->class instanceof Node\Name => $owner->value->class->getAttribute('resolvedName')?->toString() ?? $owner->value->class->toString(),
+            $owner->value instanceof Expr\Variable && $owner->value->name === 'this' => $class,
+            default => null,
+        };
+        $declaring = $named !== null ? $this->declaring($named, $method->value->value) : null;
+        if ($declaring !== null) {
+            $found = $this->methods($declaring)[strtolower($method->value->value)];
+            $array->setAttribute('target', ['symbol' => "{$declaring}::{$found['name']}", 'type' => $declaring, 'name' => $found['name']]);
+        }
     }
 
     private function called(Expr\MethodCall|Expr\NullsafeMethodCall|Expr\StaticCall $call, ?string $receiver, ?string $class): ?array
