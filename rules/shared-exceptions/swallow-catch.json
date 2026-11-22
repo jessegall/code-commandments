@@ -91,6 +91,47 @@
           false
         ]
       ]
+    },
+    "family": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "typeDeclaration",
+            "$t.refers"
+          ]
+        ],
+        "d",
+        [
+          "and",
+          [
+            "exists",
+            "$d"
+          ],
+          [
+            "or",
+            [
+              "=",
+              "$d.form",
+              "interface"
+            ],
+            [
+              "some",
+              "$d.modifiers",
+              "m",
+              [
+                "=",
+                "$m",
+                "abstract"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -141,6 +182,18 @@
                   "failureType",
                   "$t",
                   "generic"
+                ]
+              ],
+              [
+                "some",
+                "$site.caughtTypes",
+                "t",
+                [
+                  "proven",
+                  [
+                    "family",
+                    "$t"
+                  ]
                 ]
               ]
             ]
