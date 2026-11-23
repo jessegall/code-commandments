@@ -23,7 +23,7 @@ func TestAnInstructionsFileKeepsItsOwnLineEndings(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := InstructionsAt(path, root).Inject("test", "The disciplines in force here."); err != nil {
+			if err := InstructionsAt(path, root).Hold("The disciplines in force here.", "test"); err != nil {
 				t.Fatal(err)
 			}
 
@@ -37,7 +37,7 @@ func TestAnInstructionsFileKeepsItsOwnLineEndings(t *testing.T) {
 				t.Error("what the project wrote is gone")
 			}
 			if !strings.Contains(text, "The disciplines in force here.") {
-				t.Error("the block was not written")
+				t.Error("the line was not written")
 			}
 
 			crlf := strings.Count(text, "\r\n")
@@ -68,7 +68,7 @@ func TestABlockAlreadyThereIsReplacedInTheFilesOwnEndings(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := InstructionsAt(path, root).Inject("test", "new"); err != nil {
+	if err := InstructionsAt(path, root).Hold("new", "test"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -79,9 +79,9 @@ func TestABlockAlreadyThereIsReplacedInTheFilesOwnEndings(t *testing.T) {
 	text := string(written)
 
 	if strings.Contains(text, "old") {
-		t.Error("the block's old content is still there, so it was appended rather than replaced")
+		t.Error("the former block's content is still there, so the line was added beside it")
 	}
 	if lf := strings.Count(text, "\n") - strings.Count(text, "\r\n"); lf != 0 {
-		t.Errorf("%d lines end in a bare newline, so replacing the block mixed the endings", lf)
+		t.Errorf("%d lines end in a bare newline, so replacing the former block mixed the endings", lf)
 	}
 }

@@ -1,5 +1,3 @@
-@AGENTS.md
-
 ## Working here as Claude Code
 
 The briefing above is the canon, shared with every agent. These are the parts of it

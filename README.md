@@ -220,7 +220,7 @@ them from there:
 <!-- BEGIN: agents-table (auto-generated, run `composer readme`) -->
 | Agent | Skills | Instructions | Enforced by hooks | What it gets |
 |---|---|---|---|---|
-| **Claude Code** | `.claude/skills` _(links)_ | `CLAUDE.md` | yes | skills, `CLAUDE.md` (imports `AGENTS.md`), and the hooks — the only agent whose disciplines are enforced rather than only written down |
+| **Claude Code** | `.claude/skills` _(links)_ | `CLAUDE.md` | yes | skills, `CLAUDE.md` (imports `COMMANDMENTS.md`), and the hooks — the only agent whose disciplines are enforced rather than only written down |
 | **Codex** | `.agents/skills` _(read directly)_ | `AGENTS.md` | no | skills and `AGENTS.md`, both read where they already live — no links, no hooks |
 <!-- END: agents-table -->
 

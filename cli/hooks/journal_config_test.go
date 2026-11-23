@@ -141,11 +141,15 @@ func TestAnUpgradeRefreshesWhatTheProjectIsTold(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the upgrade wrote the project no briefing: %v: %s", err, errs.String())
 	}
-	if !bytes.Contains(told, []byte(agents.BriefingBlock)) {
-		t.Errorf("AGENTS.md holds no %q block:\n%s", agents.BriefingBlock, told)
+	if !bytes.Contains(told, []byte(agents.BriefingFile)) {
+		t.Errorf("AGENTS.md holds no line that points at %s:\n%s", agents.BriefingFile, told)
 	}
-	if want := ".journal/plugins/code-commandments/bin/commandments-release"; !bytes.Contains(told, []byte(want)) {
-		t.Errorf("the briefing names no %s, so it tells the agent to run a file that is not there:\n%s", want, told)
+	briefing, err := os.ReadFile(filepath.Join(project, agents.BriefingFile))
+	if err != nil {
+		t.Fatalf("the upgrade wrote no %s: %v", agents.BriefingFile, err)
+	}
+	if want := ".journal/plugins/code-commandments/bin/commandments-release"; !bytes.Contains(briefing, []byte(want)) {
+		t.Errorf("the briefing names no %s, so it tells the agent to run a file that is not there:\n%s", want, briefing)
 	}
 
 	if _, err := os.Stat(filepath.Join(project, "CLAUDE.md")); err != nil {

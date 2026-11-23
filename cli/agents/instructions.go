@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
@@ -13,7 +14,7 @@ import (
 
 const bom = "\xEF\xBB\xBF"
 
-// Instructions is a file of instructions the user owns, into which the tool keeps one block of its own: injected, never overwritten.
+// Instructions is a file of instructions the user owns, in which the tool keeps one line of its own, the one that brings the briefing file in: added, never written over.
 type Instructions struct {
 	path, root string
 }
@@ -31,29 +32,27 @@ func (e *Refused) Error() string {
 	return e.Reason
 }
 
-func (i Instructions) Inject(name, body string) error {
+func (i Instructions) Hold(line, formerBlock string) error {
 	if !i.insideTheProject() {
 		return &Refused{i.path + " resolves outside this project — left alone."}
 	}
 
-	wrapped := block.Begin(name, "composer update") + "\n" + strings.TrimSpace(body) + "\n" + block.End(name)
-
 	original, err := os.ReadFile(i.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return i.save(nil, "# "+strings.TrimSuffix(filepath.Base(i.path), ".md")+"\n\n"+wrapped+"\n")
+		return i.save(nil, "# "+strings.TrimSuffix(filepath.Base(i.path), ".md")+"\n\n"+line+"\n")
 	}
 
 	return i.rewritten(original, func(normalised string) (string, error) {
-		updated, found, err := block.Replace(normalised, name, "\n"+strings.TrimSpace(body)+"\n")
-		if err == nil && !found {
-			updated = strings.TrimRight(normalised, "\n") + "\n\n" + wrapped + "\n"
+		without, err := withoutBlock(normalised, formerBlock)
+		if err != nil || slices.Contains(strings.Split(without, "\n"), line) {
+			return without, err
 		}
 
-		return updated, err
+		return strings.TrimRight(without, "\n") + "\n\n" + line + "\n", nil
 	})
 }
 
-func (i Instructions) Withdraw(name string) error {
+func (i Instructions) Withdraw(line, formerBlock string) error {
 	if !i.insideTheProject() {
 		return &Refused{i.path + " resolves outside this project — left alone."}
 	}
@@ -64,10 +63,20 @@ func (i Instructions) Withdraw(name string) error {
 	}
 
 	return i.rewritten(original, func(normalised string) (string, error) {
-		updated, _, err := block.Remove(normalised, name)
+		without, err := withoutBlock(normalised, formerBlock)
+		lines := slices.DeleteFunc(strings.Split(without, "\n"), func(each string) bool { return each == line })
 
-		return updated, err
+		return strings.Join(lines, "\n"), err
 	})
+}
+
+func withoutBlock(document, formerBlock string) (string, error) {
+	if formerBlock == "" {
+		return document, nil
+	}
+	without, _, err := block.Remove(document, formerBlock)
+
+	return without, err
 }
 
 func (i Instructions) rewritten(original []byte, change func(string) (string, error)) error {

@@ -18,7 +18,7 @@ var enforcedByHooks string
 //go:embed claude_enforced_journal.md
 var enforcedByJournal string
 
-// Claude is Claude Code: per-skill links in .claude/skills, a CLAUDE.md that imports AGENTS.md, and the hooks, which make it the one agent whose disciplines are enforced rather than only written down.
+// Claude is Claude Code: per-skill links in .claude/skills, a CLAUDE.md that imports the briefing file, and the hooks, which make it the one agent whose disciplines are enforced rather than only written down.
 type Claude struct {
 	base
 }
@@ -26,12 +26,13 @@ type Claude struct {
 func (Claude) Class() string { return "ClaudeAgent" }
 func (Claude) Name() string  { return "Claude Code" }
 func (Claude) Summary() string {
-	return "skills, `CLAUDE.md` (imports `AGENTS.md`), and the hooks — the only agent whose disciplines are enforced rather than only written down"
+	return "skills, `CLAUDE.md` (imports `COMMANDMENTS.md`), and the hooks — the only agent whose disciplines are enforced rather than only written down"
 }
 func (Claude) SkillsDir() string        { return ".claude/skills" }
 func (Claude) CommandsDir() string      { return ".claude/commands" }
 func (Claude) InstructionsFile() string { return "CLAUDE.md" }
-func (Claude) BlockName() string        { return ClaudeBlock }
+func (Claude) BriefingLine() string     { return "@" + BriefingFile }
+func (Claude) FormerBlock() string      { return ClaudeBlock }
 func (Claude) Instructions(root string) string {
 	enforced := enforcedByHooks
 	if workspace.At(root, "").IsJournalDriven() {

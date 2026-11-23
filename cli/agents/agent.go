@@ -15,7 +15,8 @@ type Agent interface {
 	SkillsDir() string
 	CommandsDir() string
 	InstructionsFile() string
-	BlockName() string
+	BriefingLine() string
+	FormerBlock() string
 	Instructions(root string) string
 	Ignored() []Ignored
 	Enforces() bool
@@ -57,7 +58,8 @@ type base struct{}
 func (base) SkillsDir() string          { return "" }
 func (base) CommandsDir() string        { return "" }
 func (base) InstructionsFile() string   { return "" }
-func (base) BlockName() string          { return "" }
+func (base) BriefingLine() string       { return readsTheBriefing }
+func (base) FormerBlock() string        { return "" }
 func (base) Instructions(string) string { return "" }
 func (base) Ignored() []Ignored         { return nil }
 func (base) Enforces() bool             { return false }

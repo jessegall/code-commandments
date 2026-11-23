@@ -11,29 +11,33 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-func TestInstructionsAreInjectedAsThePHPToolInjectsThem(t *testing.T) {
+func TestTheOneLineIsHeldInAFileHoweverTheProjectWroteIt(t *testing.T) {
 	block := "<!-- BEGIN: briefing (auto-generated, run `composer update`) -->\nold\n<!-- END: briefing -->"
+	line := "Read the briefing."
 
-	for name, document := range map[string]*string{
-		"no-file":              nil,
-		"no-block":             ptr("# Mine\n\nMy own words.\n"),
-		"stale-block":          ptr("# Mine\n\n" + block + "\n\nAfter.\n"),
-		"windows-line-endings": ptr("# Mine\r\n\r\n" + strings.ReplaceAll(block, "\n", "\r\n") + "\r\n"),
-		"byte-order-mark":      ptr(bom + "# Mine\n\n" + block + "\n"),
-		"no-trailing-newline":  ptr("# Mine"),
-		"quoted-block":         ptr("# Mine\n\nWrite `<!-- END: briefing -->` to close it.\n"),
+	for name, held := range map[string]struct {
+		document *string
+		want     string
+	}{
+		"no-file":              {nil, "# AGENTS\n\n" + line + "\n"},
+		"no-block":             {ptr("# Mine\n\nMy own words.\n"), "# Mine\n\nMy own words.\n\n" + line + "\n"},
+		"stale-block":          {ptr("# Mine\n\n" + block + "\n\nAfter.\n"), "# Mine\n\nAfter.\n\n" + line + "\n"},
+		"windows-line-endings": {ptr("# Mine\r\n\r\n" + strings.ReplaceAll(block, "\n", "\r\n") + "\r\n"), "# Mine\r\n\r\n" + line + "\r\n"},
+		"byte-order-mark":      {ptr(bom + "# Mine\n\n" + block + "\n"), bom + "# Mine\n\n" + line + "\n"},
+		"no-trailing-newline":  {ptr("# Mine"), "# Mine\n\n" + line + "\n"},
+		"quoted-block":         {ptr("# Mine\n\nWrite `<!-- END: briefing -->` to close it.\n"), "# Mine\n\nWrite `<!-- END: briefing -->` to close it.\n\n" + line + "\n"},
+		"the-line-already":     {ptr("# Mine\n\n" + line + "\n\nAfter.\n"), "# Mine\n\n" + line + "\n\nAfter.\n"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			golang := t.TempDir()
-			if document != nil {
-				must(t, os.WriteFile(filepath.Join(golang, "AGENTS.md"), []byte(*document), 0o644))
+			project := t.TempDir()
+			if held.document != nil {
+				must(t, os.WriteFile(filepath.Join(project, "AGENTS.md"), []byte(*held.document), 0o644))
 			}
 
-			want, _ := os.ReadFile(filepath.Join("testdata", "injected", name+".md"))
-			must(t, InstructionsAt(filepath.Join(golang, "AGENTS.md"), golang).Inject("briefing", "\nThe canon.\n\n"))
+			must(t, InstructionsAt(filepath.Join(project, "AGENTS.md"), project).Hold(line, "briefing"))
 
-			if got, _ := os.ReadFile(filepath.Join(golang, "AGENTS.md")); string(got) != string(want) {
-				t.Errorf("injected\n%q\nthe PHP tool injected\n%q", got, want)
+			if got, _ := os.ReadFile(filepath.Join(project, "AGENTS.md")); string(got) != held.want {
+				t.Errorf("the file reads\n%q\nwant\n%q", got, held.want)
 			}
 		})
 	}
@@ -52,7 +56,7 @@ func TestMarkersThatCannotBeTrustedRefuseTheInjection(t *testing.T) {
 		must(t, os.WriteFile(path, []byte(document), 0o644))
 
 		var refused *Refused
-		if err := InstructionsAt(path, dir).Inject("briefing", "new"); !errors.As(err, &refused) || !strings.Contains(refused.Reason, reason) {
+		if err := InstructionsAt(path, dir).Hold("new", "briefing"); !errors.As(err, &refused) || !strings.Contains(refused.Reason, reason) {
 			t.Errorf("%q: %v", document, err)
 		}
 
@@ -68,7 +72,7 @@ func TestAFileOutsideTheProjectIsLeftAlone(t *testing.T) {
 	must(t, os.WriteFile(filepath.Join(elsewhere, "CLAUDE.md"), []byte("theirs\n"), 0o644))
 
 	var refused *Refused
-	if err := InstructionsAt(filepath.Join(project, "CLAUDE.md"), project).Inject("x", "y"); !errors.As(err, &refused) {
+	if err := InstructionsAt(filepath.Join(project, "CLAUDE.md"), project).Hold("x", "y"); !errors.As(err, &refused) {
 		t.Errorf("err %v", err)
 	}
 }
@@ -168,12 +172,17 @@ func TestTheBriefingIsWrittenByTheJournalOnlyOnceTheJournalWritesIt(t *testing.T
 			agents, _ := os.ReadFile(filepath.Join(root, "AGENTS.md"))
 			instructions, _ := os.ReadFile(filepath.Join(root, "CLAUDE.md"))
 
+			briefing, briefed := os.ReadFile(filepath.Join(root, BriefingFile))
 			if !project.withdrawn {
-				if !strings.Contains(string(agents), "Finding and fixing sins") {
-					t.Errorf("the project's own briefing was not written:\n%s", agents)
+				if !strings.Contains(string(briefing), "Finding and fixing sins") || !strings.Contains(string(agents), readsTheBriefing) {
+					t.Errorf("the project's own briefing was not written, or AGENTS.md does not point at it:\n%s\n%s", briefing, agents)
 				}
 
 				return
+			}
+
+			if briefed == nil {
+				t.Errorf("%s is still there once the journal writes the briefing", BriefingFile)
 			}
 
 			if string(agents) != "# Mine\n\nAfter.\n" {

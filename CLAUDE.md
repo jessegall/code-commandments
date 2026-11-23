@@ -244,13 +244,16 @@ a project (a wired hook, the composer sync call) has to name a file that is real
 because composer never shims a package's own `bin` into its own `vendor` — so `binary.In(root)` answers
 it once: the shim when present, the checkout's own `bin/commandments` otherwise.
 
-**📄 The briefing is `AGENTS.md`; `CLAUDE.md` imports it.** The briefing renders the canon, addressed to
-no agent in particular, into `AGENTS.md`; Claude's file is `@AGENTS.md` plus what is true only there
-(the Skill tool, hooks). Both go through the ONE rule about a file the user owns (`cli/block`,
-`cli/agents`): **inject, never overwrite.** Markers are line-anchored (our own docs SHOW them, so a
-quoted one is prose), anything ambiguous — two blocks, a BEGIN with no END, an END above its BEGIN —
-REFUSES to write and says why, a file with no block is APPENDED to, line endings and a BOM are
-preserved, and a write goes through `cli/atomic` (temp + rename).
+**📄 The briefing is ONE file the tool owns, `COMMANDMENTS.md`; an agent's own file brings it in with ONE line.**
+`sync` renders the canon, and what each agent the project uses calls its parts, into `COMMANDMENTS.md` in the
+project's root and writes that file whole on every run (`cli/agents`, through `cli/atomic`); it opens on a line that
+says so, and a `COMMANDMENTS.md` the project wrote itself is refused, never written over. A file the user owns gets a
+single line and nothing else: `CLAUDE.md` the import `@COMMANDMENTS.md`, `AGENTS.md` one sentence that tells the agent
+to read it. The line is found by its own text, so there are no markers to work out: a file that lacks it has it
+APPENDED, a file that holds it is left as it is, line endings and a BOM are preserved. The marked blocks of earlier
+versions are taken out the first time (`cli/block`); a block that is ambiguous — two of them, a BEGIN with no END, an
+END above its BEGIN — still REFUSES the write and says why. Where the journal writes the briefing into `JOURNAL.md`,
+the file and both lines are withdrawn.
 
 **Every hook we wire is stamped `@code-commandments-managed`; `sync` strips only stamped hooks,
 so a user's own hooks are never touched.**
