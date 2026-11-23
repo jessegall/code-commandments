@@ -382,7 +382,14 @@
           [
             "=",
             "$x.name",
-            "__call"
+            [
+              "case",
+              "$m.kind",
+              {
+                "function": "__call"
+              },
+              "__get"
+            ]
           ]
         ]
       ],
@@ -410,20 +417,15 @@
             [
               "=",
               "$x.kind",
-              "call"
-            ],
-            [
-              "=",
-              "$x.callee.kind",
               "access"
             ],
             [
               "isSelf",
-              "$x.callee.subject"
+              "$x.subject"
             ],
             [
               "=",
-              "$x.callee.member.name",
+              "$x.member.name",
               "$named.name"
             ]
           ]

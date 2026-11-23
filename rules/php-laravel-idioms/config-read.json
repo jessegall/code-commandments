@@ -310,18 +310,29 @@
               ],
               "m",
               [
-                "some",
+                "and",
                 [
-                  "descendants",
-                  "$m",
-                  "call"
-                ],
-                "x",
-                [
-                  "proven",
+                  "=",
                   [
-                    "laravel.configRead",
-                    "$x"
+                    "count",
+                    "$m.parameters"
+                  ],
+                  0
+                ],
+                [
+                  "some",
+                  [
+                    "descendants",
+                    "$m",
+                    "call"
+                  ],
+                  "x",
+                  [
+                    "proven",
+                    [
+                      "laravel.configRead",
+                      "$x"
+                    ]
                   ]
                 ]
               ]

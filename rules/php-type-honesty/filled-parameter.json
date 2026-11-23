@@ -402,6 +402,27 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "every",
+          "$a.values",
+          "v",
+          [
+            "and",
+            [
+              "=",
+              "$v.kind",
+              "literal"
+            ],
+            [
+              "=",
+              "$v.literalKind",
+              "null"
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$function"
