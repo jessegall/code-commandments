@@ -37,20 +37,22 @@ var strawman = []phrase{
 	{pattern: words(`(?:intentionally|deliberately)\b[^.]{0,24}\b(?:not|never|no|empty|incomplete|omitted|unused)`), notBefore: goesOnToExplain, explainedAround: true},
 	{pattern: words(`(?:not|never)\b[^.]{0,40}\bon purpose`), notBefore: reasonOrExplanation, explainedAround: true},
 	{pattern: words(`(?:is|are|'?s|'?re)\s+not\s+(?:in\s+this|here)`), notAfter: relativeClause, notBefore: anothersContents},
-	{pattern: words(`not\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)`), notAfter: relativeClause, notBefore: anothersContents},
+	{pattern: words(`not\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)`), notAfter: relativeClause, notBefore: anothersContentsOrPredicate},
 }
 
 var (
-	negation            = words(`not|never|no|isn'?t|aren'?t|nothing`)
-	strawmanNoun        = words(`random|arbitrary|magic|magical|blanket|coincidence|coincidental|accident|accidental|by chance|typo|mistake|dead code|courtesy|vibes|afterthought|oversight`)
-	mistakeAsVerb       = endsWith(`not|never|can|could|may|might|must|will|would|should|to|do|does|did`)
-	endsPhrase          = regexp.MustCompile(`^(?:\s*(?:[^\w\s]|$)|\s+(?:` + strings.Join(filler, "|") + `)\b)`)
-	anothersContents    = regexp.MustCompile(`^\s+\w+'s`)
-	givesReason         = regexp.MustCompile(`(?i)^\s*,?\s+(?:as|because|since|to)\b`)
-	reasonOrExplanation = regexp.MustCompile("(?:" + givesReason.String() + ")|(?:" + goesOnToExplain.String() + ")")
-	goesOnToExplain     = regexp.MustCompile(`(?is)^[^.]*?(?:—|–|:|\(|\s-\s|,\s*so\b|\b(?:because|since|so that|otherwise)\b|\.\s+\p{Lu})`)
-	sentenceBreak       = regexp.MustCompile(`[.!?]\s+\p{Lu}`)
-	relativeClause      = endsWith(`that|which|who`)
+	negation                    = words(`not|never|no|isn'?t|aren'?t|nothing`)
+	strawmanNoun                = words(`random|arbitrary|magic|magical|blanket|coincidence|coincidental|accident|accidental|by chance|typo|mistake|dead code|courtesy|vibes|afterthought|oversight`)
+	mistakeAsVerb               = endsWith(`not|never|can|could|may|might|must|will|would|should|to|do|does|did`)
+	endsPhrase                  = regexp.MustCompile(`^(?:\s*(?:[^\w\s]|$)|\s+(?:` + strings.Join(filler, "|") + `)\b)`)
+	anothersContents            = regexp.MustCompile(`^\s+\w+'s`)
+	goesOnToSayWhatHappens      = regexp.MustCompile(`(?i)^\s+(?:are|is|stay|stays|remain|remains|get|gets|will|keep|keeps|pass|passes)\b`)
+	anothersContentsOrPredicate = regexp.MustCompile("(?:" + anothersContents.String() + ")|(?:" + goesOnToSayWhatHappens.String() + ")")
+	givesReason                 = regexp.MustCompile(`(?i)^\s*,?\s+(?:as|because|since|to)\b`)
+	reasonOrExplanation         = regexp.MustCompile("(?:" + givesReason.String() + ")|(?:" + goesOnToExplain.String() + ")")
+	goesOnToExplain             = regexp.MustCompile(`(?is)^[^.]*?(?:—|–|:|\(|\s-\s|,\s*so\b|\b(?:because|since|so that|otherwise)\b|\.\s+\p{Lu})`)
+	sentenceBreak               = regexp.MustCompile(`[.!?]\s+\p{Lu}`)
+	relativeClause              = endsWith(`that|which|who`)
 )
 
 // phrase is a pattern, and what must not stand right before or right after a match of it for the match to count.

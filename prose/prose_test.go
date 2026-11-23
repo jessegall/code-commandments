@@ -58,6 +58,8 @@ func TestAStrawmanIsToldFromARuntimeCondition(t *testing.T) {
 		"The tag is deliberately not in the key: a board renders it as a div or a button.":     false,
 		"A cold cache may be warm next request. It is deliberately not refreshed here.":        false,
 		"Deliberately not cached (the rates change by the minute).":                            false,
+		"Properties not listed here are left untouched, even if they contain entities.":        false,
+		"The order's total is not stored here.":                                                true,
 	} {
 		if DefendsAgainstStrawman(text) != defends {
 			t.Errorf("%q defends against a strawman: %v", text, !defends)
