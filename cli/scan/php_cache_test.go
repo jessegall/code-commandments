@@ -167,3 +167,12 @@ func TestAReadTicksItsProgressOnceForEachFileWhetherTheCacheOrTheBridgeReadIt(t 
 		t.Errorf("a read of %d files after the one another reads changed ticked %d times", len(files), ticks)
 	}
 }
+
+func TestNothingIsLookedUpForAReadThatWritesEveryFile(t *testing.T) {
+	kept := &keptLines{folder: t.TempDir(), root: "/project", identity: "a build"}
+	files := []string{"/project/a.php", "/project/b.php"}
+
+	if declared := kept.declaredOf(files, files); declared != nil {
+		t.Errorf("a read that writes every file looked up what the files declare, where the bridge parses each of them anyway: %v", declared)
+	}
+}

@@ -693,6 +693,10 @@ func (b Bridge) ask(kept *keptLines, roots, files, written []string, tally func(
 	kept.printedFirst(files)
 
 	stream := &contract.Stream{}
+	asked := make(map[string]bool, len(written))
+	for _, file := range written {
+		asked[file] = true
+	}
 	request := bridge.AskedOf(b.Projects, files, written).Request()
 	if b.KeepsDeclared && kept.folder != "" {
 		request.Keeps, request.Declared = true, kept.declaredOf(files, written)
@@ -705,7 +709,7 @@ func (b Bridge) ask(kept *keptLines, roots, files, written []string, tally func(
 			parsedToDeclare.Add(1)
 			kept.keepDeclared(*line.Declared)
 		case line.File != nil:
-			line.File.Context = line.File.Context || !contract.AskedToWrite(line.File.Path, written)
+			line.File.Context = line.File.Context || !(asked[line.File.Path] || contract.AskedToWrite(line.File.Path, written))
 			stream.Files = append(stream.Files, line.File)
 			kept.keep(stream.Header, line.File, raw)
 			if !line.File.Context {

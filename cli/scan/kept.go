@@ -484,12 +484,16 @@ func (k *keptLines) keepDeclared(declared contract.Declared) {
 }
 
 func (k *keptLines) declaredOf(files, written []string) map[string]string {
-	if k.folder == "" || len(written) == 0 {
+	if k.folder == "" || len(written) == 0 || len(written) >= len(files) {
 		return nil
+	}
+	asked := make(map[string]bool, len(written))
+	for _, file := range written {
+		asked[file] = true
 	}
 	found := make([]string, len(files))
 	sidebyside.Each(len(files), runtime.GOMAXPROCS(0), func(at int) {
-		if contract.AskedToWrite(files[at], written) {
+		if asked[files[at]] {
 			return
 		}
 		if kept, err := used(k.declaredAt(files[at])); err == nil {
