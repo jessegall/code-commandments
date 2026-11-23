@@ -21,8 +21,7 @@ type Skill interface {
 	Definition() Definition
 }
 
-// Definition is what a skill states about itself. Body is the whole lesson, written by hand, with one section for each
-// sin the skill fixes; Formerly are the slugs of the skills it took the place of, which still find it.
+// Definition is what a skill states about itself: its slug and every other slug that names it, and its whole lesson with a section for each sin it fixes.
 type Definition struct {
 	Slug       string
 	Formerly   []string
@@ -54,6 +53,25 @@ func (r Reference) Link() string {
 
 func (r Reference) Document() string {
 	return "# " + r.Title + "\n\n" + strings.TrimSpace(r.Body) + "\n"
+}
+
+func (d Definition) RelatedLinks() []string {
+	links := make([]string, len(d.Related))
+	for at, relation := range d.Related {
+		links[at] = "- [`" + relation.Slug + "`](" + d.linkTo(relation.Slug) + ") — " + relation.Note
+	}
+
+	return links
+}
+
+func (d Definition) linkTo(slug string) string {
+	engine, _, _ := strings.Cut(d.Slug, "/")
+	toEngine, toName, _ := strings.Cut(slug, "/")
+	if engine == toEngine {
+		return "../" + toName + "/SKILL.md"
+	}
+
+	return "../../" + toEngine + "/" + toName + "/SKILL.md"
 }
 
 func (d Definition) ReferenceLinks() []string {

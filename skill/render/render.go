@@ -160,25 +160,12 @@ func detectorsDocument(definition skill.Definition, taught []sins.Sin) string {
 }
 
 func related(definition skill.Definition) string {
-	if len(definition.Related) == 0 {
+	links := definition.RelatedLinks()
+	if len(links) == 0 {
 		return ""
 	}
-	var rows []string
-	for _, relation := range definition.Related {
-		rows = append(rows, "- [`"+relation.Slug+"`]("+relativeLink(definition.Slug, relation.Slug)+") — "+relation.Note)
-	}
 
-	return "## Related skills\n\n" + strings.Join(rows, "\n")
-}
-
-func relativeLink(from, to string) string {
-	fromEngine, _, _ := strings.Cut(from, "/")
-	toEngine, toName, _ := strings.Cut(to, "/")
-	if fromEngine == toEngine {
-		return "../" + toName + "/SKILL.md"
-	}
-
-	return "../../" + toEngine + "/" + toName + "/SKILL.md"
+	return "## Related skills\n\n" + strings.Join(links, "\n")
 }
 
 func sinsOf(slug string) []sins.Sin {
