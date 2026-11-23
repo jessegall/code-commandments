@@ -4,6 +4,9 @@ Code Commandments checks the architecture of your code. It finds the places wher
 points at each one by file and line, and links the short lesson that explains the fix. It supports PHP, TypeScript,
 Vue, Python, C# and Go.
 
+It ships with a set of ready-made rules that check a codebase for common patterns and common architectural mistakes.
+You can also write rules of your own, so the architecture your team agreed on is checked the same way.
+
 ## Installation
 
 Code Commandments is one program for macOS and Linux. It reads each language with that language's own tools, so the
