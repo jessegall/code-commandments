@@ -104,10 +104,21 @@
                 "static"
               ],
               [
-                "exists",
+                "or",
                 [
-                  "typeDeclaration",
-                  "$v.target.type"
+                  "exists",
+                  [
+                    "typeDeclaration",
+                    "$v.target.type"
+                  ]
+                ],
+                [
+                  "=",
+                  [
+                    "count",
+                    "$v.arguments"
+                  ],
+                  0
                 ]
               ]
             ]
