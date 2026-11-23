@@ -21,35 +21,35 @@ composer require --dev jessegall/code-commandments
 vendor/bin/commandments install
 ```
 
-Composer downloads the program for your machine and checks it against the release's checksums. It needs PHP 8.3 or
-later. When your project has a `vendor/autoload.php`, the classes of your dependencies are read too.
+Composer downloads the program for your machine. It needs PHP 8.3 or later. When your project has a
+`vendor/autoload.php`, the classes of your dependencies are read too.
 
 ### TypeScript and Vue
 
 Download the program for your machine from the
-[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
-put it on your `PATH` as `commandments`. Judging TypeScript and Vue needs Node 18 or later.
+[latest release](https://github.com/jessegall/code-commandments/releases/latest) and put it on your `PATH` as
+`commandments`. Judging TypeScript and Vue needs Node 18 or later.
 
 ### Python
 
 Download the program for your machine from the
-[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
-put it on your `PATH` as `commandments`. Judging Python needs Python 3.10 or later with `venv` and `pip`. The first
+[latest release](https://github.com/jessegall/code-commandments/releases/latest) and put it on your `PATH` as
+`commandments`. Judging Python needs Python 3.10 or later with `venv` and `pip`. The first
 run builds a small environment with mypy, which needs the network once.
 
 ### C#
 
 Download the program for your machine from the
-[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
-put it on your `PATH` as `commandments`. Judging C# needs `curl` and the network once: the first run downloads
+[latest release](https://github.com/jessegall/code-commandments/releases/latest) and put it on your `PATH` as
+`commandments`. Judging C# needs `curl` and the network once: the first run downloads
 the C# reader from the release and checks it. It needs no .NET, but with a .NET SDK installed the framework's types
 are read too.
 
 ### Go
 
 Download the program for your machine from the
-[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
-put it on your `PATH` as `commandments`. Judging Go needs the Go toolchain, so the standard library's types are
+[latest release](https://github.com/jessegall/code-commandments/releases/latest) and put it on your `PATH` as
+`commandments`. Judging Go needs the Go toolchain, so the standard library's types are
 read.
 
 ### With the agent journal
