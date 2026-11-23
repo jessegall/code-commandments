@@ -891,16 +891,35 @@ final class Types
             if (preg_match('/@param\s+class-string<' . $template . '>\s+\$(\w+)/', $doc, $parameter) !== 1) {
                 continue;
             }
-            if (preg_match('/@return\s+(\?)?' . $template . '(\|null)?(?![\w<])/', $doc, $returned) !== 1) {
+            if (preg_match('/@return\s+(\?)?([\w|\\\\]++)(?!<)/', $doc, $returned) !== 1) {
+                continue;
+            }
+            $members = explode('|', $returned[2]);
+            if (! in_array($template, $members, true)) {
                 continue;
             }
             $position = array_search($parameter[1], $parameters, true);
             if ($position !== false) {
-                return ['position' => $position, 'nullable' => ($returned[1] ?? '') !== '' || ($returned[2] ?? '') !== ''];
+                $others = array_diff($members, [$template]);
+                $nullable = $returned[1] !== '' || array_filter($others, static fn (string $other): bool => self::admitsNull($other, $doc)) !== [];
+
+                return ['position' => $position, 'nullable' => $nullable];
             }
         }
 
         return null;
+    }
+
+    /**
+     * Whether a member of a documented union admits null: `null` itself, or a template whose bound does.
+     */
+    private static function admitsNull(string $member, string $doc): bool
+    {
+        if (strtolower($member) === 'null') {
+            return true;
+        }
+
+        return preg_match('/@template\s+' . preg_quote($member, '/') . '\s+of\s+[\w|\\\\]*\bnull\b/i', $doc) === 1;
     }
 
     private static function documentedReturn(string|false $doc): ?array
