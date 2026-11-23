@@ -9,7 +9,7 @@
       "IfElseLadderDetector",
       "IfElseLadder"
     ],
-    "skill": "php/guard-clauses-and-flow",
+    "skill": "shared/flow",
     "description": "if/elseif ladder of 4+ branches (should be match/dispatch)",
     "rule": "Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.",
     "suggestion": "A `match`, a method on the type, or polymorphic dispatch."

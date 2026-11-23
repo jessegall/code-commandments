@@ -1,4 +1,3 @@
-.agents/skills/commandments-go-flow/SKILL.md
 .agents/skills/commandments-python-absence/SKILL.md
 .agents/skills/commandments-python-absence/evals/triggers.json
 .agents/skills/commandments-python-behaviour-per-method/SKILL.md
@@ -19,8 +18,6 @@
 .agents/skills/commandments-python-fix-at-the-source/evals/triggers.json
 .agents/skills/commandments-python-fix-at-the-source/reference/detectors.md
 .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
-.agents/skills/commandments-python-flow/SKILL.md
-.agents/skills/commandments-python-flow/evals/triggers.json
 .agents/skills/commandments-python-method-mood/SKILL.md
 .agents/skills/commandments-python-method-mood/evals/triggers.json
 .agents/skills/commandments-python-pass-the-object/SKILL.md
@@ -61,14 +58,12 @@
 .agents/skills/commandments-shared-exceptions/reference/examples.md
 .agents/skills/commandments-shared-flow/SKILL.md
 .agents/skills/commandments-shared-flow/reference/detectors.md
-.agents/skills/commandments-shared-flow/reference/examples.md
 .agents/skills/commandments-typescript-absence/SKILL.md
 .agents/skills/commandments-typescript-absence/evals/triggers.json
 .agents/skills/commandments-typescript-absence/reference/detectors.md
 .agents/skills/commandments-typescript-absence/reference/examples.md
 .agents/skills/commandments-typescript-duplication/SKILL.md
 .agents/skills/commandments-typescript-duplication/evals/triggers.json
-.agents/skills/commandments-typescript-flow/SKILL.md
 .agents/skills/commandments-vue-mirrored-server-type/SKILL.md
 .agents/skills/commandments-vue-mirrored-server-type/reference/detectors.md
 .agents/skills/commandments-vue-server-calls/SKILL.md

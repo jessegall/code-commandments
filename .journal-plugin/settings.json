@@ -192,14 +192,6 @@
         "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
     },
     {
-        "key": "sin_csharp-inline-throw",
-        "title": "csharp-inline-throw",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work"
-    },
-    {
         "key": "sin_blank-string-on-the-wire",
         "title": "blank-string-on-the-wire",
         "type": "flag",
@@ -318,22 +310,6 @@
         "kind": "flag",
         "default": true,
         "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so"
-    },
-    {
-        "key": "sin_if-else-ladder",
-        "title": "if-else-ladder",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "if/elseif ladder of 4+ branches (should be match/dispatch)"
-    },
-    {
-        "key": "sin_inline-throw",
-        "title": "inline-throw",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)"
     },
     {
         "key": "sin_bare-scope-escape",
@@ -1328,6 +1304,14 @@
         "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException"
     },
     {
+        "key": "sin_csharp-inline-throw",
+        "title": "csharp-inline-throw",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work"
+    },
+    {
         "key": "sin_deep-nesting",
         "title": "deep-nesting",
         "type": "flag",
@@ -1342,6 +1326,22 @@
         "kind": "flag",
         "default": true,
         "help": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes."
+    },
+    {
+        "key": "sin_if-else-ladder",
+        "title": "if-else-ladder",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "if/elseif ladder of 4+ branches (should be match/dispatch)"
+    },
+    {
+        "key": "sin_inline-throw",
+        "title": "inline-throw",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)"
     },
     {
         "key": "sin_loop-inverted-guard",

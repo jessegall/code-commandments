@@ -1,7 +1,6 @@
 commandments
 commandments-php-fix-at-the-source
 commandments-shared-flow
-commandments-php-guard-clauses-and-flow
 commandments-shared-absence
 commandments-php-value-objects
 commandments-shared-exceptions
@@ -36,12 +35,9 @@ commandments-vue-mirrored-server-type
 commandments-vue-server-calls
 commandments-typescript-absence
 commandments-typescript-duplication
-commandments-typescript-flow
 commandments-python-duplication
-commandments-python-flow
 commandments-csharp-duplication
 commandments-python-exceptions
-commandments-csharp-flow
 commandments-python-absence
 commandments-csharp-exceptions
 commandments-python-value-objects
@@ -64,7 +60,6 @@ commandments-python-templates
 commandments-csharp-repeated-call-helper
 commandments-python-tell-dont-ask
 commandments-csharp-templates
-commandments-go-flow
 commandments-python-documentation
 commandments-csharp-tell-dont-ask
 commandments-python-dependency-direction

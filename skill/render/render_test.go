@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/fixture"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skill/render"
 )
@@ -60,4 +62,19 @@ func upToLine(text string) string {
 	}
 
 	return text
+}
+
+func TestAHandWrittenSkillShowsAnExampleForEverySinItFixes(t *testing.T) {
+	for _, teaching := range skill.All() {
+		definition := teaching.Definition()
+		if definition.Body == "" {
+			continue
+		}
+		for _, sin := range rules.Sins() {
+			name := sin.Definition().Name
+			if sin.Definition().Slug() == definition.Slug && info.Example(definition.Body, name) == "" {
+				t.Errorf("%s fixes %s but shows no example of it: its lesson needs a section headed `### %s` holding a fenced example", definition.Slug, name, name)
+			}
+		}
+	}
 }

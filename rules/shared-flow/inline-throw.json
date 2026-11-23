@@ -9,7 +9,7 @@
       "InlineThrowDetector",
       "InlineThrow"
     ],
-    "skill": "php/guard-clauses-and-flow",
+    "skill": "shared/flow",
     "description": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)",
     "rule": "Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work."
   },

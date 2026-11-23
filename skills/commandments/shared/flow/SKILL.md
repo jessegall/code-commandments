@@ -7,105 +7,412 @@ description: "Shaping a function body in any language: an `if` that decides whet
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> Decide what would stop you first, at the top, and leave. What is left is the work, flat and at the
-> function's own level. A reader then reads a function top to bottom: here is what would stop us, here
-> is the work. These rules hold the same in every language, so every language is judged by them the
-> same way.
+> A function body should read top to bottom, at one level: what cannot go on leaves first, and the work follows flat.
+> Read this before you shape a function body in any language, and when a flow finding points here.
+> The examples are pseudocode: read them as the language you are writing.
 
 ## The principle
 
-### Guard at the top, then leave
+**Guard at the top, leave early, keep the body flat.**
 
-Every precondition a function depends on is checked first and leaves: `return`, `throw`, `break`,
-`continue`. By the time the work runs, everything it needs is there, so it sits at the function's own
-level with no `else` and no nesting.
+A function has two kinds of lines: the checks that decide whether the work happens at all, and the work. Put every
+check first, and let each one leave (`return`, `throw`, `continue`, `break`) the moment it fails. What is left is the
+work, at the function's own level, with nothing to remember from above.
 
-### No `else` after a branch that already left
+Three habits follow from it, and every sin below breaks one of them:
 
-When the `if` returns, throws, breaks or continues, what follows it only runs when the condition was
-false. The `else` says nothing the exit did not already say, and it indents the rest for nothing. Drop
-it and dedent.
+1. **A condition that stops the work is a guard, not a wrapper.** Negate it, leave, and write the work after it. Never
+   wrap the work in an `if`, and never write an `else` after a branch that already left.
+2. **One decision, one construct.** A choice between values is a conditional expression. A choice between actions is an
+   `if`. A choice among many cases of one subject is a dispatch (`switch`/`match`, a lookup, or a method each case
+   answers). Do not fold several decisions into one expression, and do not spell a dispatch as a chain of `if`s.
+3. **A statement is written where it runs, once.** Nothing after the block has left, nothing repeated at the end of
+   every branch, and a name keeps the value it was given.
 
-### A loop body wrapped in one `if` is a `continue` guard
+```pseudo
+// Bad: the work sits two levels deep, behind conditions the reader has to keep in mind
+function ship(order) {
+    if (order.isPaid()) {
+        if (order.hasStock()) {
+            reserve(order)
+            dispatch(order)
+        } else {
+            throw OutOfStock.for(order)
+        }
+    } else {
+        throw Unpaid.for(order)
+    }
+}
 
-A loop whose whole body is one `if` is the same shape inside a loop. Flip the condition, `continue`,
-and let the body sit at the loop's own level.
+// Good: each check leaves, and the work reads flat
+function ship(order) {
+    if (!order.isPaid()) {
+        throw Unpaid.for(order)
+    }
+    if (!order.hasStock()) {
+        throw OutOfStock.for(order)
+    }
 
-### A ladder over one subject is a dispatch
+    reserve(order)
+    dispatch(order)
+}
+```
 
-`if (kind == "paid") … else if (kind == "late") … else if …` tests one value case after case. Make
-the closed set a type that answers per case, key a lookup by the value, or `switch`/`match` on it.
+## The sins
 
-### One decision per conditional expression
+### redundant-else
 
-A ternary (`a ? b : c`, `b if a else c`) chooses one value. A ternary inside another folds several
-decisions into one line; unfold it into guards that return, a `match`/`switch`, or a lookup.
+An `else` after a branch that already left. The exit above already says the rest only runs when the condition did not
+hold, so the `else` only indents it.
 
-### Choose an action with an `if`
+```pseudo
+// Bad
+if (order.isPaid()) {
+    return order.receipt()
+} else {
+    charge(order)
+}
 
-A ternary whose value nothing reads, or a bare `a && b()`, runs work off an operator. It is an `if`
-in disguise: write the `if`.
+// Good
+if (order.isPaid()) {
+    return order.receipt()
+}
 
-### Write once what every branch ends with
+charge(order)
+```
 
-A statement every branch of an `if`/`else` ends with runs whichever way the condition goes. It belongs
-after the conditional, written once.
+### loop-inverted-guard
 
-### Nothing after the block has left
+A loop whose whole body is one `if`. Every turn of the loop is pushed a level deep behind a condition. Negate the
+condition, `continue`, and the body stays flat.
 
-A statement after a `return`, `throw`, `break` or `continue` in the same block can never run. Delete
-it, or move it above the exit if it was meant to run.
+```pseudo
+// Bad
+for (line in invoice.lines) {
+    if (line.isTaxable()) {
+        tax = tax + line.tax()
+        taxed.add(line)
+    }
+}
 
-### A parameter keeps the value it was given
+// Good
+for (line in invoice.lines) {
+    if (!line.isTaxable()) {
+        continue
+    }
 
-A parameter names what the caller passed. Overwriting it makes one name mean two values, and a
-reader below the assignment has to look up which one it holds now. Give the new value a local of
-its own, named for what it is, or ask the caller for the finished value.
+    tax = tax + line.tax()
+    taxed.add(line)
+}
+```
 
-## Rules
+### deep-nesting
 
-- [ ] Never change the collection a `foreach` walks while it walks it: decide inside the loop and change afterwards.
-      _Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`foreach (var item in items.ToList())`) when the change must happen as it goes._
-- [ ] Flatten with guards that leave early, or extract the inner decision into a function of its own.
-      _Turn the outer conditions into guards that return or `continue`, or move the innermost block into a well-named function._
-- [ ] A statement every branch ends with belongs after the conditional, written once.
-      _Move the shared last statement below the `if`/`else`._
-- [ ] Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
-      _Make the negated condition the loop's first line, followed by `continue`, and dedent the body under it._
-- [ ] Use one conditional expression for one choice; for more, use a `match`/`switch`, a lookup, or guards that return early.
-      _A `match`/`switch` over the subject, a lookup for a table of values, or a small function whose guards return early._
-- [ ] Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
-      _A `while` over an explicit cursor, or better, an iterator on the type being walked, so the caller never holds the cursor at all._
-- [ ] A parameter keeps the value its caller passed; a new value gets a name of its own.
-      _Assign the new value to a local named for what it is (`trimmed = trim(name)`), or ask the caller for the finished value._
-- [ ] Drop the `else` after a branch that returns, throws, continues or breaks; let the rest run at the function's own level.
-      _Delete the `else` and dedent what was inside it; the exit above already says the rest only runs when the condition did not hold._
-- [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` (`and`/`or`) whose value nothing reads.
-      _Write the condition as an `if` and the right side as its body, negating it for an `||`._
-- [ ] Dispatch on a value with a type that answers per case, a lookup keyed by the value, or a `switch`/`match` on it; never a ladder of equality tests on one subject.
-      _Make the closed set an enum and put the per-case answer on it, or key a lookup by the value; a `switch`/`match` fits a structural dispatch._
-- [ ] Choose an action with `if`/`else`; a conditional expression chooses a value, so never write one whose value nothing reads.
-      _An `if` with each side as its own body, and no `else` at all when one side did nothing._
-- [ ] Give a compound condition a name that says what it decides.
-      _Put the condition on the type that owns the decision, or give a template condition a named computed value._
-- [ ] Every statement in a block can run; code after the block has left is dead.
-      _Delete the statement, or move it before the statement that leaves the block if it was meant to run._
+A decision that sits deep inside other decisions. Turn the outer conditions into guards that leave, or move the inner
+decision into a function with a name of its own.
+
+```pseudo
+// Bad
+for (customer in customers) {
+    if (customer.isActive()) {
+        for (order in customer.orders) {
+            if (order.isOverdue()) {
+                if (order.total > limit) {
+                    escalate(order)
+                }
+            }
+        }
+    }
+}
+
+// Good: guards in the loop, and the inner decision named
+for (customer in customers) {
+    if (!customer.isActive()) {
+        continue
+    }
+
+    escalateOverdue(customer.orders, limit)
+}
+
+function escalateOverdue(orders, limit) {
+    for (order in orders) {
+        if (!order.isOverdue() || order.total <= limit) {
+            continue
+        }
+
+        escalate(order)
+    }
+}
+```
+
+### subject-ladder · if-else-ladder
+
+A chain of four or more `if`/`else if` rungs that each compare the same subject with a constant. That is a dispatch
+written as a ladder. Put the per-case answer on the type, key a lookup by the value, or use a `switch`/`match`.
+
+```pseudo
+// Bad
+if (status == "draft") {
+    label = "Concept"
+} else if (status == "sent") {
+    label = "Sent"
+} else if (status == "paid") {
+    label = "Paid"
+} else if (status == "void") {
+    label = "Cancelled"
+}
+
+// Good: the closed set is an enum that answers for each case
+enum Status {
+    Draft, Sent, Paid, Void
+
+    function label() {
+        return match (this) {
+            Draft => "Concept"
+            Sent  => "Sent"
+            Paid  => "Paid"
+            Void  => "Cancelled"
+        }
+    }
+}
+
+label = status.label()
+```
+
+### nested-ternary
+
+A conditional expression with another inside it: several decisions folded into one expression. One conditional
+expression makes one choice. For more, use a `match`/`switch`, a lookup, or a small function whose guards return early.
+
+```pseudo
+// Bad
+rate = customer.isBusiness() ? (order.isExport() ? 0 : 21) : (order.isBook() ? 9 : 21)
+
+// Good
+function rateFor(customer, order) {
+    if (customer.isBusiness() && order.isExport()) {
+        return 0
+    }
+    if (!customer.isBusiness() && order.isBook()) {
+        return 9
+    }
+
+    return 21
+}
+```
+
+### ternary-statement
+
+A conditional expression used as a statement. Nothing reads its value, so it is choosing an action, and an action is
+chosen with an `if`.
+
+```pseudo
+// Bad
+order.isPaid() ? ship(order) : remind(order)
+
+// Good
+if (order.isPaid()) {
+    ship(order)
+} else {
+    remind(order)
+}
+```
+
+### short-circuit-statement
+
+A bare `a && b()` or `a || b()` whose value nothing reads. The operator is an `if` in disguise.
+
+```pseudo
+// Bad
+order.isPaid() && ship(order)
+cache.has(key) || cache.fill(key)
+
+// Good
+if (order.isPaid()) {
+    ship(order)
+}
+if (!cache.has(key)) {
+    cache.fill(key)
+}
+```
+
+### unnamed-condition
+
+A condition of three or more parts over two or more objects. The reader has to work out what it decides. Give the
+decision a name, on the type that owns it.
+
+```pseudo
+// Bad
+if (user.isActive() && !user.isSuspended() && order.total < account.limit && account.isOpen()) {
+    approve(order)
+}
+
+// Good
+if (account.canPlace(order, user)) {
+    approve(order)
+}
+```
+
+### duplicated-branch-tail
+
+Every branch ends with the same statement, so it runs whichever way the condition goes. Write it once, after the
+conditional.
+
+```pseudo
+// Bad
+if (order.isExpress()) {
+    courier.book(order)
+    notify(order.customer)
+} else {
+    post.book(order)
+    notify(order.customer)
+}
+
+// Good
+if (order.isExpress()) {
+    courier.book(order)
+} else {
+    post.book(order)
+}
+
+notify(order.customer)
+```
+
+### unreachable-statement
+
+A statement after one that never completes: a `return`, a `throw`, a `break` or `continue`, an `if` whose every arm
+leaves. It can never run. Delete it, or move it above the exit if it was meant to run.
+
+```pseudo
+// Bad
+function close(account) {
+    if (account.hasBalance()) {
+        throw BalanceLeft.for(account)
+        log("refused to close", account)
+    }
+
+    return account.closed()
+    audit(account)
+}
+
+// Good
+function close(account) {
+    if (account.hasBalance()) {
+        log("refused to close", account)
+        throw BalanceLeft.for(account)
+    }
+
+    audit(account)
+
+    return account.closed()
+}
+```
+
+### reassigned-parameter
+
+A parameter overwritten inside its function. One name then holds the value the caller passed and, later, a different
+one. A new value gets a name of its own.
+
+```pseudo
+// Bad
+function register(name) {
+    name = trim(name)
+    name = lowercase(name)
+
+    return Account.named(name)
+}
+
+// Good
+function register(name) {
+    normalised = lowercase(trim(name))
+
+    return Account.named(normalised)
+}
+```
+
+### non-counting-for
+
+A `for` loop whose step assigns the next item instead of moving a counter: a walk written as a count. Keep `for` for
+counting. Walk with a `while`, or better, let the type hand out its own sequence so the caller never holds the cursor.
+
+```pseudo
+// Bad
+for (node = list.head; node != null; node = node.next) {
+    visit(node)
+}
+
+// Good
+for (node in list.nodes()) {
+    visit(node)
+}
+```
+
+### collection-mutated-while-iterated
+
+A loop that adds to or removes from the very collection it walks. The iterator reads a collection that moved under
+it: an error in some languages, skipped items in others. Decide inside the loop and change afterwards.
+
+```pseudo
+// Bad
+for (session in sessions) {
+    if (session.isExpired()) {
+        sessions.remove(session)
+    }
+}
+
+// Good
+expired = sessions.filter(session => session.isExpired())
+
+for (session in expired) {
+    sessions.remove(session)
+}
+```
+
+### inline-throw — in PHP
+
+A `?? throw` fed straight into a call or dereferenced on the same line. The check that stops the method is hidden in
+the middle of the work. Guard at the top, then work with the checked value.
+
+```php
+// Bad
+$total = $this->pricing->totalFor($request->order ?? throw MissingOrder::in($request));
+
+// Good
+$order = $request->order ?? throw MissingOrder::in($request);
+
+$total = $this->pricing->totalFor($order);
+```
+
+### csharp-inline-throw — in C#
+
+The same in C#: a `?? throw` inside a call's argument or in front of a member call.
+
+```csharp
+// Bad
+var total = pricing.TotalFor(request.Order ?? throw MissingOrder.In(request));
+
+// Good
+var order = request.Order ?? throw MissingOrder.In(request);
+
+var total = pricing.TotalFor(order);
+```
+
+## In your language
+
+- **Python.** There is no `switch` before `match`; a ladder over one subject becomes a `match`, a dict keyed by the
+  value, or a method on an `Enum`. Indentation is the nesting, so every guard that leaves saves a visible level.
+- **Go.** The error check is the guard: `if err != nil { return … }` first, then the work at the function's own
+  level. Never write the happy path inside `if err == nil { … }`.
+- **PHP.** A dispatch on a value is a `match`, or a method on a backed enum.
+- **C#.** A dispatch on a value is a `switch` expression; a guard that throws can be `ArgumentNullException.ThrowIfNull`.
+- **TypeScript.** A dispatch over a union is a `switch` on its discriminant, or a `Record` keyed by it.
 
 ## Commands
 
 - `{{binary}} judge --skill=shared/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `collection-mutated-while-iterated`, `deep-nesting`, `duplicated-branch-tail`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `reassigned-parameter`, `redundant-else`, `short-circuit-statement`, `subject-ladder`, `ternary-statement`, `unnamed-condition`, `unreachable-statement`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `collection-mutated-while-iterated`, `csharp-inline-throw`, `deep-nesting`, `duplicated-branch-tail`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `reassigned-parameter`, `redundant-else`, `short-circuit-statement`, `subject-ladder`, `ternary-statement`, `unnamed-condition`, `unreachable-statement`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 13 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
-## Related skills
-
-- [`php/guard-clauses-and-flow`](../../php/guard-clauses-and-flow/SKILL.md) — what is particular to PHP's flow.
-- [`python/flow`](../../python/flow/SKILL.md) — what is particular to Python's flow, where the indentation is the cost.
-- [`typescript/flow`](../../typescript/flow/SKILL.md) — what is particular to TypeScript's flow.
-- [`csharp/flow`](../../csharp/flow/SKILL.md) — what is particular to C#'s flow.
-- [`go/flow`](../../go/flow/SKILL.md) — what is particular to Go's flow.

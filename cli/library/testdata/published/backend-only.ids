@@ -1,7 +1,6 @@
 commandments
 commandments-php-fix-at-the-source
 commandments-shared-flow
-commandments-php-guard-clauses-and-flow
 commandments-shared-absence
 commandments-php-value-objects
 commandments-shared-exceptions
@@ -30,5 +29,4 @@ commandments-php-route-actions
 commandments-php-repeated-call-helper
 commandments-php-dependency-direction
 commandments-php-behaviour-per-method
-commandments-go-flow
 commandments-writing-detectors

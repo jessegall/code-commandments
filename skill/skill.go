@@ -21,9 +21,12 @@ type Skill interface {
 	Definition() Definition
 }
 
-// Definition is what a skill states about itself.
+// Definition is what a skill states about itself. Body is the whole lesson, written by hand, with one section for each
+// sin the skill fixes; Formerly are the slugs of the skills it took the place of, which still find it.
 type Definition struct {
 	Slug                  string
+	Formerly              []string
+	Body                  string
 	Tier                  Tier
 	Order                 int
 	Title                 string
@@ -94,6 +97,11 @@ func Slugged(slug string) (Skill, bool) {
 			}
 		}
 	}
+	for _, skill := range All() {
+		if slices.Contains(skill.Definition().Formerly, slug) {
+			return skill, true
+		}
+	}
 
 	return nil, false
 }
@@ -125,5 +133,7 @@ func (d Definition) Bullet() string {
 }
 
 func (d Definition) Matches(query string) bool {
-	return strings.Contains(catalog.Normalise(d.Slug), catalog.Normalise(query))
+	return slices.ContainsFunc(append([]string{d.Slug}, d.Formerly...), func(slug string) bool {
+		return strings.Contains(catalog.Normalise(slug), catalog.Normalise(query))
+	})
 }

@@ -249,19 +249,6 @@
             ],
             "detail": true
         },
-        "sin_csharp-inline-throw": {
-            "title": "csharp-inline-throw",
-            "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/flow",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
         "sin_blank-string-on-the-wire": {
             "title": "blank-string-on-the-wire",
             "help": "A string sent over the wire that the frontend reads as absent when it is blank.",
@@ -450,32 +437,6 @@
             "type": "flag",
             "default": "true",
             "group": "php/fix-at-the-source",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_if-else-ladder": {
-            "title": "if-else-ladder",
-            "help": "if/elseif ladder of 4+ branches (should be match/dispatch)",
-            "type": "flag",
-            "default": "true",
-            "group": "php/guard-clauses-and-flow",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_inline-throw": {
-            "title": "inline-throw",
-            "help": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)",
-            "type": "flag",
-            "default": "true",
-            "group": "php/guard-clauses-and-flow",
             "when": [
                 {
                     "language_php": true
@@ -2845,6 +2806,34 @@
             ],
             "detail": true
         },
+        "sin_csharp-inline-throw": {
+            "title": "csharp-inline-throw",
+            "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/flow",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_deep-nesting": {
             "title": "deep-nesting",
             "help": "A decision sits deep inside other decisions in one function",
@@ -2876,6 +2865,62 @@
         "sin_duplicated-branch-tail": {
             "title": "duplicated-branch-tail",
             "help": "Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/flow",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_if-else-ladder": {
+            "title": "if-else-ladder",
+            "help": "if/elseif ladder of 4+ branches (should be match/dispatch)",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/flow",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_inline-throw": {
+            "title": "inline-throw",
+            "help": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)",
             "type": "flag",
             "default": "true",
             "group": "shared/flow",

@@ -49,4 +49,4 @@ passes the enum, never the string.
 ## Related skills
 
 - [`php/enums-with-behaviour`](../../php/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend.
-- [`python/flow`](../flow/SKILL.md) — an `elif` ladder over one subject is where a missing enum usually shows first.
+- [`shared/flow`](../../shared/flow/SKILL.md) — an `elif` ladder over one subject is where a missing enum usually shows first.

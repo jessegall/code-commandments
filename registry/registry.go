@@ -11,7 +11,6 @@ import (
 	_ "github.com/jessegall/code-commandments/skill/backend/spatie"
 	_ "github.com/jessegall/code-commandments/skill/csharp"
 	_ "github.com/jessegall/code-commandments/skill/frontend"
-	_ "github.com/jessegall/code-commandments/skill/go"
 	_ "github.com/jessegall/code-commandments/skill/python"
 	_ "github.com/jessegall/code-commandments/skill/shared"
 	_ "github.com/jessegall/code-commandments/skill/typescript"

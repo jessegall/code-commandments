@@ -56,6 +56,9 @@ func Documents(teaching skill.Skill, examples Examples) map[string]string {
 	definition := teaching.Definition()
 	taught := sinsOf(definition.Slug)
 	examplesOf := workedExamples(taught, examples)
+	if definition.Body != "" {
+		examplesOf = nil
+	}
 	documents := map[string]string{"SKILL.md": body(definition, taught, examplesOf)}
 	if len(examplesOf) > 1 {
 		documents[path(examplesDoc)] = examplesDocument(definition, examplesOf)
@@ -75,6 +78,17 @@ func body(definition skill.Definition, taught []sins.Sin, examplesOf []worked) s
 	if definition.Slug == fixAtSource {
 		opening = reminderSelf
 	}
+	if definition.Body != "" {
+		return written(
+			frontmatter(definition),
+			"# "+definition.Title,
+			opening,
+			strings.TrimSpace(definition.Body),
+			commands(definition, taught),
+			referenceIndex(definition, taught, nil),
+			related(definition),
+		)
+	}
 	blocks := []string{
 		frontmatter(definition),
 		"# " + definition.Title,
@@ -87,6 +101,11 @@ func body(definition skill.Definition, taught []sins.Sin, examplesOf []worked) s
 		referenceIndex(definition, taught, examplesOf),
 		related(definition),
 	}
+
+	return written(blocks...)
+}
+
+func written(blocks ...string) string {
 	var kept []string
 	for _, block := range blocks {
 		if block != "" {

@@ -1,4 +1,3 @@
-.agents/skills/commandments-go-flow/SKILL.md
 .agents/skills/commandments-php-absence/SKILL.md
 .agents/skills/commandments-php-absence/evals/triggers.json
 .agents/skills/commandments-php-absence/reference/detectors.md
@@ -24,10 +23,6 @@
 .agents/skills/commandments-php-fix-at-the-source/evals/triggers.json
 .agents/skills/commandments-php-fix-at-the-source/reference/detectors.md
 .agents/skills/commandments-php-fix-at-the-source/reference/examples.md
-.agents/skills/commandments-php-guard-clauses-and-flow/SKILL.md
-.agents/skills/commandments-php-guard-clauses-and-flow/evals/triggers.json
-.agents/skills/commandments-php-guard-clauses-and-flow/reference/detectors.md
-.agents/skills/commandments-php-guard-clauses-and-flow/reference/examples.md
 .agents/skills/commandments-php-laravel-idioms/SKILL.md
 .agents/skills/commandments-php-laravel-idioms/evals/triggers.json
 .agents/skills/commandments-php-laravel-idioms/reference/detectors.md
@@ -98,7 +93,6 @@
 .agents/skills/commandments-shared-exceptions/reference/examples.md
 .agents/skills/commandments-shared-flow/SKILL.md
 .agents/skills/commandments-shared-flow/reference/detectors.md
-.agents/skills/commandments-shared-flow/reference/examples.md
 .agents/skills/commandments-writing-detectors/SKILL.md
 .agents/skills/commandments-writing-detectors/reference/examples.md
 .agents/skills/commandments/SKILL.md

@@ -17,9 +17,6 @@
 .agents/skills/commandments-csharp-fix-at-the-source/SKILL.md
 .agents/skills/commandments-csharp-fix-at-the-source/evals/triggers.json
 .agents/skills/commandments-csharp-fix-at-the-source/reference/detectors.md
-.agents/skills/commandments-csharp-flow/SKILL.md
-.agents/skills/commandments-csharp-flow/evals/triggers.json
-.agents/skills/commandments-csharp-flow/reference/detectors.md
 .agents/skills/commandments-csharp-method-mood/SKILL.md
 .agents/skills/commandments-csharp-method-mood/evals/triggers.json
 .agents/skills/commandments-csharp-pass-the-object/SKILL.md
@@ -34,7 +31,6 @@
 .agents/skills/commandments-csharp-type-honesty/evals/triggers.json
 .agents/skills/commandments-csharp-value-objects/SKILL.md
 .agents/skills/commandments-csharp-value-objects/evals/triggers.json
-.agents/skills/commandments-go-flow/SKILL.md
 .agents/skills/commandments-php-absence/SKILL.md
 .agents/skills/commandments-php-absence/evals/triggers.json
 .agents/skills/commandments-php-absence/reference/detectors.md
@@ -60,10 +56,6 @@
 .agents/skills/commandments-php-fix-at-the-source/evals/triggers.json
 .agents/skills/commandments-php-fix-at-the-source/reference/detectors.md
 .agents/skills/commandments-php-fix-at-the-source/reference/examples.md
-.agents/skills/commandments-php-guard-clauses-and-flow/SKILL.md
-.agents/skills/commandments-php-guard-clauses-and-flow/evals/triggers.json
-.agents/skills/commandments-php-guard-clauses-and-flow/reference/detectors.md
-.agents/skills/commandments-php-guard-clauses-and-flow/reference/examples.md
 .agents/skills/commandments-php-laravel-idioms/SKILL.md
 .agents/skills/commandments-php-laravel-idioms/evals/triggers.json
 .agents/skills/commandments-php-laravel-idioms/reference/detectors.md
@@ -131,8 +123,6 @@
 .agents/skills/commandments-python-fix-at-the-source/evals/triggers.json
 .agents/skills/commandments-python-fix-at-the-source/reference/detectors.md
 .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
-.agents/skills/commandments-python-flow/SKILL.md
-.agents/skills/commandments-python-flow/evals/triggers.json
 .agents/skills/commandments-python-method-mood/SKILL.md
 .agents/skills/commandments-python-method-mood/evals/triggers.json
 .agents/skills/commandments-python-pass-the-object/SKILL.md
@@ -173,14 +163,12 @@
 .agents/skills/commandments-shared-exceptions/reference/examples.md
 .agents/skills/commandments-shared-flow/SKILL.md
 .agents/skills/commandments-shared-flow/reference/detectors.md
-.agents/skills/commandments-shared-flow/reference/examples.md
 .agents/skills/commandments-typescript-absence/SKILL.md
 .agents/skills/commandments-typescript-absence/evals/triggers.json
 .agents/skills/commandments-typescript-absence/reference/detectors.md
 .agents/skills/commandments-typescript-absence/reference/examples.md
 .agents/skills/commandments-typescript-duplication/SKILL.md
 .agents/skills/commandments-typescript-duplication/evals/triggers.json
-.agents/skills/commandments-typescript-flow/SKILL.md
 .agents/skills/commandments-vue-mirrored-server-type/SKILL.md
 .agents/skills/commandments-vue-mirrored-server-type/reference/detectors.md
 .agents/skills/commandments-vue-server-calls/SKILL.md

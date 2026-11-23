@@ -54,4 +54,4 @@ the code passes the enum, never the string.
 
 - [`php/enums-with-behaviour`](../../php/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend, with backed enums.
 - [`python/enums`](../../python/enums/SKILL.md) — the same discipline in Python.
-- [`csharp/flow`](../flow/SKILL.md) — the `else if` ladder over one subject that an enum and a `switch` expression replace.
+- [`shared/flow`](../../shared/flow/SKILL.md) — the `else if` ladder over one subject that an enum and a `switch` expression replace.

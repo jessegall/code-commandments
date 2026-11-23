@@ -3,8 +3,11 @@
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`collection-mutated-while-iterated`** — a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException — `collection-mutated-while-iterated`
+- **`csharp-inline-throw`** — a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work — `csharp-inline-throw`
 - **`deep-nesting`** — A decision sits deep inside other decisions in one function — `deep-nesting`
 - **`duplicated-branch-tail`** — Every branch of an `if`/`else` ends with the same statement: it runs whichever way the condition goes. — `duplicated-branch-tail`
+- **`if-else-ladder`** — if/elseif ladder of 4+ branches (should be match/dispatch) — `if-else-ladder`
+- **`inline-throw`** — `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) — `inline-throw`
 - **`loop-inverted-guard`** — A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition — `loop-inverted-guard`
 - **`nested-ternary`** — A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression — `nested-ternary`
 - **`non-counting-for`** — A `for` loop whose step assigns the next item instead of moving a counter: a walk written as a count — `non-counting-for`
