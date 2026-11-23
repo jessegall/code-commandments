@@ -31,6 +31,18 @@
     {
       "type": "object",
       "properties": {
+        "declared": {
+          "$ref": "#/$defs/declared"
+        }
+      },
+      "required": [
+        "declared"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
         "program": {
           "$ref": "#/$defs/program"
         }
@@ -490,6 +502,22 @@
         "symbol",
         "name",
         "kind"
+      ],
+      "additionalProperties": false
+    },
+    "declared": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "kept": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "kept"
       ],
       "additionalProperties": false
     },

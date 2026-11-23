@@ -15,10 +15,18 @@ const maxLine = 256 << 20
 
 // Line is one line of a stream; exactly one of its fields is set.
 type Line struct {
-	Header  *Header  `json:"header,omitempty"`
-	File    *File    `json:"file,omitempty"`
-	Program *Program `json:"program,omitempty"`
-	Trailer *Trailer `json:"trailer,omitempty"`
+	Header   *Header   `json:"header,omitempty"`
+	File     *File     `json:"file,omitempty"`
+	Declared *Declared `json:"declared,omitempty"`
+	Program  *Program  `json:"program,omitempty"`
+	Trailer  *Trailer  `json:"trailer,omitempty"`
+}
+
+// Declared is what a bridge parsed a file to learn before it could read the files asked for, in the bridge's own
+// writing: handed back with a later request, it stands in for parsing that file again while its contents stand.
+type Declared struct {
+	Path string `json:"path"`
+	Kept string `json:"kept"`
 }
 
 // Stream is a whole stream, read to its trailer.
@@ -154,6 +162,8 @@ func (r *Reader) accept(line Line) error {
 		return r.acceptFile(line.File)
 	case line.Program != nil:
 		return r.acceptProgram(line.Program)
+	case line.Declared != nil:
+		return nil
 	default:
 		return r.acceptTrailer(line.Trailer)
 	}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	syncatomic "sync/atomic"
 	"time"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -25,18 +26,19 @@ import (
 
 // Bridge describes the parser, its source context, and how a scan reaches and caches it.
 type Bridge struct {
-	Kind         string
-	Word         string
-	Languages    []source.Language
-	Label        string
-	Projects     *bridge.Projects
-	InOwnOrder   bool
-	InUnits      bool
-	Reach        Reach
-	Notice       func() string
-	ContextFiles func(string) []string
-	Prepare      func() (string, error)
-	Identity     func() string
+	Kind          string
+	Word          string
+	Languages     []source.Language
+	Label         string
+	Projects      *bridge.Projects
+	InOwnOrder    bool
+	InUnits       bool
+	KeepsDeclared bool
+	Reach         Reach
+	Notice        func() string
+	ContextFiles  func(string) []string
+	Prepare       func() (string, error)
+	Identity      func() string
 }
 
 // identity is what the bridge's kept lines are keyed on: its own code where it can name it, else the whole binary, and
@@ -394,10 +396,11 @@ func (p *process) Close() error {
 var Bridges = []Bridge{PHPBridge, Frontend, CSharp, Python, GoBridge}
 
 var PHPBridge = Bridge{Kind: "php", Word: "php", Languages: []source.Language{source.PHP}, Label: "PHP",
-	Reach:        Process{Command: func([]string) ([]string, error) { return php.Here().Command() }},
-	Notice:       nothingToSay,
-	ContextFiles: laravel.RouteContextFiles,
-	Identity:     bridge.PHPIdentity,
+	Reach:         Process{Command: func([]string) ([]string, error) { return php.Here().Command() }},
+	Notice:        nothingToSay,
+	ContextFiles:  laravel.RouteContextFiles,
+	Identity:      bridge.PHPIdentity,
+	KeepsDeclared: true,
 }
 
 var Frontend = Bridge{Kind: "frontend", Word: "frontend", Languages: []source.Language{source.Vue, source.TypeScript}, Label: "Vue and TypeScript",
@@ -500,9 +503,17 @@ const wavesAtMost = 12
 // bridge read the rest, in as many shares as processes side by side; one process, or a single file, is one read.
 func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (*contract.Stream, error) {
 	kept := linesKeptFor(b, walk.RealEach(roots))
-	hits, header, misses := kept.split(walk.RealEach(files))
-	for range hits {
+	var found syncatomic.Int64
+	hits, header, misses := kept.split(walk.RealEach(files), func() {
+		found.Add(1)
 		tally()
+	})
+	var owed syncatomic.Int64
+	owed.Store(int64(len(files)) - found.Load())
+	tallyOwed := func() {
+		if owed.Add(-1) >= 0 {
+			tally()
+		}
 	}
 	engine.CountedKept(len(hits))
 	if cli.Timed() {
@@ -521,14 +532,14 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 		first, later = later, nil
 	}
 	started := time.Now()
-	stream, err := b.readMisses(kept, roots, files, first, tally, processes)
+	stream, err := b.readMisses(kept, roots, files, first, tallyOwed, processes)
 	b.timedWave(1, len(first), started)
 	kept.settle()
 	kept.forget(first)
 	for wave := 2; len(later) > 0 && stream != nil; wave++ {
-		standing, _, still := kept.split(later)
+		standing, _, still := kept.split(later, func() {})
 		for range standing {
-			tally()
+			tallyOwed()
 		}
 		engine.CountedKept(len(standing))
 		hits = append(hits, standing...)
@@ -541,14 +552,14 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 			standing, next = kept.ownLines(rest)
 			rest = nil
 			for range standing {
-				tally()
+				tallyOwed()
 			}
 			engine.CountedKept(len(standing))
 			hits = append(hits, standing...)
 		}
 		if len(next) > 0 {
 			started := time.Now()
-			read, readErr := b.readMisses(kept, roots, files, next, tally, processes)
+			read, readErr := b.readMisses(kept, roots, files, next, tallyOwed, processes)
 			b.timedWave(wave, len(next), started)
 			stream, err = joined(stream, read), errors.Join(err, readErr)
 			kept.settle()
@@ -570,9 +581,11 @@ func (b Bridge) ReadShared(roots, files []string, tally func(), processes int) (
 // timedWave says, on a timed run, how long a wave of misses took the bridge.
 func (b Bridge) timedWave(wave, misses int, started time.Time) {
 	if cli.Timed() {
-		fmt.Fprintf(os.Stderr, "· %s: wave %d read %d files in %s\n", b.Kind, wave, misses, time.Since(started).Round(time.Millisecond))
+		fmt.Fprintf(os.Stderr, "· %s: wave %d read %d files in %s, and its bridge has parsed %d files so far to learn what they declare\n", b.Kind, wave, misses, time.Since(started).Round(time.Millisecond), parsedToDeclare.Load())
 	}
 }
+
+var parsedToDeclare syncatomic.Int64
 
 // outsideOnly is the program line without what a file of the stream declares: a program symbol is a declaration
 // outside the scan, and a bridge asked to write only some files names what the others declare as outside them.
@@ -680,10 +693,17 @@ func (b Bridge) ask(kept *keptLines, roots, files, written []string, tally func(
 	kept.printedFirst(files)
 
 	stream := &contract.Stream{}
-	err = asker.AskEach(bridge.AskedOf(b.Projects, files, written).Request(), func(line contract.Line, raw []byte) error {
+	request := bridge.AskedOf(b.Projects, files, written).Request()
+	if b.KeepsDeclared && kept.folder != "" {
+		request.Keeps, request.Declared = true, kept.declaredOf(files, written)
+	}
+	err = asker.AskEach(request, func(line contract.Line, raw []byte) error {
 		switch {
 		case line.Header != nil:
 			stream.Header = *line.Header
+		case line.Declared != nil:
+			parsedToDeclare.Add(1)
+			kept.keepDeclared(*line.Declared)
 		case line.File != nil:
 			line.File.Context = line.File.Context || !contract.AskedToWrite(line.File.Path, written)
 			stream.Files = append(stream.Files, line.File)

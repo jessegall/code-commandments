@@ -114,8 +114,7 @@ func removeOtherBuilds(kind string) {
 	}
 }
 
-// split hands back the files whose kept line still stands, read, and the files a bridge must read.
-func (k *keptLines) split(files []string) (hits []*contract.File, header *contract.Header, misses []string) {
+func (k *keptLines) split(files []string, met func()) (hits []*contract.File, header *contract.Header, misses []string) {
 	header = k.header()
 	if header == nil {
 		return nil, nil, files
@@ -126,6 +125,9 @@ func (k *keptLines) split(files []string) (hits []*contract.File, header *contra
 	reader := contract.KeptUnder(*header)
 	sidebyside.Each(len(files), runtime.GOMAXPROCS(0), func(at int) {
 		found[at], readsOf[at] = k.line(reader, files[at])
+		if found[at] != nil {
+			met()
+		}
 	})
 	standing := k.standingOnWhatTheyRead(files, readsOf, func(at int) bool { return found[at] != nil })
 
@@ -468,6 +470,40 @@ func (k *keptLines) addVariant(file string, reads []string) {
 
 func (k *keptLines) indexOf(file string) string {
 	return filepath.Join(k.folder, named(k.identity, k.marked(file), k.print(file))+".reads")
+}
+
+func (k *keptLines) declaredAt(file string) string {
+	return filepath.Join(k.folder, named(k.identity, k.marked(file), k.print(file))+".declared")
+}
+
+func (k *keptLines) keepDeclared(declared contract.Declared) {
+	if k.folder == "" || printed(walk.PrintNow(declared.Path)) != k.print(declared.Path) {
+		return
+	}
+	_ = atomic.Write(k.declaredAt(declared.Path), declared.Kept)
+}
+
+func (k *keptLines) declaredOf(files, written []string) map[string]string {
+	if k.folder == "" || len(written) == 0 {
+		return nil
+	}
+	found := make([]string, len(files))
+	sidebyside.Each(len(files), runtime.GOMAXPROCS(0), func(at int) {
+		if contract.AskedToWrite(files[at], written) {
+			return
+		}
+		if kept, err := used(k.declaredAt(files[at])); err == nil {
+			found[at] = string(kept)
+		}
+	})
+	declared := map[string]string{}
+	for at, kept := range found {
+		if kept != "" {
+			declared[files[at]] = kept
+		}
+	}
+
+	return declared
 }
 
 func (k *keptLines) recordOf(file string, reads []string) string {

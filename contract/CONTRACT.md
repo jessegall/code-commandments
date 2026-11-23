@@ -30,6 +30,12 @@ Each line has exactly one key, which says what the line is:
    asked for, absolute, symbolic links resolved.
 2. **`file`**, one per source file, in any order.
 3. **`program`**, at most one, after every `file`: the facts about the whole program no file carries.
+5. **`declared`**, any number, anywhere between the header and the trailer, only from a bridge that must parse
+   a file to read the others against it, and only when the request says `"keepsDeclared": true`: `{"declared": {"path": "/abs/src/Order.php", "kept": "…"}}`. `kept` is
+   what the bridge learned of that file's declarations, in the bridge's own writing, which no rule reads. The
+   reader keeps it under the file's contents and hands it back in a later request (`"declared": {path: kept}`
+   beside `paths` and `write`), where it stands in for parsing that file again. A bridge takes it only for a
+   file it is not asked to write and reads from the disk.
 4. **`trailer`**, always last. `files` counts the `file` lines; a stream without a trailer was cut short and is
    refused. `resolution` counts what the compiler saw and resolved (`expressions`, `typed`, `calls`,
    `resolved`, and `unjoined` for facts that matched no node), so a drift in spans shows instead of hiding.

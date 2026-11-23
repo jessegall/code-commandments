@@ -34,16 +34,21 @@ final readonly class Stream
         ]]);
         $referenced = [];
         $declared = [];
-        $parser = null;
         $written = 0;
         $types = new Types();
         $packages = PackageRoots::nearest($this->nearest('composer.json'));
         $judged = array_values(array_filter($files, $this->request->judges(...)));
         $unread = [];
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
         foreach ($files as $path) {
-            $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
+            if ($this->request->keeps($path) && $types->kept($this->request->declared[$path], $path)) {
+                continue;
+            }
             try {
                 $types->declare($this->read($this->request->contents[$path] ?? (string) file_get_contents($path), $parser, $path)[1], $path);
+                if ($this->request->keepsDeclared) {
+                    $this->line($out, ['declared' => ['path' => $path, 'kept' => $types->keptOf($path)]]);
+                }
             } catch (\Throwable $failure) {
                 $unread[$path] = $failure->getMessage();
             }

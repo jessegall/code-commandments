@@ -48,6 +48,11 @@ final class Types
     private array $read = [];
 
     /**
+     * @var array<string, array{classes?: list<string>, functions?: list<string>}> the lowercased names each file declares
+     */
+    private array $declaredIn = [];
+
+    /**
      * Reads every class and function a file declares.
      *
      * @param  list<Node>  $statements
@@ -70,6 +75,41 @@ final class Types
             }
         });
         $traverser->traverse($statements);
+    }
+
+    /**
+     * What a declared file declares, written so a later read takes it back with kept() in place of parsing the file.
+     */
+    public function keptOf(string $path): string
+    {
+        $named = static fn (array $declared, array $names) => array_map(
+            static fn (array $each) => array_diff_key($each, ['file' => true]),
+            array_intersect_key($declared, array_flip($names)),
+        );
+
+        return base64_encode(serialize([
+            'classes' => $named($this->classes, $this->declaredIn[$path]['classes'] ?? []),
+            'functions' => $named($this->functions, $this->declaredIn[$path]['functions'] ?? []),
+        ]));
+    }
+
+    /**
+     * Declares what an earlier read kept of a file with keptOf(); false when that is not what keptOf() writes.
+     */
+    public function kept(string $kept, string $path): bool
+    {
+        $declared = @unserialize((string) base64_decode($kept, true), ['allowed_classes' => false]);
+        if (! is_array($declared) || ! is_array($declared['classes'] ?? null) || ! is_array($declared['functions'] ?? null)) {
+            return false;
+        }
+        foreach ($declared['classes'] as $name => $class) {
+            $this->classes[$name] = ['file' => $path] + $class;
+        }
+        foreach ($declared['functions'] as $name => $function) {
+            $this->functions[$name] = ['file' => $path] + $function;
+        }
+
+        return true;
     }
 
     /**
@@ -132,6 +172,7 @@ final class Types
                 $traits[] = $trait->toString();
             }
         }
+        $this->declaredIn[$path]['classes'][] = strtolower($name);
         $this->classes[strtolower($name)] = [
             'name' => $name,
             'file' => $path,
@@ -247,6 +288,7 @@ final class Types
     public function declareFunction(Stmt\Function_ $function, string $path): void
     {
         $name = $function->namespacedName->toString();
+        $this->declaredIn[$path]['functions'][] = strtolower($name);
         $this->functions[strtolower($name)] = ['name' => $name, 'file' => $path, 'returns' => $this->written($function->returnType, null)];
     }
 

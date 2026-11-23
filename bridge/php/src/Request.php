@@ -21,6 +21,8 @@ final readonly class Request
      * @param  list<string>  $paths
      * @param  list<string>  $write
      * @param  array<string, string>  $contents  absolute path => the text to read in place of the disk's
+     * @param  array<string, string>  $declared  absolute path => what an earlier read kept of the file's declarations
+     * @param  bool  $keepsDeclared  whether the reader keeps a declared line, so the stream writes them
      */
     public function __construct(
         public array $paths,
@@ -28,6 +30,8 @@ final readonly class Request
         public ?string $autoload,
         public bool $serve,
         public array $contents = [],
+        public array $declared = [],
+        public bool $keepsDeclared = false,
     ) {
         $this->judged = array_fill_keys(array_map(static fn (string $path): string => rtrim($path, '/'), $write), true);
     }
@@ -58,7 +62,7 @@ final readonly class Request
     }
 
     /**
-     * @param  array{paths?: list<string>, write?: list<string>, contents?: array<string, string>}  $request
+     * @param  array{paths?: list<string>, write?: list<string>, contents?: array<string, string>, declared?: array<string, string>, keepsDeclared?: bool}  $request
      */
     public function answering(array $request): self
     {
@@ -75,7 +79,18 @@ final readonly class Request
             $this->autoload,
             false,
             $contents,
+            $request['declared'] ?? [],
+            $request['keepsDeclared'] ?? false,
         );
+    }
+
+    /**
+     * Whether what an earlier read kept of $file's declarations stands in for parsing it: the stream does not write
+     * the file, and it reads the file from the disk.
+     */
+    public function keeps(string $file): bool
+    {
+        return isset($this->declared[$file]) && ! isset($this->contents[$file]) && $this->judged !== [] && ! $this->judges($file);
     }
 
     /**

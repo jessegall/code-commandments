@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -36,12 +37,36 @@ func TestPHPReadsThroughTheOneCache(t *testing.T) {
 	}
 
 	written(t, project, "src/Cart.php", "<?php\n\nnamespace Shop;\n\nfinal class Cart { public function __construct(public ?Order $order) {} }\n")
+	parsed := parsedToDeclare.Load()
 	asked, stream := askedOf(t, PHPBridge, project, shop...)
 	if !slices.Equal(asked, []string{filepath.Join(project, "src/Cart.php")}) {
 		t.Errorf("an edit to Cart.php asked the bridge for %v, not Cart.php alone", asked)
 	}
+	if again := parsedToDeclare.Load() - parsed; again != 1 {
+		t.Errorf("an edit to Cart.php had the bridge parse %d files to learn what they declare, where what Order.php declares is kept and only Cart.php is parsed", again)
+	}
 	if stream.Program != nil && slices.ContainsFunc(stream.Program.Symbols, func(symbol contract.OutsideSymbol) bool { return symbol.Symbol == `Shop\Order` }) {
 		t.Errorf("Order, which a file of the scan declares, reads as outside it: %v", stream.Program.Symbols)
+	}
+
+	cache.KeepIn(t.TempDir())
+	_, parsedWhole := askedOf(t, PHPBridge, project, shop...)
+	cart := func(read *contract.Stream) string {
+		for _, file := range read.Files {
+			if strings.HasSuffix(file.Path, "Cart.php") {
+				tree, err := json.Marshal(file)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				return string(tree)
+			}
+		}
+
+		return "no Cart.php"
+	}
+	if kept, whole := cart(stream), cart(parsedWhole); kept != whole {
+		t.Errorf("Cart.php read against what was kept of Order.php is not the tree read with both files parsed:\n%s\n%s", kept, whole)
 	}
 }
 
@@ -105,5 +130,40 @@ func TestFortifyRouteContextSharesTheCacheAcrossCheckouts(t *testing.T) {
 	written(t, project, "composer.json", `{"extra":{"laravel":{"dont-discover":["laravel/fortify"]}}}`)
 	if files := Walk([]string{project}, source.Excluded{}).Files(source.PHP); len(files) != 2 {
 		t.Errorf("the opted-out provider supplied context: %v", files)
+	}
+}
+
+func TestAReadTicksItsProgressOnceForEachFileWhetherTheCacheOrTheBridgeReadIt(t *testing.T) {
+	if _, err := php.Here().Command(); err != nil {
+		t.Skipf("no PHP bridge here: %v", err)
+	}
+	project := repository(t)
+	journalDriven(t, project)
+	written(t, project, "src/Order.php", "<?php\n\nnamespace Shop;\n\nfinal class Order {}\n")
+	written(t, project, "src/Cart.php", "<?php\n\nnamespace Shop;\n\nfinal class Cart { public function __construct(public Order $order) {} }\n")
+	written(t, project, "src/Stock.php", "<?php\n\nnamespace Shop;\n\nfinal class Stock {}\n")
+	held := cache.KeptIn()
+	cache.KeepIn(t.TempDir())
+	t.Cleanup(func() { cache.KeepIn(held) })
+
+	files := []string{filepath.Join(project, "src/Cart.php"), filepath.Join(project, "src/Order.php"), filepath.Join(project, "src/Stock.php")}
+	ticked := func() int {
+		ticks := 0
+		if _, err := PHPBridge.ReadShared([]string{filepath.Join(project, "src")}, files, func() { ticks++ }, 1); err != nil {
+			t.Fatal(err)
+		}
+
+		return ticks
+	}
+
+	if ticks := ticked(); ticks != len(files) {
+		t.Errorf("a first read of %d files ticked %d times", len(files), ticks)
+	}
+	if ticks := ticked(); ticks != len(files) {
+		t.Errorf("a read of %d files the cache holds ticked %d times", len(files), ticks)
+	}
+	written(t, project, "src/Order.php", "<?php\n\nnamespace Shop;\n\nfinal class Order { public function paid(): bool { return true; } }\n")
+	if ticks := ticked(); ticks != len(files) {
+		t.Errorf("a read of %d files after the one another reads changed ticked %d times", len(files), ticks)
 	}
 }

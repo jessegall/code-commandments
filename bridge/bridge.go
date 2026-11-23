@@ -27,6 +27,8 @@ type Request struct {
 	Write    []string          `json:"write,omitempty"`
 	Support  []string          `json:"support,omitempty"`
 	Contents map[string]string `json:"contents,omitempty"`
+	Declared map[string]string `json:"declared,omitempty"`
+	Keeps    bool              `json:"keepsDeclared,omitempty"`
 }
 
 func Once(command []string, paths ...string) (*contract.Stream, error) {
