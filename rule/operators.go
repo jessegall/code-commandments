@@ -126,7 +126,7 @@ var operators = map[string]operator{
 	"hasStartingWith":     {operands: []valueType{list, text}, gives: truth, says: "whether a list holds a text that begins with the one given"},
 	"prefixes":            {operands: []valueType{text, text}, gives: list, says: "each part of a text that ends before one of its separators, shortest first: a.b.c with . reads a and a.b"},
 	"keys":                {operands: []valueType{anyValue}, gives: list, says: "the field names of a record, such as a map parameter, sorted"},
-	"get":                 {operands: []valueType{anyValue, text}, gives: anyValue, says: "a record's field by its name; none when it has no such field"},
+	"get":                 {operands: []valueType{anyValue, text}, gives: anyValue, says: "a record's field by its name, or a node's or type's as a path reads it; none when it has no such field"},
 	"withinModule":        {operands: []valueType{text, text}, gives: truth, says: "whether a module is the one named or inside it, whatever separator the language spells modules with"},
 	"contains":            {operands: []valueType{text, text}, gives: truth, says: "whether a text holds another"},
 	"isOdd":               {operands: []valueType{number}, gives: truth, says: "whether a whole number is odd"},

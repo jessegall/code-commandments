@@ -574,8 +574,11 @@ func (e evaluation) apply(expression Expr, bound bindings) value {
 	case "get":
 		held, isRecord := operand(0).held.(record)
 		name, isName := operand(1).held.(string)
-		if !operand(0).known || !isRecord || !isName {
+		if !operand(0).known || !isName {
 			return unknown
+		}
+		if !isRecord {
+			return read(operand(0), name)
 		}
 		if field, found := held.field(name); found {
 			return field

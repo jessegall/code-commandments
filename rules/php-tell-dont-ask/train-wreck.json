@@ -168,7 +168,14 @@
             "r",
             [
               "typeDeclaration",
-              "$r.resolved.name"
+              [
+                "get",
+                [
+                  "typeOf",
+                  "$r"
+                ],
+                "name"
+              ]
             ]
           ],
           "d",

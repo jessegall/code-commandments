@@ -182,7 +182,7 @@ judged.
 | `freeVariables` | node | list | the bindings a function reads or writes that are declared outside it, each once |
 | `functionRole` | node | list | the roles a function plays: constructor, named-constructor, getter, setter, override, test, sole-statement |
 | `gap` | node, node | number | how many blank lines lie between the end of the first node and the start of the second; unknown for nodes of two files |
-| `get` | value, text | value | a record's field by its name; none when it has no such field |
+| `get` | value, text | value | a record's field by its name, or a node's or type's as a path reads it; none when it has no such field |
 | `groupItems` | list, name, value | list | the items grouped by the key the body gives, each group a record of key and items, in the order each key first appears; unknown when a key is |
 | `has` | list, value | truth | whether a list holds a value equal to the one given |
 | `hasEffect` | node, text | truth | whether the library a call's resolved target belongs to states the effect named for it, at the version the project's lock file holds; unknown when the target or the version is. The effects are those the package files under rules/packages state: executes-query, database-read, deferred-query, mutates-receiver, iterates-receiver, builds-mutable, fresh-every-call, live-view, tests-membership, decodes-untyped, cast-result-type, blocks-thread, blocks-on-task, completed-task, runs-on-thread, reads-with-default, reads-key, gives-empty-collection and resets-scope |
