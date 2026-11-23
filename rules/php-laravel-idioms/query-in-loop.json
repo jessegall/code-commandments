@@ -1126,6 +1126,45 @@
             "reloads-receiver"
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$c"
+              ],
+              [
+                "ownAncestors",
+                "$c"
+              ]
+            ]
+          ],
+          "a",
+          [
+            "and",
+            [
+              "=",
+              "$a.parent.kind",
+              "assignment"
+            ],
+            [
+              "=",
+              "$a.parent.mode",
+              "fallback"
+            ],
+            [
+              "=",
+              "$a.role",
+              "values"
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$c"
