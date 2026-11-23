@@ -22,6 +22,8 @@ language spells it.
 
 Take the same few lines in three languages:
 
+**PHP**
+
 ```php
 if ($order->isPaid()) {
     return $order->receipt();
@@ -30,6 +32,8 @@ if ($order->isPaid()) {
 }
 ```
 
+**Python**
+
 ```python
 if order.is_paid():
     return order.receipt()
@@ -37,11 +41,13 @@ else:
     self.charge(order)
 ```
 
+**Go**
+
 ```go
 if order.IsPaid() {
-	return order.Receipt()
+    return order.Receipt()
 } else {
-	charge(order)
+    charge(order)
 }
 ```
 
