@@ -88,6 +88,44 @@
           "type-test"
         ]
       ]
+    },
+    "substitutedInTest": {
+      "args": [
+        "r",
+        "t"
+      ],
+      "expr": [
+        "and",
+        "$r.file.test",
+        [
+          "or",
+          [
+            "some",
+            [
+              "ownAncestors",
+              "$r"
+            ],
+            "a",
+            [
+              "=",
+              "$a.kind",
+              "argument"
+            ]
+          ],
+          [
+            "proven",
+            [
+              "isSubtype",
+              [
+                "enclosing",
+                "$r",
+                "type"
+              ],
+              "$t.symbol"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -152,6 +190,22 @@
           [
             "testedAtRunTime",
             "$r"
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "referrers",
+          "$t"
+        ],
+        "r",
+        [
+          "proven",
+          [
+            "substitutedInTest",
+            "$r",
+            "$t"
           ]
         ]
       ]
