@@ -314,29 +314,71 @@
         "f"
       ],
       "expr": [
-        "and",
+        "or",
         [
-          "exists",
-          "$f.parent.symbol"
+          "and",
+          [
+            "exists",
+            "$f.parent.symbol"
+          ],
+          [
+            "some",
+            [
+              "ownDescendants",
+              "$f.body"
+            ],
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "construction"
+              ],
+              [
+                "=",
+                "$x.type.refers",
+                "$f.parent.symbol"
+              ]
+            ]
+          ]
         ],
         [
-          "some",
+          "and",
           [
-            "ownDescendants",
-            "$f.body"
+            "exists",
+            "$f.parent.symbol"
           ],
-          "x",
           [
-            "and",
+            "=",
+            "$f.returnType.resolved.name",
+            "$f.parent.symbol"
+          ],
+          [
+            "some",
             [
-              "=",
-              "$x.kind",
-              "construction"
+              "ownDescendants",
+              "$f.body"
             ],
+            "x",
             [
-              "=",
-              "$x.type.refers",
-              "$f.parent.symbol"
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$x.callee.kind",
+                "access"
+              ],
+              [
+                "in",
+                "$x.callee.subject.form",
+                "self",
+                "static"
+              ]
             ]
           ]
         ]

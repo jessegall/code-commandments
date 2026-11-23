@@ -550,6 +550,14 @@ func FileModule(file *File) string {
 	return ""
 }
 
+func FilePackage(file *File) string {
+	if file.Package != "" {
+		return file.Package
+	}
+
+	return FileModule(file)
+}
+
 func (c *Codebase) reached(imported Match, byPath map[string]string, modules map[string]bool) []string {
 	node := imported.node
 	if to, reaches := byPath[node.Resolves]; reaches && node.Resolves != "" {

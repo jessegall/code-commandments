@@ -23,6 +23,7 @@ require __DIR__ . '/src/AnonymousClassNames.php';
 require __DIR__ . '/src/DocumentedTypes.php';
 require __DIR__ . '/src/BladeTemplate.php';
 require __DIR__ . '/src/Translator.php';
+require __DIR__ . '/src/PackageRoots.php';
 require __DIR__ . '/src/ParsedFile.php';
 require __DIR__ . '/src/UnreadableSymbol.php';
 require __DIR__ . '/src/OutsideType.php';

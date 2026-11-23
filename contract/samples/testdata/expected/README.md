@@ -115,6 +115,7 @@ meaning, never from a tree a bridge wrote. A language that truly cannot have an 
 | `contract-go-declarations` | doc 65, the bridge validator | go | written for the go bridge's contract score: the items it proves are named in reports 119 to 121 |
 | `contract-go-flow` | doc 65, the bridge validator | go | written for the go bridge's contract score: the items it proves are named in reports 119 to 121 |
 | `contract-go-switches` | doc 65, the bridge validator | go | written for the go bridge's contract score: the items it proves are named in reports 119 to 121 |
+| `contract-php-capture` | doc 65, the bridge validator | php | written for the php bridge's contract score: an arrow function's captured variables and the presence-call form |
 | `contract-php-declarations` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
 | `contract-php-dispatch` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |
 | `contract-php-enum` | doc 65, the bridge validator | php | written for the php bridge's contract score: the items it proves are named in reports 119 to 121 |

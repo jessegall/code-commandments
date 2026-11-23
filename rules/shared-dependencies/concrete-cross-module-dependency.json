@@ -318,26 +318,26 @@
       ],
       [
         "nonempty",
-        "$supplier.file.module"
+        "$supplier.file.package"
       ],
       [
         "nonempty",
-        "$p.file.module"
+        "$p.file.package"
       ],
       [
         "not",
         [
           "withinModule",
-          "$supplier.file.module",
-          "$p.file.module"
+          "$supplier.file.package",
+          "$p.file.package"
         ]
       ],
       [
         "not",
         [
           "withinModule",
-          "$p.file.module",
-          "$supplier.file.module"
+          "$p.file.package",
+          "$supplier.file.package"
         ]
       ]
     ],

@@ -37,6 +37,7 @@ final readonly class Stream
         $parser = null;
         $written = 0;
         $types = new Types();
+        $packages = PackageRoots::nearest($this->nearest('composer.json'));
         $judged = array_values(array_filter($files, $this->request->judges(...)));
         $unread = [];
         foreach ($files as $path) {
@@ -60,7 +61,7 @@ final readonly class Stream
                 }
                 [, $statements, $errors, $tokens] = $this->read($code, $parser, $path);
                 $types->infer($statements, $path);
-                $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types);
+                $file = $this->parsed($path, $code, $statements, $errors, $tokens, $types, $packages);
             } catch (\Throwable $failure) {
                 fwrite(STDERR, "php-bridge: {$path} is not read: {$failure->getMessage()}\n");
                 $this->line($out, ['file' => $this->unreadFile($path, $code, $failure->getMessage())]);
@@ -97,7 +98,7 @@ final readonly class Stream
     /**
      * @param  list<\PhpParser\Node>  $statements
      */
-    private function parsed(string $path, string $code, array $statements, Collecting $errors, array $tokens, Types $types): ParsedFile
+    private function parsed(string $path, string $code, array $statements, Collecting $errors, array $tokens, Types $types, PackageRoots $packages): ParsedFile
     {
         $translator = new Translator($code, $tokens, $types, $path);
         $root = $translator->file($statements);
@@ -111,11 +112,12 @@ final readonly class Stream
             $path,
             count($errors->getErrors()),
             count($modules) === 1 ? ($modules[0]->facts['name'] ?? null) : null,
+            $packages->packageOf($path),
             $root->written($translator->line(...)),
             $translator->comments($nodes),
             $translator,
             $translator->types,
-            array_merge($types->readSoFar($path), $this->publishing($path)[1]),
+            array_merge($types->readSoFar($path), $this->publishing($path)[1], $packages->reads($path)),
             $this->publishing($path)[0],
         );
     }

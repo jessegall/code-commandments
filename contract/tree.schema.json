@@ -597,6 +597,11 @@
           "type": "string",
           "minLength": 1
         },
+        "package": {
+          "type": "string",
+          "minLength": 1,
+          "description": "the package the file belongs to, the unit the project ships together: PHP the namespace of the composer.json PSR-4 root that autoloads it"
+        },
         "publishedBy": {
           "type": "string",
           "minLength": 1,

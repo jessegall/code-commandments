@@ -63,6 +63,7 @@ type File struct {
 	Context  bool     `json:"context,omitempty"`
 	Test     bool     `json:"test,omitempty"`
 	Module   string   `json:"module,omitempty"`
+	Package  string   `json:"package,omitempty"`
 	// PublishedBy is the dependency that ships this file, when the project holds a copy of a file a package publishes,
 	// such as a Laravel config file published from vendor: the package reads it, so nothing in the project need.
 	PublishedBy string `json:"publishedBy,omitempty"`

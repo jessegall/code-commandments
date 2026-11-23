@@ -15,7 +15,7 @@ import (
 // and a resolved type's.
 var (
 	nodeProperties      = []string{"kind", "role", "file", "span", "line", "parent", "resolved", "target"}
-	fileProperties      = []string{"path", "language", "module", "test", "purpose", "errors", "publishedBy", "frozen"}
+	fileProperties      = []string{"path", "language", "module", "package", "test", "purpose", "errors", "publishedBy", "frozen"}
 	spanProperties      = []string{"start", "end", "line", "endLine", "column", "endColumn"}
 	effectiveProperties = []string{"visibility", "static", "abstract", "final", "readonly"}
 	typeProperties      = []string{"text", "kind", "name", "args", "members", "fields", "parameters", "returns", "value", "nullable", "valueType", "element", "constructs", "origin"}

@@ -23,6 +23,7 @@ func newInterned() *interned {
 func (in *interned) file(file *File) {
 	file.Path = in.string(file.Path)
 	file.Module = in.string(file.Module)
+	file.Package = in.string(file.Package)
 	for _, node := range file.nodes {
 		in.node(node)
 	}

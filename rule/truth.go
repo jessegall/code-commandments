@@ -295,6 +295,8 @@ func fileField(file *engine.File, name string) value {
 		return known(string(file.Language()))
 	case "module":
 		return known(engine.FileModule(file))
+	case "package":
+		return known(engine.FilePackage(file))
 	case "test":
 		return known(file.Purpose() != engine.Ordinary)
 	case "purpose":

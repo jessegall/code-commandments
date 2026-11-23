@@ -21,6 +21,7 @@ final readonly class ParsedFile implements JsonSerializable
         public string $path,
         public int $errors,
         public ?string $module,
+        public ?string $package,
         public array $root,
         public array $comments,
         public Translator $translator,
@@ -32,7 +33,7 @@ final readonly class ParsedFile implements JsonSerializable
     public function jsonSerialize(): array
     {
         return array_filter([
-            'path' => $this->path, 'language' => 'php', 'errors' => $this->errors, 'module' => $this->module, 'publishedBy' => $this->publishedBy,
+            'path' => $this->path, 'language' => 'php', 'errors' => $this->errors, 'module' => $this->module, 'package' => $this->package, 'publishedBy' => $this->publishedBy,
             'resolver' => ['tool' => 'php-parser', 'ran' => true], 'reads' => $this->reads === [] ? null : $this->reads,
             'root' => $this->root, 'comments' => $this->comments, 'types' => $this->types === [] ? null : $this->types,
         ], static fn (mixed $value): bool => $value !== null);
