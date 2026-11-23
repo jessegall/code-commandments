@@ -223,19 +223,6 @@
             "default": "true",
             "group": "Languages"
         },
-        "sin_csharp-null-forgiven": {
-            "title": "csharp-null-forgiven",
-            "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/absence",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
         "sin_csharp-blocked-await": {
             "title": "csharp-blocked-await",
             "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
@@ -245,58 +232,6 @@
             "when": [
                 {
                     "language_cs": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_blank-string-on-the-wire": {
-            "title": "blank-string-on-the-wire",
-            "help": "A string sent over the wire that the frontend reads as absent when it is blank.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/absence",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_erased-null-object": {
-            "title": "erased-null-object",
-            "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`",
-            "type": "flag",
-            "default": "true",
-            "group": "php/absence",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_false-for-nothing": {
-            "title": "false-for-nothing",
-            "help": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/absence",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_option-as-nullable": {
-            "title": "option-as-nullable",
-            "help": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`",
-            "type": "flag",
-            "default": "true",
-            "group": "php/absence",
-            "when": [
-                {
-                    "language_php": true
                 }
             ],
             "detail": true
@@ -1198,162 +1133,6 @@
             ],
             "detail": true
         },
-        "sin_filled-parameter": {
-            "title": "filled-parameter",
-            "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
-            "type": "flag",
-            "default": "true",
-            "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_impossible-guard": {
-            "title": "impossible-guard",
-            "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing",
-            "type": "flag",
-            "default": "true",
-            "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_refused-bequest": {
-            "title": "refused-bequest",
-            "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_scratch-state-restore": {
-            "title": "scratch-state-restore",
-            "help": "Scratch state on the object: a method saves one of its own fields to a local and restores it later, the field really a per-call input.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_unused-parameter": {
-            "title": "unused-parameter",
-            "help": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_unused-private-member": {
-            "title": "unused-private-member",
-            "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_useless-property-hook": {
-            "title": "useless-property-hook",
-            "help": "A property's getter that reads nothing from the object: a stored property wearing computed syntax.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/type-honesty",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_coupled-fields": {
-            "title": "coupled-fields",
-            "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_flat-field-cluster": {
-            "title": "flat-field-cluster",
-            "help": "A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_hand-rolled-wither": {
-            "title": "hand-rolled-wither",
-            "help": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_mutable-value-object": {
-            "title": "mutable-value-object",
-            "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_positional-tuple-return": {
-            "title": "positional-tuple-return",
-            "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position",
-            "type": "flag",
-            "default": "true",
-            "group": "php/value-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
         "sin_python-blocked-await": {
             "title": "python-blocked-await",
             "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too",
@@ -1393,22 +1172,37 @@
             ],
             "detail": true
         },
-        "sin_python-constant-property": {
-            "title": "python-constant-property",
-            "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one.",
+        "sin_blank-string-default": {
+            "title": "blank-string-default",
+            "help": "A blank string default stands for a missing required value",
             "type": "flag",
             "default": "true",
-            "group": "python/type-honesty",
+            "group": "shared/absence",
             "when": [
                 {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
                     "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
                 }
             ],
             "detail": true
         },
-        "sin_blank-string-default": {
-            "title": "blank-string-default",
-            "help": "A blank string default stands for a missing required value",
+        "sin_blank-string-on-the-wire": {
+            "title": "blank-string-on-the-wire",
+            "help": "A string sent over the wire that the frontend reads as absent when it is blank.",
             "type": "flag",
             "default": "true",
             "group": "shared/absence",
@@ -1546,9 +1340,149 @@
             ],
             "detail": true
         },
+        "sin_csharp-null-forgiven": {
+            "title": "csharp-null-forgiven",
+            "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_de-nulled-finder": {
             "title": "de-nulled-finder",
             "help": "Every caller takes a nullable result as present",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_defended-certain-field": {
+            "title": "defended-certain-field",
+            "help": "An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_erased-null-object": {
+            "title": "erased-null-object",
+            "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_false-for-nothing": {
+            "title": "false-for-nothing",
+            "help": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_falsely-optional-field": {
+            "title": "falsely-optional-field",
+            "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
             "type": "flag",
             "default": "true",
             "group": "shared/absence",
@@ -1630,6 +1564,34 @@
             ],
             "detail": true
         },
+        "sin_match-default-returns-null": {
+            "title": "match-default-returns-null",
+            "help": "The default arm silently returns an absent value",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_nullable-callback": {
             "title": "nullable-callback",
             "help": "A callback is declared optional, checked for absence, and then invoked",
@@ -1661,6 +1623,34 @@
         "sin_nullable-registry-lookup": {
             "title": "nullable-registry-lookup",
             "help": "A keyed store returns absence on a miss",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_option-as-nullable": {
+            "title": "option-as-nullable",
+            "help": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`",
             "type": "flag",
             "default": "true",
             "group": "shared/absence",
@@ -1748,62 +1738,6 @@
             "type": "flag",
             "default": "true",
             "group": "shared/absence",
-            "when": [
-                {
-                    "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_data-clump": {
-            "title": "data-clump",
-            "help": "The same group of scalar parameters appears on different types",
-            "type": "flag",
-            "default": "true",
-            "group": "shared/arguments",
-            "when": [
-                {
-                    "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_match-default-returns-null": {
-            "title": "match-default-returns-null",
-            "help": "The default arm silently returns an absent value",
-            "type": "flag",
-            "default": "true",
-            "group": "shared/arguments",
             "when": [
                 {
                     "language_php": true
@@ -3226,28 +3160,394 @@
             ],
             "detail": true
         },
-        "sin_defended-certain-field": {
-            "title": "defended-certain-field",
-            "help": "An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out.",
+        "sin_filled-parameter": {
+            "title": "filled-parameter",
+            "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
             "type": "flag",
             "default": "true",
-            "group": "typescript/absence",
+            "group": "shared/type-honesty",
             "when": [
                 {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
                     "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
                 }
             ],
             "detail": true
         },
-        "sin_falsely-optional-field": {
-            "title": "falsely-optional-field",
-            "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
+        "sin_impossible-guard": {
+            "title": "impossible-guard",
+            "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing",
             "type": "flag",
             "default": "true",
-            "group": "typescript/absence",
+            "group": "shared/type-honesty",
             "when": [
                 {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
                     "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-constant-property": {
+            "title": "python-constant-property",
+            "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_refused-bequest": {
+            "title": "refused-bequest",
+            "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_scratch-state-restore": {
+            "title": "scratch-state-restore",
+            "help": "Scratch state on the object: a method saves one of its own fields to a local and restores it later, the field really a per-call input.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_unused-parameter": {
+            "title": "unused-parameter",
+            "help": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_unused-private-member": {
+            "title": "unused-private-member",
+            "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_useless-property-hook": {
+            "title": "useless-property-hook",
+            "help": "A property's getter that reads nothing from the object: a stored property wearing computed syntax.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_coupled-fields": {
+            "title": "coupled-fields",
+            "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_data-clump": {
+            "title": "data-clump",
+            "help": "The same group of scalar parameters appears on different types",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_flat-field-cluster": {
+            "title": "flat-field-cluster",
+            "help": "A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_hand-rolled-wither": {
+            "title": "hand-rolled-wither",
+            "help": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_mutable-value-object": {
+            "title": "mutable-value-object",
+            "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_positional-tuple-return": {
+            "title": "positional-tuple-return",
+            "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
                 }
             ],
             "detail": true

@@ -39,4 +39,4 @@ list by scattering it.
 ## Related skills
 
 - [`php/class-layout`](../../php/class-layout/SKILL.md) — the same discipline in PHP.
-- [`csharp/value-objects`](../value-objects/SKILL.md) — a record whose members are its list of state — read at a glance.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — a record whose members are its list of state — read at a glance.

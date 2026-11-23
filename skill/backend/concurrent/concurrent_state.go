@@ -33,7 +33,7 @@ func (ConcurrentState) Definition() skill.Definition {
 		Principle: concurrentStatePrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/exceptions", Note: "\"the handle/instance *for* this identity\"."},
+			{Slug: "shared/exceptions", Note: "\"the handle/instance *for* this identity\"."},
 		},
 	}
 }

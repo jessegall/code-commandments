@@ -67,4 +67,4 @@ Tell instead: give the base type an abstract member — `shape.Area()` — and l
 
 - [`php/tell-dont-ask`](../../php/tell-dont-ask/SKILL.md) — the same discipline in PHP.
 - [`csharp/enums`](../enums/SKILL.md) — a closed set of values carries its per-case knowledge beside the `enum`.
-- [`csharp/value-objects`](../value-objects/SKILL.md) — the type the behaviour moves onto.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — the type the behaviour moves onto.

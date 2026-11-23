@@ -1,76 +1,468 @@
 ---
 name: commandments-shared-absence
-description: "Writing a fallback for a value that might be missing in any language (`??`, `or`, `.get(k, default)`) and then comparing the result, or looping over `items ?? []` / `items or []`. Read this BEFORE writing either, and when an absence finding points here."
+description: "Modelling a value that might not be there, in any language: a nullable return or field (`?T`, `T | null`, `X | None`), a `return null`, a fallback (`??`, `or`, `.get(k, default)`), a `?.`, a blank string or empty collection standing in for missing, an optional callback, or an \"is it there?\" check. Read this BEFORE writing any of them, and when an absence finding points here."
 ---
 
-# Absence — ask whether it is there, directly and once
+# Absence — decide it where the value is born
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> A value that might be missing is asked about where it might be missing, plainly, and once. Folding
-> "missing" into a stand-in value and then testing for that stand-in hides the question, and a
-> collection that might be missing is ruled out by a guard before the work starts. These rules hold the
-> same in every language, so every language is judged by them the same way.
+> A value that might not be there is a decision, and it is made once: where the value is born.
+> Read this before you write a nullable type, a `return null`, a `?? default`, a `?.`, or an "is it there?" check,
+> and when an absence finding points here.
+> The examples are pseudocode: `T?` is a type that may hold nothing, `??` is "or else". Read them as your language.
 
 ## The principle
 
-### Ask about absence directly
+**Decide absence where the value is born, and say the decision in the type.**
 
-`(name ?? '') !== ''`, `(name or "") != ""`: the fallback turns "missing" into a blank, and the
-comparison then asks whether the value is that same blank. Missing and empty end up in one branch
-without anyone saying so. Ask the question you mean: whether the value is there (`name !== null`,
-`name is not None`), and if empty counts too, say both halves out loud. Better still, make the value
-always present where it is made, so only one question is left.
+When something can be missing, there are four honest answers. Pick one at the source, and every reader downstream is
+spared the question:
 
-### A missing collection is a guard, not a loop header
+| The missing case means | Do this at the source | The caller then |
+|---|---|---|
+| a bug, or a broken promise: the thing must exist | throw a named exception | uses the value, no check |
+| nothing matched | return an empty collection | loops over it, no check |
+| an optional collaborator or callback | give a default that does nothing (a Null Object, a no-op) | calls it, no check |
+| real, meaningful absence | say so in the type (`T?`, an `Option<T>`) | must handle both cases, once |
 
-`for item in items or []`, `foreach ($x[$k] ?? [] as …)`: the check for a collection that was never
-handed over hides in the loop header. State it at the top with an early return, so the loop walks
-something that is there, or make the caller always hand one over.
+What is never honest is the fifth answer: a nullable type that every caller treats as present, or a fake value (`''`,
+`0`, `[]`, `false`) that stands in for "missing" and looks like data. Both hide the decision instead of making it, and
+the bug surfaces far from where it started.
 
-## Rules
+```pseudo
+// Bad: the finder shrugs, and every caller pretends it did not
+function find(id): Customer? {
+    return customers.get(id)
+}
 
-- [ ] Require the text or give absence its own type.
-      _Require the text or give absence its own type._
-- [ ] Ask about absence directly; never fall back to a value only to compare against that same value.
-      _Say both halves out loud (`name !== null && name !== ''`), or make the value always present where it is made so only one question is left._
-- [ ] Decide which capabilities an object provides when giving it to its owner.
-      _Give the owner a typed capability or an adapter that supplies the required behavior._
-- [ ] Handle missing input before iteration or require a collection.
-      _Handle missing input before iteration or require a collection._
-- [ ] Build the collection from an explicit conditional contribution.
-      _Build the collection from an explicit conditional contribution._
-- [ ] Make the finder provide a value or report the miss.
-      _Make the finder provide a value or report the miss._
-- [ ] Keep absence explicit and resolve it before the lookup.
-      _Resolve the missing key at its source, throw or return there, and look up only a key that exists._
-- [ ] Keep required state non-null, or pass it directly to the operation that uses it.
-      _Remove the fallback by giving the value a certain type where it is set._
-- [ ] Give a callback a usable default when every caller must be able to invoke it.
-      _Use a named no-op or require the callback as a parameter._
-- [ ] Resolve a required key or fail by name.
-      _Make the lookup return a value or report the missing key._
-- [ ] Make the field's declared type agree with the values it can hold.
-      _Require the value where it is constructed, or handle its absence at the read._
-- [ ] Supply the required value or make its absence part of the type.
-      _Validate the data before constructing it, or make a separate type for the incomplete state._
-- [ ] Validate decoded data at the boundary and return the type the caller can rely on.
-      _Parse the decoded payload into a named result with checked fields._
+name = find(id).name                 // crashes somewhere else, later
+email = find(id)?.email ?? ""        // or invents a customer with no email
+
+// Good: the finder decides, and the type carries the decision
+function find(id): Customer {
+    return customers.get(id) ?? throw CustomerNotFound.withId(id)
+}
+
+name = find(id).name
+```
+
+## The sins
+
+### de-nulled-finder
+
+A finder returns `T?`, and every caller takes the result as present. The type says "might be missing", the code says
+"never is". Make the finder give a value or report the miss by name.
+
+```pseudo
+// Bad
+function byBarcode(barcode): Product? {
+    return products.firstWhere(barcode)
+}
+
+name = byBarcode(code).name
+stock = byBarcode(code).stock
+
+// Good
+function byBarcode(barcode): Product {
+    return products.firstWhere(barcode) ?? throw ProductNotFound.withBarcode(barcode)
+}
+```
+
+### nullable-registry-lookup
+
+A keyed store answers a miss with nothing. A registry is asked for keys that are expected to exist, so a miss is a
+failure with a name, not a `null` for the caller to trip over.
+
+```pseudo
+// Bad
+class TariffBook {
+    function forZone(zone): Tariff? {
+        return this.tariffs[zone] ?? null
+    }
+}
+
+// Good
+class TariffBook {
+    function forZone(zone): Tariff {
+        return this.tariffs[zone] ?? throw UnknownZone.named(zone)
+    }
+
+    function has(zone): bool {
+        return zone in this.tariffs
+    }
+}
+```
+
+### phantom-nullable
+
+A field is declared optional, and every read of it assumes it is there. The declaration lies. Make the type agree
+with the values the field can hold: require it where the object is built.
+
+```pseudo
+// Bad
+class Invoice {
+    customer: Customer?
+
+    function recipient() { return this.customer.name }
+    function address()   { return this.customer.address }
+}
+
+// Good
+class Invoice {
+    customer: Customer
+
+    constructor(customer: Customer) { this.customer = customer }
+}
+```
+
+### masked-invariant
+
+A value the design requires is read through `?.` and given a literal fallback. If the invariant is ever broken, the
+code answers `false` or `0` instead of failing, and the bug is invisible. Assert the invariant, or make the field
+certain where it is set.
+
+```pseudo
+// Bad: "focus() ran first" is required, and a broken promise reads as "no"
+function covers(date): bool {
+    return this.period?.includes(date) ?? false
+}
+
+// Good
+function covers(date): bool {
+    if (this.period == null) {
+        throw LedgerNotFocused.beforeCovers()
+    }
+
+    return this.period.includes(date)
+}
+```
+
+### manufactured-fake-fill
+
+A missing key is replaced by an empty scalar and then looked up anyway. The lookup is asked for a customer with
+email `''`: a question nobody meant to ask. Resolve the missing key first, and only look up a key that exists.
+
+```pseudo
+// Bad
+customer = customers.byEmail(row["email"] ?? "")
+
+// Good
+email = row["email"] ?? throw RowWithoutEmail.at(row)
+
+customer = customers.byEmail(email)
+```
+
+### cancelled-coalesce
+
+A fallback that is compared against the very value it falls back to. Missing and empty land in one branch, and the
+code never says that it meant both.
+
+```pseudo
+// Bad
+if ((name ?? "") != "") {
+    greet(name)
+}
+
+// Good: say both halves, or make the value always present where it is made
+if (name != null && name != "") {
+    greet(name)
+}
+```
+
+### coalesced-loop-subject
+
+A loop header that swaps a missing collection for an empty one. The absence is swallowed in the one place nobody
+looks. Handle the missing input before the loop, or require a collection.
+
+```pseudo
+// Bad
+for (parcel in manifest[carrier] ?? []) {
+    queue(parcel)
+}
+
+// Good: the type that owns the data answers with a collection, always
+for (parcel in manifest.parcelsFor(carrier)) {
+    queue(parcel)
+}
+```
+
+### conditional-array-spread
+
+A spread whose "nothing" branch is an empty collection used as a placeholder. The reader has to decode a ternary
+inside a literal to learn that a key is sometimes there. Build the collection, then add the conditional part as a
+statement.
+
+```pseudo
+// Bad
+query = { sort: sort, ...(brand == null ? {} : { brand: brand }) }
+
+// Good
+query = { sort: sort }
+
+if (brand != null) {
+    query.brand = brand
+}
+```
+
+### nullable-callback
+
+A callback declared optional, checked for absence, then called. Every call site of the callback carries the check.
+Default it to a named no-op, or require it.
+
+```pseudo
+// Bad
+function run(work, onRetry: Callback? = null) {
+    try { work() } catch (failure) {
+        if (onRetry != null) {
+            onRetry(failure)
+        }
+    }
+}
+
+// Good
+function run(work, onRetry: Callback = NoOp) {
+    try { work() } catch (failure) {
+        onRetry(failure)
+    }
+}
+```
+
+### capability-probe-hub
+
+Several methods each ask the same loosely typed field whether it can do something before using it. The question
+"what is this thing?" is asked again in every method. Decide what the object provides when it is handed over, and
+type the field for it.
+
+```pseudo
+// Bad
+class ExportPreferences {
+    settings: object
+
+    function canEmail()   { return this.settings is ExportSettings && this.settings.email }
+    function canArchive() { return this.settings is ExportSettings && this.settings.archive }
+}
+
+// Good: the owner receives the capability it needs, already decided
+class ExportPreferences {
+    settings: ExportSettings
+
+    function canEmail()   { return this.settings.email }
+    function canArchive() { return this.settings.archive }
+}
+```
+
+### blank-string-default
+
+A required text parameter defaults to `""`. A caller that forgets it gets a blank that travels on as if it were data.
+Require the text, or give absence its own type.
+
+```pseudo
+// Bad
+function invite(email: string, name: string = "") { … }
+
+// Good
+function invite(email: string, name: string) { … }
+```
+
+### placeholder-filled-data
+
+A data type built with `""` in a field it requires. The object looks complete and is not. Validate before
+constructing, or model the incomplete state as a type of its own.
+
+```pseudo
+// Bad
+draft = Customer(name: form.name, email: "", country: "")
+
+// Good
+draft = CustomerDraft(name: form.name)
+
+customer = draft.completedWith(email, country)
+```
+
+### raw-decoded-array-return
+
+A function returns decoded data (JSON, a row, a payload) before anything checked it. Every caller then reaches into
+an untyped bag and guesses which keys exist. Validate at the boundary and return a type the caller can rely on.
+
+```pseudo
+// Bad
+function settings(): map {
+    return json.decode(file.read("settings.json"))
+}
+
+limit = settings()["limit"] ?? 10
+
+// Good
+function settings(): Settings {
+    return Settings.from(json.decode(file.read("settings.json")))
+}
+
+limit = settings().limit
+```
+
+### match-default-returns-null
+
+A dispatch whose default arm quietly returns nothing. A value nobody expected turns into "no answer" instead of a
+failure, and the caller cannot tell an unknown case from a real absence. Handle the cases you expect, and signal the
+one you do not.
+
+```pseudo
+// Bad
+function carrierFor(zone): Carrier? {
+    return match (zone) {
+        "eu"    => Carrier.Post
+        "world" => Carrier.Air
+        default => null
+    }
+}
+
+// Good
+function carrierFor(zone): Carrier {
+    return match (zone) {
+        "eu"    => Carrier.Post
+        "world" => Carrier.Air
+        default => throw UnknownZone.named(zone)
+    }
+}
+```
+
+### false-for-nothing — in PHP
+
+A return typed `X|false`, where `false` stands for "nothing" or "failed". Every caller must test for it, and one who
+forgets treats `false` as data.
+
+```php
+// Bad
+public function position(string $sku): int|false
+{
+    return array_search($sku, $this->skus, true);
+}
+
+// Good
+public function position(string $sku): int
+{
+    $position = array_search($sku, $this->skus, true);
+
+    return $position === false ? throw UnknownSku::named($sku) : $position;
+}
+```
+
+### option-as-nullable — in PHP
+
+An `Option<T>` treated as a nullable: `?Option`, `Option|null`, `unwrapOr(null)`. That is two layers of "maybe" where
+one was the point. Wrap once at the seam, then consume it as an option.
+
+```php
+// Bad
+public function coupon(): ?Option { … }
+
+$code = $order->coupon()?->unwrapOr(null);
+
+// Good
+public function coupon(): Option
+{
+    return Option::fromNullable($this->couponCode);
+}
+
+$label = $order->coupon()->match(
+    some: fn (string $code) => "Coupon {$code}",
+    none: fn () => 'No coupon',
+);
+```
+
+### erased-null-object — in PHP
+
+A Null Object that renders blank, written into a `string` slot. The type coerces it straight back to `''`, and the
+object that modelled the absence is gone.
+
+```php
+// Bad
+public function __construct(public readonly string $nickname) {}
+
+new Profile(nickname: (string) new NoNickname);
+
+// Good: the slot's type carries the object
+public function __construct(public readonly Nickname $nickname) {}
+
+new Profile(nickname: new NoNickname);
+```
+
+### blank-string-on-the-wire — in PHP
+
+A string field sent to the frontend that the frontend reads as "absent" when it is blank. Two sides now share an
+unwritten rule. Say absence in the type, so both sides spell it one way.
+
+```php
+// Bad
+final class ProfileData extends Data
+{
+    public function __construct(public readonly string $avatarUrl = '') {}
+}
+
+// Good
+final class ProfileData extends Data
+{
+    public function __construct(public readonly ?string $avatarUrl = null) {}
+}
+```
+
+### csharp-null-forgiven — in C#
+
+The null-forgiving `!` on a value declared nullable. The compiler said it may be null, and `!` silences the compiler
+instead of deciding.
+
+```csharp
+// Bad
+var customer = customers.Find(id)!;
+
+// Good
+var customer = customers.Find(id) ?? throw CustomerNotFound.WithId(id);
+```
+
+### falsely-optional-field · defended-certain-field — in TypeScript
+
+A field declared optional that is initialised where it is declared, and a `?.` on a field the class declares as
+always present. Both doubt something the design already rules out, and every `?.` and `??` that follows defends a
+case that cannot happen.
+
+```ts
+// Bad
+class Cart {
+    private lines?: Line[] = []
+
+    total(): number {
+        return this.lines?.reduce((sum, line) => sum + line.price, 0) ?? 0
+    }
+}
+
+// Good
+class Cart {
+    private lines: Line[] = []
+
+    total(): number {
+        return this.lines.reduce((sum, line) => sum + line.price, 0)
+    }
+}
+```
+
+## In your language
+
+- **PHP.** `?T` and `T|null` are the nullable types; `?->` and `??` are the defences to be suspicious of. An
+  `Option` (php-types) is for absence a caller must handle; a collection method returns `[]`, never `null`.
+- **Python.** `X | None` and `Optional[X]`; the defences are `x or default`, `getattr(x, "y", default)` and
+  `.get(key, default)`. Raise a named exception instead of returning `None` for "not found".
+- **C#.** Turn nullable reference types on and believe them: `T?` only where absence is real, never `!`.
+- **TypeScript.** Pick one spelling of missing (`undefined` or `null`) per type, and no `?.` on a field that is
+  always set.
+- **Go.** Absence is the second return value: `value, ok` or `value, err`. Check it at once and leave.
 
 ## Commands
 
 - `{{binary}} judge --skill=shared/absence` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `cancelled-coalesce`, `capability-probe-hub`, `coalesced-loop-subject`, `conditional-array-spread`, `de-nulled-finder`, `manufactured-fake-fill`, `masked-invariant`, `nullable-callback`, `nullable-registry-lookup`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `capability-probe-hub`, `coalesced-loop-subject`, `conditional-array-spread`, `csharp-null-forgiven`, `de-nulled-finder`, `defended-certain-field`, `erased-null-object`, `false-for-nothing`, `falsely-optional-field`, `manufactured-fake-fill`, `masked-invariant`, `match-default-returns-null`, `nullable-callback`, `nullable-registry-lookup`, `option-as-nullable`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 13 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
-
-## Related skills
-
-- [`php/absence`](../../php/absence/SKILL.md) — what is particular to PHP's absence.
-- [`python/absence`](../../python/absence/SKILL.md) — what is particular to Python's absence.
-- [`typescript/absence`](../../typescript/absence/SKILL.md) — what is particular to TypeScript's absence.
-- [`csharp/absence`](../../csharp/absence/SKILL.md) — what is particular to C#'s absence.

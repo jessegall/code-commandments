@@ -34,7 +34,7 @@ func (ClassLayout) Definition() skill.Definition {
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
 			{Slug: "php/class-layout", Note: "the same discipline in PHP."},
-			{Slug: "csharp/value-objects", Note: "a record whose members are its list of state — read at a glance."},
+			{Slug: "shared/value-objects", Note: "a record whose members are its list of state — read at a glance."},
 		},
 	}
 }

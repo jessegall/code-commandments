@@ -92,12 +92,12 @@ func TestASkillTheLastSyncPublishedAndThisOneDoesNotIsTakenAway(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := At(project, config.Config{DisabledLanguages: []source.Language{source.CSharp, source.Python}}).Publish(); err != nil {
+	if _, err := At(project, config.Config{DisabledLanguages: []source.Language{source.Vue}}).Publish(); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-python-absence")); err == nil {
-		t.Error("a Python skill outlived the project dropping Python")
+	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-vue-vue-components")); err == nil {
+		t.Error("a Vue skill outlived the project dropping Vue")
 	}
 
 	if _, err := os.Stat(mine); err != nil {
@@ -160,7 +160,7 @@ func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
 	if _, err := At(project, config.Config{}).Publish(); err != nil {
 		t.Fatal(err)
 	}
-	stale := filepath.Join(project, Dir, "commandments-php-absence", "reference", "retired.md")
+	stale := filepath.Join(project, Dir, "commandments-php-spatie-data", "reference", "retired.md")
 	if err := os.MkdirAll(filepath.Dir(stale), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
 	if _, err := os.Stat(stale); err == nil {
 		t.Error("a page the skill no longer ships outlived the sync")
 	}
-	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-php-absence", "SKILL.md")); err != nil {
+	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-php-spatie-data", "SKILL.md")); err != nil {
 		t.Errorf("the skill itself is gone: %v", err)
 	}
 }

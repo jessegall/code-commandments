@@ -67,4 +67,4 @@ The house pattern (and the one you want): the wrapped value is a **plain class**
 
 ## Related skills
 
-- [`php/exceptions`](../exceptions/SKILL.md) — "the handle/instance *for* this identity".
+- [`shared/exceptions`](../../shared/exceptions/SKILL.md) — "the handle/instance *for* this identity".

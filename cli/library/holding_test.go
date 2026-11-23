@@ -41,7 +41,7 @@ func TestOnlyTheSkillsOfTheLanguagesAProjectHoldsArePublished(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !slices.Contains(ids, "commandments-php-absence") {
+	if !slices.Contains(ids, "commandments-php-spatie-data") {
 		t.Fatalf("a PHP project is not given the PHP skills: %v", ids)
 	}
 
@@ -55,17 +55,17 @@ func TestOnlyTheSkillsOfTheLanguagesAProjectHoldsArePublished(t *testing.T) {
 }
 
 func TestASkillOfALanguageTheProjectNoLongerHoldsIsWithdrawn(t *testing.T) {
-	project := holding(t, "composer.json", "app/Order.php", "app/order.py")
+	project := holding(t, "composer.json", "app/Order.php", "resources/js/Cart.vue")
 
 	if _, err := At(project, config.Config{}).Publish(); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-python-absence", "SKILL.md")); err != nil {
-		t.Fatalf("the Python skill was not published while the project held Python: %v", err)
+	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-vue-vue-components", "SKILL.md")); err != nil {
+		t.Fatalf("the Vue skill was not published while the project held Vue: %v", err)
 	}
 
-	if err := os.Remove(filepath.Join(project, "app", "order.py")); err != nil {
+	if err := os.Remove(filepath.Join(project, "resources", "js", "Cart.vue")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -73,7 +73,7 @@ func TestASkillOfALanguageTheProjectNoLongerHoldsIsWithdrawn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-python-absence")); !os.IsNotExist(err) {
-		t.Fatalf("the Python skill outlived the project's last Python file: %v", err)
+	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-vue-vue-components")); !os.IsNotExist(err) {
+		t.Fatalf("the Vue skill outlived the project's last Vue file: %v", err)
 	}
 }

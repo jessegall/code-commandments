@@ -363,13 +363,13 @@ file in an older format is refused, and the message names the file.
 ## Skills and rules
 
 <!-- BEGIN: skills (auto-generated, run `composer readme`) -->
-_70 skills. Full table in [README.skills.md](README.skills.md)._
+_59 skills. Full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
 
 Every problem the tool finds, and the rule file that finds it:
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_175 sins across 38 skills. Full tables in [README.sins.md](README.sins.md)._
+_175 sins across 34 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## License

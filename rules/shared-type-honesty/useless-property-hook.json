@@ -1,0 +1,238 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "typescript"
+  ],
+  "sin": {
+    "name": "useless-property-hook",
+    "aliases": [
+      "UselessPropertyHookDetector",
+      "UselessPropertyHook"
+    ],
+    "skill": "shared/type-honesty",
+    "description": "A property's getter that reads nothing from the object: a stored property wearing computed syntax.",
+    "rule": "A property getter must earn its body: one that reads none of the object's state computes nothing from the object and yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares a getter and the implementer mimics the syntax; a plain property satisfies it just as well.",
+    "suggestion": "Make it a stored property: a constant body becomes the property's default, a constructed value is assigned once in the constructor. Keep the getter only when its body derives from the object's state.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "=",
+        "$f.form",
+        "get"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.obligations"
+        ],
+        0
+      ],
+      [
+        "exists",
+        "$f.body"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "none",
+        [
+          "tree.insideOf",
+          "$f.body"
+        ],
+        "x",
+        [
+          "isSelf",
+          "$x"
+        ]
+      ],
+      [
+        "none",
+        "$field.hooks",
+        "x",
+        [
+          "=",
+          "$x.form",
+          "set"
+        ]
+      ],
+      [
+        "none",
+        [
+          "tree.insideOf",
+          "$f.body"
+        ],
+        "x",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$x.form",
+            "parent"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "spatie.isData",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ]
+      ],
+      [
+        "none",
+        [
+          "tree.insideOf",
+          "$f.body"
+        ],
+        "x",
+        [
+          "readsOwnState",
+          "$x",
+          "$f"
+        ]
+      ]
+    ],
+    "emit": "$f",
+    "let": [
+      [
+        "field",
+        [
+          "fieldOf",
+          "$f"
+        ]
+      ]
+    ]
+  },
+  "definitions": {
+    "fieldOf": {
+      "args": [
+        "h"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "siblings",
+            "$h"
+          ],
+          "f",
+          [
+            "and",
+            [
+              "=",
+              "$f.kind",
+              "field"
+            ],
+            [
+              "some",
+              "$f.hooks",
+              "x",
+              [
+                "=",
+                "$x",
+                "$h"
+              ]
+            ]
+          ]
+        ],
+        0
+      ]
+    },
+    "readsOwnState": {
+      "args": [
+        "x",
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "reference"
+        ],
+        [
+          "exists",
+          [
+            "declarationOf",
+            "$x"
+          ]
+        ],
+        [
+          "none",
+          [
+            "tree.insideOf",
+            "$f.body"
+          ],
+          "y",
+          [
+            "=",
+            "$y",
+            [
+              "declarationOf",
+              "$x"
+            ]
+          ]
+        ],
+        [
+          "ownerHolds",
+          [
+            "enclosing",
+            [
+              "declarationOf",
+              "$x"
+            ],
+            "type"
+          ],
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ]
+        ]
+      ]
+    },
+    "ownerHolds": {
+      "args": [
+        "held",
+        "own"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$held",
+          "$own"
+        ],
+        [
+          "has",
+          [
+            "supertypes",
+            "$own"
+          ],
+          "$held.symbol"
+        ]
+      ]
+    }
+  }
+}

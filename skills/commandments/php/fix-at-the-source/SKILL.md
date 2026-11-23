@@ -132,6 +132,6 @@ that guards it. A list that leaves classes out on purpose, such as an export lis
 
 ## Related skills
 
-- [`php/absence`](../absence/SKILL.md) — deciding absence at the producer is this rule applied to the null channel.
-- [`php/exceptions`](../exceptions/SKILL.md) — surfacing a failure where it's born is this rule applied to the error channel.
-- [`php/value-objects`](../value-objects/SKILL.md) — introducing the type at the source, not threading loose data downstream.
+- [`shared/absence`](../../shared/absence/SKILL.md) — deciding absence at the producer is this rule applied to the null channel.
+- [`shared/exceptions`](../../shared/exceptions/SKILL.md) — surfacing a failure where it's born is this rule applied to the error channel.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — introducing the type at the source, not threading loose data downstream.

@@ -33,9 +33,9 @@ func (RoleVocabulary) Definition() skill.Definition {
 		Principle: roleVocabularyPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/absence", Note: "a registry `get()` is resolve-or-throw, not an Option; that's the same \"missing must-exist thing throws\" rule."},
-			{Slug: "php/exceptions", Note: "the named exception a registry throws on a miss (`RegistryEntryNotFoundException::forKey($key)`)."},
-			{Slug: "php/value-objects", Note: "these roles are typed structures; reach for one instead of threading a raw `array` keyed store around."},
+			{Slug: "shared/absence", Note: "a registry `get()` is resolve-or-throw, not an Option; that's the same \"missing must-exist thing throws\" rule."},
+			{Slug: "shared/exceptions", Note: "the named exception a registry throws on a miss (`RegistryEntryNotFoundException::forKey($key)`)."},
+			{Slug: "shared/value-objects", Note: "these roles are typed structures; reach for one instead of threading a raw `array` keyed store around."},
 		},
 	}
 }

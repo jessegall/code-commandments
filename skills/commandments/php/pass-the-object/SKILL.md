@@ -81,5 +81,5 @@ the parameter to the resolved type.
 
 ## Related skills
 
-- [`php/value-objects`](../value-objects/SKILL.md) — the object you pass IS the resolved type — give data a type, don't thread an id + its container.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — the object you pass IS the resolved type — give data a type, don't thread an id + its container.
 - [`php/tell-dont-ask`](../tell-dont-ask/SKILL.md) — unpacking a container param to work its target is feature envy on the container.

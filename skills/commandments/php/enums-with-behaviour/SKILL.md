@@ -55,7 +55,7 @@ Reach for this the moment you write:
 
 ## Related skills
 
-- [`php/value-objects`](../value-objects/SKILL.md) — an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.
-- [`php/absence`](../absence/SKILL.md) — a missing/unhandled case is a throw, not a silent `default`.
-- [`php/exceptions`](../exceptions/SKILL.md) — a missing/unhandled case is a throw, not a silent `default`.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.
+- [`shared/absence`](../../shared/absence/SKILL.md) — a missing/unhandled case is a throw, not a silent `default`.
+- [`shared/exceptions`](../../shared/exceptions/SKILL.md) — a missing/unhandled case is a throw, not a silent `default`.
 - [`php/fix-at-the-source`](../fix-at-the-source/SKILL.md) — seal the set where the value is born (a typed enum field) so downstream code never re-parses a string.

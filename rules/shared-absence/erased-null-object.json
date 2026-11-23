@@ -1,0 +1,189 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "erased-null-object",
+    "aliases": [
+      "ErasedNullObjectDetector",
+      "ErasedNullObject"
+    ],
+    "skill": "shared/absence",
+    "description": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`",
+    "rule": "A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.",
+    "suggestion": "Widen the type to carry the object (`Stringable`, or the class itself) where the Null Object is the point; otherwise drop the wrapper — and where the blank meant \"missing\", say that in the type with `?string` or an `Option<string>`.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "blankText": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$f.kind",
+          "function"
+        ],
+        [
+          "=",
+          "$f.name",
+          "__toString"
+        ],
+        [
+          "=",
+          [
+            "count",
+            "$f.body.statements"
+          ],
+          1
+        ],
+        [
+          "some",
+          "$f.body.statements",
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "return"
+            ],
+            [
+              "some",
+              "$s.values",
+              "v",
+              [
+                "and",
+                [
+                  "=",
+                  "$v.kind",
+                  "literal"
+                ],
+                [
+                  "=",
+                  "$v.value",
+                  ""
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "stringSlot": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$n.role",
+            "default"
+          ],
+          [
+            "=",
+            "$n.parent.declaredType.name",
+            "string"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$n.role",
+            "initializer"
+          ],
+          [
+            "=",
+            "$n.parent.parent.declaredType.name",
+            "string"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            [
+              "get",
+              [
+                "consumer",
+                "$n"
+              ],
+              "use"
+            ],
+            "returned"
+          ],
+          [
+            "=",
+            [
+              "typeName",
+              [
+                "returnOf",
+                [
+                  "enclosing",
+                  "$n",
+                  "function"
+                ]
+              ]
+            ],
+            "string"
+          ]
+        ]
+      ]
+    },
+    "returnOf": {
+      "args": [
+        "f"
+      ],
+      "expr": "$f.returnType"
+    },
+    "typeName": {
+      "args": [
+        "t"
+      ],
+      "expr": "$t.name"
+    }
+  },
+  "find": {
+    "select": "construction",
+    "as": "n",
+    "let": [
+      [
+        "made",
+        [
+          "typeDeclaration",
+          "$n.resolved.name"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$made"
+      ],
+      [
+        "some",
+        "$made.writtenMembers",
+        "m",
+        [
+          "blankText",
+          "$m"
+        ]
+      ],
+      [
+        "stringSlot",
+        "$n"
+      ]
+    ],
+    "emit": "$n"
+  }
+}

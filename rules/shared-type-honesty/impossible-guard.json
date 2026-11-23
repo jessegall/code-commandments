@@ -1,0 +1,268 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python"
+  ],
+  "sin": {
+    "name": "impossible-guard",
+    "aliases": [
+      "ImpossibleGuardDetector",
+      "ImpossibleGuard",
+      "csharp-impossible-guard",
+      "python-impossible-guard"
+    ],
+    "skill": "shared/type-honesty",
+    "description": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing",
+    "rule": "A guard answers a question the type leaves open: if the type says the value is there, delete the guard; if the value really can be missing, say so in the type.",
+    "suggestion": "Delete the check when the type is right. When callers really do pass null, type the parameter `?Order` and let the reader see it, then decide absence once where the value is born.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "nullLiteral": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "literal"
+        ],
+        [
+          "=",
+          "$x.literalKind",
+          "null"
+        ]
+      ]
+    },
+    "failsFast": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.parent.kind",
+          "if"
+        ],
+        [
+          "=",
+          "$c.role",
+          "condition"
+        ],
+        [
+          "onlyThrows",
+          "$c.parent.then"
+        ]
+      ]
+    },
+    "onlyThrows": {
+      "args": [
+        "b"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          [
+            "count",
+            "$b.statements"
+          ],
+          1
+        ],
+        [
+          "some",
+          "$b.statements",
+          "s",
+          [
+            "or",
+            [
+              "=",
+              "$s.kind",
+              "throw"
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$s.kind",
+                "expression-statement"
+              ],
+              [
+                "=",
+                "$s.expression.kind",
+                "throw"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "nulledNames": {
+      "args": [
+        "fn"
+      ],
+      "kept": true,
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              "$fn.body"
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "assignment"
+              ],
+              [
+                "some",
+                "$a.values",
+                "v",
+                [
+                  "nullLiteral",
+                  "$v"
+                ]
+              ]
+            ]
+          ],
+          "a",
+          [
+            "map",
+            [
+              "filter",
+              "$a.targets",
+              "t",
+              [
+                "in",
+                "$t.kind",
+                "reference",
+                "binding"
+              ]
+            ],
+            "t",
+            "$t.name"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "comparison",
+    "as": "c",
+    "where": [
+      "and",
+      [
+        "=",
+        [
+          "count",
+          "$c.operands"
+        ],
+        2
+      ],
+      [
+        "every",
+        "$c.operators",
+        "o",
+        [
+          "in",
+          "$o",
+          "identical",
+          "not-identical",
+          "equal",
+          "not-equal"
+        ]
+      ],
+      [
+        "some",
+        "$c.operands",
+        "o",
+        [
+          "nullLiteral",
+          "$o"
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "tested",
+        [
+          "at",
+          [
+            "filter",
+            "$c.operands",
+            "o",
+            [
+              "not",
+              [
+                "nullLiteral",
+                "$o"
+              ]
+            ]
+          ],
+          0
+        ]
+      ],
+      [
+        "function",
+        [
+          "enclosing",
+          "$c",
+          "function"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "=",
+        "$tested.resolved.nullable",
+        false
+      ],
+      [
+        "=",
+        "$tested.resolved.kind",
+        "named"
+      ],
+      [
+        "not",
+        [
+          "failsFast",
+          "$c"
+        ]
+      ],
+      [
+        "or",
+        [
+          "!=",
+          "$tested.kind",
+          "reference"
+        ],
+        [
+          "not",
+          [
+            "has",
+            [
+              "nulledNames",
+              "$function"
+            ],
+            "$tested.name"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}

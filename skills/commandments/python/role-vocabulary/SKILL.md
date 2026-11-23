@@ -68,5 +68,5 @@ classes are added and renamed.
 ## Related skills
 
 - [`php/role-vocabulary`](../../php/role-vocabulary/SKILL.md) — the same roles in PHP, with scaffolded bases.
-- [`python/absence`](../absence/SKILL.md) — a registry `get` raises on a miss — the same "a must-exist thing that is missing raises" rule.
-- [`python/exceptions`](../exceptions/SKILL.md) — the named exception a registry raises on a miss, built by a classmethod factory.
+- [`shared/absence`](../../shared/absence/SKILL.md) — a registry `get` raises on a miss — the same "a must-exist thing that is missing raises" rule.
+- [`shared/exceptions`](../../shared/exceptions/SKILL.md) — the named exception a registry raises on a miss, built by a classmethod factory.

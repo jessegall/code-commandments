@@ -72,6 +72,6 @@ added; a marker interface is checked by the compiler.
 
 ## Related skills
 
-- [`php/absence`](../absence/SKILL.md) — a registry `get()` is resolve-or-throw, not an Option; that's the same "missing must-exist thing throws" rule.
-- [`php/exceptions`](../exceptions/SKILL.md) — the named exception a registry throws on a miss (`RegistryEntryNotFoundException::forKey($key)`).
-- [`php/value-objects`](../value-objects/SKILL.md) — these roles are typed structures; reach for one instead of threading a raw `array` keyed store around.
+- [`shared/absence`](../../shared/absence/SKILL.md) — a registry `get()` is resolve-or-throw, not an Option; that's the same "missing must-exist thing throws" rule.
+- [`shared/exceptions`](../../shared/exceptions/SKILL.md) — the named exception a registry throws on a miss (`RegistryEntryNotFoundException::forKey($key)`).
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — these roles are typed structures; reach for one instead of threading a raw `array` keyed store around.

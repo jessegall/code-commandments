@@ -58,4 +58,4 @@ needs it (usually through the constructor), and the dependency is in the signatu
 ## Related skills
 
 - [`php/fix-at-the-source`](../../php/fix-at-the-source/SKILL.md) — the same discipline in PHP, which every other skill builds on.
-- [`csharp/absence`](../absence/SKILL.md) — deciding what "missing" means where a value is made is this rule applied to `null`.
+- [`shared/absence`](../../shared/absence/SKILL.md) — deciding what "missing" means where a value is made is this rule applied to `null`.

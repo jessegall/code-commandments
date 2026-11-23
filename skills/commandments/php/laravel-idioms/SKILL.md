@@ -91,6 +91,6 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 ## Related skills
 
-- [`php/value-objects`](../value-objects/SKILL.md) — a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge.
 - [`php/fix-at-the-source`](../fix-at-the-source/SKILL.md) — read input typed at the boundary so nothing downstream re-coerces a `mixed`.
-- [`php/absence`](../absence/SKILL.md) — a typed accessor for an optional field still answers "can this be missing?" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`.
+- [`shared/absence`](../../shared/absence/SKILL.md) — a typed accessor for an optional field still answers "can this be missing?" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`.

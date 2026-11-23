@@ -34,7 +34,7 @@ func (ClassLayout) Definition() skill.Definition {
 		Languages: []string{"python"},
 		Related: []skill.Relation{
 			{Slug: "php/class-layout", Note: "the same discipline over PHP classes."},
-			{Slug: "python/value-objects", Note: "a dataclass whose fields are its inventory — read at a glance."},
+			{Slug: "shared/value-objects", Note: "a dataclass whose fields are its inventory — read at a glance."},
 		},
 	}
 }

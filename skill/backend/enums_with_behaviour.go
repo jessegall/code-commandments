@@ -33,9 +33,9 @@ func (EnumsWithBehaviour) Definition() skill.Definition {
 		Principle: enumsWithBehaviourPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/value-objects", Note: `an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.`},
-			{Slug: "php/absence", Note: "a missing/unhandled case is a throw, not a silent `default`."},
-			{Slug: "php/exceptions", Note: "a missing/unhandled case is a throw, not a silent `default`."},
+			{Slug: "shared/value-objects", Note: `an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.`},
+			{Slug: "shared/absence", Note: "a missing/unhandled case is a throw, not a silent `default`."},
+			{Slug: "shared/exceptions", Note: "a missing/unhandled case is a throw, not a silent `default`."},
 			{Slug: "php/fix-at-the-source", Note: `seal the set where the value is born (a typed enum field) so downstream code never re-parses a string.`},
 		},
 	}

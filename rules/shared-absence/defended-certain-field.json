@@ -1,0 +1,127 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "typescript"
+  ],
+  "sin": {
+    "name": "defended-certain-field",
+    "aliases": [
+      "DefendedCertainFieldDetector",
+      "DefendedCertainField"
+    ],
+    "skill": "shared/absence",
+    "description": "An `?.` on a field the class declares as always present \u2014 a defence against a case the type says cannot happen, so the code doubts something the design already rules out.",
+    "rule": "Reach for `?.` only where the type admits absence; on a field declared total, it is noise that makes the next reader wonder if it can be missing.",
+    "suggestion": "A plain `.` \u2014 the declaration already guarantees it."
+  },
+  "definitions": {
+    "fieldNamed": {
+      "args": [
+        "t",
+        "n"
+      ],
+      "expr": [
+        "at",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                "$t.writtenMembers",
+                "m",
+                [
+                  "=",
+                  "$m.kind",
+                  "field"
+                ]
+              ],
+              "m",
+              "$m.declarators"
+            ]
+          ],
+          "d",
+          [
+            "=",
+            "$d.binding.name",
+            "$n"
+          ]
+        ],
+        0
+      ]
+    },
+    "optionalField": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "some",
+        "$d.parent.modifiers",
+        "m",
+        [
+          "=",
+          "$m",
+          "optional"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "access",
+    "as": "a",
+    "where": [
+      "and",
+      [
+        "=",
+        "$a.nullConditional",
+        true
+      ],
+      [
+        "tree.selfField",
+        "$a.subject"
+      ]
+    ],
+    "let": [
+      [
+        "field",
+        [
+          "fieldNamed",
+          [
+            "enclosing",
+            "$a",
+            "type"
+          ],
+          "$a.subject.member.name"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$field"
+      ],
+      [
+        "not",
+        [
+          "optionalField",
+          "$field"
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            "$a.subject.resolved.nullable",
+            true
+          ]
+        ]
+      ]
+    ],
+    "emit": "$a"
+  }
+}

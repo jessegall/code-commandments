@@ -47,4 +47,4 @@ So the signature demands what it uses — `def rename(node: Node, title: str)` �
 
 - [`php/pass-the-object`](../../php/pass-the-object/SKILL.md) — the same discipline over PHP methods.
 - [`python/tell-dont-ask`](../tell-dont-ask/SKILL.md) — the sibling: once you hold the object, ask it rather than reaching into it.
-- [`python/value-objects`](../value-objects/SKILL.md) — the type an id stands in for.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — the type an id stands in for.

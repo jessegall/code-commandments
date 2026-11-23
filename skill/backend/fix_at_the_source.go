@@ -33,9 +33,9 @@ func (FixAtTheSource) Definition() skill.Definition {
 		Principle: fixAtTheSourcePrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/absence", Note: "deciding absence at the producer is this rule applied to the null channel."},
-			{Slug: "php/exceptions", Note: "surfacing a failure where it's born is this rule applied to the error channel."},
-			{Slug: "php/value-objects", Note: "introducing the type at the source, not threading loose data downstream."},
+			{Slug: "shared/absence", Note: "deciding absence at the producer is this rule applied to the null channel."},
+			{Slug: "shared/exceptions", Note: "surfacing a failure where it's born is this rule applied to the error channel."},
+			{Slug: "shared/value-objects", Note: "introducing the type at the source, not threading loose data downstream."},
 		},
 	}
 }

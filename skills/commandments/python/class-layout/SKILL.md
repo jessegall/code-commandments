@@ -40,4 +40,4 @@ crowded inventory by scattering it.
 ## Related skills
 
 - [`php/class-layout`](../../php/class-layout/SKILL.md) — the same discipline over PHP classes.
-- [`python/value-objects`](../value-objects/SKILL.md) — a dataclass whose fields are its inventory — read at a glance.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — a dataclass whose fields are its inventory — read at a glance.

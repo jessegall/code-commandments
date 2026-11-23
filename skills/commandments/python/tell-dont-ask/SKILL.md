@@ -60,4 +60,4 @@ instead of a ladder at every call site.
 
 - [`php/tell-dont-ask`](../../php/tell-dont-ask/SKILL.md) — the same discipline over PHP.
 - [`python/enums`](../enums/SKILL.md) — a closed set of cases carries its per-case behaviour on the `Enum`.
-- [`python/value-objects`](../value-objects/SKILL.md) — the type the behaviour moves onto.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — the type the behaviour moves onto.

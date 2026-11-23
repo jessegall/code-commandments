@@ -143,5 +143,5 @@ If yes — and you're reaching past its surface into its structure — that's wh
 
 ## Related skills
 
-- [`php/value-objects`](../value-objects/SKILL.md) — behaviour belongs on the typed object that owns the data.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — behaviour belongs on the typed object that owns the data.
 - [`php/fix-at-the-source`](../fix-at-the-source/SKILL.md) — move the method to where the data lives, not a downstream class that walks it.

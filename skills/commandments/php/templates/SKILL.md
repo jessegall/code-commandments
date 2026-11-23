@@ -86,4 +86,4 @@ sit in it.
 ## Related skills
 
 - [`php/documentation`](../documentation/SKILL.md) — the same instinct one scale down: say a thing once, in the form a reader can check.
-- [`php/value-objects`](../value-objects/SKILL.md) — a shape worth stating repeatedly is usually a type, not a string.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — a shape worth stating repeatedly is usually a type, not a string.

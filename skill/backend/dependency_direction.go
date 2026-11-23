@@ -33,7 +33,7 @@ func (DependencyDirection) Definition() skill.Definition {
 		Principle: dependencyDirectionPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/value-objects", Note: "the value a low layer needs instead of the high-level class it reached for."},
+			{Slug: "shared/value-objects", Note: "the value a low layer needs instead of the high-level class it reached for."},
 			{Slug: "php/tell-dont-ask", Note: "reaching up for an object's data is the same instinct, one scale down."},
 		},
 	}

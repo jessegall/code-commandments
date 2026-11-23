@@ -50,4 +50,4 @@ resolves once.
 
 - [`php/pass-the-object`](../../php/pass-the-object/SKILL.md) — the same discipline over PHP methods.
 - [`csharp/tell-dont-ask`](../tell-dont-ask/SKILL.md) — the sibling: once you hold the object, ask it rather than reaching into it.
-- [`csharp/value-objects`](../value-objects/SKILL.md) — the type an id stands in for.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — the type an id stands in for.

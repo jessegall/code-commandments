@@ -1,0 +1,57 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "typescript"
+  ],
+  "sin": {
+    "name": "falsely-optional-field",
+    "aliases": [
+      "FalselyOptionalFieldDetector",
+      "FalselyOptionalField"
+    ],
+    "skill": "shared/absence",
+    "description": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared \u2014 it is never absent, and every `?.` and `??` downstream defends a case that cannot happen",
+    "rule": "Do not declare a field optional when it always has a value: drop the `?` and the `| null`, and the defences downstream go with them.",
+    "suggestion": "Declare it as its plain type \u2014 the initialiser already proves it is total."
+  },
+  "definitions": {
+    "optionalField": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "=",
+        "$d.parent.optional",
+        true
+      ]
+    }
+  },
+  "find": {
+    "select": "declarator",
+    "as": "d",
+    "where": [
+      "and",
+      [
+        "=",
+        "$d.parent.kind",
+        "field"
+      ],
+      [
+        "optionalField",
+        "$d"
+      ],
+      [
+        "exists",
+        "$d.initializer"
+      ],
+      [
+        "not",
+        [
+          "tree.nullish",
+          "$d.initializer"
+        ]
+      ]
+    ],
+    "emit": "$d.parent"
+  }
+}

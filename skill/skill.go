@@ -97,13 +97,29 @@ func Slugged(slug string) (Skill, bool) {
 			}
 		}
 	}
-	for _, skill := range All() {
-		if slices.Contains(skill.Definition().Formerly, slug) {
-			return skill, true
+	for _, slug := range []string{slug, renamed(slug)} {
+		for _, skill := range All() {
+			if slug != "" && slices.Contains(skill.Definition().Formerly, slug) {
+				return skill, true
+			}
 		}
 	}
 
 	return nil, false
+}
+
+func (d Definition) WholePrinciple() string {
+	if d.Principle != "" {
+		return d.Principle
+	}
+
+	_, after, found := strings.Cut(d.Body, "## The principle\n")
+	if !found {
+		return ""
+	}
+	section, _, _ := strings.Cut(after, "\n## ")
+
+	return strings.TrimSpace(section)
 }
 
 func renamed(slug string) string {

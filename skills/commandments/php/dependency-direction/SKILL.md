@@ -139,5 +139,5 @@ object carries rather than a collaborator it calls.
 
 ## Related skills
 
-- [`php/value-objects`](../value-objects/SKILL.md) — the value a low layer needs instead of the high-level class it reached for.
+- [`shared/value-objects`](../../shared/value-objects/SKILL.md) — the value a low layer needs instead of the high-level class it reached for.
 - [`php/tell-dont-ask`](../tell-dont-ask/SKILL.md) — reaching up for an object's data is the same instinct, one scale down.

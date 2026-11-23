@@ -33,7 +33,7 @@ func (PassTheObject) Definition() skill.Definition {
 		Principle: passTheObjectPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/value-objects", Note: "the object you pass IS the resolved type — give data a type, don't thread an id + its container."},
+			{Slug: "shared/value-objects", Note: "the object you pass IS the resolved type — give data a type, don't thread an id + its container."},
 			{Slug: "php/tell-dont-ask", Note: "unpacking a container param to work its target is feature envy on the container."},
 		},
 	}

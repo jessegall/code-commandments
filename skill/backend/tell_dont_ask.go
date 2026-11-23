@@ -33,7 +33,7 @@ func (TellDontAsk) Definition() skill.Definition {
 		Principle: tellDontAskPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/value-objects", Note: "behaviour belongs on the typed object that owns the data."},
+			{Slug: "shared/value-objects", Note: "behaviour belongs on the typed object that owns the data."},
 			{Slug: "php/fix-at-the-source", Note: "move the method to where the data lives, not a downstream class that walks it."},
 		},
 	}

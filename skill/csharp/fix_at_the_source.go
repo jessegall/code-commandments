@@ -34,7 +34,7 @@ func (FixAtTheSource) Definition() skill.Definition {
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
 			{Slug: "php/fix-at-the-source", Note: "the same discipline in PHP, which every other skill builds on."},
-			{Slug: "csharp/absence", Note: "deciding what \"missing\" means where a value is made is this rule applied to `null`."},
+			{Slug: "shared/absence", Note: "deciding what \"missing\" means where a value is made is this rule applied to `null`."},
 		},
 	}
 }

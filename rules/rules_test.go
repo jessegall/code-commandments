@@ -54,7 +54,7 @@ func TestOverrideFileReplacesTheEmbeddedRuleAndRemovingItRestoresIt(t *testing.T
 	if exported := key(rules.LoadFrom(folder)); exported != embedded {
 		t.Errorf("the exported catalogue reads otherwise than the embedded one")
 	}
-	path := filepath.Join(folder, "shared-arguments", "data-clump.json")
+	path := filepath.Join(folder, "shared-value-objects", "data-clump.json")
 	text, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

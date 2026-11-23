@@ -9,13 +9,11 @@ import (
 )
 
 var (
-	//go:embed absence.intro.md
-	absenceIntro string
-	//go:embed absence.principle.md
-	absencePrinciple string
+	//go:embed absence.md
+	absenceBody string
 )
 
-// Absence teaches how a value that might be missing is asked about in every language: directly, once, and before the work starts.
+// Absence teaches how a value that might be missing is modelled in every language: decided once, where the value is born, and said in the type.
 type Absence struct{}
 
 func init() {
@@ -32,17 +30,11 @@ func (Absence) Definition() skill.Definition {
 		Slug:      "shared/absence",
 		Tier:      skill.Mandatory,
 		Order:     2,
-		Title:     "Absence — ask whether it is there, directly and once",
-		Trigger:   "Writing a fallback for a value that might be missing in any language (`??`, `or`, `.get(k, default)`) and then comparing the result, or looping over `items ?? []` / `items or []`. Read this BEFORE writing either, and when an absence finding points here.",
-		Intro:     absenceIntro,
-		Summary:   "ask whether a value is there directly instead of comparing it to its own fallback, and guard against a missing collection before the loop instead of in its header.",
-		Principle: absencePrinciple,
+		Title:     "Absence — decide it where the value is born",
+		Trigger:   "Modelling a value that might not be there, in any language: a nullable return or field (`?T`, `T | null`, `X | None`), a `return null`, a fallback (`??`, `or`, `.get(k, default)`), a `?.`, a blank string or empty collection standing in for missing, an optional callback, or an \"is it there?\" check. Read this BEFORE writing any of them, and when an absence finding points here.",
+		Summary:   "decide absence where the value is born (throw by name, return an empty collection, give a default that does nothing, or say it in the type) so no caller treats a nullable as present or reads a fake value as data.",
+		Body:      absenceBody,
+		Formerly:  []string{"php/absence", "csharp/absence", "python/absence", "typescript/absence"},
 		Languages: languages,
-		Related: []skill.Relation{
-			{Slug: "php/absence", Note: "what is particular to PHP's absence."},
-			{Slug: "python/absence", Note: "what is particular to Python's absence."},
-			{Slug: "typescript/absence", Note: "what is particular to TypeScript's absence."},
-			{Slug: "csharp/absence", Note: "what is particular to C#'s absence."},
-		},
 	}
 }

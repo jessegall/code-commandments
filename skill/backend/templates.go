@@ -34,7 +34,7 @@ func (Templates) Definition() skill.Definition {
 		Languages: []string{"php"},
 		Related: []skill.Relation{
 			{Slug: "php/documentation", Note: "the same instinct one scale down: say a thing once, in the form a reader can check."},
-			{Slug: "php/value-objects", Note: "a shape worth stating repeatedly is usually a type, not a string."},
+			{Slug: "shared/value-objects", Note: "a shape worth stating repeatedly is usually a type, not a string."},
 		},
 	}
 }

@@ -176,52 +176,12 @@
         "help": "Enables Go sin detection"
     },
     {
-        "key": "sin_csharp-null-forgiven",
-        "title": "csharp-null-forgiven",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding"
-    },
-    {
         "key": "sin_csharp-blocked-await",
         "title": "csharp-blocked-await",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
-    },
-    {
-        "key": "sin_blank-string-on-the-wire",
-        "title": "blank-string-on-the-wire",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A string sent over the wire that the frontend reads as absent when it is blank."
-    },
-    {
-        "key": "sin_erased-null-object",
-        "title": "erased-null-object",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`"
-    },
-    {
-        "key": "sin_false-for-nothing",
-        "title": "false-for-nothing",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it."
-    },
-    {
-        "key": "sin_option-as-nullable",
-        "title": "option-as-nullable",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`"
     },
     {
         "key": "sin_flag-argument",
@@ -776,102 +736,6 @@
         "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
     },
     {
-        "key": "sin_filled-parameter",
-        "title": "filled-parameter",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
-    },
-    {
-        "key": "sin_impossible-guard",
-        "title": "impossible-guard",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing"
-    },
-    {
-        "key": "sin_refused-bequest",
-        "title": "refused-bequest",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep."
-    },
-    {
-        "key": "sin_scratch-state-restore",
-        "title": "scratch-state-restore",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Scratch state on the object: a method saves one of its own fields to a local and restores it later, the field really a per-call input."
-    },
-    {
-        "key": "sin_unused-parameter",
-        "title": "unused-parameter",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses."
-    },
-    {
-        "key": "sin_unused-private-member",
-        "title": "unused-private-member",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries."
-    },
-    {
-        "key": "sin_useless-property-hook",
-        "title": "useless-property-hook",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A property's getter that reads nothing from the object: a stored property wearing computed syntax."
-    },
-    {
-        "key": "sin_coupled-fields",
-        "title": "coupled-fields",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object."
-    },
-    {
-        "key": "sin_flat-field-cluster",
-        "title": "flat-field-cluster",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`."
-    },
-    {
-        "key": "sin_hand-rolled-wither",
-        "title": "hand-rolled-wither",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class."
-    },
-    {
-        "key": "sin_mutable-value-object",
-        "title": "mutable-value-object",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing."
-    },
-    {
-        "key": "sin_positional-tuple-return",
-        "title": "positional-tuple-return",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position"
-    },
-    {
         "key": "sin_python-blocked-await",
         "title": "python-blocked-await",
         "type": "flag",
@@ -896,20 +760,20 @@
         "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it"
     },
     {
-        "key": "sin_python-constant-property",
-        "title": "python-constant-property",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one."
-    },
-    {
         "key": "sin_blank-string-default",
         "title": "blank-string-default",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "A blank string default stands for a missing required value"
+    },
+    {
+        "key": "sin_blank-string-on-the-wire",
+        "title": "blank-string-on-the-wire",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A string sent over the wire that the frontend reads as absent when it is blank."
     },
     {
         "key": "sin_cancelled-coalesce",
@@ -944,12 +808,52 @@
         "help": "A spread branch supplies an empty collection as a placeholder"
     },
     {
+        "key": "sin_csharp-null-forgiven",
+        "title": "csharp-null-forgiven",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding"
+    },
+    {
         "key": "sin_de-nulled-finder",
         "title": "de-nulled-finder",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "Every caller takes a nullable result as present"
+    },
+    {
+        "key": "sin_defended-certain-field",
+        "title": "defended-certain-field",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out."
+    },
+    {
+        "key": "sin_erased-null-object",
+        "title": "erased-null-object",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`"
+    },
+    {
+        "key": "sin_false-for-nothing",
+        "title": "false-for-nothing",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A return typed `X|false`: `false` stands in for \"nothing\" or \"failed\", and every caller must test for it."
+    },
+    {
+        "key": "sin_falsely-optional-field",
+        "title": "falsely-optional-field",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen"
     },
     {
         "key": "sin_manufactured-fake-fill",
@@ -968,6 +872,14 @@
         "help": "Masking an optional field behind a literal hides a value the design requires"
     },
     {
+        "key": "sin_match-default-returns-null",
+        "title": "match-default-returns-null",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "The default arm silently returns an absent value"
+    },
+    {
         "key": "sin_nullable-callback",
         "title": "nullable-callback",
         "type": "flag",
@@ -982,6 +894,14 @@
         "kind": "flag",
         "default": true,
         "help": "A keyed store returns absence on a miss"
+    },
+    {
+        "key": "sin_option-as-nullable",
+        "title": "option-as-nullable",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`"
     },
     {
         "key": "sin_phantom-nullable",
@@ -1006,22 +926,6 @@
         "kind": "flag",
         "default": true,
         "help": "A function returns decoded data before checking and giving it a type"
-    },
-    {
-        "key": "sin_data-clump",
-        "title": "data-clump",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "The same group of scalar parameters appears on different types"
-    },
-    {
-        "key": "sin_match-default-returns-null",
-        "title": "match-default-returns-null",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "The default arm silently returns an absent value"
     },
     {
         "key": "sin_redundant-arrow-return-type",
@@ -1424,20 +1328,116 @@
         "help": "A statement after one that never completes (a return, throw, break or continue, an if whose every arm leaves, a loop that never ends): it can never run."
     },
     {
-        "key": "sin_defended-certain-field",
-        "title": "defended-certain-field",
+        "key": "sin_filled-parameter",
+        "title": "filled-parameter",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out."
+        "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
     },
     {
-        "key": "sin_falsely-optional-field",
-        "title": "falsely-optional-field",
+        "key": "sin_impossible-guard",
+        "title": "impossible-guard",
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen"
+        "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing"
+    },
+    {
+        "key": "sin_python-constant-property",
+        "title": "python-constant-property",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one."
+    },
+    {
+        "key": "sin_refused-bequest",
+        "title": "refused-bequest",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A method that overrides or implements an inherited one only to throw: the class claims a contract it refuses to keep."
+    },
+    {
+        "key": "sin_scratch-state-restore",
+        "title": "scratch-state-restore",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Scratch state on the object: a method saves one of its own fields to a local and restores it later, the field really a per-call input."
+    },
+    {
+        "key": "sin_unused-parameter",
+        "title": "unused-parameter",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter of a method no subclass can override that its body never reads: every caller must pass a value nothing uses."
+    },
+    {
+        "key": "sin_unused-private-member",
+        "title": "unused-private-member",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A private method nothing in its class calls, or a private property nothing in its class reads: dead code the class still carries."
+    },
+    {
+        "key": "sin_useless-property-hook",
+        "title": "useless-property-hook",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A property's getter that reads nothing from the object: a stored property wearing computed syntax."
+    },
+    {
+        "key": "sin_coupled-fields",
+        "title": "coupled-fields",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object."
+    },
+    {
+        "key": "sin_data-clump",
+        "title": "data-clump",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "The same group of scalar parameters appears on different types"
+    },
+    {
+        "key": "sin_flat-field-cluster",
+        "title": "flat-field-cluster",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`."
+    },
+    {
+        "key": "sin_hand-rolled-wither",
+        "title": "hand-rolled-wither",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class."
+    },
+    {
+        "key": "sin_mutable-value-object",
+        "title": "mutable-value-object",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing."
+    },
+    {
+        "key": "sin_positional-tuple-return",
+        "title": "positional-tuple-return",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position"
     },
     {
         "key": "sin_mirrored-server-type",

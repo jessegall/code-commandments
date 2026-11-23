@@ -58,4 +58,4 @@ signature where a reader can see it.
 ## Related skills
 
 - [`php/fix-at-the-source`](../../php/fix-at-the-source/SKILL.md) — the same discipline over PHP, where every other skill defers to it.
-- [`python/absence`](../absence/SKILL.md) — deciding absence where a value is born is this rule applied to `None`.
+- [`shared/absence`](../../shared/absence/SKILL.md) — deciding absence where a value is born is this rule applied to `None`.
