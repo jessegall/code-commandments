@@ -137,6 +137,33 @@
             "$x.role",
             "condition"
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.parent.kind",
+            "argument"
+          ],
+          [
+            "=",
+            "$x.parent.parent.kind",
+            "call"
+          ],
+          [
+            "or",
+            [
+              "=",
+              "$x.parent.parent.role",
+              "condition"
+            ],
+            [
+              "in",
+              "$x.parent.parent.parent.kind",
+              "logical",
+              "unary"
+            ]
+          ]
         ]
       ]
     },

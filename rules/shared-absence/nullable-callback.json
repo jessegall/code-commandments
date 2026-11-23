@@ -24,19 +24,40 @@
         "t"
       ],
       "expr": [
-        "some",
+        "and",
         [
-          "typeMembers",
-          "$t"
-        ],
-        "m",
-        [
-          "=",
+          "some",
           [
-            "typeCategory",
-            "$m"
+            "typeMembers",
+            "$t"
           ],
-          "function"
+          "m",
+          [
+            "=",
+            [
+              "typeCategory",
+              "$m"
+            ],
+            "function"
+          ]
+        ],
+        [
+          "every",
+          [
+            "typeMembers",
+            "$t"
+          ],
+          "m",
+          [
+            "in",
+            [
+              "typeCategory",
+              "$m"
+            ],
+            "function",
+            "null",
+            "named"
+          ]
         ]
       ]
     },
@@ -415,8 +436,29 @@
       [
         "body",
         [
-          "descendants",
-          "$p.parent.body"
+          "case",
+          [
+            ">",
+            [
+              "count",
+              "$p.modifiers"
+            ],
+            0
+          ],
+          {
+            "true": [
+              "descendants",
+              [
+                "enclosing",
+                "$p",
+                "type"
+              ]
+            ]
+          },
+          [
+            "descendants",
+            "$p.parent.body"
+          ]
         ]
       ],
       [
