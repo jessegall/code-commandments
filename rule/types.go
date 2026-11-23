@@ -395,7 +395,7 @@ func memberGroup(site engine.Match) value {
 	return unknown
 }
 
-// functionRoles is each role a function plays, read from its form, its obligations and its body.
+// functionRoles is each role a function plays, read from its form, what it overrides and its body.
 func functionRoles(site engine.Match) value {
 	node := site.Node()
 	var roles []value
@@ -411,7 +411,7 @@ func functionRoles(site engine.Match) value {
 	add("serialization-hook", slices.Contains(engine.PackageIdentitiesNamed("serialization-hook"), node.Name))
 	add("getter", node.Form == "get")
 	add("setter", node.Form == "set")
-	add("override", len(node.Obligations) > 0)
+	add("override", site.IsOverride())
 	add("test", site.Source().Purpose() != engine.Ordinary)
 	add("sole-statement", len(site.Child("body").ChildrenIn("statements")) == 1)
 

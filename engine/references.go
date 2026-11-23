@@ -67,7 +67,12 @@ func (m Match) IsOverride() bool {
 		}
 	}
 
-	return false
+	return owner.Node().Form == "trait" && slices.ContainsFunc(owner.Referrers(), func(used Match) bool {
+		user := used.Parent()
+		return used.Node().InRole() == "mixins" && slices.ContainsFunc(append(user.Lineage(), user.Contracts()...), func(supertype string) bool {
+			return user.declaresMember(supertype, m.Name())
+		})
+	})
 }
 
 func (m Match) declaresMember(symbol, name string) bool {

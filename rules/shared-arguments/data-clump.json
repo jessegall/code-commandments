@@ -221,8 +221,12 @@
             "constructor"
           ],
           [
-            "exists",
-            "$f.obligations"
+            "has",
+            [
+              "functionRole",
+              "$f"
+            ],
+            "override"
           ],
           [
             "namedConstructor",
