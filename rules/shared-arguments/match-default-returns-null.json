@@ -186,6 +186,211 @@
           ]
         ]
       ]
+    },
+    "heldIn": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "case",
+        "$m.parent.kind",
+        {
+          "assignment": [
+            "case",
+            [
+              "=",
+              "$m.role",
+              "values"
+            ],
+            {
+              "true": [
+                "at",
+                [
+                  "map",
+                  "$m.parent.targets",
+                  "t",
+                  "$t.name"
+                ],
+                0
+              ]
+            },
+            ""
+          ]
+        },
+        ""
+      ]
+    },
+    "nextStatement": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "at",
+        "$s.parent.statements",
+        [
+          "add",
+          [
+            "position",
+            "$s"
+          ],
+          1
+        ]
+      ]
+    },
+    "testsAbsent": {
+      "args": [
+        "s",
+        "n"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$s.kind",
+          "if"
+        ],
+        [
+          "some",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$s.condition"
+              ],
+              [
+                "descendants",
+                "$s.condition"
+              ]
+            ]
+          ],
+          "x",
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "comparison"
+              ],
+              [
+                "some",
+                "$x.operands",
+                "o",
+                [
+                  "tree.nullish",
+                  "$o"
+                ]
+              ],
+              [
+                "some",
+                "$x.operands",
+                "o",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$o.kind",
+                    "reference"
+                  ],
+                  [
+                    "=",
+                    "$o.name",
+                    "$n"
+                  ]
+                ]
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "unary"
+              ],
+              [
+                "=",
+                "$x.operator",
+                "not"
+              ],
+              [
+                "=",
+                "$x.operand.kind",
+                "reference"
+              ],
+              [
+                "=",
+                "$x.operand.name",
+                "$n"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$x.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$x.form",
+                "presence"
+              ],
+              [
+                "some",
+                "$x.arguments",
+                "g",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$g.value.kind",
+                    "reference"
+                  ],
+                  [
+                    "=",
+                    "$g.value.name",
+                    "$n"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "testedNext": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "and",
+        [
+          "nonempty",
+          [
+            "heldIn",
+            "$m"
+          ]
+        ],
+        [
+          "=",
+          "$m.parent.parent.kind",
+          "expression-statement"
+        ],
+        [
+          "testsAbsent",
+          [
+            "nextStatement",
+            "$m.parent.parent"
+          ],
+          [
+            "heldIn",
+            "$m"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -226,6 +431,14 @@
             true
           ]
         ]
+      ],
+      [
+        "f",
+        [
+          "enclosing",
+          "$a",
+          "function"
+        ]
       ]
     ],
     "having": [
@@ -250,6 +463,30 @@
       [
         "answersAbsent",
         "$a.body"
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "testedNext",
+            "$a.parent"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            ">",
+            [
+              "count",
+              "$f.obligations"
+            ],
+            0
+          ]
+        ]
       ]
     ],
     "emit": "$a"
