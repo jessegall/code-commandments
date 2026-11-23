@@ -168,6 +168,63 @@
               ]
             ]
           ]
+        ],
+        [
+          "and",
+          [
+            "isList",
+            "$v"
+          ],
+          [
+            "every",
+            "$v.entries",
+            "x",
+            [
+              "and",
+              [
+                "=",
+                "$x.value.kind",
+                "literal"
+              ],
+              [
+                "in",
+                "$x.value.literalKind",
+                "string",
+                "integer",
+                "float",
+                "boolean"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "isList": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$v.kind",
+          "collection"
+        ],
+        [
+          "nonempty",
+          "$v.entries"
+        ],
+        [
+          "every",
+          "$v.entries",
+          "x",
+          [
+            "not",
+            [
+              "exists",
+              "$x.key"
+            ]
+          ]
         ]
       ]
     }
@@ -205,9 +262,16 @@
             ]
           ],
           [
-            "!=",
-            "$e.value.kind",
-            "collection"
+            "or",
+            [
+              "!=",
+              "$e.value.kind",
+              "collection"
+            ],
+            [
+              "isList",
+              "$e.value"
+            ]
           ],
           [
             "every",

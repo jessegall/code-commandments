@@ -13,6 +13,8 @@ return [
 
     'cutoff_hour' => 16,
 
+    'carriers' => ['dhl', 'postnl'],
+
     'lanes' => [
         'default' => static function (array $context): array {
             return [
