@@ -32,18 +32,25 @@ put it on your `PATH` as `commandments`. Judging TypeScript and Vue needs Node 1
 
 ### Python
 
-Install the program as for TypeScript. Judging Python needs Python 3.10 or later with `venv` and `pip`. The first run
-builds a small environment with mypy, which needs the network once.
+Download the program for your machine from the
+[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
+put it on your `PATH` as `commandments`. Judging Python needs Python 3.10 or later with `venv` and `pip`. The first
+run builds a small environment with mypy, which needs the network once.
 
 ### C#
 
-Install the program as for TypeScript. Judging C# needs `curl` and the network once: the first run downloads the C#
-reader from the release and checks it. It needs no .NET, but with a .NET SDK installed the framework's types are read
-too.
+Download the program for your machine from the
+[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
+put it on your `PATH` as `commandments`. Judging C# needs `curl` and the network once: the first run downloads
+the C# reader from the release and checks it. It needs no .NET, but with a .NET SDK installed the framework's types
+are read too.
 
 ### Go
 
-Install the program as for TypeScript. Judging Go needs the Go toolchain, so the standard library's types are read.
+Download the program for your machine from the
+[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
+put it on your `PATH` as `commandments`. Judging Go needs the Go toolchain, so the standard library's types are
+read.
 
 ### With the agent journal
 
