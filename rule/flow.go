@@ -107,25 +107,54 @@ func init() {
 		"buildsText": nodeTruth(buildsText),
 		"testsType": func(_ evaluation, operands []value) value {
 			return onNode(operands, func(site engine.Match) value {
-				negated := false
-				for site.Node().Kind == "unary" && site.Node().Operator == "not" {
-					site, negated = site.Child("operand"), !negated
-				}
-				if site.Node().Kind != "type-test" {
+				test, found := typeTestOf(site)
+				if !found {
 					return known(nil)
 				}
-				tested := site.Child("testedType")
-				types := []value{known(tested)}
-				if members := tested.ChildrenIn("members"); len(members) > 0 && tested.Node().Form == "union" {
-					types = matches(members).held.([]value)
-				}
 
-				return known(record{"subject": known(site.Child("subject")), "types": known(types), "negated": known(site.Node().Negated != negated)})
+				return known(record{"subject": known(test.subject), "types": known(test.types), "negated": known(test.negated)})
 			})
 		},
 		"membershipTest": func(_ evaluation, operands []value) value { return onNode(operands, membershipTest) },
 		"dispatchArms":   func(_ evaluation, operands []value) value { return onNode(operands, dispatchArms) },
 	})
+}
+
+// typeTest is what one type test asks, or what a disjunction of tests on one variable asks together.
+type typeTest struct {
+	subject engine.Match
+	types   []value
+	negated bool
+}
+
+func typeTestOf(site engine.Match) (typeTest, bool) {
+	negated := false
+	for site.Node().Kind == "unary" && site.Node().Operator == "not" {
+		site, negated = site.Child("operand"), !negated
+	}
+	if site.Node().Kind == "logical" && site.Node().Operator == "or" && !negated {
+		left, leftFound := typeTestOf(site.Child("left"))
+		right, rightFound := typeTestOf(site.Child("right"))
+		if !leftFound || !rightFound || left.negated || right.negated || !sameVariable(left.subject, right.subject) {
+			return typeTest{}, false
+		}
+
+		return typeTest{subject: left.subject, types: append(append([]value{}, left.types...), right.types...)}, true
+	}
+	if site.Node().Kind != "type-test" {
+		return typeTest{}, false
+	}
+	tested := site.Child("testedType")
+	types := []value{known(tested)}
+	if members := tested.ChildrenIn("members"); len(members) > 0 && tested.Node().Form == "union" {
+		types = matches(members).held.([]value)
+	}
+
+	return typeTest{subject: site.Child("subject"), types: types, negated: site.Node().Negated != negated}, true
+}
+
+func sameVariable(one, other engine.Match) bool {
+	return one.Node().Kind == "reference" && other.Node().Kind == "reference" && one.Node().Name != "" && one.Node().Name == other.Node().Name
 }
 
 // completes says whether control can run off the end of a statement.
