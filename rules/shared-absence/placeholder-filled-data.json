@@ -128,6 +128,42 @@
           "type"
         ]
       ]
+    },
+    "handedIn": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        "$c.arguments",
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.value.kind",
+            "reference"
+          ],
+          [
+            "some",
+            [
+              "get",
+              [
+                "enclosing",
+                "$c",
+                "function"
+              ],
+              "parameters"
+            ],
+            "p",
+            [
+              "=",
+              "$p.binding.name",
+              "$a.value.name"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -153,9 +189,16 @@
     "having": [
       "and",
       [
-        "!=",
-        "$owner.symbol",
-        "$c.resolved.name"
+        "or",
+        [
+          "!=",
+          "$owner.symbol",
+          "$c.resolved.name"
+        ],
+        [
+          "handedIn",
+          "$c"
+        ]
       ],
       [
         "case",
