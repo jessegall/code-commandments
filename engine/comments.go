@@ -233,6 +233,30 @@ func (cm Commented) Documents() Match {
 	return cm.File.Match(*cm.Attached)
 }
 
+func (cm Commented) StackedOn() Match {
+	if cm.Form != "doc" || cm.Attached != nil || cm.headsTheFile() {
+		return Match{}
+	}
+	comments := cm.File.File.Comments
+	at := slices.IndexFunc(comments, func(comment contract.Comment) bool { return comment.Span.Start >= cm.Span.End })
+	if at < 0 || comments[at].Form != "doc" || comments[at].Attached == nil {
+		return Match{}
+	}
+	next := comments[at]
+	source, err := cm.File.Source()
+	if err != nil || next.Span.Start > len(source) || strings.TrimSpace(string(source[cm.Span.End:next.Span.Start])) != "" {
+		return Match{}
+	}
+
+	return cm.File.Match(*next.Attached)
+}
+
+func (cm Commented) headsTheFile() bool {
+	return !slices.ContainsFunc(cm.File.Nodes(), func(node *contract.Node) bool {
+		return node.Kind != "file" && node.Kind != "module" && node.Span.Start < cm.Span.Start
+	}) && !slices.ContainsFunc(cm.File.File.Comments, func(comment contract.Comment) bool { return comment.Span.Start < cm.Span.Start })
+}
+
 func (cm Commented) Line() int {
 	if documented := cm.Documents(); documented.Exists() {
 		return documented.Line()

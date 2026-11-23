@@ -52,6 +52,9 @@ func everyComment(codebase *engine.Codebase) []record {
 			if comment.Form == "doc" {
 				docs[comment.Documents()]++
 			}
+			if stacked := comment.StackedOn(); stacked.Exists() {
+				docs[stacked]++
+			}
 		}
 		comments := make([]record, 0, len(runs))
 		for _, comment := range runs {
