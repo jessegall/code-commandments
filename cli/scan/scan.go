@@ -233,6 +233,7 @@ func stayedWithin(stream *contract.Stream, given int, label string) {
 // the run before it read; judging runs after, outside the turn, so runs judge side by side.
 func (s Sources) bridge() map[int]bridged {
 	defer s.readingTurn()()
+	defer printsKeptFor(s.roots).keep()
 
 	finished := make(chan bridged)
 	slots := make(chan struct{}, bridgesAtOnce)

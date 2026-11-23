@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"os"
 	"sync"
+	"sync/atomic"
 )
 
 // prints holds the print of each file's contents with the mark it had when read: the cache keys a file's line on it and
@@ -34,10 +35,29 @@ func Print(path string) ([32]byte, error) {
 // PrintNow is the sha256 of a file's contents as they are now, read again, so a run can tell a file that changed while
 // it ran.
 func PrintNow(path string) ([32]byte, error) {
+	readForPrint.Add(1)
 	text, err := os.ReadFile(path)
 	if err != nil {
 		return [32]byte{}, err
 	}
 
 	return sha256.Sum256(text), nil
+}
+
+var readForPrint atomic.Int64
+
+func ReadForPrint() int64 {
+	return readForPrint.Load()
+}
+
+func HoldPrint(path, mark string, print [32]byte) {
+	prints.LoadOrStore(path, heldPrint{mark, print})
+}
+
+func HeldPrints(each func(path, mark string, print [32]byte)) {
+	prints.Range(func(path, held any) bool {
+		each(path.(string), held.(heldPrint).mark, held.(heldPrint).print)
+
+		return true
+	})
 }

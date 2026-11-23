@@ -62,6 +62,7 @@ func (s Sources) unitsOf(held Bridge, complete func(*engine.Codebase) error) (*U
 		return nil, nil
 	}
 	units, err := readUnits(held, roots, files, func(codebase *engine.Codebase) error { return complete(s.rooted(codebase)) })
+	printsKeptFor(roots).keep()
 	if leftUnread(err, len(files)) {
 		return nil, nil
 	}

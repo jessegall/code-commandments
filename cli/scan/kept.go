@@ -57,8 +57,12 @@ func linesKeptFor(b Bridge, roots []string) *keptLines {
 	if len(roots) == 0 {
 		return &keptLines{}
 	}
+	printsKeptFor(roots).hold()
 	shared, root := workspace.SharedFolder(roots[0]), git.Root(roots[0])
-	if shared == "" || root == "" {
+	if root == "" {
+		root = folderOf(roots[0])
+	}
+	if shared == "" {
 		return &keptLines{}
 	}
 
@@ -71,6 +75,14 @@ func linesKeptFor(b Bridge, roots []string) *keptLines {
 	go removeOtherBuilds(kind)
 
 	return &keptLines{folder: folder, root: root, identity: identity, packages: engine.InstalledPackages(roots)}
+}
+
+func folderOf(path string) string {
+	if walk.IsFolder(path) {
+		return path
+	}
+
+	return filepath.Dir(path)
 }
 
 // thisBuildsFolder makes the folder the lines of this bridge's build are kept in. A bridge's lines are keyed on its
