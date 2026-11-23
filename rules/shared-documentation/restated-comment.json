@@ -39,6 +39,16 @@
         "$c.documents"
       ],
       [
+        "!=",
+        "$c.documents.kind",
+        "entry"
+      ],
+      [
+        "!=",
+        "$c.documents.parent.kind",
+        "collection"
+      ],
+      [
         "not",
         [
           "in",
