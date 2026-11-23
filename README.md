@@ -1,10 +1,11 @@
 # Code Commandments
 
-> A static code checker for PHP, Vue, TypeScript, Python, C# and Go, built to drive AI coding agents.
+> A compiler for architecture: a static checker for PHP, Vue, TypeScript, Python, C# and Go.
 
 **code-commandments** judges a codebase against a set of architectural disciplines.
 Every violation (a "sin") is reported as a `file:line`, grouped under the **skill**
-that teaches the fix. It reads six languages, each parsed by its own compiler:
+that teaches the fix. It is one static binary, and it reads six languages, each parsed
+by its own compiler:
 
 <!-- BEGIN: languages-table (auto-generated, run `composer readme`) -->
 | Language | Files |
@@ -21,9 +22,10 @@ One set of disciplines covers them all. A rule is written once against a generic
 syntax tree, so *tell, don't ask* reads the same whether it is judging PHP or C#;
 only the parse differs.
 
-It's built for AI coding agents: point your agent at a codebase and it reads the
-skill each sin names, fixes at the source, and re-runs until clean. You can drive
-it by hand too.
+It reports and teaches; it changes no code. Whoever fixes a sin, you or a coding
+agent, reads the skill the finding names and writes the fix at the source. Since
+version 8 there are no automatic fixes: the agent writes every one from the
+finding and its skill.
 
 A linter tells you a line is too long. code-commandments tells you *this array
 should be a value object, and here's the discipline that explains why*.
@@ -59,15 +61,24 @@ One pass of that loop, with an agent driving:
   <img src="docs/agent-loop-session.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, the agent drops two redundant elses, fixes feature envy and an array bag at the source, judge comes back clean." />
 </p>
 
-Under the hood there are three layers:
+Under the hood:
 
-- **Skills**: the teaching layer. One doc per discipline, the source of truth for
-  what "good" looks like.
-- **Sins**: the vocabulary. Each sin is one named fault — what it flags, and the
-  skill that teaches the fix. It is what `--sin=` selects and what a finding is
-  reported as.
-- **Rules**: one JSON file per sin that finds it in the generic tree, the one tree
-  every language is translated into. Rules *find*, skills *teach*.
+- **Bridges**: each language is parsed by its own compiler (php-parser for PHP,
+  TypeScript's compiler for Vue and TypeScript, mypy for Python, Roslyn for C#,
+  go/types for Go). Its bridge writes what it read as the **generic tree**: one node
+  shape, named roles, and the same type, symbol and comment facts for every language.
+  A bridge supplies facts only; it never decides a rule.
+- **Rules**: one JSON file per sin that finds it in the generic tree. Every rule is
+  written once and judges every language in its `engine` list the same way. The files
+  are built into the binary.
+- **Sins**: the vocabulary. Each sin is one named fault: what it flags, and the skill
+  that teaches the fix. It is what `--sin=` selects and what a finding is reported as.
+- **Skills**: the teaching layer. One document per discipline, the source of truth for
+  what "good" looks like. Rules *find*, skills *teach*.
+
+A judge reads a file once and keeps what it read in one cache keyed on the file's
+contents, shared by every checkout of the project, so a second run, or a worktree,
+re-reads and re-judges only what changed and the files that import it.
 
 **You don't need the packages a rule is about.** Rules match on real *types*,
 so a rule for a package your project doesn't use never fires. Nothing to install
@@ -400,9 +411,9 @@ from the registry by `composer readme`, so they never drift. Flipping one writes
 `.commandments/config.json` through `commandments journal-config`, the same `disable` entry you
 would write by hand; the rest of the file is kept.
 
-Journals from version 5 read `journal-plugin.5.json`; older journals read `journal-plugin.json`, which is frozen
-on release 7.18.115 and its script in `.journal-plugin/v4`, so a journal before version 5 keeps working as it did
-and takes no newer release. For every event it hears, the journal runs `.journal-plugin/hook`, a Python script
+Journals from version 5 read `journal-plugin.5.json`; older journals read `journal-plugin.json`, whose script is in
+`.journal-plugin/v4`. Both manifests pin the same release, so a journal before version 5 judges with the same
+binary and rules. For every event it hears, a journal from version 5 runs `.journal-plugin/hook`, a Python script
 (3.9 or newer) that decides what happens and leaves only the judging to the release binary. It answers each event
 at once, through the binary's answer in the journal's words, and **nothing the journal waits for is worked out**:
 with live judging on, an edit joins its agent's edit window, at most one judge run waits in the journal's queue per
@@ -509,7 +520,8 @@ scoped run over your real code read by eye. The `commandments-writing-detectors`
 ## Skills
 
 The teaching layer: one discipline each, the doc an agent reads to fix a sin.
-Every `SKILL.md` is generated from its class (`composer sins`).
+Every `SKILL.md` is rendered from its source under `skill/<engine>/`, with its
+"when it fires" rows projected from the rule files (`composer sins`).
 
 <!-- BEGIN: skills (auto-generated, run `composer readme`) -->
 _75 skills. Full table in [README.skills.md](README.skills.md)._
