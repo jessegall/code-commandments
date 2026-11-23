@@ -418,9 +418,12 @@
         "$s.kind",
         {
           "return": [
-            "at",
-            "$s.values",
-            0
+            "deferredChoice",
+            [
+              "at",
+              "$s.values",
+              0
+            ]
           ]
         },
         "$s"
@@ -713,6 +716,83 @@
             ]
           ]
         ]
+      ]
+    },
+    "deferredChoice": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        [
+          "proven",
+          [
+            "and",
+            [
+              "=",
+              "$v.kind",
+              "call"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$v.arguments"
+              ],
+              1
+            ],
+            [
+              "=",
+              [
+                "get",
+                [
+                  "get",
+                  [
+                    "at",
+                    "$v.arguments",
+                    0
+                  ],
+                  "value"
+                ],
+                "kind"
+              ],
+              "function"
+            ],
+            [
+              "=",
+              [
+                "get",
+                [
+                  "get",
+                  [
+                    "at",
+                    "$v.arguments",
+                    0
+                  ],
+                  "value"
+                ],
+                "form"
+              ],
+              "arrow"
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "get",
+            [
+              "get",
+              [
+                "at",
+                "$v.arguments",
+                0
+              ],
+              "value"
+            ],
+            "body"
+          ]
+        },
+        "$v"
       ]
     }
   }

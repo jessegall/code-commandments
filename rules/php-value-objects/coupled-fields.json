@@ -222,6 +222,51 @@
                         "$x"
                       ],
                       [
+                        "or",
+                        [
+                          "presentRead",
+                          "$x"
+                        ],
+                        [
+                          "some",
+                          [
+                            "ownDescendants",
+                            "$l"
+                          ],
+                          "y",
+                          [
+                            "and",
+                            [
+                              "tree.selfField",
+                              "$y"
+                            ],
+                            [
+                              "!=",
+                              [
+                                "readName",
+                                "$y"
+                              ],
+                              [
+                                "readName",
+                                "$x"
+                              ]
+                            ],
+                            [
+                              "movesWith",
+                              "$t",
+                              [
+                                "readName",
+                                "$x"
+                              ],
+                              [
+                                "readName",
+                                "$y"
+                              ]
+                            ]
+                          ]
+                        ]
+                      ],
+                      [
                         "some",
                         [
                           "filter",
@@ -886,6 +931,434 @@
           ]
         ]
       ]
+    },
+    "negatedBy": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$n.parent.kind",
+          "unary"
+        ],
+        [
+          "=",
+          "$n.parent.operator",
+          "not"
+        ]
+      ]
+    },
+    "presentRead": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.parent.kind",
+        {
+          "comparison": [
+            "and",
+            [
+              "some",
+              "$x.parent.operands",
+              "o",
+              [
+                "and",
+                [
+                  "=",
+                  "$o.kind",
+                  "literal"
+                ],
+                [
+                  "=",
+                  "$o.literalKind",
+                  "null"
+                ]
+              ]
+            ],
+            [
+              "=",
+              [
+                "in",
+                [
+                  "at",
+                  "$x.parent.operators",
+                  0
+                ],
+                "not-identical",
+                "not-equal"
+              ],
+              [
+                "not",
+                [
+                  "negatedBy",
+                  "$x.parent"
+                ]
+              ]
+            ]
+          ],
+          "type-test": [
+            "and",
+            [
+              "=",
+              "$x.role",
+              "subject"
+            ],
+            [
+              "=",
+              [
+                "not",
+                [
+                  "=",
+                  "$x.parent.negated",
+                  true
+                ]
+              ],
+              [
+                "not",
+                [
+                  "negatedBy",
+                  "$x.parent"
+                ]
+              ]
+            ]
+          ]
+        },
+        false
+      ]
+    },
+    "writesField": {
+      "args": [
+        "m",
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "filter",
+          [
+            "ownDescendants",
+            "$m.body"
+          ],
+          "a",
+          [
+            "=",
+            "$a.kind",
+            "assignment"
+          ]
+        ],
+        "a",
+        [
+          "some",
+          "$a.targets",
+          "t",
+          [
+            "=",
+            [
+              "fieldWritten",
+              "$t"
+            ],
+            "$n"
+          ]
+        ]
+      ]
+    },
+    "testedNames": {
+      "args": [
+        "l",
+        "written"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "ownDescendants",
+            "$l"
+          ],
+          "x",
+          [
+            "and",
+            [
+              "tree.selfField",
+              "$x"
+            ],
+            [
+              "has",
+              "$written",
+              "$x.member.name"
+            ],
+            [
+              "!=",
+              "$x.parent.kind",
+              "access"
+            ]
+          ]
+        ],
+        "x",
+        "$x.member.name"
+      ]
+    },
+    "fieldWritten": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "index": [
+            "case",
+            "$x.subject.kind",
+            {
+              "index": [
+                "selfName",
+                "$x.subject.subject"
+              ]
+            },
+            [
+              "selfName",
+              "$x.subject"
+            ]
+          ]
+        },
+        [
+          "selfName",
+          "$x"
+        ]
+      ]
+    },
+    "writtenTogether": {
+      "args": [
+        "f",
+        "a",
+        "b"
+      ],
+      "expr": [
+        "or",
+        [
+          "some",
+          [
+            "filter",
+            [
+              "members",
+              [
+                "enclosing",
+                "$f",
+                "type"
+              ]
+            ],
+            "m",
+            [
+              "and",
+              [
+                "=",
+                "$m.kind",
+                "function"
+              ],
+              [
+                "!=",
+                "$m",
+                "$f"
+              ]
+            ]
+          ],
+          "m",
+          [
+            "and",
+            [
+              "writesField",
+              "$m",
+              "$a"
+            ],
+            [
+              "writesField",
+              "$m",
+              "$b"
+            ]
+          ]
+        ],
+        [
+          "movesWith",
+          [
+            "enclosing",
+            "$f",
+            "type"
+          ],
+          "$a",
+          "$b"
+        ]
+      ]
+    },
+    "selfName": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        [
+          "tree.selfField",
+          "$x"
+        ],
+        {
+          "true": "$x.member.name"
+        },
+        ""
+      ]
+    },
+    "movesWith": {
+      "args": [
+        "t",
+        "a",
+        "b"
+      ],
+      "expr": [
+        "and",
+        [
+          "some",
+          [
+            "writesOf",
+            "$t",
+            "$a"
+          ],
+          "w",
+          [
+            "pairedWrite",
+            "$w",
+            "$b"
+          ]
+        ],
+        [
+          "every",
+          [
+            "writesOf",
+            "$t",
+            "$a"
+          ],
+          "w",
+          [
+            "pairedWrite",
+            "$w",
+            "$b"
+          ]
+        ],
+        [
+          "every",
+          [
+            "writesOf",
+            "$t",
+            "$b"
+          ],
+          "w",
+          [
+            "pairedWrite",
+            "$w",
+            "$a"
+          ]
+        ]
+      ]
+    },
+    "writesOf": {
+      "args": [
+        "t",
+        "n"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "members",
+              "$t"
+            ],
+            "m",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ]
+          ],
+          "m",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              "$m.body"
+            ],
+            "w",
+            [
+              "and",
+              [
+                "=",
+                "$w.kind",
+                "assignment"
+              ],
+              [
+                "some",
+                "$w.targets",
+                "x",
+                [
+                  "=",
+                  [
+                    "fieldWritten",
+                    "$x"
+                  ],
+                  "$n"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "pairedWrite": {
+      "args": [
+        "w",
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "get",
+          [
+            "enclosing",
+            "$w",
+            "block"
+          ],
+          "statements"
+        ],
+        "s",
+        [
+          "and",
+          [
+            "=",
+            "$s.kind",
+            "expression-statement"
+          ],
+          [
+            "=",
+            "$s.expression.kind",
+            "assignment"
+          ],
+          [
+            "some",
+            "$s.expression.targets",
+            "x",
+            [
+              "=",
+              [
+                "fieldWritten",
+                "$x"
+              ],
+              "$n"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -1014,49 +1487,42 @@
             ],
             "l",
             [
-              ">=",
+              "some",
               [
-                "distinctCount",
+                "testedNames",
+                "$l",
                 [
-                  "map",
-                  [
-                    "filter",
-                    [
-                      "ownDescendants",
-                      "$l"
-                    ],
-                    "x",
-                    [
-                      "and",
-                      [
-                        "tree.selfField",
-                        "$x"
-                      ],
-                      [
-                        "some",
-                        [
-                          "flatten",
-                          "$written"
-                        ],
-                        "w",
-                        [
-                          "=",
-                          "$w",
-                          "$x.member.name"
-                        ]
-                      ],
-                      [
-                        "!=",
-                        "$x.parent.kind",
-                        "access"
-                      ]
-                    ]
-                  ],
-                  "x",
-                  "$x.member.name"
+                  "flatten",
+                  "$written"
                 ]
               ],
-              2
+              "a",
+              [
+                "some",
+                [
+                  "testedNames",
+                  "$l",
+                  [
+                    "flatten",
+                    "$written"
+                  ]
+                ],
+                "b",
+                [
+                  "and",
+                  [
+                    "!=",
+                    "$a",
+                    "$b"
+                  ],
+                  [
+                    "writtenTogether",
+                    "$f",
+                    "$a",
+                    "$b"
+                  ]
+                ]
+              ]
             ]
           ]
         ],
