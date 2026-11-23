@@ -95,6 +95,41 @@
               "and",
               [
                 "=",
+                [
+                  "tree.kindOf",
+                  [
+                    "source",
+                    "$v"
+                  ]
+                ],
+                "construction"
+              ],
+              [
+                "=",
+                [
+                  "count",
+                  [
+                    "get",
+                    [
+                      "source",
+                      "$v"
+                    ],
+                    "arguments"
+                  ]
+                ],
+                0
+              ]
+            ]
+          ]
+        ],
+        [
+          "not",
+          [
+            "proven",
+            [
+              "and",
+              [
+                "=",
                 "$v.callee.kind",
                 "access"
               ],
@@ -202,13 +237,19 @@
         "case",
         "$v.kind",
         {
-          "call": "$v.target.symbol",
+          "call": [
+            "symbolOrCallee",
+            "$v"
+          ],
           "cast": [
             "concat",
             "cast:",
             "$v.resolved.text"
           ],
-          "construction": "$v.target.symbol"
+          "construction": [
+            "symbolOrCallee",
+            "$v"
+          ]
         },
         null
       ]
@@ -252,15 +293,15 @@
               0
             ],
             [
-              "=",
+              "!=",
               "$v.callee.form",
               "static"
             ]
           ],
           {
-            "true": null
+            "true": "$v.callee.subject"
           },
-          "$v.callee.subject"
+          null
         ]
       ]
     },
@@ -350,6 +391,37 @@
               ]
             ]
           ]
+        ]
+      ]
+    },
+    "symbolOrCallee": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "case",
+        [
+          "proven",
+          [
+            "and",
+            [
+              "exists",
+              "$v.target.symbol"
+            ],
+            [
+              "!=",
+              "$v.target.symbol",
+              ""
+            ]
+          ]
+        ],
+        {
+          "true": "$v.target.symbol"
+        },
+        [
+          "concat",
+          "callee:",
+          "$v.callee.text"
         ]
       ]
     }
