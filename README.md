@@ -1,22 +1,64 @@
 # Code Commandments
 
-Code Commandments checks the architecture of your code. It reads a project, finds the places where the code breaks a
-design rule, and tells you which lesson explains the fix.
+Code Commandments checks the architecture of your code. It finds the places where the code breaks a design rule,
+points at each one by file and line, and links the short lesson that explains the fix. It supports PHP, TypeScript,
+Vue, Python, C# and Go.
 
-It reads PHP, Vue, TypeScript, Python, C# and Go:
+## Installation
 
-<!-- BEGIN: languages-table (auto-generated, run `composer readme`) -->
-| Language | Files |
-|---|---|
-| **PHP** | `.php` |
-| **Vue** | `.vue` |
-| **TypeScript** | `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs` |
-| **Python** | `.py` |
-| **C#** | `.cs` |
-| **Go** | `.go` |
-<!-- END: languages-table -->
+Code Commandments is one program for macOS and Linux. It reads each language with that language's own tools, so the
+machine needs the toolchain of each language you want judged.
 
-## What you get
+### PHP
+
+Install it with Composer:
+
+```bash
+composer require --dev jessegall/code-commandments
+vendor/bin/commandments install
+```
+
+Composer downloads the program for your machine and checks it against the release's checksums. It needs PHP 8.3 or
+later. When your project has a `vendor/autoload.php`, the classes of your dependencies are read too.
+
+### TypeScript and Vue
+
+Download the program for your machine from the
+[latest release](https://github.com/jessegall/code-commandments/releases/latest), check it against `SHA256SUMS`, and
+put it on your `PATH` as `commandments`. Judging TypeScript and Vue needs Node 18 or later.
+
+### Python
+
+Install the program as for TypeScript. Judging Python needs Python 3.10 or later with `venv` and `pip`. The first run
+builds a small environment with mypy, which needs the network once.
+
+### C#
+
+Install the program as for TypeScript. Judging C# needs `curl` and the network once: the first run downloads the C#
+reader from the release and checks it. It needs no .NET, but with a .NET SDK installed the framework's types are read
+too.
+
+### Go
+
+Install the program as for TypeScript. Judging Go needs the Go toolchain, so the standard library's types are read.
+
+### With the agent journal
+
+If your project uses the [agent journal](https://github.com/jessegall/agent-journal), you can install Code
+Commandments as a journal plugin instead:
+
+```bash
+journal plugin install https://github.com/jessegall/code-commandments
+```
+
+This downloads the same program and checks it. It needs `sh`, `curl`, `sha256sum` or `shasum`, and Python 3.9 or
+newer. Journals from version 5 on read `journal-plugin.5.json`; older journals read `journal-plugin.json`. Both
+install the same release.
+
+When a language's toolchain is missing, that language is not judged and the run says so once; every other language
+is judged as usual. [docs/requirements.md](docs/requirements.md) has the details.
+
+## How it works
 
 Run it on a project and you get a list of problems. Each one names a file and a line, says what is wrong, and points
 to a short lesson (a "skill") that explains how to fix it. For example:
@@ -32,8 +74,6 @@ belongs on another class, and why.
 It never changes your code. You fix each problem yourself, or your coding agent does, using the lesson the problem
 points to.
 
-## How it works
-
 1. **Reading.** Each language is read by its own compiler: php-parser for PHP, the TypeScript compiler for TypeScript
    and Vue, mypy for Python, Roslyn for C# and go/types for Go. A small program for each language, called a bridge,
    turns what the compiler read into one shared format: the same tree shape for every language.
@@ -45,30 +85,7 @@ Code Commandments is one program. It remembers what it read and what each rule d
 file. A second run only reads and judges the files that changed, plus the files that depend on them. Every copy of a
 project on your machine, including git worktrees, shares that memory.
 
-## Install
-
-**With the agent journal.** If your project uses the [agent journal](https://github.com/jessegall/agent-journal),
-install Code Commandments as a journal plugin:
-
-```bash
-journal plugin install https://github.com/jessegall/code-commandments
-```
-
-This downloads one program for your machine and checks it against the release's checksums. It needs `sh`, `curl`,
-`sha256sum` or `shasum`, and Python 3.9 or newer. It does not need PHP, Composer, Go or Docker. Journals from version
-5 on read `journal-plugin.5.json`; older journals read `journal-plugin.json`. Both install the same release.
-
-**With Composer.** In a PHP project:
-
-```bash
-composer require --dev jessegall/code-commandments
-vendor/bin/commandments install
-```
-
-Composer downloads the same program, checked the same way. It runs on macOS and Linux; see
-[docs/requirements.md](docs/requirements.md#platforms) for what each platform needs.
-
-## Use it
+## Usage
 
 ```bash
 commandments judge                       # judge the folders listed in your config
@@ -131,7 +148,7 @@ Every command explains itself with `--help`:
 | `commandments trigger-eval` | Measure whether skill descriptions pull their own skill in — and stay out of their neighbours'. |
 <!-- END: commands-table -->
 
-## Configure it
+## Configuration
 
 You do not have to configure anything: every rule is on. The settings live in `.commandments/config.json`, created
 when you install, with a schema beside it, so your editor can complete every name.
@@ -167,13 +184,13 @@ down, and the rule reports every reference that points the wrong way. `commandme
 code already has and prints the declaration, and `commandments layers --write` adds it to your config, so everything
 that passes today keeps passing.
 
-### Files that must not change
+### Frozen files
 
 Some files carry problems on purpose, such as generated code or a frozen migration. `commandments freeze <file>`
 marks one. Judge still reads a frozen file, so the files around it are judged correctly, but it never reports a
 problem in it.
 
-## Under the agent journal
+## Agent journal
 
 The plugin connects Code Commandments to the journal's events. It needs no service running in the background.
 
@@ -185,7 +202,7 @@ The plugin connects Code Commandments to the journal's events. It needs no servi
 - **Settings.** The journal's plugin page has a switch for every rule and every language. A switch writes the same
   `disable` entry you would write by hand.
 
-## Agents
+## Coding agents
 
 The skills are plain documents, written once into your project's `.agents/skills/` folder. Every coding agent reads
 them from there:
@@ -200,8 +217,6 @@ them from there:
 `AGENTS.md` holds the instructions every agent reads. `CLAUDE.md` imports it and adds what is true only for Claude
 Code. Both are edited in place: only the block between their markers is ever written, and the rest of the file stays
 yours.
-
-### Hooks
 
 Claude Code can run commands on its events, so it is the one agent where the rules are checked as it works, not only
 written down. Composer's install wires these hooks into `.claude/settings.json`. Every hook it wires is stamped, and
@@ -218,7 +233,7 @@ instead.
 | `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit, PostToolUse/Bash` | After an edit — including one made with the shell — checks the files against the rules that can judge one file and names the skill that teaches the fix. |
 <!-- END: hooks-table -->
 
-## Write your own rules
+## Writing your own rules
 
 A rule of your own is a JSON file in `.commandments/custom/`, in the same format as every rule this package ships
 (`commandments:neutral-rule/v2`). It names the languages it judges, the problem it finds, the skill that teaches the
@@ -248,21 +263,11 @@ shows the tree a rule reads, `commandments rule try <rule> <folder>` runs one ru
 checks it against your own examples. The `commandments-writing-detectors` skill explains the whole format. A rule
 file in an older format is refused, and the message names the file.
 
-## How the rules are tested
-
-Every rule is proven against a small example project for each language. In those projects, a comment or attribute
-marks each place a rule must report: `#[Sinful(...)]` in PHP, `// @sin Name` in TypeScript, C# and Go, `# @sin Name`
-in Python and `<!-- @sin Name -->` in Vue. The tests fail when a rule misses a marked place, or reports a place
-nobody marked. Each rule must also catch at least three genuinely different examples, and leave alone a look-alike
-it must not report. Before a rule ships, it is run on real open-source projects and every report is read by hand.
-
-## Skills
+## Skills and rules
 
 <!-- BEGIN: skills (auto-generated, run `composer readme`) -->
 _75 skills. Full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
-
-## Problems and rules
 
 Every problem the tool finds, and the rule file that finds it:
 

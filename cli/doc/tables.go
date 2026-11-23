@@ -173,16 +173,6 @@ func AgentsTable() string {
 	return strings.Join(rows, "\n") + "\n"
 }
 
-func LanguagesTable() string {
-	rows := []string{"| Language | Files |", "|---|---|"}
-
-	for _, language := range source.Languages {
-		rows = append(rows, "| **"+language.Label()+"** | `."+strings.Join(language.Extensions(), "`, `.")+"` |")
-	}
-
-	return strings.Join(rows, "\n") + "\n"
-}
-
 func PluginSettings() *jsonfile.Object {
 	settings := jsonfile.NewObject(
 		"folders_judged", setting("Folders to check", "One folder per line, from the project root. Empty, the config keeps the folders it names.", "list", "", "Folders"),
@@ -332,7 +322,7 @@ func Generated(root string) (map[string]string, error) {
 			return nil, err
 		}
 	}
-	for name, content := range map[string]string{"hooks-table": HooksTable(), "agents-table": AgentsTable(), "languages-table": LanguagesTable()} {
+	for name, content := range map[string]string{"hooks-table": HooksTable(), "agents-table": AgentsTable()} {
 		if updated, err = replaced(updated, name, "\n"+content); err != nil {
 			return nil, err
 		}
