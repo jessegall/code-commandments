@@ -79,6 +79,9 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 	if !normalize || !rules.Declares(node) {
 		parts = append(parts, facts.Name)
 	}
+	if !normalize && facts.Facts != nil && aliased(facts.Name, facts.Refers) {
+		parts = append(parts, facts.Refers)
+	}
 	parts = append(parts, facts.Operator, facts.Form, strings.Join(facts.Modifiers, " "))
 	if marking, ok := rules.(Marking); ok {
 		if mark := marking.Mark(node); mark != "" {
@@ -92,4 +95,13 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 	}
 
 	return "(" + strings.Join(parts, "|") + ")"
+}
+
+func aliased(name, refers string) bool {
+	if name == "" || refers == "" {
+		return false
+	}
+	last := refers[strings.LastIndexAny(refers, `\.:/`)+1:]
+
+	return !strings.EqualFold(last, name)
 }

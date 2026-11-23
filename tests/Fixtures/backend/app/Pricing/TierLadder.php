@@ -4,6 +4,7 @@ namespace Shop\Pricing;
 
 use JesseGall\CodeCommandments\Sins\Backend\NonCountingFor;
 use JesseGall\CodeCommandments\Testing\Sinful;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 
 /**
  * Climbs the discount ladder until a tier admits the quantity. The step is a CALL — the next
@@ -29,6 +30,7 @@ final class TierLadder
         return null;
     }
 
+    #[Sinful(UnusedParameter::class)]
     private function tierAbove(object $tier): ?object
     {
         return null;

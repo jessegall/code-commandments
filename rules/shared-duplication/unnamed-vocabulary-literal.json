@@ -376,6 +376,10 @@
     "where": [
       "and",
       [
+        "not",
+        "$a.file.test"
+      ],
+      [
         "=",
         "$a.value.kind",
         "literal"

@@ -54,12 +54,35 @@
         "$f"
       ],
       [
-        "=",
+        "every",
+        "$f.body.statements",
+        "s",
         [
-          "count",
-          "$f.body.statements"
-        ],
-        1
+          "or",
+          [
+            "=",
+            [
+              "position",
+              "$s"
+            ],
+            [
+              "sum",
+              [
+                "list",
+                [
+                  "count",
+                  "$f.body.statements"
+                ],
+                -1
+              ]
+            ]
+          ],
+          [
+            "=",
+            "$s.kind",
+            "if"
+          ]
+        ]
       ],
       [
         "none",
@@ -78,9 +101,8 @@
         [
           "builtBy",
           [
-            "at",
-            "$f.body.statements",
-            0
+            "last",
+            "$f.body.statements"
           ]
         ]
       ],

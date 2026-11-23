@@ -61,12 +61,36 @@
         "$p.parent.body"
       ],
       [
-        ">",
+        "or",
         [
-          "count",
-          "$p.parent.parameters"
+          ">",
+          [
+            "count",
+            "$p.parent.parameters"
+          ],
+          1
         ],
-        1
+        [
+          "and",
+          [
+            "some",
+            "$p.parent.modifiers",
+            "m",
+            [
+              "=",
+              "$m",
+              "private"
+            ]
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$p.parent.body.statements"
+            ],
+            0
+          ]
+        ]
       ],
       [
         "none",
@@ -146,38 +170,62 @@
         ]
       ],
       [
-        "some",
-        "$p.parent.parameters",
-        "q",
+        "or",
         [
           "and",
           [
-            "!=",
-            "$q",
-            "$p"
-          ],
-          [
-            "exists",
-            "$q.binding"
-          ],
-          [
             "some",
+            "$p.parent.modifiers",
+            "m",
             [
-              "descendants",
-              "$p.parent.body"
+              "=",
+              "$m",
+              "private"
+            ]
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$p.parent.body.statements"
             ],
-            "x",
+            0
+          ]
+        ],
+        [
+          "some",
+          "$p.parent.parameters",
+          "q",
+          [
+            "and",
             [
-              "and",
+              "!=",
+              "$q",
+              "$p"
+            ],
+            [
+              "exists",
+              "$q.binding"
+            ],
+            [
+              "some",
               [
-                "=",
-                "$x.kind",
-                "reference"
+                "descendants",
+                "$p.parent.body"
               ],
+              "x",
               [
-                "=",
-                "$x.name",
-                "$q.binding.name"
+                "and",
+                [
+                  "=",
+                  "$x.kind",
+                  "reference"
+                ],
+                [
+                  "=",
+                  "$x.name",
+                  "$q.binding.name"
+                ]
               ]
             ]
           ]

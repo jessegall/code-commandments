@@ -42,6 +42,7 @@ final class ShopConfig
     }
 
     #[Fixed(DuplicatedConfigDefault::class)]
+    #[Sinful(UnusedParameter::class)]
     private function int(string $key): int
     {
         return 0;

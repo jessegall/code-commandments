@@ -5,6 +5,7 @@ namespace Shop\Catalog;
 use JesseGall\CodeCommandments\Sins\Backend\ArchaeologyComment;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ConfigRead;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
@@ -65,6 +66,7 @@ final class CatalogSearchService
     /**
      * @return array<int, mixed>
      */
+    #[Sinful(UnusedParameter::class)]
     private function run(string $term, string $sort, int $perPage): array
     {
         return [];

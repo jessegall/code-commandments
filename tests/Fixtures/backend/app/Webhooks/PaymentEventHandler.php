@@ -7,6 +7,7 @@ use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Backend\GenericException;
 use JesseGall\CodeCommandments\Sins\Backend\InlineThrow;
 use JesseGall\CodeCommandments\Sins\Backend\MessageAtThrow;
+use JesseGall\CodeCommandments\Sins\Backend\UnusedParameter;
 
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -46,6 +47,7 @@ final class PaymentEventHandler
     /**
      * @param  array<string, mixed>  $event
      */
+    #[Sinful(UnusedParameter::class)]
     private function reference(array $event): string
     {
         return 'ref';
