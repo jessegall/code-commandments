@@ -1,6 +1,7 @@
 > A function body should read top to bottom, at one level: what cannot go on leaves first, and the work follows flat.
 > Read this before you shape a function body in any language, and when a flow finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -23,7 +24,7 @@ Three habits follow from it, and every sin below breaks one of them:
 ```pseudo
 // Bad: the work sits two levels deep, behind conditions the reader has to keep in mind
 function ship(order) {
-    if (order.isPaid()) {
+    if (order.isPaid()) {   // ← the work waits behind this check
         if (order.hasStock()) {
             reserve(order)
             dispatch(order)
@@ -37,7 +38,7 @@ function ship(order) {
 
 // Good: each check leaves, and the work reads flat
 function ship(order) {
-    if (!order.isPaid()) {
+    if (!order.isPaid()) {   // ← a guard: it fails, it leaves
         throw Unpaid.for(order)
     }
     if (!order.hasStock()) {
@@ -60,7 +61,7 @@ hold, so the `else` only indents it.
 // Bad
 if (order.isPaid()) {
     return order.receipt()
-} else {
+} else {   // ← the branch above already returned
     charge(order)
 }
 
@@ -80,7 +81,7 @@ condition, `continue`, and the body stays flat.
 ```pseudo
 // Bad
 for (line in invoice.lines) {
-    if (line.isTaxable()) {
+    if (line.isTaxable()) {   // ← the whole body of the loop sits inside this
         tax = tax + line.tax()
         taxed.add(line)
     }
@@ -89,7 +90,7 @@ for (line in invoice.lines) {
 // Good
 for (line in invoice.lines) {
     if (!line.isTaxable()) {
-        continue
+        continue   // ← leave this turn early
     }
 
     tax = tax + line.tax()
@@ -108,7 +109,7 @@ for (customer in customers) {
     if (customer.isActive()) {
         for (order in customer.orders) {
             if (order.isOverdue()) {
-                if (order.total > limit) {
+                if (order.total > limit) {   // ← five levels deep
                     escalate(order)
                 }
             }
@@ -145,7 +146,7 @@ written as a ladder. Put the per-case answer on the type, key a lookup by the va
 // Bad
 if (status == "draft") {
     label = "Concept"
-} else if (status == "sent") {
+} else if (status == "sent") {   // ← the same subject, compared again
     label = "Sent"
 } else if (status == "paid") {
     label = "Paid"
@@ -178,6 +179,7 @@ expression makes one choice. For more, use a `match`/`switch`, a lookup, or a sm
 ```pseudo
 // Bad
 rate = customer.isBusiness() ? (order.isExport() ? 0 : 21) : (order.isBook() ? 9 : 21)
+// ↑ three decisions in one expression
 
 // Good
 function rateFor(customer, order) {
@@ -199,7 +201,7 @@ chosen with an `if`.
 
 ```pseudo
 // Bad
-order.isPaid() ? ship(order) : remind(order)
+order.isPaid() ? ship(order) : remind(order)   // ← nothing reads the value: this picks an action
 
 // Good
 if (order.isPaid()) {
@@ -211,11 +213,11 @@ if (order.isPaid()) {
 
 ### short-circuit-statement
 
-A bare `a && b()` or `a || b()` whose value nothing reads. The operator is an `if` in disguise.
+A bare `a && b()` or `a || b()` whose value nothing reads. The operator is doing the work of an `if`.
 
 ```pseudo
 // Bad
-order.isPaid() && ship(order)
+order.isPaid() && ship(order)   // ← an if, written as an operator
 cache.has(key) || cache.fill(key)
 
 // Good
@@ -235,11 +237,12 @@ decision a name, on the type that owns it.
 ```pseudo
 // Bad
 if (user.isActive() && !user.isSuspended() && order.total < account.limit && account.isOpen()) {
+// ↑ four checks over three objects: what is being decided?
     approve(order)
 }
 
 // Good
-if (account.canPlace(order, user)) {
+if (account.canPlace(order, user)) {   // ← the decision has a name
     approve(order)
 }
 ```
@@ -253,10 +256,10 @@ conditional.
 // Bad
 if (order.isExpress()) {
     courier.book(order)
-    notify(order.customer)
+    notify(order.customer)   // ← the last line of this branch
 } else {
     post.book(order)
-    notify(order.customer)
+    notify(order.customer)   // ← and of this one
 }
 
 // Good
@@ -266,7 +269,7 @@ if (order.isExpress()) {
     post.book(order)
 }
 
-notify(order.customer)
+notify(order.customer)   // ← once, after the choice
 ```
 
 ### unreachable-statement
@@ -279,11 +282,11 @@ leaves. It can never run. Delete it, or move it above the exit if it was meant t
 function close(account) {
     if (account.hasBalance()) {
         throw BalanceLeft.for(account)
-        log("refused to close", account)
+        log("refused to close", account)   // ← never runs: the throw above already left
     }
 
     return account.closed()
-    audit(account)
+    audit(account)   // ← never runs: it stands after the return
 }
 
 // Good
@@ -307,7 +310,7 @@ one. A new value gets a name of its own.
 ```pseudo
 // Bad
 function register(name) {
-    name = trim(name)
+    name = trim(name)   // ← from here on, name is no longer what the caller passed
     name = lowercase(name)
 
     return Account.named(name)
@@ -329,6 +332,7 @@ counting. Walk with a `while`, or better, let the type hand out its own sequence
 ```pseudo
 // Bad
 for (node = list.head; node != null; node = node.next) {
+// ↑ the step moves to the next item; nothing is counted
     visit(node)
 }
 
@@ -347,7 +351,7 @@ it: an error in some languages, skipped items in others. Decide inside the loop 
 // Bad
 for (session in sessions) {
     if (session.isExpired()) {
-        sessions.remove(session)
+        sessions.remove(session)   // ← changes the collection the loop is walking
     }
 }
 
@@ -367,6 +371,7 @@ the middle of the work. Guard at the top, then work with the checked value.
 ```php
 // Bad
 $total = $this->pricing->totalFor($request->order ?? throw MissingOrder::in($request));
+// ↑ the check that stops the method hides inside the call
 
 // Good
 $order = $request->order ?? throw MissingOrder::in($request);
@@ -381,6 +386,7 @@ The same in C#: a `?? throw` inside a call's argument or in front of a member ca
 ```csharp
 // Bad
 var total = pricing.TotalFor(request.Order ?? throw MissingOrder.In(request));
+// ↑ the check that stops the method hides inside the call
 
 // Good
 var order = request.Order ?? throw MissingOrder.In(request);

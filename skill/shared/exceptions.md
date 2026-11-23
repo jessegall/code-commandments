@@ -2,6 +2,7 @@
 > Read this before you write a `throw`, a `try`/`catch`, or an exception type in any language, and when an
 > exceptions finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -16,7 +17,7 @@ A failure is information: what went wrong, to what, and where it began. Each rul
 3. **Catch only to do something.** Handle it, add what the caller needs, or release what was held. A `catch` that
    does nothing useful should not be written; the failure travels by itself.
 4. **A failure never becomes a value.** An empty `catch`, or one that returns `null`, `false` or `[]`, turns "it broke"
-   into something that looks like an answer. The caller carries on with a lie.
+   into something that looks like an answer. The caller carries on with a wrong answer.
 5. **Wrapping keeps the cause.** When a caught failure is replaced by one of your own, the original goes along as its
    cause. Otherwise the trace of where it started is gone.
 
@@ -54,7 +55,7 @@ function rate(currency): Rate? {
     try {
         return exchange.fetch(currency)
     } catch (failure) {
-        return null
+        return null   // ← the failure now looks like "no rate"
     }
 }
 
@@ -78,7 +79,7 @@ give it work.
 try {
     ledger.post(entry)
 } catch (failure) {
-    throw failure
+    throw failure   // ← does exactly what writing no catch does
 }
 
 // Good: no clause at all
@@ -104,14 +105,14 @@ and nothing of where it began.
 try {
     gateway.charge(order)
 } catch (failure: GatewayTimeout) {
-    throw PaymentFailed.for(order)
+    throw PaymentFailed.for(order)   // ← the timeout that caused it is lost
 }
 
 // Good
 try {
     gateway.charge(order)
 } catch (failure: GatewayTimeout) {
-    throw PaymentFailed.for(order, cause: failure)
+    throw PaymentFailed.for(order, cause: failure)   // ← the cause goes along
 }
 ```
 
@@ -122,7 +123,7 @@ is a string. Give the failure a type of its own.
 
 ```pseudo
 // Bad
-throw Exception("Order " + id + " not found")
+throw Exception("Order " + id + " not found")   // ← nothing to catch it by, only a string
 
 // Good
 throw OrderNotFound.withId(id)
@@ -137,6 +138,7 @@ writes the message once.
 ```pseudo
 // Bad
 throw OrderNotFound("No order with id " + id + " for customer " + customer.name)
+// ↑ the sentence is written here, and again at the next throw
 
 // Good
 throw OrderNotFound.forCustomer(id, customer)
@@ -157,4 +159,4 @@ class OrderNotFound extends Failure {
   Rethrow with a bare `throw;`, never `throw e;`.
 - **TypeScript.** Extend `Error`; the cause is `new PaymentFailed(order, { cause: failure })`.
 - **Go.** A failure is a returned `error`. Wrap with `fmt.Errorf("charging order %s: %w", id, err)` so the cause
-  stays reachable, and never drop an `err` on the floor with `_`.
+  stays reachable, and never discard an `err` with `_`.

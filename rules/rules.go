@@ -20,13 +20,10 @@ import (
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
 	// Every skill a rule can name is registered before the rules are read.
-	_ "github.com/jessegall/code-commandments/skill/backend"
 	_ "github.com/jessegall/code-commandments/skill/backend/concurrent"
 	_ "github.com/jessegall/code-commandments/skill/backend/laravel"
 	_ "github.com/jessegall/code-commandments/skill/backend/spatie"
-	_ "github.com/jessegall/code-commandments/skill/csharp"
 	_ "github.com/jessegall/code-commandments/skill/frontend"
-	_ "github.com/jessegall/code-commandments/skill/python"
 	_ "github.com/jessegall/code-commandments/skill/shared"
 )
 

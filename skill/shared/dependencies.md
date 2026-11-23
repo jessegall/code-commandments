@@ -2,6 +2,7 @@
 > Read this before you add an import, a type hint or a constructor parameter that crosses a module boundary, move a
 > class between modules, or add an interface, and when a dependencies finding points here.
 > The examples are pseudocode: a *module* is a namespace, a package or a folder of code that belongs together.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -13,8 +14,8 @@ things destroy that:
 1. **An arrow that points back up.** A low layer (shared primitives, the domain) that imports a high one (the UI, a
    feature) can no longer be used without it.
 2. **A circle.** Two modules that import each other are one module with two names.
-3. **A concrete class across a boundary.** A module that takes another module's concrete service is welded to its
-   insides. Across a boundary, depend on a contract.
+3. **A concrete class across a boundary.** A module that takes another module's concrete service is tied to how
+   that service works inside. Across a boundary, depend on a contract.
 
 Inside a module, the opposite holds: do not invent contracts nobody needs. An interface with one implementation and
 no boundary to cross is indirection without a purpose.
@@ -22,7 +23,7 @@ no boundary to cross is indirection without a purpose.
 ```pseudo
 // Bad: the domain reaches up into the UI
 module Domain {
-    import Ui.Toast
+    import Ui.Toast   // ← the domain can no longer be used without the UI
 
     class Order {
         function pay() {
@@ -76,7 +77,7 @@ and the high layer supplies it.
 ```pseudo
 // Bad: Ui.Elements may use only itself
 module Ui.Elements {
-    import Ui.Shared.Theme
+    import Ui.Shared.Theme   // ← Elements may not use Shared
 
     class Button {
         function colour() { return Theme.current().primary }
@@ -99,7 +100,7 @@ share to a module both can use, so both arrows point the same way.
 ```pseudo
 // Bad
 module Orders   { import Invoices.Invoice }
-module Invoices { import Orders.Order }
+module Invoices { import Orders.Order }   // ← each needs the other before it can load
 
 // Good
 module Billing  { interface Billable { function total(): Money } }
@@ -118,7 +119,7 @@ module Checkout {
     import Payments.StripeGateway
 
     class PlaceOrder {
-        constructor(gateway: StripeGateway) { … }
+        constructor(gateway: StripeGateway) { … }   // ← tied to one implementation in another module
     }
 }
 
@@ -127,7 +128,7 @@ module Checkout {
     import Payments.PaymentGateway
 
     class PlaceOrder {
-        constructor(gateway: PaymentGateway) { … }
+        constructor(gateway: PaymentGateway) { … }   // ← a contract
     }
 }
 ```
@@ -140,11 +141,11 @@ boundary: another module depends on it, or a second implementation exists.
 
 ```pseudo
 // Bad
-interface PriceCalculatorInterface {
+interface PriceCalculatorInterface {   // ← one implementation, no boundary: a jump for nothing
     function priceOf(cart): Money
 }
 
-class PriceCalculator implements PriceCalculatorInterface { … }
+class PriceCalculator implements PriceCalculatorInterface { … }   // ← the only code there is
 
 class Checkout {
     constructor(calculator: PriceCalculatorInterface) { … }
@@ -154,7 +155,7 @@ class Checkout {
 class PriceCalculator { … }
 
 class Checkout {
-    constructor(calculator: PriceCalculator) { … }
+    constructor(calculator: PriceCalculator) { … }   // ← the class is used directly
 }
 ```
 
@@ -166,7 +167,7 @@ drift apart. Check that they promise the same behaviour, then reuse the existing
 ```pseudo
 // Bad
 interface Exportable  { function toRow(): Row }
-interface CsvWritable { function toRow(): Row }
+interface CsvWritable { function toRow(): Row }   // ← the same promise as Exportable
 
 // Good
 interface Exportable  { function toRow(): Row }
@@ -184,7 +185,7 @@ types share, and type the access with that contract.
 // Bad
 public function label(Shape $shape): string
 {
-    return $shape->radius . ' cm';       // only Circle has a radius
+    return $shape->radius . ' cm';       // ← only Circle has a radius
 }
 
 // Good

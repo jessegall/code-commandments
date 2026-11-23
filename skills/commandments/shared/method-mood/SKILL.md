@@ -11,6 +11,7 @@ description: "Naming a method: one that acts (returns nothing or itself) or one 
 > question.
 > Read this before you name a method, and when a method-mood finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -42,7 +43,7 @@ one instead. Name it in the imperative.
 
 ```pseudo
 // Bad
-panel.hides()
+panel.hides()   // ← describes; a call gives an order
 session.entersTestMode()
 door.opensFor(user)
 
@@ -59,7 +60,7 @@ something that starts the wheel. Make it a question: `is…`, `has…`, `can…`
 
 ```pseudo
 // Bad
-if (wheel.spins()) { … }
+if (wheel.spins()) { … }   // ← a question, or does it start the wheel?
 if (field.binds()) { … }
 if (job.retries()) { … }
 

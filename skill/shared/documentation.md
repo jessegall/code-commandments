@@ -2,6 +2,7 @@
 > Read this the moment you are about to write a doc comment, an inline comment or a type annotation that repeats
 > what is already there, and when a documentation finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -153,7 +154,7 @@ was renamed or deleted, and the comment was not. Correct the target or remove th
 
 ```pseudo
 // Bad
-/** @see LegacyTaxTable.rateFor */        // LegacyTaxTable no longer exists
+/** @see LegacyTaxTable.rateFor */        // ← LegacyTaxTable no longer exists
 function rate(country)
 
 // Good
@@ -168,7 +169,7 @@ a restated comment: the reader sees the same fact twice. Let the expression supp
 
 ```pseudo
 // Bad
-names = users.map((user): string => user.name)
+names = users.map((user): string => user.name)   // ← user.name already is a string
 
 // Good
 names = users.map(user => user.name)

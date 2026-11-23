@@ -1,0 +1,295 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "assembled-template",
+    "aliases": [
+      "AssembledTemplateDetector",
+      "AssembledTemplate",
+      "csharp-assembled-template",
+      "python-assembled-template"
+    ],
+    "skill": "shared/templates",
+    "description": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it",
+    "rule": "State a fixed multi-line string as one multi-line literal, at its real indentation, and interpolate what varies; never as a list of line fragments joined by a newline.",
+    "suggestion": "The language's multi-line string (a heredoc, a triple-quoted or raw string, a template literal), with the computed part as one interpolation."
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "=",
+      "$c.kind",
+      "call"
+    ],
+    "having": [
+      "and",
+      [
+        "some",
+        [
+          "fragments",
+          "$c"
+        ],
+        "x",
+        [
+          "newline",
+          "$x"
+        ]
+      ],
+      [
+        "or",
+        [
+          "and",
+          [
+            "<=",
+            [
+              "count",
+              "$c.arguments"
+            ],
+            2
+          ],
+          [
+            "some",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "fragments",
+                  "$c"
+                ],
+                "x",
+                [
+                  "not",
+                  [
+                    "extended",
+                    "$x"
+                  ]
+                ]
+              ],
+              "x",
+              [
+                "listOf",
+                "$x"
+              ]
+            ],
+            "k",
+            [
+              "and",
+              [
+                "exists",
+                "$k"
+              ],
+              [
+                "=",
+                "$k.kind",
+                "collection"
+              ],
+              [
+                ">=",
+                [
+                  "count",
+                  "$k.entries"
+                ],
+                3
+              ],
+              [
+                ">=",
+                [
+                  "count",
+                  [
+                    "filter",
+                    "$k.entries",
+                    "e",
+                    [
+                      "spelledText",
+                      "$e.value"
+                    ]
+                  ]
+                ],
+                2
+              ]
+            ]
+          ]
+        ],
+        [
+          ">=",
+          [
+            "count",
+            [
+              "filter",
+              "$c.arguments",
+              "g",
+              [
+                "spelledText",
+                "$g.value"
+              ]
+            ]
+          ],
+          3
+        ]
+      ]
+    ],
+    "emit": "$c"
+  },
+  "definitions": {
+    "newline": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$x.literalKind",
+            "string"
+          ],
+          [
+            "=",
+            "$x.value",
+            "\n"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.constantValue.type",
+            "string"
+          ],
+          [
+            "=",
+            "$x.constantValue.value",
+            "\n"
+          ]
+        ],
+        [
+          "has",
+          [
+            "identities",
+            "newline"
+          ],
+          "$x.refers"
+        ],
+        [
+          "has",
+          [
+            "identities",
+            "newline"
+          ],
+          "$x.member.refers"
+        ]
+      ]
+    },
+    "listOf": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "case",
+        "$x.kind",
+        {
+          "collection": "$x",
+          "reference": [
+            "case",
+            [
+              "exists",
+              "$x.binding"
+            ],
+            {
+              "true": [
+                "tree.heldValue",
+                "$x.binding"
+              ]
+            },
+            null
+          ]
+        },
+        null
+      ]
+    },
+    "extended": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "reference"
+        ],
+        [
+          "exists",
+          "$x.binding"
+        ],
+        [
+          "some",
+          [
+            "referrers",
+            "$x.binding"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.parent.kind",
+              "index"
+            ],
+            [
+              "=",
+              "$r.parent.parent.kind",
+              "assignment"
+            ]
+          ]
+        ]
+      ]
+    },
+    "fragments": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "list",
+          [
+            "map",
+            "$c.arguments",
+            "g",
+            "$g.value"
+          ],
+          [
+            "list",
+            "$c.callee.subject"
+          ]
+        ]
+      ]
+    },
+    "spelledText": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "in",
+        "$x.kind",
+        "literal",
+        "interpolation"
+      ]
+    }
+  }
+}

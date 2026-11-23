@@ -1,0 +1,326 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "member-after-method",
+    "aliases": [
+      "MemberAfterMethodDetector",
+      "MemberAfterMethod",
+      "csharp-member-after-method",
+      "python-member-after-method"
+    ],
+    "skill": "shared/class-layout",
+    "description": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it.",
+    "rule": "Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom."
+  },
+  "definitions": {
+    "rank": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "case",
+        "$m.file.language",
+        {
+          "php": [
+            "case",
+            "$m.kind",
+            {
+              "enum-case": 1,
+              "constant": 2,
+              "field": [
+                "case",
+                [
+                  "some",
+                  "$m.modifiers",
+                  "x",
+                  [
+                    "=",
+                    "$x",
+                    "static"
+                  ]
+                ],
+                {
+                  "true": 3
+                },
+                [
+                  "add",
+                  [
+                    "case",
+                    [
+                      ">",
+                      [
+                        "count",
+                        "$m.hooks"
+                      ],
+                      0
+                    ],
+                    {
+                      "true": 7
+                    },
+                    4
+                  ],
+                  [
+                    "case",
+                    [
+                      "some",
+                      "$m.modifiers",
+                      "x",
+                      [
+                        "=",
+                        "$x",
+                        "private"
+                      ]
+                    ],
+                    {
+                      "true": 2
+                    },
+                    [
+                      "case",
+                      [
+                        "some",
+                        "$m.modifiers",
+                        "x",
+                        [
+                          "=",
+                          "$x",
+                          "protected"
+                        ]
+                      ],
+                      {
+                        "true": 1
+                      },
+                      0
+                    ]
+                  ]
+                ]
+              ],
+              "function": [
+                "case",
+                [
+                  "in",
+                  "$m.form",
+                  "get",
+                  "set"
+                ],
+                {
+                  "true": 7
+                },
+                10
+              ]
+            },
+            0
+          ]
+        },
+        [
+          "case",
+          "$m.kind",
+          {
+            "enum-case": 1,
+            "constant": 1,
+            "field": [
+              "case",
+              [
+                "nonempty",
+                "$m.hooks"
+              ],
+              {
+                "true": 3
+              },
+              [
+                "case",
+                [
+                  "and",
+                  [
+                    "some",
+                    "$m.modifiers",
+                    "x",
+                    [
+                      "=",
+                      "$x",
+                      "static"
+                    ]
+                  ],
+                  [
+                    "some",
+                    "$m.modifiers",
+                    "x",
+                    [
+                      "in",
+                      "$x",
+                      "readonly",
+                      "const",
+                      "final"
+                    ]
+                  ]
+                ],
+                {
+                  "true": 1
+                },
+                2
+              ]
+            ],
+            "function": 3
+          },
+          0
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": [
+      "field",
+      "constant",
+      "enum-case"
+    ],
+    "as": "m",
+    "where": [
+      "and",
+      [
+        "=",
+        "$m.parent.kind",
+        "type"
+      ],
+      [
+        "or",
+        [
+          "!=",
+          "$m.parent.form",
+          "interface"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "field"
+          ],
+          [
+            ">",
+            [
+              "count",
+              "$m.hooks"
+            ],
+            0
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          "$m.declarators",
+          "d",
+          [
+            "matchesText",
+            "$d.binding.name",
+            "^__.+__$"
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          "$m.declarators",
+          "d",
+          [
+            "and",
+            [
+              "=",
+              "$d.initializer.kind",
+              "call"
+            ],
+            [
+              "some",
+              "$d.initializer.arguments",
+              "a",
+              [
+                "some",
+                "$m.parent.writtenMembers",
+                "w",
+                [
+                  "and",
+                  [
+                    "=",
+                    "$w.kind",
+                    "function"
+                  ],
+                  [
+                    "=",
+                    "$w.symbol",
+                    "$a.value.refers"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    "let": [
+      [
+        "mine",
+        [
+          "rank",
+          "$m"
+        ]
+      ],
+      [
+        "methods",
+        [
+          "case",
+          "$m.file.language",
+          {
+            "php": 10
+          },
+          3
+        ]
+      ],
+      [
+        "earlier",
+        [
+          "map",
+          [
+            "before",
+            "$m"
+          ],
+          "p",
+          [
+            "rank",
+            "$p"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">",
+        "$mine",
+        0
+      ],
+      [
+        "<",
+        "$mine",
+        "$methods"
+      ],
+      [
+        "some",
+        "$earlier",
+        "r",
+        [
+          ">=",
+          "$r",
+          "$methods"
+        ]
+      ]
+    ],
+    "emit": "$m"
+  }
+}

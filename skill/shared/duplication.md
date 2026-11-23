@@ -3,6 +3,7 @@
 > Read this before you paste a function, write out a condition or a call you have written before, list by hand what
 > the code already knows, or type a path or a literal for the third time, and when a duplication finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -44,6 +45,7 @@ class InvoiceMailer {
 
 class QuoteMailer {
     function footer() { return company.name + " · " + company.vatNumber + " · " + company.address }
+    // ↑ the same body as InvoiceMailer.footer()
 }
 
 // Good
@@ -66,7 +68,7 @@ function exportOrders() {
 
 function exportInvoices() {
     rows = invoices.all().map(invoice => invoice.toRow())
-    file.write("exports/invoices.csv", csv(rows))
+    file.write("exports/invoices.csv", csv(rows))   // ← the same steps; only the name and the records differ
 }
 
 // Good
@@ -79,7 +81,7 @@ function export(name: string, records: Exportable[]) {
 ### divergent-twin
 
 Two functions that share most of their steps, where one misses a step the other takes. They were copies once, and
-a fix reached only one of them. This is duplication's bug, already happened. Extract the shared work, pass the real
+a fix reached only one of them. This is the bug that duplication causes, and it has already happened. Extract the shared work, pass the real
 differences as inputs, and decide on purpose whether the missing step belongs in both.
 
 ```pseudo
@@ -93,7 +95,7 @@ function cancelByCustomer(order) {
 
 function cancelByAdmin(order) {
     order.markCancelled()
-    refunds.issue(order)                 // stock is never released
+    refunds.issue(order)                 // ← stock is never released
     mail.sendCancellation(order)
 }
 
@@ -116,6 +118,7 @@ owns most of the condition.
 if (user.isActive && user.emailVerifiedAt != null && !user.isBanned) { … }
 …
 if (user.isActive && user.emailVerifiedAt != null && !user.isBanned) { … }
+// ↑ the same three checks, written again
 
 // Good
 if (user.canSignIn()) { … }
@@ -130,7 +133,7 @@ whose name says which values it accepts.
 // Bad
 if (node is Element && node.parent is Form) { … }
 …
-if (node is Element && node.parent is Form) { … }
+if (node is Element && node.parent is Form) { … }   // ← the same check, a second time
 
 // Good
 if (isFormField(node)) { … }
@@ -149,7 +152,7 @@ method on the type could say what.
 // Bad
 event = event.with(metadata: payload.metadata())
 …
-job = job.with(metadata: payload.metadata())
+job = job.with(metadata: payload.metadata())   // ← the same call, spelled out again
 
 // Good
 event = event.withMetadataOf(payload)
@@ -165,7 +168,7 @@ question. Call the factory once, hold the object, and ask it both.
 ```pseudo
 // Bad
 name = Reflector.of(type).shortName()
-parent = Reflector.of(type).parent()
+parent = Reflector.of(type).parent()   // ← asks the factory for the same object again
 
 // Good
 reflected = Reflector.of(type)
@@ -183,7 +186,7 @@ function: take the original typed value and convert it where it is used.
 // Bad
 schedule(date.toIsoString())
 schedule(deadline.toIsoString())
-schedule(reminder.at.toIsoString())
+schedule(reminder.at.toIsoString())   // ← every caller converts in the same way
 
 function schedule(at: string) { … }
 
@@ -204,7 +207,7 @@ constant or method and build paths from that.
 // Bad
 file.read("storage/exports/" + name)
 file.delete("storage/exports/" + old)
-file.list("storage/exports")
+file.list("storage/exports")   // ← the third copy of this folder
 
 // Good
 class Exports {
@@ -223,7 +226,7 @@ what makes a typo a compile error and a rename one change.
 
 ```pseudo
 // Bad
-queue.push(job, "high-priority")
+queue.push(job, "high-priority")   // ← Queue.HIGH_PRIORITY already holds this value
 
 // Good
 queue.push(job, Queue.HIGH_PRIORITY)
@@ -238,6 +241,7 @@ register itself.
 ```pseudo
 // Bad
 HANDLERS = [CardHandler, IdealHandler, PaypalHandler, BankTransferHandler]
+// ↑ a new handler must be remembered here
 
 // Good
 HANDLERS = implementationsOf(PaymentHandler)

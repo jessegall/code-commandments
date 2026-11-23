@@ -3,6 +3,7 @@
 > status or a kind, a membership list of literals, or an `is this an A or a B?` type test, and when an enums finding
 > points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -20,7 +21,7 @@ So two rules:
 
 ```pseudo
 // Bad: the set is strings, and every call site knows what they mean
-if (order.status == "paid" || order.status == "shipped") {
+if (order.status == "paid" || order.status == "shipped") {   // ← strings whose meaning only people know
     badge = order.status == "paid" ? "green" : "blue"
 }
 
@@ -59,7 +60,7 @@ class Role {
     const VIEWER = "viewer"
 }
 
-function grant(role: string) { … }
+function grant(role: string) { … }   // ← any string still fits
 
 // Good
 enum Role { Admin, Editor, Viewer }
@@ -75,7 +76,7 @@ on its strings anyway. Dispatch on the type and its named cases.
 ```pseudo
 // Bad
 switch (payment.method) {
-    case "card":   return chargeCard(payment)
+    case "card":   return chargeCard(payment)   // ← Method.Card exists; the string repeats it
     case "ideal":  return redirectToBank(payment)
     case "paypal": return redirectToPaypal(payment)
 }
@@ -95,7 +96,7 @@ named group on the enum.
 
 ```pseudo
 // Bad
-if (status in ["paid", "shipped", "delivered"]) { … }
+if (status in ["paid", "shipped", "delivered"]) { … }   // ← repeats values the enum declares
 
 // Good
 if (status.isSettled()) { … }
@@ -109,6 +110,7 @@ chain will be written again elsewhere, one case short. Give the group a named te
 ```pseudo
 // Bad
 if (status == Status.Paid || status == Status.Shipped || status == Status.Delivered) { … }
+// ↑ a group of cases that has no name
 
 // Good
 if (status.isSettled()) { … }
@@ -125,7 +127,7 @@ cases. Put it on the enum as a method that answers for each case.
 
 ```pseudo
 // Bad
-label = match (order.status.value) {
+label = match (order.status.value) {   // ← what each case means, written far from the cases
     "pending" => "Waiting for payment"
     "paid"    => "Paid"
     "shipped" => "On its way"
@@ -152,7 +154,7 @@ silently out of date. Keep the trait beside the cases it describes.
 
 ```pseudo
 // Bad
-REFUNDABLE = [Status.Paid, Status.Shipped]
+REFUNDABLE = [Status.Paid, Status.Shipped]   // ← a new case will not appear here by itself
 
 if (order.status in REFUNDABLE) { … }
 
@@ -166,13 +168,13 @@ if (order.status.isRefundable()) { … }
 
 ### type-switch
 
-Branches that test the same value against several concrete types. It is a `switch` over an enum in disguise: the
+Branches that test the same value against several concrete types. It is really a `switch` over an enum: the
 "cases" are the subtypes, and the behaviour belongs on them. Put the behaviour on the type that owns it.
 
 ```pseudo
 // Bad
 function price(freight): Money {
-    if (freight is Parcel) { return parcelRate(freight.weight) }
+    if (freight is Parcel) { return parcelRate(freight.weight) }   // ← asks what it is, then does its work for it
     if (freight is Pallet) { return palletRate(freight.count) }
     if (freight is Letter) { return letterRate() }
 }
@@ -194,7 +196,7 @@ the comparison is not needed for type narrowing, so every comparison of that enu
 
 ```php
 // Bad
-if ($order->status === OrderStatus::Paid) { … }
+if ($order->status === OrderStatus::Paid) { … }   // ← the enum has is() for this
 
 // Good
 if ($order->status->is(OrderStatus::Paid)) { … }

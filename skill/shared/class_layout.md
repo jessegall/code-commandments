@@ -2,6 +2,7 @@
 > Read this before you add a constant, a field or a property to a class, and especially before you add one next to
 > the method that uses it, and when a class-layout finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -30,11 +31,11 @@ it. Do not shorten the list by scattering it.
 class Cart {
     function add(line) { this.lines.add(line) }
 
-    private lines: Line[] = []
+    private lines: Line[] = []   // ← state, found between two methods
 
     function total() { return sum(this.lines) * (1 + TAX) }
 
-    const TAX = 0.21
+    const TAX = 0.21   // ← and more of it at the bottom
 }
 
 // Good
@@ -61,7 +62,7 @@ the behaviour before the state it works on. Move it to the top, above the constr
 class Session {
     function start() { this.startedAt = now() }
 
-    private startedAt: Time
+    private startedAt: Time   // ← used above, declared here
 
     function isRunning() { return this.startedAt != null }
 }
@@ -85,10 +86,10 @@ public field under a private one, a computed property above the fields it reads.
 // Bad
 class Customer {
     private notes: string[]
-    get fullName() { return this.first + " " + this.last }
+    get fullName() { return this.first + " " + this.last }   // ← reads fields that are declared below it
     public first: string
     public last: string
-    const MAX_NOTES = 20
+    const MAX_NOTES = 20   // ← a constant under the fields
 }
 
 // Good

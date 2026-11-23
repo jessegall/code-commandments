@@ -4,6 +4,7 @@
 > always travels with two others, or write a method that changes a value in place, and when a value-objects finding
 > points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -15,7 +16,7 @@ does three things a bag of loose values cannot:
 1. **It names the concept.** `period` says more than `from` and `until`, and the compiler knows the two belong together.
 2. **It is checked once.** The fields are validated where the object is built, so every reader after that can rely
    on them. A string key can be misspelled at every read.
-3. **It cannot drift.** A value is built complete and never written again. To change it you derive a new one, so two
+3. **It stays what it was.** A value is built complete and never written again. To change it you derive a new one, so two
    places holding "the same" value can never end up holding different ones.
 
 ```pseudo
@@ -48,7 +49,7 @@ type. Build a value object once from the incoming map, and read fields from that
 ```pseudo
 // Bad
 function label(shipment: map): string {
-    return shipment["carrier"] + " " + shipment["tracking"]
+    return shipment["carrier"] + " " + shipment["tracking"]   // ← keys that no type declares
 }
 
 // Good
@@ -64,7 +65,7 @@ not in the callers: the method never said what it takes.
 
 ```pseudo
 // Bad
-function schedule(options: map) { … }
+function schedule(options: map) { … }   // ← which keys? the signature does not say
 
 schedule({ "at": tomorrow, "retries": 3, "queue": "mail" })
 
@@ -76,13 +77,14 @@ schedule(Delivery(at: tomorrow, retries: 3, queue: "mail"))
 
 ### array-return-bag
 
-A function that returns a literal map with several string keys. The caller receives a bag and has to know its keys by
-heart. Return a value object with those fields.
+A function that returns a literal map with several string keys. The caller receives a bag and has to remember its
+keys. Return a value object with those fields.
 
 ```pseudo
 // Bad
 function summary(order): map {
     return { "lines": order.lines.count, "total": order.total, "currency": order.currency }
+    // ↑ the caller must remember these keys
 }
 
 // Good
@@ -99,7 +101,7 @@ nothing complains. Return a small typed result.
 ```pseudo
 // Bad
 function resolve(path) {
-    return [node, key, inputs, outputs]
+    return [node, key, inputs, outputs]   // ← four values, told apart only by position
 }
 
 [node, key, inputs, outputs] = resolve(path)
@@ -119,9 +121,9 @@ introduced yet. Give the group a type and pass that.
 
 ```pseudo
 // Bad
-function book(street, houseNumber, postcode, city) { … }
+function book(street, houseNumber, postcode, city) { … }   // ← the same four parameters
 function quote(street, houseNumber, postcode, city, weight) { … }
-function label(street, houseNumber, postcode, city) { … }
+function label(street, houseNumber, postcode, city) { … }   // ← on every function: they are one Address
 
 // Good
 function book(address: Address) { … }
@@ -138,7 +140,7 @@ several fields. Fold them into a value object that owns the rule between them.
 // Bad
 class Shift {
     opensAt: int
-    closesAt: int
+    closesAt: int   // ← always read and changed together with opensAt
 
     function stretch(from, until) {
         if (from < this.opensAt || until > this.closesAt) {
@@ -169,7 +171,7 @@ class Money {
     amount: int
 
     function add(other: Money) {
-        this.amount = this.amount + other.amount
+        this.amount = this.amount + other.amount   // ← changes a value someone else may be holding
     }
 }
 
@@ -193,6 +195,7 @@ language's copy-with-change.
 // Bad
 function withValue(value): Socket {
     return Socket(this.id, this.label, this.type, this.required, this.order, value)
+    // ↑ lists every field again; a new field must be added here too
 }
 
 // Good
@@ -211,7 +214,7 @@ prefix. The prefix names the object that should be nested.
 final class PortView extends Data
 {
     public function __construct(
-        public readonly string $wireType,
+        public readonly string $wireType,   // ← three fields with one prefix: a Wire, spread flat
         public readonly string $wireSocket,
         public readonly string $wireLabel,
         public readonly int $index,

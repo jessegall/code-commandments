@@ -2,13 +2,14 @@
 > Read this FIRST whenever you are asked to fix, refactor, clean up or review code, and before you add a null check,
 > a `?? default`, a cast, a wrapper or a `try`/`catch` to make a finding go quiet. Every other skill defers to this one.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
 **A finding is a symptom. Walk back to where the bad value, missing type or wrong shape is born, and fix it there.**
 
 The place a problem surfaces is almost never the place it was made. A null check in a consumer, a default at a read,
-a nullable field "to be safe", a suppressed finding: each one makes the symptom quiet and leaves the cause alive, so
+a nullable field "to be safe", a suppressed finding: each one makes the symptom quiet and leaves the cause in place, so
 the next consumer needs the same patch. The code grows and the types lie more with every round.
 
 Before you change a line:
@@ -35,7 +36,7 @@ class RawCommand {
 }
 
 function move(command: RawCommand) {
-    if (command.target == null) { return }
+    if (command.target == null) { return }   // ← every handler repeats this check
 
     board.move(command.target, command.label ?? "")
 }
@@ -43,7 +44,7 @@ function move(command: RawCommand) {
 // Good: the boundary makes the value certain, once
 function decode(payload): MoveCommand {
     return MoveCommand(
-        target: payload["target"] ?? throw CommandWithoutTarget.in(payload),
+        target: payload["target"] ?? throw CommandWithoutTarget.in(payload),   // ← decided here, once
         label: Label.from(payload["label"]),
     )
 }
@@ -68,7 +69,7 @@ happens in a method someone calls.
 // Bad
 class Importer {
     constructor(queue: Queue) {
-        queue.clear()
+        queue.clear()   // ← creating an Importer empties the queue
     }
 }
 
@@ -95,7 +96,7 @@ that someone owns and passes.
 class Tenant {
     static current: Tenant
 
-    static function switchTo(tenant) { Tenant.current = tenant }
+    static function switchTo(tenant) { Tenant.current = tenant }   // ← whoever writes last wins
 }
 
 report = Report.for(Tenant.current)
@@ -122,7 +123,7 @@ the real bug.
 class InvoiceMailer {
     constructor(mailer: Mailer, clock: Clock) {
         this.mailer = mailer
-        this.clock = clock          // never read
+        this.clock = clock          // ← never read
     }
 
     function send(invoice) { this.mailer.send(invoice.asMail()) }
@@ -146,7 +147,7 @@ one boundary with `.Result` is the symptom patch.
 // Bad
 public Invoice Load(int id)
 {
-    return repository.FindAsync(id).Result;
+    return repository.FindAsync(id).Result;   // ← blocks the thread the task needs back
 }
 
 // Good
@@ -164,7 +165,7 @@ every coroutine waiting on it stops too.
 ```python
 # Bad
 async def poll(url: str) -> Response:
-    time.sleep(1)
+    time.sleep(1)   # ← stops the event loop for every coroutine
     return requests.get(url)
 
 # Good
@@ -181,11 +182,12 @@ shares one list, or gets the moment the module was imported.
 
 ```python
 # Bad
-def add_line(line: Line, lines: list[Line] = []) -> list[Line]:
+def add_line(line: Line, lines: list[Line] = []) -> list[Line]:   # ← one list, shared by every call
     lines.append(line)
     return lines
 
 def stamp(order: Order, at: datetime = datetime.now()) -> Order: ...
+# ↑ worked out once, when the module is imported
 
 # Good
 def add_line(line: Line, lines: list[Line] | None = None) -> list[Line]:

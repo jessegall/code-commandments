@@ -13,6 +13,7 @@ description: "Writing a method that loops over or queries another object's colle
 > before changing it, walks through an object to its neighbours' neighbours, or wraps a collaborator without adding
 > anything, and when a tell-dont-ask finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -29,7 +30,7 @@ is probably in the wrong class.
 ```pseudo
 // Bad: the caller pulls the order apart and does the order's work
 total = 0
-for (line in order.lines) {
+for (line in order.lines) {   // ← the caller does the order's arithmetic
     total = total + line.price * line.quantity
 }
 if (order.coupon != null) {
@@ -45,14 +46,14 @@ total = order.total()
 ### feature-envy
 
 A method that loops over or queries one other object's internals to work out something that object could answer
-itself. The behaviour is in exile. Move it onto the object it works on.
+itself. The behaviour is in the wrong class. Move it onto the object it works on.
 
 ```pseudo
 // Bad
 class GraphPrinter {
     function edgesOf(node: Node): Edge[] {
         edges = []
-        for (port in node.ports) {
+        for (port in node.ports) {   // ← walks the inside of a Node from outside it
             for (edge in port.edges) {
                 edges.add(edge)
             }
@@ -78,6 +79,7 @@ through a collaborator. The object is right there and could be asked.
 // Bad
 function label(product: Product): string {
     return this.stock.levelFor(product.id) > 0 ? "In stock" : "Sold out"
+    // ↑ looks a fact about the product up by its id, with the product in hand
 }
 
 // Good
@@ -94,7 +96,7 @@ state carries the rule and refuses by itself.
 
 ```pseudo
 // Bad
-if (sample.status != Status.Pending) {
+if (sample.status != Status.Pending) {   // ← the rule for approve() stands outside approve()
     throw SampleRefused.notPending(sample)
 }
 
@@ -122,7 +124,7 @@ type ask only its own neighbour.
 
 ```pseudo
 // Bad
-city = order.customer().address().city()
+city = order.customer().address().city()   // ← knows how three other types are wired together
 
 // Good
 city = order.shippingCity()
@@ -146,9 +148,9 @@ the caller and the object that does the work. Let callers talk to that object, o
 class OrderService {
     constructor(orders: OrderRepository) { this.orders = orders }
 
-    function find(id)    { return this.orders.find(id) }
+    function find(id)    { return this.orders.find(id) }   // ← only forwards
     function save(order) { return this.orders.save(order) }
-    function all()       { return this.orders.all() }
+    function all()       { return this.orders.all() }   // ← and so does every other method
 }
 
 // Good: the caller takes the repository itself
@@ -165,7 +167,7 @@ class CheckoutController {
   asks what a value is before acting belongs on the types as a method.
 - **C#.** LINQ over another object's collection, written outside that object, is the usual form: give the owner a
   method that returns the answer.
-- **TypeScript.** `a.b?.c?.d` across your own types is a train wreck with question marks on it.
+- **TypeScript.** `a.b?.c?.d` across your own types is the same chain with `?.` added.
 - **Go.** A function in one package reaching through another package's struct fields: give that type a method.
 
 ## Commands

@@ -176,30 +176,6 @@
         "help": "Enables Go sin detection"
     },
     {
-        "key": "sin_flag-argument",
-        "title": "flag-argument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name"
-    },
-    {
-        "key": "sin_member-after-method",
-        "title": "member-after-method",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it."
-    },
-    {
-        "key": "sin_member-out-of-order",
-        "title": "member-out-of-order",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads"
-    },
-    {
         "key": "sin_concurrent-subclass",
         "title": "concurrent-subclass",
         "type": "flag",
@@ -382,14 +358,6 @@
         "kind": "flag",
         "default": true,
         "help": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value."
-    },
-    {
-        "key": "sin_hand-rolled-registry",
-        "title": "hand-rolled-registry",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base"
     },
     {
         "key": "sin_boundary-duplicated-operation",
@@ -584,14 +552,6 @@
         "help": "A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array"
     },
     {
-        "key": "sin_assembled-template",
-        "title": "assembled-template",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
-    },
-    {
         "key": "sin_blank-string-default",
         "title": "blank-string-default",
         "type": "flag",
@@ -758,6 +718,30 @@
         "kind": "flag",
         "default": true,
         "help": "A function returns decoded data before checking and giving it a type"
+    },
+    {
+        "key": "sin_flag-argument",
+        "title": "flag-argument",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name"
+    },
+    {
+        "key": "sin_member-after-method",
+        "title": "member-after-method",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it."
+    },
+    {
+        "key": "sin_member-out-of-order",
+        "title": "member-out-of-order",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads"
     },
     {
         "key": "sin_concrete-cross-module-dependency",
@@ -1296,6 +1280,14 @@
         "help": "Unpacking the target out of a container parameter: a method takes a container and a key (a workflow and a node id) and resolves the node itself, when it could just receive the node."
     },
     {
+        "key": "sin_hand-rolled-registry",
+        "title": "hand-rolled-registry",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base"
+    },
+    {
         "key": "sin_feature-envy",
         "title": "feature-envy",
         "type": "flag",
@@ -1326,6 +1318,14 @@
         "kind": "flag",
         "default": true,
         "help": "A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller."
+    },
+    {
+        "key": "sin_assembled-template",
+        "title": "assembled-template",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
     },
     {
         "key": "sin_filled-parameter",

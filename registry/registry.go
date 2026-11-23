@@ -5,12 +5,9 @@ package registry
 
 import (
 	_ "github.com/jessegall/code-commandments/rules"
-	_ "github.com/jessegall/code-commandments/skill/backend"
 	_ "github.com/jessegall/code-commandments/skill/backend/concurrent"
 	_ "github.com/jessegall/code-commandments/skill/backend/laravel"
 	_ "github.com/jessegall/code-commandments/skill/backend/spatie"
-	_ "github.com/jessegall/code-commandments/skill/csharp"
 	_ "github.com/jessegall/code-commandments/skill/frontend"
-	_ "github.com/jessegall/code-commandments/skill/python"
 	_ "github.com/jessegall/code-commandments/skill/shared"
 )

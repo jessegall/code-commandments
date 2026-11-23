@@ -363,7 +363,7 @@ file in an older format is refused, and the message names the file.
 ## Skills and rules
 
 <!-- BEGIN: skills (auto-generated, run `composer readme`) -->
-_35 skills. Full table in [README.skills.md](README.skills.md)._
+_27 skills. Full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
 
 Every problem the tool finds, and the rule file that finds it:

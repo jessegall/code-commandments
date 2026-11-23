@@ -2,6 +2,7 @@
 > Read this before you add a parameter that the caller derives from an object it already holds: a field of it, an id
 > to look it up by, a yes-or-no worked out from it, and when a pass-the-object finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -34,7 +35,7 @@ inside.
 
 ```pseudo
 // Bad
-render(invoice, invoice.customer.name, invoice.lines.count)
+render(invoice, invoice.customer.name, invoice.lines.count)   // ← the last two come from the first
 
 function render(invoice: Invoice, customerName: string, lineCount: int) { … }
 
@@ -55,7 +56,7 @@ flag; each caller now carries the rule for how the flag is worked out. Take the 
 
 ```pseudo
 // Bad
-inset = cornerInset(editor.isFullscreen() && !editor.hasSidebar())
+inset = cornerInset(editor.isFullscreen() && !editor.hasSidebar())   // ← every caller repeats this rule
 
 function cornerInset(compact: bool): Inset { … }
 
@@ -76,7 +77,7 @@ workflow and an id. Take the resolved object; the caller resolves it once.
 ```pseudo
 // Bad
 function rename(workflow: Workflow, nodeId: string, name: string) {
-    node = workflow.graph.node(nodeId)
+    node = workflow.graph.node(nodeId)   // ← it wanted the node all along
     node.name = name
 }
 

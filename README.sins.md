@@ -8,31 +8,6 @@ _175 sins across 27 skills._
 
 ### PHP
 
-#### `commandments-php-behaviour-per-method`
-
-| Sin | Judges | What it flags |
-|---|---|---|
-| `flag-argument` | PHP, Vue, TypeScript, Python, C#, Go | a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name |
-
-#### `commandments-php-class-layout`
-
-| Sin | Judges | What it flags |
-|---|---|---|
-| `member-after-method` | PHP, Vue, TypeScript, Python, C# | A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it. |
-| `member-out-of-order` | PHP, Vue, TypeScript, Python, C# | A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads |
-
-#### `commandments-php-role-vocabulary`
-
-| Sin | Judges | What it flags |
-|---|---|---|
-| `hand-rolled-registry` | PHP, Vue, TypeScript, Python, C#, Go | A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base |
-
-#### `commandments-php-templates`
-
-| Sin | Judges | What it flags |
-|---|---|---|
-| `assembled-template` | PHP, Vue, TypeScript, Python, C#, Go | A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it |
-
 #### `commandments-php-concurrent-state`
 
 | Sin | Judges | What it flags |
@@ -137,6 +112,19 @@ _175 sins across 27 skills._
 | `phantom-nullable` | PHP, Python, C# | Every dereference assumes the declared optional value is present |
 | `placeholder-filled-data` | PHP, Vue, TypeScript, Python, C# | A blank string fills a required string field in a data type |
 | `raw-decoded-array-return` | PHP, Vue, TypeScript, Python, C#, Go | A function returns decoded data before checking and giving it a type |
+
+#### `commandments-shared-behaviour-per-method`
+
+| Sin | Judges | What it flags |
+|---|---|---|
+| `flag-argument` | PHP, Vue, TypeScript, Python, C#, Go | a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name |
+
+#### `commandments-shared-class-layout`
+
+| Sin | Judges | What it flags |
+|---|---|---|
+| `member-after-method` | PHP, Vue, TypeScript, Python, C# | A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it. |
+| `member-out-of-order` | PHP, Vue, TypeScript, Python, C# | A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads |
 
 #### `commandments-shared-dependencies`
 
@@ -250,6 +238,12 @@ _175 sins across 27 skills._
 | `derived-argument` | PHP, Vue, TypeScript, Python, C#, Go | Passing the same object twice, once whole and once broken into a piece, or broken into several pieces at once, when the callee could derive each piece itself from the one object. |
 | `param-resolved-from-param` | PHP, Vue, TypeScript, Python, C#, Go | Unpacking the target out of a container parameter: a method takes a container and a key (a workflow and a node id) and resolves the node itself, when it could just receive the node. |
 
+#### `commandments-shared-role-vocabulary`
+
+| Sin | Judges | What it flags |
+|---|---|---|
+| `hand-rolled-registry` | PHP, Vue, TypeScript, Python, C#, Go | A class writes its own keyed store (fill under a key, throw on a missing key) instead of extending the one Registry base |
+
 #### `commandments-shared-tell-dont-ask`
 
 | Sin | Judges | What it flags |
@@ -258,6 +252,12 @@ _175 sins across 27 skills._
 | `guard-beside-transition` | PHP, Vue, TypeScript, Python, C#, Go | A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards |
 | `middle-man` | PHP, Vue, TypeScript, Python, C#, Go | A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work. |
 | `train-wreck` | PHP, Vue, TypeScript, Python, C#, Go | A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller. |
+
+#### `commandments-shared-templates`
+
+| Sin | Judges | What it flags |
+|---|---|---|
+| `assembled-template` | PHP, Vue, TypeScript, Python, C#, Go | A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it |
 
 #### `commandments-shared-type-honesty`
 

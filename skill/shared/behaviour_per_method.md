@@ -3,6 +3,7 @@
 > Read this before you add a `bool` parameter that switches what a method does, or make a parameter optional so
 > that leaving it out means something different, and when a behaviour-per-method finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -14,7 +15,7 @@ which half it wants: it wrote the literal. So the choice can be made by name, at
 readable: `renderCompact()`.
 
 The same holds for a parameter made optional so that leaving it out means "all of them" or "the other mode". The
-absence is a flag in disguise.
+absence is a flag too.
 
 What the two halves really share goes into a private method both call.
 
@@ -28,7 +29,7 @@ function render(compact: bool) {
     return this.header() + this.rows() + this.footer()
 }
 
-label = widget.render(true)
+label = widget.render(true)   // ← true means what?
 
 // Good
 function renderCompact() {
@@ -52,7 +53,7 @@ two methods, each named for what it does.
 ```pseudo
 // Bad
 function export(orders, asCsv: bool) {
-    if (asCsv) {
+    if (asCsv) {   // ← the flag splits the body in two
         return csv(orders.map(order => order.toRow()))
     }
 
@@ -60,7 +61,7 @@ function export(orders, asCsv: bool) {
 }
 
 function archive(customer: Customer? = null) {
-    if (customer == null) {
+    if (customer == null) {   // ← leaving the argument out picks another behaviour
         archiveEveryone()
         return
     }

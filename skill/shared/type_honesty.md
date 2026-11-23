@@ -3,6 +3,7 @@
 > Read this before you widen a type to make something pass, add a check "just in case", keep a member "for later", or
 > override a method to refuse it, and when a type-honesty finding points here.
 > The examples are pseudocode: read them as the language you are writing.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -31,7 +32,7 @@ decide the absence where the value is born.
 ```pseudo
 // Bad
 function ship(order: Order) {
-    if (order == null) {
+    if (order == null) {   // ← the type says this cannot happen
         return
     }
 
@@ -53,7 +54,7 @@ out gives it back.
 ```pseudo
 // Bad
 function fillCounts(state: ExportState, run: string): void {
-    state.rows = api.countRows(run)
+    state.rows = api.countRows(run)   // ← changes the caller's object; the signature does not say so
 }
 
 state = ExportState()
@@ -79,13 +80,13 @@ class Router {
     prefix: string
 
     function nest(segment, routes) {
-        parent = this.prefix
+        parent = this.prefix   // ← saved here
         this.prefix = parent + "/" + segment
 
         try {
             return routes.map(route => this.prefix + "#" + route)
         } finally {
-            this.prefix = parent
+            this.prefix = parent   // ← and put back here: it was never the object's state
         }
     }
 }
@@ -110,7 +111,7 @@ extending it.
 // Bad
 class ReadOnlyLedger extends Ledger {
     function post(amount) {
-        throw LedgerIsReadOnly.forPosting(amount)
+        throw LedgerIsReadOnly.forPosting(amount)   // ← inherits post() only to refuse it
     }
 }
 
@@ -129,7 +130,7 @@ for it. Remove it and the argument at each call, or use it where it was meant to
 
 ```pseudo
 // Bad
-function charge(token: string, amount: Money): string {
+function charge(token: string, amount: Money): string {   // ← amount is never read
     return gateway.send(token)
 }
 
@@ -148,9 +149,9 @@ carries it. Delete it, or call it from where it was meant to be used.
 // Bad
 class Cart {
     private lines: Line[]
-    private lastTouched: Time          // never read
+    private lastTouched: Time          // ← never read
 
-    private function recalculate() { … }   // never called
+    private function recalculate() { … }   // ← never called
 }
 
 // Good
@@ -162,14 +163,14 @@ class Cart {
 ### useless-property-hook
 
 A property getter that reads nothing from the object. It yields the same value however the instance is built, so it
-is a stored property wearing computed syntax. Store it. Keep a getter only when its body derives from the object's
+is a stored value written as a computed one. Store it. Keep a getter only when its body derives from the object's
 state.
 
 ```pseudo
 // Bad
 class LabelDefaults {
     get maxWeight(): Weight {
-        return Weight(23000)
+        return Weight(23000)   // ← reads nothing from the object
     }
 }
 
@@ -188,7 +189,7 @@ The same sin in Python: an `@property` whose body never reads `self`.
 class Parcel:
     @property
     def kind(self) -> str:
-        return "box"
+        return "box"   # ← never reads self
 
 # Good
 class Parcel:

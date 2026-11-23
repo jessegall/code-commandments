@@ -2,6 +2,7 @@
 > Read this before you write a nullable type, a `return null`, a `?? default`, a `?.`, or an "is it there?" check,
 > and when an absence finding points here.
 > The examples are pseudocode: `T?` is a type that may hold nothing, `??` is "or else". Read them as your language.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
@@ -22,13 +23,13 @@ What is never honest is the fifth answer: a nullable type that every caller trea
 the bug surfaces far from where it started.
 
 ```pseudo
-// Bad: the finder shrugs, and every caller pretends it did not
+// Bad: the finder does not decide, and every caller acts as if the value is always there
 function find(id): Customer? {
     return customers.get(id)
 }
 
-name = find(id).name                 // crashes somewhere else, later
-email = find(id)?.email ?? ""        // or invents a customer with no email
+name = find(id).name                 // ← crashes somewhere else, later
+email = find(id)?.email ?? ""        // ← or invents a customer with no email
 
 // Good: the finder decides, and the type carries the decision
 function find(id): Customer {
@@ -47,11 +48,11 @@ A finder returns `T?`, and every caller takes the result as present. The type sa
 
 ```pseudo
 // Bad
-function byBarcode(barcode): Product? {
+function byBarcode(barcode): Product? {   // ← says the product may be missing
     return products.firstWhere(barcode)
 }
 
-name = byBarcode(code).name
+name = byBarcode(code).name   // ← and every caller acts as if it never is
 stock = byBarcode(code).stock
 
 // Good
@@ -63,20 +64,20 @@ function byBarcode(barcode): Product {
 ### nullable-registry-lookup
 
 A keyed store answers a miss with nothing. A registry is asked for keys that are expected to exist, so a miss is a
-failure with a name, not a `null` for the caller to trip over.
+failure with a name, not a `null` the caller must remember to check.
 
 ```pseudo
 // Bad
 class TariffBook {
     function forZone(zone): Tariff? {
-        return this.tariffs[zone] ?? null
+        return this.tariffs[zone] ?? null   // ← an unknown zone becomes a null the caller must remember to check
     }
 }
 
 // Good
 class TariffBook {
     function forZone(zone): Tariff {
-        return this.tariffs[zone] ?? throw UnknownZone.named(zone)
+        return this.tariffs[zone] ?? throw UnknownZone.named(zone)   // ← a miss fails by name
     }
 
     function has(zone): bool {
@@ -93,9 +94,9 @@ with the values the field can hold: require it where the object is built.
 ```pseudo
 // Bad
 class Invoice {
-    customer: Customer?
+    customer: Customer?   // ← declared optional
 
-    function recipient() { return this.customer.name }
+    function recipient() { return this.customer.name }   // ← read as if it is always there
     function address()   { return this.customer.address }
 }
 
@@ -116,7 +117,7 @@ certain where it is set.
 ```pseudo
 // Bad: "focus() ran first" is required, and a broken promise reads as "no"
 function covers(date): bool {
-    return this.period?.includes(date) ?? false
+    return this.period?.includes(date) ?? false   // ← a missing period answers "no" instead of failing
 }
 
 // Good
@@ -136,7 +137,7 @@ email `''`: a question nobody meant to ask. Resolve the missing key first, and o
 
 ```pseudo
 // Bad
-customer = customers.byEmail(row["email"] ?? "")
+customer = customers.byEmail(row["email"] ?? "")   // ← asks for the customer whose email is empty
 
 // Good
 email = row["email"] ?? throw RowWithoutEmail.at(row)
@@ -151,7 +152,7 @@ code never says that it meant both.
 
 ```pseudo
 // Bad
-if ((name ?? "") != "") {
+if ((name ?? "") != "") {   // ← falls back to "" only to compare with ""
     greet(name)
 }
 
@@ -168,7 +169,7 @@ looks. Handle the missing input before the loop, or require a collection.
 
 ```pseudo
 // Bad
-for (parcel in manifest[carrier] ?? []) {
+for (parcel in manifest[carrier] ?? []) {   // ← a missing carrier quietly loops zero times
     queue(parcel)
 }
 
@@ -187,6 +188,7 @@ statement.
 ```pseudo
 // Bad
 query = { sort: sort, ...(brand == null ? {} : { brand: brand }) }
+// ↑ an empty map is spread in, only to say "no brand"
 
 // Good
 query = { sort: sort }
@@ -205,14 +207,14 @@ Default it to a named no-op, or require it.
 // Bad
 function run(work, onRetry: Callback? = null) {
     try { work() } catch (failure) {
-        if (onRetry != null) {
+        if (onRetry != null) {   // ← every call of the callback needs this check
             onRetry(failure)
         }
     }
 }
 
 // Good
-function run(work, onRetry: Callback = NoOp) {
+function run(work, onRetry: Callback = NoOp) {   // ← a default that does nothing
     try { work() } catch (failure) {
         onRetry(failure)
     }
@@ -228,7 +230,7 @@ type the field for it.
 ```pseudo
 // Bad
 class ExportPreferences {
-    settings: object
+    settings: object   // ← typed so loosely that every method must ask what it is
 
     function canEmail()   { return this.settings is ExportSettings && this.settings.email }
     function canArchive() { return this.settings is ExportSettings && this.settings.archive }
@@ -236,7 +238,7 @@ class ExportPreferences {
 
 // Good: the owner receives the capability it needs, already decided
 class ExportPreferences {
-    settings: ExportSettings
+    settings: ExportSettings   // ← decided once, where it is handed over
 
     function canEmail()   { return this.settings.email }
     function canArchive() { return this.settings.archive }
@@ -250,7 +252,7 @@ Require the text, or give absence its own type.
 
 ```pseudo
 // Bad
-function invite(email: string, name: string = "") { … }
+function invite(email: string, name: string = "") { … }   // ← forget the name and a blank travels on as data
 
 // Good
 function invite(email: string, name: string) { … }
@@ -263,7 +265,7 @@ constructing, or model the incomplete state as a type of its own.
 
 ```pseudo
 // Bad
-draft = Customer(name: form.name, email: "", country: "")
+draft = Customer(name: form.name, email: "", country: "")   // ← looks complete and is not
 
 // Good
 draft = CustomerDraft(name: form.name)
@@ -279,10 +281,10 @@ an untyped bag and guesses which keys exist. Validate at the boundary and return
 ```pseudo
 // Bad
 function settings(): map {
-    return json.decode(file.read("settings.json"))
+    return json.decode(file.read("settings.json"))   // ← unchecked data leaves the boundary
 }
 
-limit = settings()["limit"] ?? 10
+limit = settings()["limit"] ?? 10   // ← so every caller guesses which keys exist
 
 // Good
 function settings(): Settings {
@@ -304,7 +306,7 @@ function carrierFor(zone): Carrier? {
     return match (zone) {
         "eu"    => Carrier.Post
         "world" => Carrier.Air
-        default => null
+        default => null   // ← an unknown zone becomes "no carrier"
     }
 }
 
@@ -325,7 +327,7 @@ forgets treats `false` as data.
 
 ```php
 // Bad
-public function position(string $sku): int|false
+public function position(string $sku): int|false   // ← false stands for "not found"
 {
     return array_search($sku, $this->skus, true);
 }
@@ -346,7 +348,7 @@ one was the point. Wrap once at the seam, then consume it as an option.
 
 ```php
 // Bad
-public function coupon(): ?Option { … }
+public function coupon(): ?Option { … }   // ← a maybe inside a maybe
 
 $code = $order->coupon()?->unwrapOr(null);
 
@@ -371,7 +373,7 @@ object that modelled the absence is gone.
 // Bad
 public function __construct(public readonly string $nickname) {}
 
-new Profile(nickname: (string) new NoNickname);
+new Profile(nickname: (string) new NoNickname);   // ← the cast turns the object back into ''
 
 // Good: the slot's type carries the object
 public function __construct(public readonly Nickname $nickname) {}
@@ -389,6 +391,7 @@ unwritten rule. Say absence in the type, so both sides spell it one way.
 final class ProfileData extends Data
 {
     public function __construct(public readonly string $avatarUrl = '') {}
+    // ↑ '' means "no avatar", and only the frontend knows it
 }
 
 // Good
@@ -405,7 +408,7 @@ instead of deciding.
 
 ```csharp
 // Bad
-var customer = customers.Find(id)!;
+var customer = customers.Find(id)!;   // ← silences the compiler and decides nothing
 
 // Good
 var customer = customers.Find(id) ?? throw CustomerNotFound.WithId(id);
@@ -420,10 +423,11 @@ case that cannot happen.
 ```ts
 // Bad
 class Cart {
-    private lines?: Line[] = []
+    private lines?: Line[] = []   // ← optional, yet always set
 
     total(): number {
         return this.lines?.reduce((sum, line) => sum + line.price, 0) ?? 0
+        // ↑ defends a case that cannot happen
     }
 }
 
