@@ -132,8 +132,8 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		t.Error("the map skill does not list the Python disciplines")
 	}
 
-	if agents := c.read("AGENTS.md"); !strings.Contains(agents, "`commandments`") {
-		t.Error("AGENTS.md does not point at the map skill")
+	if briefing := c.read("COMMANDMENTS.md"); !strings.Contains(briefing, "`commandments`") || !strings.Contains(c.read("AGENTS.md"), "COMMANDMENTS.md") {
+		t.Error("the briefing does not point at the map skill, or AGENTS.md does not point at the briefing")
 	}
 
 	if settings := c.read(".claude/settings.json"); !strings.Contains(settings, `"command": "commandments hooks # @code-commandments-managed"`) || strings.Contains(settings, "php") {
@@ -180,6 +180,7 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 
 	for said, text := range map[string]string{
 		"AGENTS.md":                            c.read("AGENTS.md"),
+		"COMMANDMENTS.md":                      c.read("COMMANDMENTS.md"),
 		".agents/skills/commandments/SKILL.md": c.read(".agents/skills/commandments/SKILL.md"),
 		"judge":                                judged,
 		"the per-edit hook":                    hooked,
@@ -190,7 +191,7 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		}
 	}
 
-	if !strings.Contains(c.read("AGENTS.md"), "`commandments judge`") || !strings.Contains(stopped, "`commandments judge --changes`") {
+	if !strings.Contains(c.read("COMMANDMENTS.md"), "`commandments judge`") || !strings.Contains(stopped, "`commandments judge --changes`") {
 		t.Error("the briefing or the stop hook does not name the binary")
 	}
 }
