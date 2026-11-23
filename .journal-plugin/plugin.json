@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "8.0.0",
+    "version": "8.0.1",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -51,7 +51,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v8.0.0"
+        "COMMANDMENTS_RELEASE": "v8.0.1"
     },
     "setup": [
         {
@@ -522,6 +522,19 @@
             ],
             "detail": true
         },
+        "sin_dead-config-key": {
+            "title": "dead-config-key",
+            "help": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt",
+            "type": "flag",
+            "default": "true",
+            "group": "php/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_dead-event-wiring": {
             "title": "dead-event-wiring",
             "help": "A listener wired to an event class no live code path can fire (`Event::listen`, or an entry of an event service provider's `$listen`) — a listener chain that dead-ends but reads as live wiring",
@@ -850,6 +863,19 @@
         "sin_boundary-duplicated-operation": {
             "title": "boundary-duplicated-operation",
             "help": "The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift",
+            "type": "flag",
+            "default": "true",
+            "group": "php/route-actions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_dangling-route-name": {
+            "title": "dangling-route-name",
+            "help": "A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500",
             "type": "flag",
             "default": "true",
             "group": "php/route-actions",
@@ -1954,6 +1980,34 @@
         "sin_namespace-cycle": {
             "title": "namespace-cycle",
             "help": "Two independent modules import each other",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/dependencies",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_undeclared-member": {
+            "title": "undeclared-member",
+            "help": "A member access the receiver's declared type neither declares nor inherits",
             "type": "flag",
             "default": "true",
             "group": "shared/dependencies",

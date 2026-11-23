@@ -85,6 +85,7 @@ final readonly class Stream
      */
     private function read(string $code, Parser $parser, string $path): array
     {
+        $code = BladeTemplate::isOne($path) ? BladeTemplate::asPhp($code, $parser) : $code;
         $errors = new Collecting();
         $statements = $parser->parse($code, $errors) ?? [];
         $names = new NameResolver($errors, ['preserveOriginalNames' => true]);
@@ -98,7 +99,7 @@ final readonly class Stream
      */
     private function parsed(string $path, string $code, array $statements, Collecting $errors, array $tokens, Types $types): ParsedFile
     {
-        $translator = new Translator($code, $tokens, $types);
+        $translator = new Translator($code, $tokens, $types, $path);
         $root = $translator->file($statements);
         $nodes = $root->numbered();
         $modules = $root->parts['modules'];

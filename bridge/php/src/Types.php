@@ -99,7 +99,7 @@ final class Types
         }
         foreach ($class->getProperties() as $property) {
             foreach ($property->props as $declared) {
-                $properties[$declared->name->toString()] = $this->written($property->type, $name);
+                $properties[$declared->name->toString()] = $this->written($property->type, $name) ?? $property->getAttribute('documentedProperty');
             }
         }
         if ($class instanceof Stmt\Enum_) {
@@ -204,6 +204,36 @@ final class Types
     public function declared(string $class): ?array
     {
         return $this->declaration($class);
+    }
+
+    /**
+     * The class among a class, its traits, parents and interfaces that declares a member by that name, nearest first;
+     * null when none does, and false when a class on the way cannot be read, so none can be ruled out.
+     */
+    public function memberOwner(string $class, string $member): string|false|null
+    {
+        $seen = [];
+        $waiting = [$class];
+        $complete = true;
+        while ($waiting !== []) {
+            $at = array_shift($waiting);
+            if (isset($seen[strtolower($at)])) {
+                continue;
+            }
+            $seen[strtolower($at)] = true;
+            $declared = $this->declaration($at);
+            if ($declared === null) {
+                $complete = false;
+
+                continue;
+            }
+            if (isset($declared['methods'][strtolower($member)]) || isset($declared['constants'][$member]) || array_key_exists($member, $declared['properties'])) {
+                return $declared['name'];
+            }
+            array_push($waiting, ...$declared['traits'], ...($declared['parent'] !== null ? [$declared['parent']] : []), ...$declared['interfaces']);
+        }
+
+        return $complete ? null : false;
     }
 
     /**

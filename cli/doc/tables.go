@@ -364,12 +364,7 @@ func Generated(root string) (map[string]string, error) {
 			return nil, err
 		}
 
-		pinned := string(text)
-		if journal != Journal4Plugin {
-			pinned = repinned(pinned, release)
-		}
-
-		if documents[journal], err = renamedVersion(pinned, version); err != nil {
+		if documents[journal], err = renamedVersion(repinned(string(text), release), version); err != nil {
 			return nil, fmt.Errorf("%s: %w", journal, err)
 		}
 	}

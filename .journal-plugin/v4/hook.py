@@ -1,5 +1,5 @@
-"""Frozen at release 7.18.115 for journals before version 5, which read journal-plugin.json: it runs the v7.18.115
-binary that manifest pins, and never changes again; journals from version 5 on run .journal-plugin/hook.py.
+"""The script journals before version 5 run, which read journal-plugin.json: it runs the release binary that manifest
+pins through the binary's plugin-hook command; journals from version 5 on run .journal-plugin/hook.py.
 
 The plugin's answer to every event the agent journal hands it: one JSON line in, one out. The pinned release binary
 judges; this script decides which events are judged later, queues that judging in the journal, and shapes every answer

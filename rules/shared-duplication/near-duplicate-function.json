@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -369,6 +370,62 @@
           ]
         ]
       ]
+    },
+    "handedCallback": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "in",
+          "$f.form",
+          "closure",
+          "arrow",
+          "lambda"
+        ],
+        [
+          "=",
+          "$f.parent.kind",
+          "argument"
+        ]
+      ]
+    },
+    "extendsItsParent": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownDescendants",
+          "$f"
+        ],
+        "c",
+        [
+          "and",
+          [
+            "=",
+            "$c.kind",
+            "call"
+          ],
+          [
+            "=",
+            "$c.callee.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$c.callee.subject.form",
+            "parent"
+          ],
+          [
+            "=",
+            "$c.callee.member.name",
+            "$f.name"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -414,6 +471,14 @@
           ],
           [
             "inMigration",
+            "$f"
+          ],
+          [
+            "handedCallback",
+            "$f"
+          ],
+          [
+            "extendsItsParent",
             "$f"
           ]
         ]

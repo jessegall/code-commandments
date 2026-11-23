@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -155,6 +156,88 @@
                 ]
               ]
             ]
+          ]
+        ]
+      ]
+    },
+    "objectAssigned": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "referrers",
+          "$n"
+        ],
+        "r",
+        [
+          "and",
+          [
+            "=",
+            "$r.parent.role",
+            "targets"
+          ],
+          [
+            "=",
+            "$r.parent.parent.kind",
+            "assignment"
+          ],
+          [
+            "some",
+            "$r.parent.parent.values",
+            "v",
+            [
+              "=",
+              [
+                "at",
+                [
+                  "map",
+                  [
+                    "list",
+                    [
+                      "typeOf",
+                      "$v"
+                    ]
+                  ],
+                  "t",
+                  "$t.kind"
+                ],
+                0
+              ],
+              "named"
+            ]
+          ]
+        ]
+      ]
+    },
+    "indexWritten": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "referrers",
+          "$n"
+        ],
+        "r",
+        [
+          "and",
+          [
+            "=",
+            "$r.parent.role",
+            "subject"
+          ],
+          [
+            "=",
+            "$r.parent.parent.kind",
+            "index"
+          ],
+          [
+            "=",
+            "$r.parent.parent.role",
+            "targets"
           ]
         ]
       ]
@@ -346,6 +429,64 @@
           ]
         ],
         0
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "function"
+          ],
+          [
+            "some",
+            [
+              "descendants",
+              "$owner"
+            ],
+            "c",
+            [
+              "and",
+              [
+                "=",
+                "$c.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$c.callee.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$c.callee.member.name",
+                "$m.name"
+              ],
+              [
+                "not",
+                [
+                  "exists",
+                  "$c.target"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "objectAssigned",
+            "$named"
+          ],
+          [
+            "indexWritten",
+            "$named"
+          ]
+        ]
       ],
       [
         "none",

@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -193,6 +194,32 @@
                       "=",
                       "$x.role",
                       "callee"
+                    ]
+                  ]
+                ],
+                [
+                  "not",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$x.kind",
+                      "call"
+                    ],
+                    [
+                      "=",
+                      "$x.callee.kind",
+                      "reference"
+                    ],
+                    [
+                      "not",
+                      [
+                        "exists",
+                        [
+                          "declarationOf",
+                          "$x.callee"
+                        ]
+                      ]
                     ]
                   ]
                 ]

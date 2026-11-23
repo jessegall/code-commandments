@@ -101,7 +101,7 @@ final class Translator
     /**
      * @param  list<Token>  $tokens
      */
-    public function __construct(private readonly string $code, private readonly array $tokens, private readonly ?Types $known = null)
+    public function __construct(private readonly string $code, private readonly array $tokens, private readonly ?Types $known = null, private readonly ?string $path = null)
     {
         preg_match_all('/\n/', $code, $breaks, PREG_OFFSET_CAPTURE);
         foreach ($breaks[0] as [, $at]) {
@@ -968,7 +968,7 @@ final class Translator
                 fn (Node $part): TreeNode => $part instanceof Node\InterpolatedStringPart ? $this->of('text', $part)->with('value', $part->value) : $this->expression($part),
                 $expression->parts,
             )]),
-            $expression instanceof Node\Scalar\MagicConst => $this->of('reference', $expression, ['name' => $expression->getName(), 'form' => 'name']),
+            $expression instanceof Node\Scalar\MagicConst => $this->of('reference', $expression, ['name' => $expression->getName(), 'form' => 'name', 'refers' => $this->magicValue($expression)]),
             $expression instanceof Expr\ConstFetch => $this->constant($expression),
             $expression instanceof Expr\Assign => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var, true)], 'values' => [$this->expression($expression->expr)]], ['mode' => 'assign']),
             $expression instanceof Expr\AssignRef => $this->owning('assignment', $expression, ['targets' => [$this->target($expression->var, true)], 'values' => [$this->expression($expression->expr)]], ['mode' => 'assign']),
@@ -1367,19 +1367,22 @@ final class Translator
                     $bare && $enclosingParent !== null ? [$enclosingParent, $written] : null,
                 ])),
             };
+            if ($bare && ! $called && ! function_exists($written) && ctype_lower($written[0]) && $this->ownerOf($readings) === null) {
+                continue;
+            }
             $ref = ['text' => $written.($member !== null ? '::'.$member : '')];
+            $unreadable = false;
             foreach ($readings as [$class, $named]) {
                 $declared = $this->known?->declared($class);
-                if ($declared !== null && ($named === null
-                    || isset($declared['methods'][strtolower($named)])
-                    || isset($declared['constants'][$named])
-                    || isset($declared['properties'][$named]))) {
-                    $ref['symbol'] = $named === null ? $declared['name'] : $declared['name'].'::'.$named;
+                $owner = $declared !== null && $named !== null ? $this->known->memberOwner($class, $named) : null;
+                $unreadable = $unreadable || $owner === false;
+                if ($declared !== null && ($named === null || is_string($owner))) {
+                    $ref['symbol'] = $named === null ? $declared['name'] : $owner.'::'.$named;
                     break;
                 }
             }
             if (! isset($ref['symbol'])) {
-                $ref['ownedHere'] = $bare && $called && function_exists($written)
+                $ref['ownedHere'] = ($bare && function_exists($written)) || $unreadable
                     ? false
                     : strtok($readings[0][0] ?? $this->qualified($written), '\\') === strtok((string) $this->namespace, '\\');
             }
@@ -1387,6 +1390,34 @@ final class Translator
         }
 
         return $refs;
+    }
+
+    /**
+     * What a magic constant stands for where it is written, for the ones a file fixes: its file's name, its folder's name and its class.
+     */
+    private function magicValue(Node\Scalar\MagicConst $constant): ?string
+    {
+        return match (true) {
+            $constant instanceof Node\Scalar\MagicConst\File => $this->path !== null ? basename($this->path) : null,
+            $constant instanceof Node\Scalar\MagicConst\Dir => $this->path !== null ? basename(dirname($this->path)) : null,
+            $constant instanceof Node\Scalar\MagicConst\Class_ => $this->classes === [] ? null : ($this->classes[array_key_last($this->classes)]['self'] ?? null),
+            default => null,
+        };
+    }
+
+    /**
+     * @param  list<array{0: string, 1: ?string}>  $readings
+     */
+    private function ownerOf(array $readings): ?string
+    {
+        foreach ($readings as [$class, $named]) {
+            $owner = $named !== null ? $this->known?->memberOwner($class, $named) : ($this->known?->declared($class)['name'] ?? null);
+            if ($owner !== null) {
+                return $owner === false ? '' : $owner;
+            }
+        }
+
+        return null;
     }
 
     private function qualified(string $written): string
@@ -1647,7 +1678,7 @@ final class Translator
         });
         $errors = new Collecting();
         $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
-        $code = "<?php {$text}";
+        $code = preg_match('/^(\?->|->|::)\w/', $text) === 1 ? "<?php \$chained{$text};" : "<?php {$text}";
         $statements = $text === '' ? [] : ($parser->parse($code, $errors) ?? []);
         $read = ['context' => 'statement', 'diagnostics' => count($errors->getErrors()), 'statements' => count($statements)];
         if (count($statements) === 1 && $statements[0] instanceof Stmt\Expression) {

@@ -1,6 +1,7 @@
 {
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
+    "php",
     "python",
     "csharp",
     "typescript",
@@ -393,6 +394,26 @@
           ]
         ]
       ]
+    },
+    "accessorDeclaration": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "soleStatement",
+          "$f"
+        ],
+        [
+          "proven",
+          [
+            "assignable",
+            "$f.returnType.resolved",
+            "attribute-accessor"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -425,6 +446,10 @@
           ],
           [
             "inMigration",
+            "$f"
+          ],
+          [
+            "accessorDeclaration",
             "$f"
           ]
         ]

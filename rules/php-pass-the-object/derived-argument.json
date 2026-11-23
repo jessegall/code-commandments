@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -513,6 +514,49 @@
           ]
         ]
       ]
+    },
+    "rootsTypedAt": {
+      "args": [
+        "d",
+        "at"
+      ],
+      "expr": [
+        "every",
+        [
+          "callsOf",
+          "$d"
+        ],
+        "o",
+        [
+          "exists",
+          [
+            "typeDeclaration",
+            [
+              "at",
+              [
+                "map",
+                [
+                  "list",
+                  [
+                    "typeOf",
+                    [
+                      "pieceRoot",
+                      [
+                        "values",
+                        "$o"
+                      ],
+                      "$at"
+                    ]
+                  ]
+                ],
+                "t",
+                "$t.name"
+              ],
+              0
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -637,6 +681,14 @@
             1
           ],
           [
+            "rootsTypedAt",
+            "$callee",
+            [
+              "position",
+              "$g"
+            ]
+          ],
+          [
             "not",
             [
               "isSelf",
@@ -667,6 +719,64 @@
                 [
                   "position",
                   "$g"
+                ]
+              ]
+            ]
+          ],
+          [
+            "or",
+            [
+              "!=",
+              "$c.kind",
+              "construction"
+            ],
+            [
+              "every",
+              [
+                "values",
+                "$c"
+              ],
+              "h",
+              [
+                "and",
+                [
+                  "exists",
+                  [
+                    "piece",
+                    "$h"
+                  ]
+                ],
+                [
+                  "=",
+                  [
+                    "fingerprint",
+                    [
+                      "rootOf",
+                      [
+                        "subjectOf",
+                        [
+                          "piece",
+                          "$h"
+                        ]
+                      ]
+                    ],
+                    "exact"
+                  ],
+                  [
+                    "fingerprint",
+                    [
+                      "pieceRoot",
+                      [
+                        "values",
+                        "$c"
+                      ],
+                      [
+                        "position",
+                        "$g"
+                      ]
+                    ],
+                    "exact"
+                  ]
                 ]
               ]
             ]
@@ -884,12 +994,12 @@
             ],
             "s",
             [
-              "in",
-              "$s",
+              "has",
               [
                 "identities",
                 "stored-event"
-              ]
+              ],
+              "$s"
             ]
           ]
         ]

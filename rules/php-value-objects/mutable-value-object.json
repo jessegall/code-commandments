@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -328,6 +329,127 @@
                   [
                     "tree.nullish",
                     "$o"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "some",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              [
+                "enclosing",
+                "$a",
+                "function"
+              ]
+            ],
+            "g",
+            [
+              "and",
+              [
+                "=",
+                "$g.kind",
+                "if"
+              ],
+              [
+                "<",
+                "$g.line",
+                "$a.line"
+              ]
+            ]
+          ],
+          "g",
+          [
+            "and",
+            [
+              "=",
+              "$g.kind",
+              "if"
+            ],
+            [
+              "some",
+              [
+                "flatten",
+                [
+                  "list",
+                  [
+                    "list",
+                    "$g.then"
+                  ],
+                  [
+                    "ownDescendants",
+                    "$g.then"
+                  ]
+                ]
+              ],
+              "s",
+              [
+                "=",
+                "$s.kind",
+                "return"
+              ]
+            ],
+            [
+              "some",
+              [
+                "flatten",
+                [
+                  "list",
+                  [
+                    "list",
+                    "$g.condition"
+                  ],
+                  [
+                    "descendants",
+                    "$g.condition"
+                  ]
+                ]
+              ],
+              "c",
+              [
+                "and",
+                [
+                  "=",
+                  "$c.kind",
+                  "comparison"
+                ],
+                [
+                  "some",
+                  "$c.operands",
+                  "o",
+                  [
+                    "tree.nullish",
+                    "$o"
+                  ]
+                ],
+                [
+                  "some",
+                  "$c.operands",
+                  "o",
+                  [
+                    "and",
+                    [
+                      "tree.selfField",
+                      "$o"
+                    ],
+                    [
+                      "=",
+                      "$o.member.name",
+                      [
+                        "at",
+                        [
+                          "map",
+                          "$a.targets",
+                          "t",
+                          "$t.member.name"
+                        ],
+                        0
+                      ]
+                    ]
                   ]
                 ]
               ]

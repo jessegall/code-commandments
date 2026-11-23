@@ -1,0 +1,10 @@
+{
+  "package": "laravel/folio",
+  "ecosystem": "composer",
+  "versions": ">=1.0",
+  "provenance": "Folio names a page's route with the function Laravel\\Folio\\name() written in the page itself",
+  "entries": [],
+  "identities": [
+    {"name": "page-route-namer", "type": "Laravel\\Folio\\name"}
+  ]
+}

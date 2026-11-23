@@ -86,7 +86,7 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 14 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 15 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

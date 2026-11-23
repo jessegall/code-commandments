@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -412,93 +413,100 @@
       ]
     ],
     "having": [
-      "or",
+      "and",
       [
-        "some",
-        [
-          "constantsAt",
-          "$callee",
-          "$at"
-        ],
-        "e",
-        [
-          "and",
-          [
-            "=",
-            [
-              "get",
-              "$e",
-              "word"
-            ],
-            "$a.value.value"
-          ],
-          [
-            "not",
-            [
-              "proven",
-              [
-                "vocabularyOfCaller",
-                "$e",
-                "$a"
-              ]
-            ]
-          ]
-        ]
+        "exists",
+        "$callee"
       ],
       [
-        "some",
+        "or",
         [
-          "constantsAt",
-          "$callee",
-          "$at"
-        ],
-        "e",
-        [
-          "and",
+          "some",
           [
-            "some",
-            [
-              "get",
-              "$e",
-              "words"
-            ],
-            "w",
+            "constantsAt",
+            "$callee",
+            "$at"
+          ],
+          "e",
+          [
+            "and",
             [
               "=",
-              "$w",
-              "$a.value.value"
-            ]
-          ],
-          [
-            "not",
-            [
-              "proven",
               [
-                "vocabularyOfCaller",
+                "get",
                 "$e",
-                "$a"
+                "word"
+              ],
+              "$a.value.value"
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "vocabularyOfCaller",
+                  "$e",
+                  "$a"
+                ]
               ]
             ]
           ]
-        ]
-      ],
-      [
-        "and",
-        [
-          "nonempty",
-          "$a.parent.target.symbol"
         ],
         [
-          "hasRow",
-          "constant-arguments",
+          "some",
           [
-            "record",
-            "callee",
-            "$a.parent.target.symbol",
-            "at",
-            "$at",
-            "word",
-            "$a.value.value"
+            "constantsAt",
+            "$callee",
+            "$at"
+          ],
+          "e",
+          [
+            "and",
+            [
+              "some",
+              [
+                "get",
+                "$e",
+                "words"
+              ],
+              "w",
+              [
+                "=",
+                "$w",
+                "$a.value.value"
+              ]
+            ],
+            [
+              "not",
+              [
+                "proven",
+                [
+                  "vocabularyOfCaller",
+                  "$e",
+                  "$a"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "nonempty",
+            "$a.parent.target.symbol"
+          ],
+          [
+            "hasRow",
+            "constant-arguments",
+            [
+              "record",
+              "callee",
+              "$a.parent.target.symbol",
+              "at",
+              "$at",
+              "word",
+              "$a.value.value"
+            ]
           ]
         ]
       ]

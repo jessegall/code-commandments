@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -484,6 +485,100 @@
               "$f.obligations"
             ],
             0
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "in",
+            "$f.form",
+            "closure",
+            "arrow",
+            "lambda"
+          ],
+          [
+            "=",
+            "$f.parent.kind",
+            "argument"
+          ],
+          [
+            "not",
+            [
+              "exists",
+              [
+                "declarationOf",
+                "$f.parent.parent"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "list",
+                "$a.parent.subject"
+              ],
+              [
+                "descendants",
+                "$a.parent.subject"
+              ]
+            ]
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "reference"
+            ],
+            [
+              "!=",
+              "$x.role",
+              "member"
+            ],
+            [
+              "some",
+              [
+                "list",
+                [
+                  "declarationOf",
+                  "$x"
+                ]
+              ],
+              "b",
+              [
+                "=",
+                "$b.parent.kind",
+                "parameter"
+              ]
+            ],
+            [
+              "some",
+              [
+                "list",
+                [
+                  "typeOf",
+                  "$x"
+                ]
+              ],
+              "t",
+              [
+                "=",
+                "$t.nullable",
+                true
+              ]
+            ]
           ]
         ]
       ]

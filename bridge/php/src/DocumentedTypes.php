@@ -36,6 +36,9 @@ final class DocumentedTypes extends NodeVisitorAbstract
             if ($variables !== []) {
                 $node->setAttribute('documentedVariables', $variables);
             }
+            if ($node instanceof Node\Stmt\Property && preg_match('/@var\s+(\??)([\\\\A-Za-z_][\\\\A-Za-z0-9_]*)(\|null)?\s*(?:\*\/|\s)/', $doc->getText(), $only) === 1 && ! in_array(strtolower($only[2]), self::BUILT_IN, true)) {
+                $node->setAttribute('documentedProperty', ['name' => $this->names->getNameContext()->getResolvedClassName(new Node\Name($only[2]))->toString()] + ($only[1] !== '' || $only[3] !== '' ? ['nullable' => true] : []));
+            }
 
             return null;
         }

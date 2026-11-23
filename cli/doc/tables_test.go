@@ -16,10 +16,6 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// frozenForJournal4 is the release every journal before version 5 runs: journal-plugin.json pins it for good, with the
-// script frozen beside it in .journal-plugin/v4, and only journal-plugin.5.json follows newer releases.
-const frozenForJournal4 = "v7.18.115"
-
 func TestTheGeneratedDocumentsAreCurrent(t *testing.T) {
 	root := filepath.Join("..", "..")
 	documents, err := doc.Generated(root)
@@ -108,7 +104,6 @@ func TestEveryPluginManifestNamesOneVersionAndFetchesOneRelease(t *testing.T) {
 
 	versions, releases := map[string]bool{}, map[string]bool{}
 	for _, name := range []string{doc.Plugin, doc.Journal4Plugin, doc.Journal5Plugin} {
-		frozen := name == doc.Journal4Plugin
 		text, err := os.ReadFile(filepath.Join(root, name))
 		if err != nil {
 			t.Fatal(err)
@@ -125,14 +120,6 @@ func TestEveryPluginManifestNamesOneVersionAndFetchesOneRelease(t *testing.T) {
 		}
 
 		version, _ := manifest.Get("version")
-		if frozen {
-			if "v"+pinned[1] != frozenForJournal4 {
-				t.Errorf("%s fetches v%s, but journals before version 5 stay on %s for good", name, pinned[1], frozenForJournal4)
-			}
-			versions[fmt.Sprint(version)] = true
-
-			continue
-		}
 		if newer(pinned[1], fmt.Sprint(version)) {
 			t.Errorf("%s says version %v and fetches the later v%s, a binary no tag of this version can have built", name, version, pinned[1])
 		}

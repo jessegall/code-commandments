@@ -1,7 +1,8 @@
 {
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
-    "csharp"
+    "csharp",
+    "php"
   ],
   "sin": {
     "name": "orphaned-binding",

@@ -20,6 +20,13 @@
       ],
       "tag": "no-container",
       "why": "An aggregate is built by AggregateRoot::retrieve() with new static, never by the container, and the repository getters it overrides are declared by the package."
+    },
+    {
+      "attributes": [
+        "Spatie\\EventSourcing\\Attributes\\EventSerializer"
+      ],
+      "tag": "association",
+      "why": "An event names its serializer with #[EventSerializer(X::class)], the only way the package wires them, and the serializer must name the event it builds: one end of a pair the framework requires both ends to name, it carries no dependency direction and cannot close a cycle."
     }
   ],
   "identities": [

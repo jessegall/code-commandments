@@ -2,6 +2,7 @@
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
     "csharp",
+    "php",
     "python",
     "typescript"
   ],
@@ -238,8 +239,108 @@
             ]
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "every",
+          [
+            "filter",
+            "$owner.writtenMembers",
+            "m",
+            [
+              "and",
+              [
+                "=",
+                "$m.kind",
+                "function"
+              ],
+              [
+                "!=",
+                "$m.form",
+                "constructor"
+              ]
+            ]
+          ],
+          "m",
+          [
+            "and",
+            [
+              ">",
+              [
+                "count",
+                "$m.obligations"
+              ],
+              0
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$m.body.statements"
+              ],
+              1
+            ],
+            [
+              "throws",
+              [
+                "at",
+                "$m.body.statements",
+                0
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "ownDescendants",
+            [
+              "at",
+              "$f.body.statements",
+              0
+            ]
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$x.subject.kind",
+              "reference"
+            ],
+            [
+              "some",
+              "$f.parameters",
+              "p",
+              [
+                "=",
+                "$p.binding.name",
+                "$x.subject.name"
+              ]
+            ]
+          ]
+        ]
       ]
     ],
-    "emit": "$f"
+    "emit": "$f",
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$f",
+          "type"
+        ]
+      ]
+    ]
   }
 }

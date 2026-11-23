@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -170,6 +171,33 @@
           "scope": "$scope",
           "key": "$row"
         }
+      },
+      {
+        "where": [
+          "not",
+          [
+            "has",
+            [
+              "identities",
+              "skeleton-folder"
+            ],
+            [
+              "last",
+              [
+                "split",
+                [
+                  "last",
+                  [
+                    "split",
+                    "$key",
+                    "|"
+                  ]
+                ],
+                "/"
+              ]
+            ]
+          ]
+        ]
       },
       {
         "groupBy": "$key"

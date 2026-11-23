@@ -6,4 +6,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`interface-overlap`** — An interface repeats the signatures of a contract it can reuse. — `interface-overlap`
 - **`lone-implementer-interface`** — An interface has only one local implementation — `lone-implementer-interface`
 - **`namespace-cycle`** — Two independent modules import each other — `namespace-cycle`
-- **`undeclared-member`** — A member access the receiver's declared type neither declares nor inherits
+- **`undeclared-member`** — A member access the receiver's declared type neither declares nor inherits — `undeclared-member`

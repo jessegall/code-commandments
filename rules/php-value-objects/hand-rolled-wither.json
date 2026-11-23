@@ -81,6 +81,29 @@
             "=",
             "$s.kind",
             "if"
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "expression-statement"
+            ],
+            [
+              "=",
+              "$s.expression.kind",
+              "assignment"
+            ],
+            [
+              "every",
+              "$s.expression.targets",
+              "t",
+              [
+                "=",
+                "$t.kind",
+                "reference"
+              ]
+            ]
           ]
         ]
       ],

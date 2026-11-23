@@ -2,6 +2,7 @@
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
     "csharp",
+    "php",
     "python",
     "typescript"
   ],
@@ -191,6 +192,60 @@
               "classRef",
               "$f.value"
             ]
+          ]
+        ]
+      ]
+    },
+    "positionalUse": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$c.parent.kind",
+            "assignment"
+          ],
+          [
+            "=",
+            "$c.role",
+            "values"
+          ],
+          [
+            "some",
+            "$c.parent.targets",
+            "t",
+            [
+              "=",
+              "$t.kind",
+              "pattern"
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.parent.kind",
+            "index"
+          ],
+          [
+            "=",
+            "$c.role",
+            "subject"
+          ],
+          [
+            "=",
+            "$c.parent.key.kind",
+            "literal"
+          ],
+          [
+            "=",
+            "$c.parent.key.literalKind",
+            "integer"
           ]
         ]
       ]
@@ -422,6 +477,30 @@
               "$fn.obligations"
             ],
             0
+          ],
+          [
+            "or",
+            [
+              "none",
+              [
+                "tree.callsOf",
+                "$fn"
+              ],
+              "c",
+              true
+            ],
+            [
+              "some",
+              [
+                "tree.callsOf",
+                "$fn"
+              ],
+              "c",
+              [
+                "positionalUse",
+                "$c"
+              ]
+            ]
           ]
         ],
         "function": [

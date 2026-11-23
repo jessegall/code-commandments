@@ -19,8 +19,7 @@
     },
     "reporting": {
       "crossFile": true
-    },
-    "unpublished": true
+    }
   },
   "find": {
     "from": "laravel-config-keys",

@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -265,6 +266,13 @@
           ],
           0
         ]
+      ],
+      [
+        "subjectType",
+        [
+          "typeOf",
+          "$target.subject"
+        ]
       ]
     ],
     "having": [
@@ -372,6 +380,10 @@
             [
               "typeDeclaration",
               "$parameter.declaredType.refers"
+            ],
+            [
+              "typeDeclaration",
+              "$subjectType.name"
             ]
           ],
           "t",

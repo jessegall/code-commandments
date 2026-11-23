@@ -2,6 +2,7 @@
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
     "csharp",
+    "php",
     "python",
     "typescript"
   ],
@@ -179,49 +180,57 @@
             ]
           ],
           [
-            "some",
+            "and",
             [
-              "tree.insideOf",
-              "$h"
+              "!=",
+              "$h.kind",
+              "call"
             ],
-            "r",
             [
-              "and",
+              "some",
               [
-                "=",
-                "$r.kind",
-                "reference"
+                "tree.insideOf",
+                "$h"
               ],
+              "r",
               [
-                "not",
-                [
-                  "isSelf",
-                  "$r"
-                ]
-              ],
-              [
-                "exists",
-                "$r.binding"
-              ],
-              [
-                "or",
+                "and",
                 [
                   "=",
+                  "$r.kind",
+                  "reference"
+                ],
+                [
+                  "not",
                   [
-                    "fingerprint",
-                    "$r",
-                    "exact"
-                  ],
-                  [
-                    "fingerprint",
-                    "$h",
-                    "exact"
+                    "isSelf",
+                    "$r"
                   ]
                 ],
                 [
-                  "=",
-                  "$r.role",
-                  "subject"
+                  "exists",
+                  "$r.binding"
+                ],
+                [
+                  "or",
+                  [
+                    "=",
+                    [
+                      "fingerprint",
+                      "$r",
+                      "exact"
+                    ],
+                    [
+                      "fingerprint",
+                      "$h",
+                      "exact"
+                    ]
+                  ],
+                  [
+                    "=",
+                    "$r.role",
+                    "subject"
+                  ]
                 ]
               ]
             ]

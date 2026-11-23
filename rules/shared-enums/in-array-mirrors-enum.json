@@ -2,6 +2,7 @@
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
     "csharp",
+    "php",
     "python",
     "typescript"
   ],

@@ -57,4 +57,19 @@ final class PriorityLabel
             default => null,
         };
     }
+
+    /**
+     * The code it is handed may be absent, and the default arm is where an absent code lands, so
+     * null passes the caller's own absence through; nothing unhandled is swallowed.
+     */
+    #[Righteous(MatchDefaultReturnsNull::class)]
+    public function forCode(?string $code): ?string
+    {
+        return match (strtoupper((string) $code)) {
+            'U', 'URGENT' => 'urgent',
+            'N', 'NORMAL' => 'normal',
+            'L', 'LOW' => 'low',
+            default => null,
+        };
+    }
 }

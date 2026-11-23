@@ -196,6 +196,9 @@ func (w *fingerprintWalk) write(out *strings.Builder, m Match) {
 	if !normalize || !declares {
 		out.WriteString("|" + node.Name)
 	}
+	if !normalize && node.Facts != nil && aliased(node.Name, node.Refers) {
+		out.WriteString("|" + node.Refers)
+	}
 	out.WriteString("|" + node.Operator + "|" + form + "|" + strings.Join(node.Modifiers, " ") + "|" + flagsOf(node))
 	if w.how.Commutative && slices.Contains(orderFree, node.Operator) {
 		var children []string

@@ -3,6 +3,7 @@
   "engine": [
     "csharp",
     "go",
+    "php",
     "python",
     "typescript"
   ],
@@ -104,6 +105,14 @@
             "laravel.routed",
             "$c.documents.expression"
           ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "contains",
+          "$c.text",
+          "\\"
         ]
       ]
     ],

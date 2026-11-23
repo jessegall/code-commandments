@@ -5,7 +5,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`bare-scope-escape`** — an Eloquent query drops every global scope, including ones added later — `bare-scope-escape`
 - **`config-read`** — `config('…')` read inside a class — `config-read`
 - **`container-reach`** — `app()`, `resolve()` or a container's `make()` reach inside a container-resolved class — `container-reach`
-- **`dead-config-key`** — A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt
+- **`dead-config-key`** — A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt — `dead-config-key`
 - **`dead-event-wiring`** — A listener wired to an event class no live code path can fire (`Event::listen`, or an entry of an event service provider's `$listen`) — a listener chain that dead-ends but reads as live wiring — `dead-event-wiring`
 - **`duplicated-config-default`** — A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently — `duplicated-config-default`
 - **`facade-call`** — Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `facade-call`

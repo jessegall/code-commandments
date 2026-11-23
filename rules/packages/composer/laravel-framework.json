@@ -3201,6 +3201,50 @@
     {
       "name": "refutes-argument",
       "type": "throw_if"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "routes"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "logs"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "app"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "framework"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "seeders"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "migrations"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "factories"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "views"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "lang"
+    },
+    {
+      "name": "skeleton-folder",
+      "type": "config"
+    },
+    {
+      "name": "attribute-accessor",
+      "type": "Illuminate\\Database\\Eloquent\\Casts\\Attribute"
     }
   ],
   "forwards": [

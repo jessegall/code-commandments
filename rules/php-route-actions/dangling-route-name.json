@@ -19,8 +19,7 @@
     },
     "reporting": {
       "crossFile": true
-    },
-    "unpublished": true
+    }
   },
   "find": {
     "relations": {
@@ -198,7 +197,8 @@
           "route-name-calls",
           "route-groups",
           "route-resources",
-          "route-array-names"
+          "route-array-names",
+          "page-route-names"
         ],
         "as": "r"
       },
@@ -262,6 +262,49 @@
                 "concat",
                 "$prefix",
                 "$first"
+              ]
+            }
+          }
+        ]
+      },
+      "page-route-names": {
+        "from": "call",
+        "as": "c",
+        "pipeline": [
+          {
+            "where": [
+              "and",
+              [
+                "=",
+                "$c.callee.kind",
+                "reference"
+              ],
+              [
+                "has",
+                [
+                  "identities",
+                  "page-route-namer"
+                ],
+                "$c.callee.refers"
+              ]
+            ]
+          },
+          {
+            "project": {
+              "anchor": "$c",
+              "kind": [
+                "laravel.nameKind",
+                [
+                  "laravel.firstValue",
+                  "$c"
+                ]
+              ],
+              "name": [
+                "laravel.nameText",
+                [
+                  "laravel.firstValue",
+                  "$c"
+                ]
               ]
             }
           }
