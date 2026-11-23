@@ -1,4 +1,3 @@
-// @example NamespaceCycle bad
 using Shop.Loyalty;
 
 namespace Shop.Rewards;

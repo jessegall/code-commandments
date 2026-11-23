@@ -1,4 +1,3 @@
-# @example SideTableTrait bad
 # Which tags keep their words out of the chat is kept as a set of the ones it is true of, beside the
 # tags themselves. A tag added tomorrow is silently spoken aloud, and has nowhere to say otherwise.
 from dataclasses import dataclass

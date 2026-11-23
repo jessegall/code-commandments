@@ -1,4 +1,3 @@
-<!-- @example DuplicateFunction good -->
 <script setup lang="ts">
 // The FIX: subscribing again is the same request, so there is one function and both buttons call it.
 import { ref } from 'vue'

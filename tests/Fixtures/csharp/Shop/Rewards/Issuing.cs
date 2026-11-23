@@ -1,4 +1,3 @@
-// @example NamespaceCycle good
 namespace Shop.Rewards;
 
 // Rewards issues a voucher from what it is handed — a member's id and points — and names nothing in

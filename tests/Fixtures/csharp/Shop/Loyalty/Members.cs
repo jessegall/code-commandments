@@ -1,4 +1,3 @@
-// @example NamespaceCycle bad
 namespace Shop.Loyalty;
 
 // @sin NamespaceCycle

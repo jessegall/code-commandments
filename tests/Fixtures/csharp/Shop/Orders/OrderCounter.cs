@@ -1,4 +1,3 @@
-// @example MutableStaticState bad
 namespace Shop.Orders;
 
 // Numbers each order placed at the till.

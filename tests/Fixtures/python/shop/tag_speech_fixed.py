@@ -1,4 +1,3 @@
-# @example SideTableTrait good
 # The repair: the trait is a field each tag answers for itself, so a tag written tomorrow has to say
 # whether it is spoken aloud, and the set that reads it is derived from the tags rather than kept beside
 # them. There is no second place left to forget.

@@ -1,4 +1,3 @@
-// @example SideTableTrait good
 using System.Collections.Generic;
 
 namespace Shop.Tags;

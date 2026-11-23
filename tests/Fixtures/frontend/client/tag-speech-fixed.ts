@@ -1,4 +1,3 @@
-// @example SideTableTrait good
 // @fixed SideTableTrait
 type SpokenTag = { name: string; command: string; saidInChat: boolean }
 

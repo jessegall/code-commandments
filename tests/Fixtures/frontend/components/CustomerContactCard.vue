@@ -1,4 +1,3 @@
-<!-- @example MirroredServerType good -->
 <script setup lang="ts">
 // The FIX: the server owns the `CustomerData` shape, so the card imports the type generated from
 // its `Data` class instead of restating it.

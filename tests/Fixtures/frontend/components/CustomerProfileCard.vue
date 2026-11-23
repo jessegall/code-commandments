@@ -1,4 +1,3 @@
-<!-- @example MirroredServerType bad -->
 <script setup lang="ts">
 // This restates the server `CustomerData` payload in snake_case — the same contract,
 // hand-maintained. Generate it from the `Data` class instead.

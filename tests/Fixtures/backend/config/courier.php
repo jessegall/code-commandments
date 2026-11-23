@@ -1,6 +1,5 @@
 <?php
 
-// @example DeadConfigKey good
 
 /*
  * The courier settings, holding only what something reads: the pickup cutoff is bound in the settings

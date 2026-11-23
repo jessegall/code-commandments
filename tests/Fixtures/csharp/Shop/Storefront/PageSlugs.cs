@@ -1,4 +1,3 @@
-// @example NamespaceDependency good
 namespace Shop.Storefront;
 
 // Listing the pages' slugs is the storefront's own work, so it lives beside the pages, and search keeps

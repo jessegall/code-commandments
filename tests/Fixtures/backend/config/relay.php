@@ -1,6 +1,5 @@
 <?php
 
-// @example DeadConfigKey bad
 
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DeadConfigKey;
 use JesseGall\CodeCommandments\Testing\Sinful;

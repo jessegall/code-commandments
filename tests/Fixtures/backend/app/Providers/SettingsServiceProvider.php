@@ -1,6 +1,5 @@
 <?php
 
-// @example DeadConfigKey good
 
 namespace Shop\Providers;
 

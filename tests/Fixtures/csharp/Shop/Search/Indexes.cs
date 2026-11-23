@@ -1,4 +1,3 @@
-// @example NamespaceDependency bad
 namespace Shop.Search;
 
 using Shop.Catalog;

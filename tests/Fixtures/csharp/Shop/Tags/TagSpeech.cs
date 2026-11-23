@@ -1,4 +1,3 @@
-// @example SideTableTrait bad
 using System.Collections.Generic;
 
 namespace Shop.Tags;

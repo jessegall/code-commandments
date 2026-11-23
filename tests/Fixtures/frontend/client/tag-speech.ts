@@ -1,4 +1,3 @@
-// @example SideTableTrait bad
 type SpeechTag = { name: string; command: string }
 
 const TAGS: SpeechTag[] = [
