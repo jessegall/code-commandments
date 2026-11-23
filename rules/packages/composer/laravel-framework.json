@@ -2454,10 +2454,11 @@
         "morphOne",
         "morphMany",
         "morphToMany",
-        "morphedByMany"
+        "morphedByMany",
+        "event"
       ],
       "tag": "association",
-      "why": "One end of a two-way association the framework requires both ends to name (a relation's class argument, a factory's model, an observer or policy attribute): it carries no dependency direction and cannot close a cycle.",
+      "why": "One end of a two-way association the framework requires both ends to name (a relation's class argument, an event a model fires with itself as in $dispatchesEvents, a factory's model, an observer or policy attribute): it carries no dependency direction and cannot close a cycle.",
       "on": {
         "Illuminate\\Database\\Eloquent\\Factories\\Factory": [
           "model"
