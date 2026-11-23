@@ -287,6 +287,57 @@
           "presence"
         ]
       ]
+    },
+    "storedType": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "case",
+        [
+          "exists",
+          [
+            "get",
+            "$t",
+            "element"
+          ]
+        ],
+        {
+          "true": [
+            "get",
+            "$t",
+            "element"
+          ]
+        },
+        [
+          "last",
+          [
+            "get",
+            "$t",
+            "args"
+          ]
+        ]
+      ]
+    },
+    "storeOf": {
+      "args": [
+        "r"
+      ],
+      "expr": [
+        "case",
+        "$r.kind",
+        {
+          "index": "$r.subject"
+        },
+        [
+          "get",
+          [
+            "keyedStoreRead",
+            "$r"
+          ],
+          "store"
+        ]
+      ]
     }
   },
   "find": {
@@ -553,6 +604,25 @@
             [
               "isNullable",
               "$function.returnType.resolved"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "isNullable",
+            [
+              "storedType",
+              [
+                "typeOf",
+                [
+                  "storeOf",
+                  "$r"
+                ]
+              ]
             ]
           ]
         ]

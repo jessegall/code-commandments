@@ -925,17 +925,7 @@ final class Translator
      */
     private function typeIndex(array $type): int
     {
-        if (isset($type['name'])) {
-            $this->referenced[strtolower($type['name'])] = $type['name'];
-        }
-        $written = array_filter([
-            'text' => ($type['nullable'] ?? false ? '?' : '').($type['name'] ?? $type['keyword'] ?? ''),
-            'kind' => isset($type['name']) ? 'named' : 'keyword',
-            'name' => $type['name'] ?? $type['keyword'] ?? null,
-            'nullable' => (bool) ($type['nullable'] ?? false),
-            'origin' => 'compiler',
-            'valueType' => in_array($type['keyword'] ?? null, self::COPIED_KEYWORDS, true) ? true : null,
-        ], static fn (mixed $value): bool => $value !== null);
+        $written = $this->compilerType($type);
         $at = array_search($written, $this->types, true);
         if ($at === false) {
             $this->types[] = $written;
@@ -943,6 +933,28 @@ final class Translator
         }
 
         return $at;
+    }
+
+    /**
+     * A type the bridge inferred, written as the contract's type, with the element of a collection whose element is known.
+     *
+     * @return array<string, mixed>
+     */
+    private function compilerType(array $type): array
+    {
+        if (isset($type['name'])) {
+            $this->referenced[strtolower($type['name'])] = $type['name'];
+        }
+
+        return array_filter([
+            'text' => ($type['nullable'] ?? false ? '?' : '').($type['name'] ?? $type['keyword'] ?? ''),
+            'kind' => isset($type['name']) ? 'named' : 'keyword',
+            'name' => $type['name'] ?? $type['keyword'] ?? null,
+            'nullable' => (bool) ($type['nullable'] ?? false),
+            'origin' => 'compiler',
+            'valueType' => in_array($type['keyword'] ?? null, self::COPIED_KEYWORDS, true) ? true : null,
+            'element' => isset($type['element']) ? $this->compilerType($type['element']) : null,
+        ], static fn (mixed $value): bool => $value !== null);
     }
 
     private function expressionNode(Expr $expression): TreeNode
