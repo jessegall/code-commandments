@@ -4,6 +4,7 @@ namespace Shop\Orders;
 
 use JesseGall\CodeCommandments\Sins\Backend\PhpTypes\OptionAsNullable;
 
+use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use JesseGall\PhpTypes\Option;
 
@@ -28,15 +29,26 @@ final class OrderResolver
     }
 
     /**
-     * Adapting the Option to a nullable-sink parameter at the boundary — `withTags(?array
-     * $tags)` discriminates on null, so `unwrapOr(null)` in ARGUMENT position is the
-     * legitimate adaptation, NOT a `?Option` costume (no marker).
+     * Hands the Option to the project's own `withTags(?array $tags)` as a null: the method is ours, so it
+     * can take the Option itself.
      *
      * @param  Option<array<int, string>>  $tags
      */
+    #[Sinful(OptionAsNullable::class)]
     public function dispatch(Option $tags): void
     {
         $this->withTags(tags: $tags->unwrapOr(null));
+    }
+
+    /**
+     * Writes the tags to the wire, where JSON's null is the format: a library signature the project cannot change.
+     *
+     * @param  Option<array<int, string>>  $tags
+     */
+    #[Righteous(OptionAsNullable::class)]
+    public function tagsPayload(Option $tags): string
+    {
+        return (string) json_encode($tags->unwrapOr(null));
     }
 
     private function withTags(?array $tags): void

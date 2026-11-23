@@ -138,18 +138,33 @@
             [
               "proven",
               [
-                "=",
+                "and",
                 [
-                  "typeCategory",
+                  "exists",
                   [
-                    "typeOf",
-                    [
-                      "parameterOf",
-                      "$s.parent"
-                    ]
+                    "parameterOf",
+                    "$s.parent"
                   ]
                 ],
-                "any"
+                [
+                  "=",
+                  [
+                    "count",
+                    [
+                      "get",
+                      [
+                        "get",
+                        [
+                          "parameterOf",
+                          "$s.parent"
+                        ],
+                        "parent"
+                      ],
+                      "obligations"
+                    ]
+                  ],
+                  0
+                ]
               ]
             ]
           ],
