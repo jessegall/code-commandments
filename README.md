@@ -521,7 +521,7 @@ Every sin (the `--sin=` key) and what it flags. Each sin has one rule file under
 that finds it, named after the sin (e.g. `rules/shared-exceptions/swallow-catch.json`).
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_175 sins across 40 skills. Full tables in [README.sins.md](README.sins.md)._
+_172 sins across 40 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## Scaffolding

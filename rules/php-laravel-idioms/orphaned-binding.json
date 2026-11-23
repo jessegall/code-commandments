@@ -1,8 +1,7 @@
 {
   "$schema": "commandments:neutral-rule/v2",
   "engine": [
-    "csharp",
-    "php"
+    "csharp"
   ],
   "sin": {
     "name": "orphaned-binding",
@@ -12,7 +11,7 @@
       "csharp-orphaned-binding"
     ],
     "skill": "php/laravel-idioms",
-    "description": "A container binding whose abstract nothing ever resolves \u2014 dead wiring that reads as load-bearing and survives every refactor",
+    "description": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor",
     "rule": "Wiring is code: a binding exists to answer a resolve. When the last consumer goes, the binding goes with it.",
     "suggestion": "Delete the registration (and the implementation it names, if that is dead too).",
     "requires": {

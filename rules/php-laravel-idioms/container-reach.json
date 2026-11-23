@@ -526,6 +526,40 @@
           ]
         ]
       ]
+    },
+    "builtOnlyWithin": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "some",
+        "$t.writtenMembers",
+        "m",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "function"
+          ],
+          [
+            "=",
+            "$m.form",
+            "constructor"
+          ],
+          [
+            "some",
+            "$m.modifiers",
+            "x",
+            [
+              "in",
+              "$x",
+              "private",
+              "protected"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -836,22 +870,31 @@
               [
                 "some",
                 [
-                  "list",
-                  [
-                    "enclosing",
-                    "$c",
-                    "function"
-                  ]
+                  "ancestors",
+                  "$c"
                 ],
                 "f",
                 [
-                  "some",
-                  "$f.modifiers",
-                  "m",
+                  "and",
                   [
                     "=",
-                    "$m",
-                    "static"
+                    "$f.kind",
+                    "function"
+                  ],
+                  [
+                    "=",
+                    "$f.form",
+                    "method"
+                  ],
+                  [
+                    "some",
+                    "$f.modifiers",
+                    "m",
+                    [
+                      "=",
+                      "$m",
+                      "static"
+                    ]
                   ]
                 ]
               ]
@@ -870,6 +913,13 @@
             [
               "containerBuilt",
               "$owner"
+            ],
+            [
+              "not",
+              [
+                "builtOnlyWithin",
+                "$owner"
+              ]
             ],
             [
               "not",

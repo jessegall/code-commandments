@@ -360,14 +360,6 @@
         "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class"
     },
     {
-        "key": "sin_dead-config-key",
-        "title": "dead-config-key",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt"
-    },
-    {
         "key": "sin_dead-event-wiring",
         "title": "dead-event-wiring",
         "type": "flag",
@@ -574,14 +566,6 @@
         "kind": "flag",
         "default": true,
         "help": "The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift"
-    },
-    {
-        "key": "sin_dangling-route-name",
-        "title": "dangling-route-name",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500"
     },
     {
         "key": "sin_duplicate-route",
@@ -1086,14 +1070,6 @@
         "kind": "flag",
         "default": true,
         "help": "Two independent modules import each other"
-    },
-    {
-        "key": "sin_undeclared-member",
-        "title": "undeclared-member",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A member access the receiver's declared type neither declares nor inherits"
     },
     {
         "key": "sin_archaeology-comment",

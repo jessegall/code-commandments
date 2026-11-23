@@ -121,6 +121,10 @@
     "having": [
       "and",
       [
+        "not",
+        "$d.file.test"
+      ],
+      [
         "or",
         [
           "some",

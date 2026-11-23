@@ -15,7 +15,8 @@
     "suggestion": "Declare the member on the carrying types' contract and use that contract at the access.",
     "reporting": {
       "crossFile": true
-    }
+    },
+    "unpublished": true
   },
   "definitions": {
     "namesOf": {
