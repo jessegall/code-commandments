@@ -262,19 +262,6 @@
             ],
             "detail": true
         },
-        "sin_container-reach": {
-            "title": "container-reach",
-            "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class",
-            "type": "flag",
-            "default": "true",
-            "group": "php/laravel-idioms",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
         "sin_dead-config-key": {
             "title": "dead-config-key",
             "help": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt",
@@ -327,19 +314,6 @@
             ],
             "detail": true
         },
-        "sin_handed-out-collection": {
-            "title": "handed-out-collection",
-            "help": "A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/laravel-idioms",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
         "sin_hard-coded-route-path": {
             "title": "hard-coded-route-path",
             "help": "A path written out by hand where a named route already declares it",
@@ -369,32 +343,6 @@
         "sin_model-mutation-at-call-site": {
             "title": "model-mutation-at-call-site",
             "help": "Set-property-then-`save()` at a call site (should be an intention method)",
-            "type": "flag",
-            "default": "true",
-            "group": "php/laravel-idioms",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_orphaned-binding": {
-            "title": "orphaned-binding",
-            "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor",
-            "type": "flag",
-            "default": "true",
-            "group": "php/laravel-idioms",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_query-in-loop": {
-            "title": "query-in-loop",
-            "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -1534,6 +1482,34 @@
             ],
             "detail": true
         },
+        "sin_container-reach": {
+            "title": "container-reach",
+            "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/dependencies",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_interface-overlap": {
             "title": "interface-overlap",
             "help": "An interface repeats the signatures of a contract it can reuse.",
@@ -1621,6 +1597,34 @@
         "sin_namespace-dependency": {
             "title": "namespace-dependency",
             "help": "a declared layer references a layer it may not use (the arrow points back up)",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/dependencies",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_orphaned-binding": {
+            "title": "orphaned-binding",
+            "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor",
             "type": "flag",
             "default": "true",
             "group": "shared/dependencies",
@@ -3046,6 +3050,34 @@
             ],
             "detail": true
         },
+        "sin_query-in-loop": {
+            "title": "query-in-loop",
+            "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/flow",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_reassigned-parameter": {
             "title": "reassigned-parameter",
             "help": "A parameter overwritten inside its function, so one name holds the value the caller passed and later a different one.",
@@ -3441,6 +3473,34 @@
         "sin_guard-beside-transition": {
             "title": "guard-beside-transition",
             "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_handed-out-collection": {
+            "title": "handed-out-collection",
+            "help": "A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back.",
             "type": "flag",
             "default": "true",
             "group": "shared/tell-dont-ask",

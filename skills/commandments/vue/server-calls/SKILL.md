@@ -7,39 +7,64 @@ description: "You are about to call `fetch(` in a component, write a server path
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> The server declares every address it answers and every header it expects. A component that writes a path by
-> hand, or calls `fetch` with its own headers, keeps a **second copy** of those facts. The copies drift: a
-> route is renamed and a link breaks without an error, a header is added and the hand-rolled calls forget it.
+> The server already declares its routes. The frontend reaches them through the generated route helpers and one
+> client module, never through a path typed by hand or a `fetch` in a component.
+> Read this before you call `fetch(` in a component, write a server path such as `'/plans/' + id`, or set request
+> headers by hand, and when a server-calls finding points here.
+> An arrow in an example (`←`) marks the line the lesson is about.
 
 ## The principle
 
-### The rule
+**Every server address comes from the generated routes, and one module owns how the frontend talks to the server.**
 
-- **Every server address comes from the generated routes.** `route('plans.show', { plan: card.number })` or
-  the generated action's `.url()`, never `'/plans/' + card.id`. The generated helper knows the path and the
-  parameter it takes; a hand-written string knows neither, which is how one view builds a link from `card.id`
-  while another uses `card.number`.
-- **Components never call `fetch`.** One client module owns how the frontend talks to the server: the base
-  path, the headers (CSRF, `Accept`, an `Idempotency-Key`), the error handling, the JSON parsing. A component
-  calls that module, or the router (`router.post`, `useForm().submit`), and stays about what it shows.
+- **Addresses.** `route('plans.show', { plan: card.number })`, or the generated action's `.url()`. The helper
+  knows the path and the parameter it takes. A string written by hand knows neither, which is how one view builds
+  a link from `card.id` while another uses `card.number`, and how a moved route breaks links with no error.
+- **Calls.** One client module owns the base path, the headers (CSRF, `Accept`), the error handling and the
+  parsing. A component calls that module, or the router (`router.post`, `useForm().submit`), and stays about what
+  it shows.
 
-### What is NOT this sin
+Not this sin: an external URL (`https://…`), a `mailto:` link, an asset path the bundler resolves, a path the
+server does not declare as a route, and the client module itself, which is where `fetch` belongs.
 
-- An external URL (`https://…`), a `mailto:` link, an asset path the bundler resolves.
-- The one client module itself, which is where `fetch` belongs.
-- A path the server does not declare as a route.
+## The sins
 
-### The tell
+### hard-coded-server-url
 
-You are typing a `/` at the start of a string in a component, or the word `fetch(`. Stop and import the
-generated route or the client instead.
+A string written out as the path of a route the server declares by name. Build it with the generated route helper.
 
-## Rules
+```vue
+<script setup lang="ts">
+// Bad
+const url = '/plans/' + card.id                             // ← the path of plans.show, typed by hand
 
-- [ ] Every server address comes from the generated routes, never a path written by hand.
-      _Build it with the generated route helper (`route('plans.show', { plan: card.number })`) or the generated action's `.url()`._
-- [ ] Components never talk to the server with `fetch`; one client module owns the headers, the errors and the parsing.
-      _Call the project's client module (or `router` / `useForm`) and move any headers the component sets into that module._
+// Good
+const url = route('plans.show', { plan: card.number })
+</script>
+```
+
+### raw-fetch-in-component
+
+A component that calls the global `fetch` itself. It now carries the headers, the error handling and the parsing,
+and the next component will carry a slightly different copy. Call the client module.
+
+```vue
+<script setup lang="ts">
+// Bad
+async function archive() {
+  const response = await fetch(`/plans/${plan.id}/archive`, {   // ← the component talks to the server itself
+    method: 'POST',
+    headers: { 'X-CSRF-TOKEN': token, Accept: 'application/json' },
+  })
+  plan.value = await response.json()
+}
+
+// Good
+async function archive() {
+  plan.value = await client.post(route('plans.archive', { plan: plan.number }))
+}
+</script>
+```
 
 ## Commands
 
@@ -49,7 +74,6 @@ generated route or the client instead.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

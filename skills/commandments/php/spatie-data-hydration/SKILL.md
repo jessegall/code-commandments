@@ -7,81 +7,135 @@ description: "How to CONSTRUCT and CONSUME a Spatie `Data` object at a call site
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> A `Data` object hydrates itself: `::from([...])` builds nested `Data`, `#[DataCollectionOf]`
-> collections, and enum/date casts straight from a plain array. Feed it the **simplest input** and let it
-> build. The moment you re-create a nested type, a cast, or a derivation at the call site, you've duplicated
-> the mapping the class owns — and coupled every caller to it.
+> `::from()` already knows how to turn plain input into a Data object: nested objects, collections, enums, dates and
+> renamed keys. Hand it the plain input and let it work.
+> Read this before you build the array you pass to `::from([...])`, and when a spatie-data-hydration finding points
+> here.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
-The sibling skill [`spatie-data`](../spatie-data/SKILL.md) teaches how to *author* a `Data` class. This one
-teaches how to *feed* it. They share one root: the `Data` class is a declarative machine — `::from()`,
-`::collect()`, casts, `#[DataCollectionOf]`, `#[Computed]`, and name mappers already do the array↔object
-work. A **call site** that re-does any of it by hand is redundant, and it duplicates a mapping that should
-live in exactly one place — the class.
+**Pass `::from` the raw value for each slot. Whatever you build by hand there, the package would have built for you.**
 
-### The one rule: pass the simplest input the class can build from
+`::from` looks at the type of every property and hydrates it:
 
-`::from([...])` runs the whole pipeline **recursively**. Every value in that array is fed to the matching
-property through its own hydration — nested `Data`, typed collection, enum, or date. So the value you write
-should be the **raw material**, not the finished object.
+| The property is typed | Pass | Not |
+|---|---|---|
+| a nested `Data` class | the plain array (or the object you already hold) | `Nested::from([...])` |
+| `#[DataCollectionOf(X::class)] array` | the list of plain arrays | a `map` of `X::from` |
+| a backed enum | the enum, or its raw value | `Enum::from($raw)`, `$enum->value` |
+| a `DateTimeInterface` | the string | `new DateTime($raw)` |
+| a value object | the raw value, with a `#[WithCast]` on the property | the object, built at every caller |
 
-### Nested `Data` and collections auto-hydrate — don't wrap them
+And when the input uses other key names (snake_case from a database or an API), say so once on the class with
+`#[MapInputName]`, not key by key at the call site.
 
-A property typed as a nested `Data` builds itself from a plain array; a `#[DataCollectionOf(E)]` builds each
-element from an array. So `X::from([...])` sitting in a parent `::from` array is pure ceremony:
+Every hand-built step is work done twice, and a place where the caller's idea of the shape can differ from the
+class's. The call site should read `SomeData::from($source)`.
 
-- `'sandbox' => ConsoleSandboxCopy::from(['label' => 'x'])` → just `'sandbox' => ['label' => 'x']`.
-- `'modes' => [Mode::from([...]), Mode::from([...])]` → just `'modes' => [[...], [...]]`.
+## The sins
 
-Pass the array; the parent nests it. (The one-argument, array-literal form is the redundant one — an
-**object** source like `X::from($model)` is a real conversion, not this sin.)
+### redundant-nested-from
 
-### Enums and dates auto-cast — pass the scalar
+A nested `X::from([...])` in a slot that the parent `::from` hydrates anyway. Pass the plain array.
 
-Spatie casts enums (native) and `DateTimeInterface` (built-in) straight from their raw value. So constructing
-them at a hydration site is redundant:
+```php
+// Bad
+OrderData::from([
+    'number' => $row['number'],
+    'customer' => CustomerData::from($row['customer']),   // ← the parent ::from does this
+]);
 
-- `'status' => WorkflowRunStatus::from($raw)` → just `'status' => $raw`.
+// Good
+OrderData::from([
+    'number' => $row['number'],
+    'customer' => $row['customer'],
+]);
+```
 
-(A `tryFrom`, or a `new DateTime($x, $tz)` / `createFromFormat(...)` that carries a timezone or format the
-default cast wouldn't reproduce, is **not** redundant — those change the semantics.)
+### redundant-native-cast
 
-### A derivation belongs in a cast, not a call-site `array_map`
+An enum or a date constructed at the hydration site, where the property casts the raw value by itself.
 
-When each element is **derived** from a simpler value through a factory — `array_map(E::for($enum), $cases)` —
-auto-hydration can't help (the input isn't the element's array shape). But a **cast** can: a `#[WithCast]`
-(or per-item `IterableItemCast`) on the collection property owns the `enum → E` derivation once, and every
-caller just passes the raw list. A factory that closes over services/`$this` can't move into a per-item cast,
-so it stays at the call site — that's the boundary of this rule.
+```php
+// Bad
+OrderData::from([
+    'status' => OrderStatus::from($row['status']),   // ← the enum slot casts the string
+    'paidAt' => new DateTimeImmutable($row['paid_at']),
+]);
 
-### Don't build a `Data` only to discard it
+// Good
+OrderData::from([
+    'status' => $row['status'],
+    'paidAt' => $row['paid_at'],
+]);
+```
 
-Building `X::from([...])->toArray()` constructs a typed object just to flatten it back to an array — either
-pass the source array, or type the receiving slot as `X` and pass the object. And to serialize a `Data`
-object, call `->toArray()` — never hand-write `['a' => $d->a, 'b' => $d->b, …]`, which silently drifts from
-the class the moment a field is added.
+### redundant-enum-unwrap
 
-### Derive and map on the class, not the caller
+An enum unwrapped to `->value` for a slot typed as that enum. Spatie casts the scalar straight back.
 
-A field that is a pure function of other fields is a `#[Computed]` property — computed once in the class, not
-recomputed at every construction site. A boundary that renames keys (snake ↔ camel) is one class-level
-`#[MapInputName(SnakeCaseMapper::class)]` — not a hand-written translation array at each `::from`.
+```php
+// Bad
+OrderData::from(['status' => $order->status->value]);   // ← unwrapped, only to be wrapped again
 
-## Rules
+// Good
+OrderData::from(['status' => $order->status]);
+```
 
-- [ ] Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.
-      _Drop the `->toArray()` — the nested-`Data` / `#[DataCollectionOf]` slot takes the object as-is._
-- [ ] Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.
-      _`#[WithCast(SomeCast::class)] public array $items` — the cast runs `E::for(...)` per item; the call site passes the raw values._
-- [ ] Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
-      _`#[MapInputName(SnakeCaseMapper::class)]` on the class, then `SomeData::from($src)`._
-- [ ] Pass the enum itself to an enum slot — Spatie's enum cast keeps it; don't destructure it to `->value` at the hydration site only for it to be re-hydrated.
-      _`'status' => $order->status`, not `'status' => $order->status->value`._
-- [ ] Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
-      _`'status' => $raw`, not `'status' => Status::from($raw)`._
-- [ ] Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
-      _`'slot' => ['a' => 1]` (or `[['a' => 1], ...]` for a collection), not `X::from(['a' => 1])`._
+### data-to-array-roundtrip
+
+A Data object turned into an array with `->toArray()` and put in a slot that hydrates it again: build, flatten,
+build. Pass the object.
+
+```php
+// Bad
+InvoiceData::from(['customer' => CustomerData::from($customer)->toArray()]);   // ← built, flattened, built again
+
+// Good
+InvoiceData::from(['customer' => $customer]);
+```
+
+### hand-key-remap
+
+A `::from([...])` that only renames keys by hand, from `$src['snake_key']` to `camelKey`. Declare the mapping once
+on the class.
+
+```php
+// Bad
+CustomerData::from([
+    'firstName' => $row['first_name'],   // ← a rename, key by key
+    'lastName' => $row['last_name'],
+    'postalCode' => $row['postal_code'],
+]);
+
+// Good
+#[MapInputName(SnakeCaseMapper::class)]
+final class CustomerData extends Data { … }
+
+CustomerData::from($row);
+```
+
+### derived-collection-cast
+
+A `#[DataCollectionOf]` slot filled by mapping a factory over the inputs at the call site. Every caller has to know
+how an item is derived. Put the derivation in a cast on the property and pass the raw list.
+
+```php
+// Bad
+MenuData::from(['items' => array_map(fn (string $slug) => MenuItem::for($slug), $slugs)]);   // ← derived by the caller
+
+// Good
+final class MenuData extends Data
+{
+    public function __construct(
+        #[WithCast(MenuItemsCast::class)]
+        public readonly array $items,
+    ) {}
+}
+
+MenuData::from(['items' => $slugs]);
+```
 
 ## Commands
 
@@ -91,7 +145,6 @@ recomputed at every construction site. A boundary that renames keys (snake ↔ c
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 - [Spatie Data hydration mechanics](reference/mechanics.md)
 

@@ -36,13 +36,10 @@
 .agents/skills/commandments-vue-mirrored-server-type/reference/detectors.md
 .agents/skills/commandments-vue-server-calls/SKILL.md
 .agents/skills/commandments-vue-server-calls/reference/detectors.md
-.agents/skills/commandments-vue-server-calls/reference/examples.md
 .agents/skills/commandments-vue-vue-components/SKILL.md
 .agents/skills/commandments-vue-vue-components/reference/detectors.md
-.agents/skills/commandments-vue-vue-components/reference/examples.md
 .agents/skills/commandments-vue-vue-control-flow/SKILL.md
 .agents/skills/commandments-vue-vue-control-flow/reference/detectors.md
-.agents/skills/commandments-vue-vue-control-flow/reference/examples.md
 .agents/skills/commandments-writing-detectors/SKILL.md
 .agents/skills/commandments-writing-detectors/reference/examples.md
 .agents/skills/commandments/SKILL.md

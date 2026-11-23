@@ -200,14 +200,6 @@
         "help": "`config('…')` read inside a class"
     },
     {
-        "key": "sin_container-reach",
-        "title": "container-reach",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class"
-    },
-    {
         "key": "sin_dead-config-key",
         "title": "dead-config-key",
         "type": "flag",
@@ -240,14 +232,6 @@
         "help": "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)"
     },
     {
-        "key": "sin_handed-out-collection",
-        "title": "handed-out-collection",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back."
-    },
-    {
         "key": "sin_hard-coded-route-path",
         "title": "hard-coded-route-path",
         "type": "flag",
@@ -270,22 +254,6 @@
         "kind": "flag",
         "default": true,
         "help": "Set-property-then-`save()` at a call site (should be an intention method)"
-    },
-    {
-        "key": "sin_orphaned-binding",
-        "title": "orphaned-binding",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor"
-    },
-    {
-        "key": "sin_query-in-loop",
-        "title": "query-in-loop",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call"
     },
     {
         "key": "sin_raw-request-input",
@@ -752,6 +720,14 @@
         "help": "A constructor takes another module's concrete service"
     },
     {
+        "key": "sin_container-reach",
+        "title": "container-reach",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class"
+    },
+    {
         "key": "sin_interface-overlap",
         "title": "interface-overlap",
         "type": "flag",
@@ -782,6 +758,14 @@
         "kind": "flag",
         "default": true,
         "help": "a declared layer references a layer it may not use (the arrow points back up)"
+    },
+    {
+        "key": "sin_orphaned-binding",
+        "title": "orphaned-binding",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor"
     },
     {
         "key": "sin_undeclared-member",
@@ -1184,6 +1168,14 @@
         "help": "A `for` loop whose step assigns the next item instead of moving a counter: a walk written as a count"
     },
     {
+        "key": "sin_query-in-loop",
+        "title": "query-in-loop",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call"
+    },
+    {
         "key": "sin_reassigned-parameter",
         "title": "reassigned-parameter",
         "type": "flag",
@@ -1302,6 +1294,14 @@
         "kind": "flag",
         "default": true,
         "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards"
+    },
+    {
+        "key": "sin_handed-out-collection",
+        "title": "handed-out-collection",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back."
     },
     {
         "key": "sin_middle-man",

@@ -7,135 +7,145 @@ description: "How to write a PAGE OBJECT — the composed Spatie `Data` a contro
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> A page object is a `Data` class that assembles one page's whole payload and hands it back to the
-> frontend. Let it build ITSELF: seed it from an id, pull its collaborators from the container (hidden), and
-> let each slot be a computed projection — not a constructor that imperatively fills field after field.
+> A page object is the Data class a controller returns for one page. It describes, slot by slot, what the page
+> gets, and the frontend type is generated from it.
+> Read this before you write or change a Data class that is returned to an Inertia or Vue page, and when a
+> page-objects finding points here.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
-A **page object** is the single composed `Data` a controller returns for one page to render. It is not a
-leaf DTO: it *composes several nested Data slots* (a canvas, a list of rows, a set of menus) and it
-*travels back in the response*. Those two facts are what make it a page object — and what make its
-discipline different from an ordinary [`spatie-data`](../spatie-data/SKILL.md) value. A leaf DTO should
-avoid `Lazy` and output transformers; a page object earns them. Same library, higher-order shape.
+**A page object describes each thing the page receives where it is declared, and nothing else reaches the page.**
 
-### Let it build itself from a seed
+- **It is typed for the frontend.** `#[TypeScript]` on the class, so the page binds to a generated type and a
+  changed field is a compile error in the `.vue` file.
+- **Each slot is described in place.** A value worked out from the page's inputs is a `#[Computed]` property hook
+  that says what it is. The constructor does not fill slots one after another.
+- **Collaborators are injected and hidden.** A service the page object needs is a constructor property marked
+  `#[Hidden] #[FromContainer(Service::class)]`. Never `app()` inside a getter, and never a service that leaks into
+  the response or the generated type.
+- **The wire shape has one owner.** When a value object must look different on the wire, a `#[WithTransformer]`
+  shapes it, and a `#[TypeScriptType]` beside it tells the generator what the frontend now receives.
 
-Give it a tiny named constructor — `EditorShell::for($workflowId)` → `::from(['workflowId' => $workflowId])` —
-and let the framework pipeline assemble the rest. The controller stays a one-liner: it returns the page
-object (a `Data` is `Responsable`) or hands it to the renderer. The *page* knows how to build the page.
+```php
+// Good
+#[TypeScript]
+final class OrderPage extends Data
+{
+    public function __construct(
+        public readonly OrderData $order,
+        #[Hidden]
+        #[FromContainer(ShippingQuotes::class)]
+        public readonly ShippingQuotes $quotes,
+    ) {}
 
-### Inject collaborators from the container — hidden, always
-
-A page object needs services to project its slots — a repository, a normaliser, a fleet of projectors, the
-current request. Pull each from the container with **`#[FromContainer(SomeService::class)]`** on a promoted
-property; never reach *out* with `app()`, `resolve()`, `App::make()`, or a facade inside the object. The
-container injection is declarative, testable, and visible in the signature; a `app(X::class)` buried in a
-getter is service location — the thing the container exists to remove.
-
-**Every injected collaborator MUST carry `#[Hidden]`.** Miss it, and your `NodeCardProjector` becomes a
-field on the frontend `EditorShell` type — a leak that is invisible until you read the generated `.d.ts`.
-Inject hidden, or the service ships to the browser.
-
-**Mind the TWO `#[Hidden]`s.** There are two unrelated attributes of that name:
-`Spatie\LaravelData\Attributes\Hidden` drops a property from the **serialized payload**;
-`Spatie\TypeScriptTransformer\Attributes\Hidden` drops it from the **generated TypeScript type**. LaravelData's
-`#[Hidden]` alone keeps the service off the wire but the transformer *still generates it* into the `.d.ts`.
-Rather than stamp both attributes on every injected service, run `commandments scaffold
---sin=injected-service-not-hidden` — it publishes a hidden-aware transformer that treats LaravelData's
-`#[Hidden]` as TS-hidden too. WHICH one it writes follows the `spatie/typescript-transformer` major you
-have installed: on 3 a `HiddenAwareAttributedClassTransformer` composing a class-property processor, on 2
-a `HiddenAwareDataTypeScriptTransformer` overriding `resolveProperties` — the two majors declare different
-classes, and the wrong one is a fatal rather than a fix. Register whichever it wrote in your
-typescript-transformer config's `transformers` list, and one `#[Hidden]` covers both surfaces.
-
-### Computed slots, not a fat constructor
-
-The wrong shape is a constructor that imperatively fills every field:
-
-```
-$this->topBarCenter = $this->topBar->center();
-$this->docks        = $this->dockProjector->project();
+    #[Computed]
+    public array $shippingOptions { get => $this->quotes->for($this->order); }
+}
 ```
 
-The right shape makes each slot a **computed property hook** that projects itself on demand:
+## The sins
 
+### page-object-missing-typescript
+
+A page object that goes back in a response without `#[TypeScript]`. The page reads it as `any`, and nothing checks
+the contract between the controller and the page.
+
+```php
+// Bad
+final class OrderPage extends Data { … }   // ← the .vue page gets no type
+
+// Good
+#[TypeScript]
+final class OrderPage extends Data { … }
 ```
+
+### constructor-orchestration
+
+A page object that fills a public slot with an assignment in the constructor. The reader has to run the
+constructor to learn what the slot holds. Describe the slot in a `#[Computed]` hook, where it is declared.
+
+```php
+// Bad
+public array $shippingOptions;
+
+public function __construct(public readonly OrderData $order, ShippingQuotes $quotes)
+{
+    $this->shippingOptions = $quotes->for($order);   // ← filled here, declared somewhere else
+}
+
+// Good
 #[Computed]
-public array $topBarCenter { get => $this->topBar->center(); }
+public array $shippingOptions { get => $this->quotes->for($this->order); }
 ```
 
-Now the class is self-describing: each field declares *what it is*, next to *how it is projected*, with no
-assembly-line constructor to read top to bottom. Two mechanics to get right:
+### service-location-in-page-object
 
-- A get-only hook is **re-evaluated on every read**. For a slot whose projection is expensive or must be
-  stable, memoise it — `get => $this->rows ??= $this->resolveRows();` — so it computes **once**. That
-  `??=` form is the default for a real projection; a pure, cheap derivation can stay un-memoised.
-- Computed slots are **excluded from the input payload** (the framework computes them), so they never
-  belong to construction — only injected seeds (the id, the `#[Hidden]` services) do.
+A page object that calls `app()` or `resolve()` inside a getter. The dependency is hidden in a method body. Inject
+it as a hidden constructor property.
 
-**What legitimately STAYS in the constructor** — a slot the hook form would break:
+```php
+// Bad
+#[Computed]
+public array $shippingOptions { get => app(ShippingQuotes::class)->for($this->order); }   // ← reaches into the container
 
-- a **`Lazy` / deferred** slot (`Lazy::closure(...)`, an Inertia `DeferProp`/`MergeProp`): converting it to
-  an eager `get` destroys the deferral the page relies on for partial reloads.
-- a **local unwrapped once for reuse**: when several slots need the same intermediate (`$menus` built once,
-  then read by both `topBarEnd` and `menus`), compute it once in the constructor rather than re-run the
-  projector inside two hooks. A construction step that *feeds* the slots is not orchestration to hoist.
-
-### Seed computed slots from the request
-
-The clean way to make a page react to query/state: inject the request **hidden**, then let computed slots
-read it. `#[Hidden] #[FromContainer(WarehouseShowRequest::class)] public WarehouseShowRequest $request` in
-the signature, and `#[Computed] public string $movementWindow { get => $this->request->getMovementWindow(); }`
-as a slot. The request is a seed; the slots are projections of it. No `request()` helper, no facade.
-
-### Shape output with a transformer, not a hand-rolled getter
-
-When a property's *serialized shape* must differ from its PHP type — a value object rendered as a string, a
-domain type flattened for the wire — reach for **`#[WithTransformer(SomeTransformer::class)]`** on that
-property. The wrong move is a computed getter that hand-builds the reshaped array:
-
-```
-// Wrong — an Order's fields hand-flattened into a wire array; the honest type is lost, and the same
-// shape is copy-pasted onto every page that carries a price.
-public array $priceInEuro { get => ['amount' => $this->order->priceInCents, 'currency' => $this->order->currency]; }
-
-// Right — a real Money slot; a transformer owns the wire shape, and the TS type is declared to match it.
-#[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
-public readonly Money $priceInEuro;
+// Good
+public function __construct(
+    public readonly OrderData $order,
+    #[Hidden]
+    #[FromContainer(ShippingQuotes::class)]
+    public readonly ShippingQuotes $quotes,
+) {}
 ```
 
-A transformer is a tiny class implementing Spatie's `Transformer` —
-`transform(DataProperty $property, mixed $value, TransformationContext $context): mixed` — returning the
-serialized form (`$value->cents . ' ' . $value->code`, an array, whatever the frontend needs). Applied
-per-property with `#[WithTransformer(X::class, ...args)]`, or registered as a global transformer in
-`config/data.php` for a whole type (a `Money`, a `Carbon`). Keeping the transform in a transformer means
-the property's PHP type stays honest and the same shaping is reusable across every page that carries a `Money`.
+### injected-service-not-hidden
 
-**A transformer changes the wire shape, but NOT the generated TypeScript.** The typescript-transformer
-derives a property's TS type from its PHP type hint (`Money`), not from the transformer's output — so pair
-the transformer with **`#[TypeScriptType('string')]`** (PHP-type syntax) or **`#[LiteralTypeScriptType(...)]`**
-(raw TS, e.g. a reference to another generated type) declaring the transformed shape. Without it the frontend
-type silently stays `Money` while the wire carries a string. (A built-in like `Carbon`→`string` is already
-known to the generator; a custom value object is not — you must state it.)
+A service injected into a public property without `#[Hidden]`. It is serialized into the response and appears in
+the generated TypeScript type.
 
-(For a *leaf* DTO the [`spatie-data`](../spatie-data/SKILL.md) skill says to avoid output transformers; a
-page object — the composed thing on the wire — is exactly where they earn their place.)
+```php
+// Bad
+#[FromContainer(ShippingQuotes::class)]
+public readonly ShippingQuotes $quotes,   // ← the service is sent to the page
 
-## Rules
+// Good
+#[Hidden]
+#[FromContainer(ShippingQuotes::class)]
+public readonly ShippingQuotes $quotes,
+```
 
-- [ ] Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
-      _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch._
-- [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
-      _Add `#[Hidden]` above the injection attribute to keep it off the wire. To also keep it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config — otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type._
-- [ ] Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
-      _Keep the real value-object type and add `#[WithTransformer(SomeTransformer::class)]` — plus `#[TypeScriptType(...)]` so the generated TypeScript matches the transformed shape._
-- [ ] Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.
-      _Add `#[TypeScript]` above the page-object class (`use Spatie\TypeScriptTransformer\Attributes\TypeScript;`)._
-- [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
-      _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
-- [ ] On Data classes exported to TypeScript, pair a custom `#[WithTransformer]` with `#[TypeScriptType]` or `#[LiteralTypeScriptType]` that declares the wire shape.
-      _Add `#[TypeScriptType('...')]` (or `#[LiteralTypeScriptType(...)]`) stating the type the transformer serializes to, so the generated frontend type matches the wire._
+### manual-output-transform
+
+A computed slot that flattens a value object into an array by hand, so the page gets a wire-friendly shape. The
+real type is lost. Keep the value object as the property's type and let a transformer own its wire shape.
+
+```php
+// Bad
+#[Computed]
+public array $total { get => ['amount' => $this->order->total->cents, 'currency' => $this->order->total->currency]; }
+// ↑ the Money is taken apart by hand
+
+// Good
+#[WithTransformer(MoneyTransformer::class)]
+#[TypeScriptType('{ amount: number, currency: string }')]
+public readonly Money $total,
+```
+
+### transformer-without-ts-type
+
+On a `#[TypeScript]` class, a `#[WithTransformer]` that changes the wire shape with no `#[TypeScriptType]` beside
+it. The generated type still describes the PHP value, and the frontend is told something that is not true.
+
+```php
+// Bad
+#[WithTransformer(MoneyTransformer::class)]
+public readonly Money $total,   // ← the generated type still says Money
+
+// Good
+#[WithTransformer(MoneyTransformer::class)]
+#[TypeScriptType('{ amount: number, currency: string }')]
+public readonly Money $total,
+```
 
 ## Commands
 
@@ -146,7 +156,6 @@ page object — the composed thing on the wire — is exactly where they earn th
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

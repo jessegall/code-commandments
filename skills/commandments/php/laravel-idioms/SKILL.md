@@ -7,88 +7,299 @@ description: "Use the framework's typed/injected mechanisms and keep behaviour o
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> The framework already hands you typed input, typed bags, wired-up dependencies, query scopes, and a model
-> to hang behaviour on. Reach for those. Raw `->input()`, untyped `->get()`, `app()`-in-a-method, a
-> repeated `where()` chain, and a column-poke-then-`save()` are all the same mistake: throwing away a
-> type, a wire, or a name the framework was holding for you.
+> Laravel already hands you typed input, injected dependencies, named routes, query scopes and a model to put
+> behaviour on. Use those, and do not rebuild them by hand at each call site.
+> Read this before you read request input, call `config()`, `app()` or a facade inside a class, write a query or a
+> URL by hand, or change a model from outside it, and when a laravel-idioms finding points here.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
-The framework already hands you typed input, typed bags, wired-up dependencies, query scopes, and a model to
-hang behaviour on. Reach for those. Raw `->input()`, an untyped `->get()`, `app()`-in-a-method, a `where()`
-chain repeated at call sites, and a column-poke-then-`save()` are all the same mistake: throwing away a
-type, a wire, or a name the framework was holding for you.
+**Take the type, the dependency and the name the framework is holding for you.**
 
-Read request input through the request's **typed accessors**, exposed as **named getter methods on the
-request class** — the one place the type is settled, so every call site reads a typed value by intent
-instead of re-coercing `mixed`. An MCP tool's input is a request like any other: give each tool its own
-named request class (the analogue of a `FormRequest`), with its keys, rules and types in one place, and
-read *that* — never the raw request inside `handle()`.
+Every sin here throws one of those away:
 
-Hold every dependency as a required constructor parameter, never resolved by hand from the container:
-not `app(X::class)`, not `Container::getInstance()->make(X::class)`, and not an injected container asked for a
-class it could have named in the constructor. A container that builds a class it was handed as data is a factory
-and is fine.
+- **Input.** Read request input through a typed accessor, behind a named getter on the request class. That is the one
+  place the type is settled; every call site then reads a typed value by its meaning.
+- **Dependencies and settings.** A class states what it needs in its constructor: a service behind its interface, a
+  typed settings object. Not `app()`, not a facade, not `config('…')` inside a method.
+- **Routes.** A path is declared once, where the route is registered. Everywhere else builds it from the route's name.
+- **Queries.** A query several callers run is one named scope or finder on the model. A query that must read past a
+  global scope names the one scope it leaves.
+- **Models.** A model changes through a method that says what happened (`$order->markPaid()`), never through an
+  anonymous array of columns or a property poke followed by `save()`.
+- **Wiring.** A config key and a listener exist because something reads or fires them. When the last user goes, they go.
 
-A query that must read past a global scope names the one scope it steps out of
-(`withoutGlobalScope(OwnerScope::class)`); a bare `withoutGlobalScopes()` drops every scope, including one
-added next year for a different reason. When the code keeps stepping out of the same scope, the scope is
-ambient state that belongs as an argument: pass whose rows the query reads.
+```php
+// Bad
+public function store(Request $request): RedirectResponse
+{
+    $order = Order::query()->where('id', $request->input('order_id'))->first();   // ← untyped input, query by hand
+    $order->status = 'paid';                                                       // ← the caller edits the model's columns
+    $order->save();
 
-A route's path is declared once, in its registration. Everywhere else, a redirect, an HTTP call to the
-app itself, or a link in a mail, builds it from the route's name: `route('shares.show', $share)`, never
-`"/sharing/shares/{$share->id}"`. A path written out by hand keeps working until the route moves, and then
-every copy breaks without an error.
+    Mail::to($order->customer)->send(new OrderPaid($order));                       // ← a hidden dependency
 
-Express a query concept that recurs across call sites as a **named Eloquent scope**, so the column knowledge
-lives in one place instead of being re-typed wherever you query. And mutate a model through
-**intention-revealing methods** (`$order->markPaid()`) that say what changed and why — not a bare
-`update([...])` or a set-property-then-`save()` smeared across the call site.
+    return redirect('/orders/'.$order->id);                                        // ← the path, written again
+}
 
-## Rules
+// Good
+public function store(PayOrderRequest $request, Mailer $mailer): RedirectResponse
+{
+    $order = $request->order();
+    $order->markPaid();
 
-- [ ] Name the scope a query steps out of (`withoutGlobalScope(OwnerScope::class)`), or pass whose rows it reads as an argument; never drop every global scope at once.
-      _Name the one scope to drop, or give the query the owner it reads for explicitly._
-- [ ] Inject a typed config object; never read `config('…')` inside a class.
-      _Inject a typed config value object._
-- [ ] Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.
-      _Declare the dependency as a constructor parameter._
-- [ ] Config is an interface: every key exists because something reads it. When the last reader goes, the key goes with it.
-      _Delete the key (and its env var), or restore the reader the feature lost._
-- [ ] A listener exists to answer a dispatch. When the last dispatcher goes, the listener goes with it.
-      _Delete the registration (and the listener, if nothing else reaches it) — or restore the dispatch the listener was waiting for._
-- [ ] The config FILE owns the default. A reader asks for the value; it does not restate what the value should be when absent.
-      _Drop the reader's fallback and let the config file answer — or delete the key from the file and let the reader's default be the one truth._
-- [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
-      _Constructor-inject the dependency behind its interface._
-- [ ] An object keeps its own collection: hand out something a caller cannot change, and give the object the methods callers were reaching in to use.
-      _Return a copy or a read-only view of the collection, and add the methods the callers were doing by hand (`addLine()`, `totalFor()`, `without(line)`)._
-- [ ] A route's path is declared once, in its registration; everywhere else builds it from the route's name.
-      _Build the URL with `route('name', $parameters)` so a changed path changes every link with it._
-- [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
-      _An intention method on the model (`$order->markPaid()`)._
-- [ ] Mutate a model through an intention method; don't set-property-then-`save()` at a call site.
-      _An intention method on the model (`$order->suspend($reason)`)._
-- [ ] Wiring is code: a binding exists to answer a resolve. When the last consumer goes, the binding goes with it.
-      _Delete the registration (and the implementation it names, if that is dead too)._
-- [ ] Ask the database once for everything the loop needs, before the loop.
-      _Load what the loop needs in one query before it: eager-load the relation with `with()`, or fetch the rows by their keys and index them, then let the loop read what is already in memory._
-- [ ] Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
-      _A named getter on a `FormRequest` subclass (`$request->productId()`)._
-- [ ] A query several callers run is one named finder or scope on the model, written once.
-      _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
-- [ ] Use `toString()` to read a plain string from the typed request accessor.
-      _Call `$request->string('id')->toString()` for the string value._
+    $mailer->to($order->customer)->send(new OrderPaid($order));
+
+    return redirect()->route('orders.show', $order);
+}
+```
+
+## The sins
+
+### raw-request-input
+
+Raw `->input()`, `->get()`, `->query()` or `->post()` on a request. Each returns `mixed`, so every call site decides
+the type again. Read through a typed accessor, behind a named getter on a `FormRequest`.
+
+```php
+// Bad
+$productId = $request->input('product_id');   // ← mixed: a string, an array, or null
+
+// Good
+final class AddToCartRequest extends FormRequest
+{
+    public function productId(): int
+    {
+        return $this->integer('product_id');
+    }
+}
+
+$productId = $request->productId();
+```
+
+### request-accessor-recast
+
+Casting the `Stringable` that a typed accessor returns with `(string)`. The accessor already has a method for it.
+
+```php
+// Bad
+$nodeId = (string) $request->string('nodeId');   // ← a cast where toString() says the same
+
+// Good
+$nodeId = $request->string('nodeId')->toString();
+```
+
+### config-read
+
+`config('…')` read inside a class. The class depends on a setting that its constructor does not show, by a string
+key that nothing checks. Inject a typed settings object.
+
+```php
+// Bad
+final class InvoiceNumberer
+{
+    public function next(): string
+    {
+        return config('billing.prefix').$this->sequence->next();   // ← a hidden dependency on a string key
+    }
+}
+
+// Good
+final class InvoiceNumberer
+{
+    public function __construct(
+        private readonly BillingSettings $settings,
+        private readonly Sequence $sequence,
+    ) {}
+
+    public function next(): string
+    {
+        return $this->settings->prefix.$this->sequence->next();
+    }
+}
+```
+
+### duplicated-config-default
+
+A config key whose default is stated twice: once in the config file, and again as the reader's inline fallback. The
+two will drift apart. The config file owns the default.
+
+```php
+// Bad
+// config/relay.php
+'heartbeat_seconds' => env('RELAY_HEARTBEAT', 30),
+
+// elsewhere
+$seconds = config('relay.heartbeat_seconds', 15);   // ← a second default, and a different one
+
+// Good
+$seconds = config('relay.heartbeat_seconds');
+```
+
+### dead-config-key
+
+A config key that nothing reads. It was left behind by a deleted feature, and new code may adopt it by mistake.
+Delete the key and its env variable, or restore the reader the feature lost.
+
+```php
+// Bad
+// config/shop.php
+return [
+    'currency' => env('SHOP_CURRENCY', 'EUR'),
+    'legacy_tax_mode' => env('SHOP_LEGACY_TAX', false),   // ← nothing reads shop.legacy_tax_mode
+];
+
+// Good
+return [
+    'currency' => env('SHOP_CURRENCY', 'EUR'),
+];
+```
+
+### facade-call
+
+A facade call (`Cache::`, `Log::`, `Mail::` …) inside a class. It is a dependency the constructor does not show.
+Inject the service behind its contract.
+
+```php
+// Bad
+final class RateBook
+{
+    public function rateFor(string $currency): float
+    {
+        return Cache::remember("rate.{$currency}", 3600, fn () => $this->fetch($currency));   // ← hidden dependency
+    }
+}
+
+// Good
+final class RateBook
+{
+    public function __construct(private readonly Repository $cache) {}
+
+    public function rateFor(string $currency): float
+    {
+        return $this->cache->remember("rate.{$currency}", 3600, fn () => $this->fetch($currency));
+    }
+}
+```
+
+### hard-coded-route-path
+
+A path written out by hand where a named route already declares it. It keeps working until the route moves, and
+then every copy breaks without an error. Build the URL from the route's name.
+
+```php
+// Bad
+return redirect("/sharing/shares/{$share->id}");   // ← the path of shares.show, written again
+
+// Good
+return redirect()->route('shares.show', $share);
+```
+
+### repeated-query-chain
+
+One Eloquent query chain written the same way at three or more places outside its model. The knowledge of the
+columns is copied to every caller. Give the model a named scope or finder.
+
+```php
+// Bad
+CommandRequest::query()->where('command_id', $id)->whereNull('released_at')->lockForUpdate()->first();
+// ↑ the same chain stands in two other classes
+
+// Good
+final class CommandRequest extends Model
+{
+    public static function lockedFor(string $id): ?self
+    {
+        return self::query()->where('command_id', $id)->whereNull('released_at')->lockForUpdate()->first();
+    }
+}
+
+CommandRequest::lockedFor($id);
+```
+
+### bare-scope-escape
+
+A query that drops every global scope with a bare `withoutGlobalScopes()`. It also drops the scopes someone adds
+next year for another reason. Name the one scope the query leaves, or pass whose rows it reads as an argument.
+
+```php
+// Bad
+$subscriptions->withoutGlobalScopes()->whereBetween('ended_at', [$from, $until])->get();   // ← drops all of them
+
+// Good
+$subscriptions->withoutGlobalScope(OwnerScope::class)->whereBetween('ended_at', [$from, $until])->get();
+```
+
+### mass-update-at-call-site
+
+A bare `$model->update([...])` with an array of columns, written at a call site. The caller knows the model's
+columns, and nothing says what the change means. Give the model a method named for what happens.
+
+```php
+// Bad
+$order->update(['status' => 'paid', 'paid_at' => now()]);   // ← the caller writes the model's columns
+
+// Good
+$order->markPaid();
+
+final class Order extends Model
+{
+    public function markPaid(): void
+    {
+        $this->update(['status' => OrderStatus::Paid, 'paid_at' => now()]);
+    }
+}
+```
+
+### model-mutation-at-call-site
+
+A property of a model set from outside, followed by `save()`. It is the same sin in a second form: the change has
+no name and lives with the caller.
+
+```php
+// Bad
+$customer->suspended_at = now();          // ← the caller sets the columns
+$customer->suspension_reason = $reason;
+$customer->save();
+
+// Good
+$customer->suspend($reason);
+
+final class Customer extends Model
+{
+    public function suspend(string $reason): void
+    {
+        $this->suspended_at = now();
+        $this->suspension_reason = $reason;
+        $this->save();
+    }
+}
+```
+
+### dead-event-wiring
+
+A listener wired to an event that no code can fire. It reads as live wiring and it never runs. A listener exists to
+answer a dispatch: delete the registration (and the listener, if nothing else uses it), or restore the dispatch.
+
+```php
+// Bad
+protected $listen = [
+    ShelfRestocked::class => [NotifyShelfStaff::class],   // ← nothing dispatches ShelfRestocked
+];
+
+// Good
+protected $listen = [];
+```
 
 ## Commands
 
 - `{{binary}} judge --skill=php/laravel-idioms` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `bare-scope-escape`, `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `handed-out-collection`, `hard-coded-route-path`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `repeated-query-chain`, `request-accessor-recast`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `bare-scope-escape`, `config-read`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `hard-coded-route-path`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `raw-request-input`, `repeated-query-chain`, `request-accessor-recast`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 16 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

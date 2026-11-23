@@ -11,7 +11,7 @@
       "ContainerReach",
       "csharp-container-reach"
     ],
-    "skill": "php/laravel-idioms",
+    "skill": "shared/dependencies",
     "description": "`app()`, `resolve()` or a container's `make()` reach inside a container-resolved class",
     "rule": "Declare dependencies in the constructor; never reach into the container with `app()`/`resolve()` from a resolved class.",
     "suggestion": "Declare the dependency as a constructor parameter.",

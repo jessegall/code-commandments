@@ -150,6 +150,34 @@ class CheckoutController {
 }
 ```
 
+### handed-out-collection
+
+A getter whose whole body returns the object's own mutable collection. Every caller now holds the same collection
+and can add to it, remove from it or reorder it without the object knowing. Hand out something a caller cannot
+change, and give the object the methods callers were reaching in to use.
+
+```pseudo
+// Bad
+class Cart {
+    private lines: Line[]
+
+    function lines(): Line[] { return this.lines }   // ← the caller gets the cart's own list
+}
+
+cart.lines().add(line)
+
+// Good
+class Cart {
+    private lines: Line[]
+
+    function lines(): ReadOnlyList<Line> { return readOnly(this.lines) }
+
+    function add(line: Line) { this.lines.add(line) }
+}
+
+cart.add(line)
+```
+
 ## In your language
 
 - **PHP.** Watch for a `foreach` over `$other->items` and for `$a->b()->c()->d()` across your own classes. A fluent

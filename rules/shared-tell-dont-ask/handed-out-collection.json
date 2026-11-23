@@ -15,7 +15,7 @@
       "csharp-handed-out-collection",
       "python-handed-out-collection"
     ],
-    "skill": "php/laravel-idioms",
+    "skill": "shared/tell-dont-ask",
     "description": "A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back.",
     "rule": "An object keeps its own collection: hand out something a caller cannot change, and give the object the methods callers were reaching in to use.",
     "suggestion": "Return a copy or a read-only view of the collection, and add the methods the callers were doing by hand (`addLine()`, `totalFor()`, `without(line)`)."

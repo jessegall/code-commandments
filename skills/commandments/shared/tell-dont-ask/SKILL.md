@@ -159,6 +159,34 @@ class CheckoutController {
 }
 ```
 
+### handed-out-collection
+
+A getter whose whole body returns the object's own mutable collection. Every caller now holds the same collection
+and can add to it, remove from it or reorder it without the object knowing. Hand out something a caller cannot
+change, and give the object the methods callers were reaching in to use.
+
+```pseudo
+// Bad
+class Cart {
+    private lines: Line[]
+
+    function lines(): Line[] { return this.lines }   // ← the caller gets the cart's own list
+}
+
+cart.lines().add(line)
+
+// Good
+class Cart {
+    private lines: Line[]
+
+    function lines(): ReadOnlyList<Line> { return readOnly(this.lines) }
+
+    function add(line: Line) { this.lines.add(line) }
+}
+
+cart.add(line)
+```
+
 ## In your language
 
 - **PHP.** Watch for a `foreach` over `$other->items` and for `$a->b()->c()->d()` across your own classes. A fluent
@@ -173,7 +201,7 @@ class CheckoutController {
 ## Commands
 
 - `{{binary}} judge --skill=shared/tell-dont-ask` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `feature-envy`, `guard-beside-transition`, `keyed-lookup-envy`, `middle-man`, `train-wreck`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `feature-envy`, `guard-beside-transition`, `handed-out-collection`, `keyed-lookup-envy`, `middle-man`, `train-wreck`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

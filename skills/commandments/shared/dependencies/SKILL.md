@@ -184,6 +184,45 @@ interface Exportable  { function toRow(): Row }
 function writeCsv(records: Exportable[]) { … }
 ```
 
+### container-reach
+
+A class the container builds reaches back into the container for something it needs: `app(X)`, `resolve(X)`,
+`container.make(X)`. The dependency is real but hidden: the constructor does not show it, a test cannot replace it,
+and it is found only by reading every method. Declare it as a constructor parameter. (A factory that is handed a
+class name as data and asks the container to build it is not reaching: building is its job.)
+
+```pseudo
+// Bad
+class InvoiceSender {
+    function send(invoice) {
+        mailer = container.make(Mailer)   // ← a dependency the constructor does not show
+        mailer.send(invoice.asMail())
+    }
+}
+
+// Good
+class InvoiceSender {
+    constructor(mailer: Mailer) { this.mailer = mailer }
+
+    function send(invoice) {
+        this.mailer.send(invoice.asMail())
+    }
+}
+```
+
+### orphaned-binding
+
+A container binding for a type that nothing ever asks for. It reads as wiring the application depends on, and it
+survives every refactor because nothing fails without it. A binding exists to answer a resolve: when the last
+consumer goes, the binding goes too, along with the implementation it names if that is dead as well.
+
+```pseudo
+// Bad
+container.bind(LegacyExporter, CsvLegacyExporter)   // ← no constructor and no resolve asks for a LegacyExporter
+
+// Good: the line is deleted
+```
+
 ### undeclared-member — in PHP
 
 A member access that the receiver's declared type neither declares nor inherits. It works today because the object
@@ -223,7 +262,7 @@ public function label(Sized $shape): string
 ## Commands
 
 - `{{binary}} judge --skill=shared/dependencies` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `concrete-cross-module-dependency`, `interface-overlap`, `lone-implementer-interface`, `namespace-cycle`, `namespace-dependency`, `undeclared-member`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `concrete-cross-module-dependency`, `container-reach`, `interface-overlap`, `lone-implementer-interface`, `namespace-cycle`, `namespace-dependency`, `orphaned-binding`, `undeclared-member`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

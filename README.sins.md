@@ -20,17 +20,13 @@ _175 sins across 27 skills._
 |---|---|---|
 | `bare-scope-escape` | PHP | an Eloquent query drops every global scope, including ones added later |
 | `config-read` | PHP | `config('…')` read inside a class |
-| `container-reach` | PHP, C# | `app()`, `resolve()` or a container's `make()` reach inside a container-resolved class |
 | `dead-config-key` | PHP | A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt |
 | `dead-event-wiring` | PHP | A listener wired to an event class no live code path can fire (`Event::listen`, or an entry of an event service provider's `$listen`) — a listener chain that dead-ends but reads as live wiring |
 | `duplicated-config-default` | PHP | A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently |
 | `facade-call` | PHP | Laravel facade call (`Cache::`, `Log::`, `Mail::` …) |
-| `handed-out-collection` | PHP, Vue, TypeScript, Python, C#, Go | A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back. |
 | `hard-coded-route-path` | PHP | A path written out by hand where a named route already declares it |
 | `mass-update-at-call-site` | PHP | Bare `$model->update([...])` mass-array update at a call site |
 | `model-mutation-at-call-site` | PHP | Set-property-then-`save()` at a call site (should be an intention method) |
-| `orphaned-binding` | PHP, C# | A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor |
-| `query-in-loop` | PHP, Python, C# | a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call |
 | `raw-request-input` | PHP | Raw `->input()/->get()/->query()/->post()` on a Request |
 | `repeated-query-chain` | PHP | One Eloquent query chain written alike at three or more sites outside its model |
 | `request-accessor-recast` | PHP | Casting the Stringable returned by a typed request accessor instead of using its `toString()` method. |
@@ -131,10 +127,12 @@ _175 sins across 27 skills._
 | Sin | Judges | What it flags |
 |---|---|---|
 | `concrete-cross-module-dependency` | PHP, Vue, TypeScript, Python, C#, Go | A constructor takes another module's concrete service |
+| `container-reach` | PHP, C# | `app()`, `resolve()` or a container's `make()` reach inside a container-resolved class |
 | `interface-overlap` | PHP, Go | An interface repeats the signatures of a contract it can reuse. |
 | `lone-implementer-interface` | PHP, Vue, TypeScript, Python, C#, Go | An interface has only one local implementation |
 | `namespace-cycle` | PHP, Vue, TypeScript, Python, C# | Two independent modules import each other |
 | `namespace-dependency` | PHP, Vue, TypeScript, Python, C#, Go | a declared layer references a layer it may not use (the arrow points back up) |
+| `orphaned-binding` | PHP, C# | A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor |
 | `undeclared-member` | PHP | A member access the receiver's declared type neither declares nor inherits |
 
 #### `commandments-shared-documentation`
@@ -215,6 +213,7 @@ _175 sins across 27 skills._
 | `loop-inverted-guard` | PHP, Vue, TypeScript, Python, C#, Go | A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition |
 | `nested-ternary` | PHP, Vue, TypeScript, Python, C# | A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression |
 | `non-counting-for` | PHP, Vue, TypeScript, C#, Go | A `for` loop whose step assigns the next item instead of moving a counter: a walk written as a count |
+| `query-in-loop` | PHP, Python, C# | a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call |
 | `reassigned-parameter` | PHP, Vue, TypeScript, Python, C#, Go | A parameter overwritten inside its function, so one name holds the value the caller passed and later a different one. |
 | `redundant-else` | PHP, Vue, TypeScript, Python, C#, Go | An `else` after an `if` branch that already left (it returns, throws, breaks or continues): it indents the rest for nothing |
 | `short-circuit-statement` | PHP, Vue, TypeScript, Python | A bare `a && b()` or `a \|\| b()` statement: a short-circuit whose value nothing reads, so the operator is an `if` in disguise |
@@ -250,6 +249,7 @@ _175 sins across 27 skills._
 |---|---|---|
 | `feature-envy` | PHP, Vue, TypeScript, Python, C#, Go | Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object |
 | `guard-beside-transition` | PHP, Vue, TypeScript, Python, C#, Go | A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards |
+| `handed-out-collection` | PHP, Vue, TypeScript, Python, C#, Go | A getter whose whole body returns the object's own mutable collection, untouched: every caller holds the same one and may add, remove or reorder it behind the object's back. |
 | `middle-man` | PHP, Vue, TypeScript, Python, C#, Go | A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work. |
 | `train-wreck` | PHP, Vue, TypeScript, Python, C#, Go | A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller. |
 

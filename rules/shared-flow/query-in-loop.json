@@ -11,7 +11,7 @@
       "QueryInLoopDetector",
       "QueryInLoop"
     ],
-    "skill": "php/laravel-idioms",
+    "skill": "shared/flow",
     "description": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call",
     "rule": "Ask the database once for everything the loop needs, before the loop.",
     "suggestion": "Load what the loop needs in one query before it: eager-load the relation with `with()`, or fetch the rows by their keys and index them, then let the loop read what is already in memory.",

@@ -8,10 +8,8 @@ import (
 )
 
 var (
-	//go:embed page_objects.intro.md
-	pageObjectsIntro string
-	//go:embed page_objects.principle.md
-	pageObjectsPrinciple string
+	//go:embed page_objects.md
+	pageObjectsBody string
 )
 
 // PageObjects teaches: the composed `Data` a controller returns for a page — container-injected + `#[Hidden]` collaborators, computed slots over a fat constructor, transformers for output shape.
@@ -28,9 +26,8 @@ func (PageObjects) Definition() skill.Definition {
 		Order:     5,
 		Title:     "Page Objects — the Data class builds the whole page",
 		Trigger:   "How to write a PAGE OBJECT — the composed Spatie `Data` a controller returns for one page to render, assembling several nested Data slots and travelling back in the response. Read this BEFORE you write or review a `*Page`/view-model `Data` class, a controller that returns a Data payload, a page object's constructor, or a `#[FromContainer]`/`#[Hidden]`/`#[Computed]`/`#[WithTransformer]` attribute on a Data property. Read it too when you are deciding how a Data property should be SHAPED on the wire — a `Money`, a `Carbon`, an enum, any value object whose serialized form must differ from its PHP type — or when you are about to reach for `app()`/`resolve()`/a facade inside a Data class.",
-		Intro:     pageObjectsIntro,
 		Summary:   "the composed `Data` a controller returns for a page — container-injected + `#[Hidden]` collaborators, computed slots over a fat constructor, transformers for output shape.",
-		Principle: pageObjectsPrinciple,
+		Body:      pageObjectsBody,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
 			{Slug: "php/spatie-data", Note: "the mechanics of a `Data` class this builds on — `::from()`, honest types, `#[DataCollectionOf]`; a page object is a Data used as a composed view-model."},

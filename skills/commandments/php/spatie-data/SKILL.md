@@ -7,262 +7,294 @@ description: "How to write and construct a Spatie Data class — final, public r
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> A `Data` class already knows how to be built from an array, copied, serialised, and collected. Your job
-> is to declare **honest, typed, readonly** properties and let the framework do the mapping. The moment
-> you hand-roll the array↔object plumbing, you've taken work the library does declaratively — and made it
-> wrong.
+> A Spatie `Data` class is a typed, sealed description of one piece of data: what is always there, what may be left
+> out, and how it is built. Write it so the type tells the truth and the package does the work.
+> Read this before you write or review a `Data` class, a `::from`, a `new SomeData`, a loop that fills Data objects
+> one by one, or an attribute on a Data property, and when a spatie-data finding points here.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
-A `Data` class already knows how to be built from an array, copied, serialised, and collected. Your job
-is to declare **honest, typed, readonly** properties and let the framework do the mapping. The moment
-you hand-roll the array↔object plumbing, you've taken work the library does declaratively — and made it
-wrong.
+**Seal the class, type each field as what it really is, and build it through `::from`.**
 
-### The house shape
+1. **A Data class is a leaf.** `final`, with `public readonly` promoted constructor properties.
+2. **Each field has one honest type.** There are three different things a field can be, and each has its own
+   spelling:
 
-- **`final`**, **public `readonly`** promoted constructor properties. Immutable by construction — built
-  once, never mutated. No setters; "change" a field by building a new one with `::from([...])`.
-  - **A `#[WithCast]` on a promoted param is still `readonly`.** The cast runs INSIDE the `::from()`
-    pipeline, BEFORE the object exists — it morphs the raw value and Spatie passes the *built* result as
-    the constructor argument. So the value is present at construction; `readonly` holds. Don't demote a
-    cast property to mutable "because the cast injects it after construction" — that only happens for a
-    **non-promoted** class property (`public T $x;` outside the constructor), which Spatie sets by
-    reflection post-construction and which therefore can't be `readonly`. The fix for that is to *promote*
-    it into the constructor, not to drop `readonly`.
-- **Construct via `::from([...])`, not `new`** — see the next section.
-- **Document non-array `fromX()` factories with `@method`** (see below) — *only* when you add a
-  `fromX(SomeClass $x)` magic factory. The plain `::from([...])` array shape needs **no** `@method`: it's
-  the default, already visible in the constructor. A class with no `fromX()` factories needs no `@method`.
+   | The field is | Type it |
+   |---|---|
+   | always present | `T`, no default |
+   | sometimes left out (the key is missing on the wire) | `T\|Optional = new Optional()` |
+   | present, and "none" is a real value | `?T`, or better a Null Object or an identity default |
 
-### Construct with `::from()`, never `new` — except defaults
-
-Build every data object through **`::from([...])`** (or a named `fromX()` factory), at every call site.
-
-`::from()` runs the framework pipeline — name mapping, casts, (request-sourced) validation, magic
-factories. `new` bypasses all of it and binds you to positional args. Routing construction through
-`::from()` keeps it uniform and mapped, and keeps the construction *shape* in the one documented place.
-
-**`new` is fine on a PLAIN data class.** The rule is about not *silently bypassing a pipeline*. If the
-class has no pipeline to bypass — only scalar/enum promoted props, no `#[WithCast]`/`#[WithCastable]`,
-no `#[MapInputName]`/`#[MapName]`, no `#[DataCollectionOf]`, no nested `Data` prop, no `casts()`, no
-`fromX()` factory — then `::from()` and `new` do exactly the same thing, and `new` (with named args) is
-honest and clearer.
-
-The sin is `new` on a **rich** class — one that *does* carry casts, name maps, nested Data, or a magic
-factory — where the raw `new` quietly skips that work.
-
-**The other place `new` is always right** — a **default value in a constructor signature**, even on a rich
-class. That is a default, not construction-from-input.
-
-Never hand-roll the mapping: a static `fromArray()`/`fromRow()` reading keys one-by-one into
-`new self(...)` re-implements what `::from()` already does. If a source genuinely needs conversion, write
-an explicit magic factory — `public static function fromUser(User $user): self`.
-
-### Document the magic `::from()`/`::collect()` overloads with `@method` — never the factory or the array shape
-
-`::from()` **magically dispatches** to a custom factory whose parameter type matches the payload, so
-`ProfileData::from($user)` silently runs `fromUser($user)`. The IDE and the reader cannot see that hidden
-overload from the constructor — that, and only that, is what `@method` is for.
-
-The dispatcher's mechanics, which must be exactly right or the magic doesn't exist:
-
-- **A magic factory's name MUST begin with `from`** (and cannot be exactly `from`). The dispatcher only
-  considers public-static `from*` methods. A factory named `forCredential`, `ofUser`, `createFromRow`,
-  `make…` is **invisible to `::from()`** — callers must invoke it directly and it gets no polymorphism.
-  If you want `::from($x)` to route to it, **rename it `from<Type>`** (`forCredential(Credential $c)` →
-  `fromCredential`). Multiple args are fine: `fromMultiple(string $t, string $a)` answers
-  `ProfileData::from($t, $a)`.
-- **The `@method` line documents `from` — NEVER the factory's own name.** Writing
-  `@method static static fromCredential(...)` (or `forCredential(...)`) re-declares a method the class
-  *already* has, so the IDE reports **"Method with same name already defined in this class."** The
-  concrete `from<Type>` is visible from its real signature; the *invisible* thing — the one the annotation
-  must describe — is the `::from(<that type>)` overload. So the tag always names `from`.
-
-Each `from<Type>(T)` *object* factory gets one matching `@method static static from(T $x)` line.
-
-**Do NOT `@method`-document the array shape.** `::from([...])` from an array is the default; the
-constructor already shows the keys it takes, so a verbose `@method static static from(array{a?: …, b?: …})`
-just duplicates it as noise. Only the *non-array* factory types earn a `@method`.
-
-### Honest field types — this is where most damage happens
-
-A `Data` class's constructor signature **is** a contract. Type each field to the truth:
-
-- A **required** field is **non-nullable, no default** — then `::from([...])` throws on a missing value,
-  at the boundary, loudly. That is the point.
-- An **optional** field uses `Optional`, `?T`, or a default — a *deliberate* three-way choice. **Do not
-  reach for `?T = null` reflexively to dodge a missing key.** Which one is the [`absence`](../absence/SKILL.md)
-  decision; the Spatie mechanics are:
-
-| You want… | Use | In `toArray()` |
-|---|---|---|
-| key may be **absent**, omit it when missing (PATCH / partial) | `string \| Optional $x` | excluded entirely |
-| value may be **explicit null**, key always present | `?string $x` / `string \| null $x` | `null` |
-| a concrete **fallback** when absent | `string $x = 'default'` | the default |
-
-**The anti-pattern (see `fix-at-the-source`):** a DTO where *every* field is `?T = null`. It validates
-nothing and pushes every required-field check downstream into the consumers. If you're tempted to make a
-field nullable so a consumer's check passes — stop, that's a symptom; the field's nullability is decided
-by *this* class's real contract, not by what quiets a caller.
-
-**When every field genuinely IS optional and same-shaped**, with no required core field to demand, the
-honest shape is *not* `?T = null` on each, and *not* flattening the bag into its parent (that loses the
-cohesive shape). If the field's type has a natural **inert / identity value**, keep each field
-**non-nullable with a [Null Object](../absence/SKILL.md) default** on the value type. Now consumers never
-null-check, the wire contract carries no nullables, and an "undeclared" field is an *inert value* rather
-than an absence. This is the `absence` skill's Null Object option applied to a whole DTO — reach for it
-before you accept an all-nullable bag.
-
-This is **not** a callback-only move — it fits any type with an identity value:
-
-- a **callback/hook bag** — `AcceptCallbacks { startDrag, received, moved, removed: Callback }` → each
-  defaults to `new Callback(Callback::NOOP)`, with `noOp()`/`isNoOp()` on `Callback`. The unset hook is
-  a verb nothing listens to.
-- a **filter/criteria set** — `SearchFilters { status, assignee, dueBefore }` → each defaults to a
-  "match-all" object (`StatusFilter::any()`, `DateFilter::unbounded()`), so the query builder applies
-  every filter unconditionally, no `if ($x !== null)` branch.
-- a **money/quantity bag** — `PriceBreakdown { discount, tax, shipping: Money }` → each defaults to
-  `Money::zero()`, so `subtotal + tax + shipping` needs no null coalescing.
-
-Where the type has **no** honest identity value, the field is not really always-optional — it has a real
-contract; go back to the required/`Optional`/`?T` choice above.
-
-### `Optional` — for a value that may be genuinely ABSENT
-
-`Optional` (`Spatie\LaravelData\Optional`) is **not** another word for `null`. It marks a field that may be
-**missing from the payload entirely**, and Spatie treats it structurally:
-
-- **Hydration** — `::from([...])` with the key absent leaves the field an `Optional` instance; you never
-  pass a value. Constructing by hand, give it that default so partial construction is legal:
-  `public readonly string|Optional $artist = new Optional()` (equivalently `Optional::create()`).
-- **Output** — an `Optional` field is **omitted from `toArray()`/JSON entirely**, not emitted as `null`.
-  That is the whole point: `{"title": …}` with **no** `artist` key — versus `?string`, which emits
-  `"artist": null`. So `Optional` is the honest, leaner way to say "this simply isn't here", and it is the
-  clean way to prune a `?T = null` field from the wire: retype it `T|Optional = new Optional()`.
-- **Need both "absent" and "explicit null"?** `string|Optional|null`, then
-  `SomeData::factory()->withoutOptionalValues()->from([...])` collapses `Optional` → `null` for output.
-
-Read the three-way as a statement about the **wire**: `Optional` = the key vanishes; `?T` = key present,
-`null`; `T = default` = key present, the fallback. Choose by what the consumer of the JSON must see.
-
-### Put the optionality at its SOURCE — the coarsest honest boundary
-
-This is the cardinal rule (**trace to the source**) applied to absence. When a whole **sub-object** may be
-absent, the optional belongs on the **container field where the object is used** — NOT scattered across
-that object's own leaves:
+   A class where every field is nullable, or every field is `Optional`, promises nothing. When a whole sub-object
+   may be absent, put the `Optional` on the field that holds it and keep its own fields concrete.
+3. **`::from` builds it.** Never `new`: `::from` runs the casts, the mapping and the validation. A collection is
+   typed `array` with `#[DataCollectionOf]` and built with `::collect`. A value object is built by a cast that is
+   written once, not by hand at every caller.
+4. **What goes to the frontend is generated.** A `#[TypeScript]` class needs every nested Data class to be
+   `#[TypeScript]` too, or the generated type has a hole.
 
 ```php
-// ✗ WRONG — every leaf carries Optional, so a Grid can exist half-built (no columns, no span). The
-//   absence is smeared across the children and the object's own invariant ("a grid has columns") is gone.
-final class Grid extends Data {
+// Bad
+class OrderData extends Data                                   // ← not final
+{
     public function __construct(
-        public readonly int|Optional $columns = new Optional(),
-        public readonly int|Optional $span    = new Optional(),
+        public ?string $number = null,                         // ← an order always has a number
+        public ?CustomerData $customer = null,
+        public ?DataCollection $lines = null,                  // ← untyped items
     ) {}
 }
 
-// ✓ RIGHT — Grid is ALWAYS whole, with honest concrete defaults; "is there a grid at all?" lives on the
-//   PARENT's field. The invariant holds: if a Grid exists, it is a valid grid.
-final class Grid extends Data {
+$order = new OrderData($row['number'], new CustomerData(...), null);   // ← skips casts and validation
+
+// Good
+final class OrderData extends Data
+{
     public function __construct(
-        public readonly int $columns = 1,
-        public readonly int $span    = 1,
+        public readonly string $number,
+        public readonly CustomerData $customer,
+        #[DataCollectionOf(OrderLineData::class)]
+        public readonly array $lines,
+        public readonly CouponData|Optional $coupon = new Optional(),
     ) {}
 }
-final class UiChrome extends Data {
+
+$order = OrderData::from($row);
+```
+
+## The sins
+
+### non-final-data
+
+A Data class that is not `final`, or whose properties are not `readonly` promoted. It is a leaf, not a base class,
+and a value that can be changed after it was built cannot be trusted.
+
+```php
+// Bad
+class AddressData extends Data                     // ← can be extended
+{
+    public string $street;                         // ← can be changed after it is built
+    public string $city;
+}
+
+// Good
+final class AddressData extends Data
+{
     public function __construct(
-        public readonly Grid|Optional       $grid  = new Optional(),
-        public readonly StyleToken|Optional $style = new Optional(),
+        public readonly string $street,
+        public readonly string $city,
     ) {}
 }
 ```
 
-**A `Data` class where EVERY field is `T|Optional` is the same god-DTO smell as all-`?T = null`** — the
-type now promises that *nothing* is ever present. Don't trade one lie for the other. Ask where the absence
-is really born: almost always it is the *whole object* that is present-or-absent, so make the enclosing
-field `T|Optional` and give this object honest, concrete leaves.
+### new-data-object
 
-### Collections — type the element, collect the list
+`new SomeData(...)` instead of `::from()` or a named `fromX()` factory. `new` skips everything the package does:
+casts, name mapping, nested hydration, validation.
 
-- **NEVER type a property as `DataCollection`.** The property type is **`array`** (preferred) or a
-  `Collection`, with **`#[DataCollectionOf(X::class)]`** naming the element — `public readonly array $nodes;`
-  with the attribute, never `public readonly DataCollection $nodes;`. `DataCollection` is a fine *return*
-  of `::collect()`, but as a property TYPE it generates malformed TypeScript (`undefined<number, X>`) and
-  skips the element-typed hydration/validation below. (`#[LiteralTypeScriptType('X[]')]` is NOT the fix —
-  `array` + `#[DataCollectionOf]` is.)
-- **`#[DataCollectionOf(X::class)]`** (or a `/** @var X[] */` docblock) on the property is **required** —
-  element typing drives both hydration and nested validation (`songs.*.title`). A `::from()` inside a
-  `foreach`/`array_map` is the tell you forgot it.
-- **`::collect()` is magic, like `::from()`** — and **shape-preserving**: whatever collection type you pass
-  in comes back out, holding the data objects. `array` → `array`, `Illuminate\Support\Collection` →
-  `Collection`, an Eloquent collection → Eloquent collection, a `LengthAwarePaginator`/`CursorPaginator`
-  stays that paginator. The optional second arg casts a **non-paginator** collection into a target type:
-  `SongData::collect($rows, DataCollection::class)`.
-- **Document `collect()` with a *conditional* `@method`, never a flat `static[]`.** A flat array return
-  lies the moment a caller passes a `Collection`. Encode the shape-preservation so the IDE/PHPStan infers
-  the real return from the argument. PhpStorm renders the conditional as the union
-  (`Collection<int, static>|array<int, static>`), still honest; PHPStan/Psalm resolve the exact branch.
-  Only annotate `collect()` when the class is actually `::collect()`-ed.
-- A source needing conversion gets a **`collectX()`** method (mirrors `fromX()`); document it the same way.
+```php
+// Bad
+$customer = new CustomerData($row['name'], $row['email']);   // ← no casts, no mapping, no validation
 
-### Mapping, casts, validation — the bits you actually use
+// Good
+$customer = CustomerData::from($row);
+```
 
-- **Name mapping at the class level:** for a snake_case boundary (LLM / external JSON), one
-  `#[MapInputName(SnakeCaseMapper::class)]` on the class — never hand-write `#[MapInputName]` on every
-  property.
-- **`#[WithCast]` for non-scalar input** the framework can't auto-build (a `DateTime`, an enum from a
-  non-trivial value). Don't write a cast for a **nested Data class** (nesting is automatic) or a plain
-  scalar. **Gotcha:** a property carrying `#[WithCast]` (or any value-injecting attribute) **cannot be
-  `readonly`** — the framework injects into it after construction. Drop `readonly` on exactly that
-  property, nowhere else.
-- **Never hand-hydrate a value object in a constructor/factory.** `$this->price = new Money($raw['amount'],
-  $raw['currency'])` re-does imperatively the `simple → complex` mapping a **cast** owns. Type the property
-  as the value object and give it a `#[WithCast(MoneyCast::class)]`, or let the value object implement
-  `Castable` (a `castUsing()` returning the cast). A custom cast is a tiny class implementing `Cast` —
-  `cast(DataProperty $property, mixed $value, array $properties, CreationContext $context): mixed` —
-  returning the built object (or `Uncastable` when it can't; it never receives `null`). Hydration stays
-  declarative and reusable, out of the constructor. (Still not for a nested `Data` — that nests automatically.)
-- **Validation:** prefer **declarative attributes** (`#[Required]`, `#[Min(1)]`, `#[Email]`) for static,
-  per-property constraints. Use a static `rules()` only for **conditional / cross-field** logic — and
-  return an **array** (`['field' => ['required', 'email']]`), never a pipe-string (`'required|email'`).
-  Remember plain `from($array)` does **not** validate; validation runs on request-sourced creation.
-- **`#[TypeScript]`** on any shape the frontend consumes, so the TS type stays in sync. And on every
-  nested **`Data`** it reaches on the wire — an untagged nested Data generates as `undefined` (a silent hole
-  in the type). A nested **enum** needs no tag: the enum collector auto-generates it either way.
+### all-nullable-data
 
-### Don't reach for (not our style)
+A Data class where every field is `?T` or has a default. The type says nothing is certain, so every reader has to
+check everything. Type each field as what it really is.
 
-`Lazy` properties, output `#[WithTransformer]`s, `validateAndCreate()`, `#[WithoutValidation]`,
-hand-written `fromX()` magic methods that just re-do default array mapping. The codebase doesn't use them;
-if you think you need one, you probably want a typed accessor / method on the class instead.
+```php
+// Bad
+final class GridData extends Data
+{
+    public function __construct(
+        public readonly ?int $columns = null,      // ← a grid always has columns
+        public readonly ?int $gap = null,
+        public readonly ?string $align = null,
+    ) {}
+}
 
-## Rules
+// Good
+final class GridData extends Data
+{
+    public function __construct(
+        public readonly int $columns = 1,
+        public readonly int $gap = 0,
+        public readonly Alignment $align = Alignment::Start,
+    ) {}
+}
+```
 
-- [ ] Use non-nullable types for values the class guarantees. Use `T|Optional = new Optional()` for omitted fields in any Data class. A single required nullable value can carry an explicit state, such as clearing a selection. Give empty filters, collections, or money breakdowns a typed identity where one exists.
-      _Retype each field to the truth: required → non-nullable, no default; genuinely-absent → `T|Optional = new Optional()` (dropped from output, not `null`); always-present-but-emptyable → a Null Object / identity default (`Grid $grid = new Grid()`, `Status $s = Status::Default`). If a whole SUB-object may be absent, put the optional on the CONTAINER field (`Type|Optional $x = new Optional()`) and keep that type's leaves concrete — don't scatter `?T`/`Optional` across every leaf._
-- [ ] Give a Data object the fields it needs to be valid. When the whole object can be absent, put `Optional` on the enclosing field. A partial update can make every field optional when its consumer applies each supplied field independently and preserves the current value for each omitted field.
-      _Give each leaf a concrete default (`int $columns = 1`) and move the optionality up to where this type is used: `public readonly Grid|Optional $grid = new Optional();`._
-- [ ] Never type a `Data` property as `DataCollection`. Type it `array` (preferred) or `Collection` and add `#[DataCollectionOf(X::class)]` — element typing drives hydration, nested validation, and clean TypeScript.
-      _`#[DataCollectionOf(NodeData::class)] public readonly array $nodes;`, not `public readonly DataCollection $nodes;`._
-- [ ] A `@method` hint must name the magic `from`/`collect`, never re-declare a real method (no IDE collision).
-- [ ] Mark every get-only property hook on a `Data` class `#[Computed]`, so Spatie treats it as an output-only computed value, not a required hydration input.
-      _Add `#[Computed]` above the property: `#[Computed] public array $docks { get => $this->dockSet->all(); }`._
-- [ ] Hydrate a collection with `#[DataCollectionOf]` + `::collect()`, not a per-item `::from()` loop.
-      _`#[DataCollectionOf(X::class)]` + `X::collect($rows)`._
-- [ ] Hydrate a value-object property with a `#[WithCast]` (or a `Castable` value object), never by hand-building it at every `new`/`::from` call site.
-      _Type the property as the value object and add `#[WithCast(SomeCast::class)]` (or make the value object `Castable`) so the `simple → complex` mapping lives in one place._
-- [ ] Every nested `Data` reachable on the wire from a `#[TypeScript]` class must ALSO be `#[TypeScript]` (or the property must declare its shape with `#[LiteralTypeScriptType]`), or it generates as `undefined`. Enums need no tag — they auto-generate.
-      _Add `#[TypeScript]` to the nested `Data` class the property points at._
-- [ ] Build a rich `Data` object via `::from()`/a `fromX()` factory, never `new`.
-      _`X::from(...)` (or a `fromY()` factory)._
-- [ ] Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.
-- [ ] Map an absent value onto `Optional` in ONE named factory, not a ternary at every producer. Use the scaffolded `optionalOrMissing()` (null → `new Optional`, else `::from`), the omit-from-wire counterpart to Spatie's `optional()`.
-      _Replace `$x === null ? new Optional : Foo::from($x)` / `expr() ?? new Optional` with `Foo::optionalOrMissing($x)` (scaffold the `OptionalOrMissing` trait)._
-- [ ] On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested Data or enum (a backed enum included: its absence is a missing key, not a null case) `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.
-      _`public readonly UiChrome|Optional $chrome = new Optional();`, not `public readonly UiChrome|null $chrome = null;`._
-- [ ] Use `Optional::create()`, not `new Optional`, everywhere a static call is legal — a parameter/property default must stay `new Optional` (a factory call is illegal there), everywhere else prefer the factory.
-      _Replace `new Optional` / `new Optional()` with `Optional::create()`._
+### all-optional-data
+
+Every field of a Data class is `T|Optional`. The type promises that nothing is ever present. What is optional is
+the whole object: put `Optional` on the field that holds it, and give its own fields concrete types. (A partial
+update, where each supplied field is applied by itself, may keep every field optional.)
+
+```php
+// Bad
+final class GridData extends Data
+{
+    public function __construct(
+        public readonly int|Optional $columns = new Optional(),   // ← every field can be missing
+        public readonly int|Optional $gap = new Optional(),
+    ) {}
+}
+
+// Good: the grid itself is what may be left out
+final class LayoutData extends Data
+{
+    public function __construct(
+        public readonly GridData|Optional $grid = new Optional(),
+    ) {}
+}
+```
+
+### nullable-wire-object
+
+On a `#[TypeScript]` Data class, a nested Data or enum typed `T|null`. It sends `null` to the frontend, where the
+frontend expects the key to be missing (`x?.`). Type it `T|Optional` so the key is left out.
+
+```php
+// Bad
+public readonly ?UiChrome $chrome = null;                       // ← ships "chrome": null
+
+// Good
+public readonly UiChrome|Optional $chrome = new Optional();     // the key is left out
+```
+
+### null-to-optional-map
+
+A producer that maps null onto `Optional` by hand with a ternary or `??`, at every place it builds the object. Put
+that mapping in one named factory. (Spatie's own `optional()` maps null to null, which is the opposite.)
+
+```php
+// Bad
+chrome: $row->chrome === null ? new Optional : UiChrome::from($row->chrome),   // ← repeated at every producer
+
+// Good
+chrome: UiChrome::optionalOrMissing($row->chrome),
+```
+
+### prefer-optional-create
+
+A raw `new Optional` in a runtime expression. Use `Optional::create()`. Only a parameter or property default must
+stay `new Optional()`, because a call is not allowed there.
+
+```php
+// Bad
+return $coupon === null ? new Optional : $coupon;   // ← a runtime expression
+
+// Good
+return $coupon ?? Optional::create();
+```
+
+### data-collection-type
+
+A property typed `DataCollection`. It generates broken TypeScript and its items are not hydrated by type. Type it
+`array` (or `Collection`) and name the item type with `#[DataCollectionOf]`.
+
+```php
+// Bad
+public readonly DataCollection $nodes;   // ← items of what?
+
+// Good
+#[DataCollectionOf(NodeData::class)]
+public readonly array $nodes;
+```
+
+### manual-hydration-loop
+
+A collection built with `::from()` for each item in a loop or a `map`. The package already does this.
+
+```php
+// Bad
+$lines = array_map(fn (array $row) => OrderLineData::from($row), $rows);   // ← one ::from per item, by hand
+
+// Good
+$lines = OrderLineData::collect($rows);
+```
+
+### manual-input-cast
+
+A value-object property that every caller builds by hand before calling `::from`. The mapping from the simple
+value to the object is copied to each call site. Let a cast own it once.
+
+```php
+// Bad
+InboundOrderData::from(['price' => new Money($request->integer('price'))]);   // ← every caller builds the Money
+
+// Good
+final class InboundOrderData extends Data
+{
+    public function __construct(
+        #[WithCast(MoneyCast::class)]
+        public readonly Money $price,
+    ) {}
+}
+
+InboundOrderData::from($request);
+```
+
+### hook-missing-computed
+
+A get-only property hook on a Data class without `#[Computed]`. Spatie reads the virtual property as an input and
+expects it in `::from()`: it crashes, or the value is dropped.
+
+```php
+// Bad
+public array $docks { get => $this->dockSet->all(); }   // ← read as a required input
+
+// Good
+#[Computed]
+public array $docks { get => $this->dockSet->all(); }
+```
+
+### nested-type-missing-typescript
+
+A `#[TypeScript]` Data class has a property typed as a nested Data class that is not `#[TypeScript]` itself. The
+generator writes that property as `undefined`. Tag the nested class too. (An enum needs no tag.)
+
+```php
+// Bad
+#[TypeScript]
+final class OrderData extends Data
+{
+    public function __construct(public readonly CustomerData $customer) {}   // ← CustomerData has no #[TypeScript]
+}
+
+// Good
+#[TypeScript]
+final class CustomerData extends Data { … }
+```
+
+### data-method-hint-collision
+
+A `@method` docblock tag that declares a method the class really has. The IDE now sees the method twice. A
+`@method` hint is only for the magic `from` and `collect`.
+
+```php
+// Bad
+/**
+ * @method static array rules()            ← rules() is a real method below
+ */
+final class CouponData extends Data
+{
+    public static function rules(): array { … }
+}
+
+// Good
+/**
+ * @method static self from(array $payload)
+ */
+final class CouponData extends Data
+{
+    public static function rules(): array { … }
+}
+```
 
 ## Commands
 
@@ -273,7 +305,6 @@ if you think you need one, you probably want a typed accessor / method on the cl
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 13 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

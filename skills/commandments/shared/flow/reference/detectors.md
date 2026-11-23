@@ -11,6 +11,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`loop-inverted-guard`** — A loop whose whole body is one `if` (no `else`) around real work: the iteration pushed a level deep behind a condition — `loop-inverted-guard`
 - **`nested-ternary`** — A conditional expression (`a ? b : c`, `b if a else c`) with another inside it: several decisions folded into one expression — `nested-ternary`
 - **`non-counting-for`** — A `for` loop whose step assigns the next item instead of moving a counter: a walk written as a count — `non-counting-for`
+- **`query-in-loop`** — a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call — `query-in-loop`
 - **`reassigned-parameter`** — A parameter overwritten inside its function, so one name holds the value the caller passed and later a different one. — `reassigned-parameter`
 - **`redundant-else`** — An `else` after an `if` branch that already left (it returns, throws, breaks or continues): it indents the rest for nothing — `redundant-else`
 - **`short-circuit-statement`** — A bare `a && b()` or `a || b()` statement: a short-circuit whose value nothing reads, so the operator is an `if` in disguise — `short-circuit-statement`

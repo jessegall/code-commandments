@@ -372,6 +372,26 @@ for (session in expired) {
 }
 ```
 
+### query-in-loop
+
+A query that runs inside a loop: one query per turn. The code reads as one call, and the work grows with the data.
+Ask once, before the loop, for everything the loop needs, and let the loop read what is already in memory.
+
+```pseudo
+// Bad
+for (order in orders) {
+    customer = customers.find(order.customerId)   // ← one query for every order
+    send(order, customer)
+}
+
+// Good
+customersById = customers.findMany(orders.map(order => order.customerId)).keyBy(customer => customer.id)
+
+for (order in orders) {
+    send(order, customersById[order.customerId])
+}
+```
+
 ### inline-throw — in PHP
 
 A `?? throw` fed straight into a call or dereferenced on the same line. The check that stops the method is hidden in
@@ -416,7 +436,7 @@ var total = pricing.TotalFor(order);
 ## Commands
 
 - `{{binary}} judge --skill=shared/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `collection-mutated-while-iterated`, `csharp-inline-throw`, `deep-nesting`, `duplicated-branch-tail`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `reassigned-parameter`, `redundant-else`, `short-circuit-statement`, `subject-ladder`, `ternary-statement`, `unnamed-condition`, `unreachable-statement`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `collection-mutated-while-iterated`, `csharp-inline-throw`, `deep-nesting`, `duplicated-branch-tail`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `query-in-loop`, `reassigned-parameter`, `redundant-else`, `short-circuit-statement`, `subject-ladder`, `ternary-statement`, `unnamed-condition`, `unreachable-statement`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

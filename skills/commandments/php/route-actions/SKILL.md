@@ -7,67 +7,167 @@ description: "How a route action (controller method) earns its existence — it 
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> A route action is the thin boundary between an HTTP request and your domain. Its job is to
-> translate the request and hand off — once. Two routes that answer the same operation, or two controllers
-> that do the same thing, are duplication at the boundary: one operation deserves exactly one way in.
+> A route action is the thin step between a request and the domain. One operation has one entry point and one
+> implementation.
+> Read this before you add a controller action or a route, call one controller from another, write the same
+> operation in a command and a controller, or look a route up by name, and when a route-actions finding points here.
+> An arrow in an example (`←` or `↑`) marks the line the lesson is about.
 
 ## The principle
 
-A **route action** — a controller method wired to a URL — is the thin seam between an HTTP request and
-the domain. It validates/binds the request and **delegates into the domain**, then shapes the response.
-That is all. The discipline is one line: **one operation, one entry point.**
+**An action reads its request, calls into the domain, and shapes the response. Nothing else, and never twice.**
 
-### Delegate INTO the domain, never wrap another controller
+A controller method wired to a URL does three small things: it binds and validates the request, it hands the work to
+a service or an action class, and it returns a response. The work itself lives below it, once.
 
-An action delegates *down* — to a service, an action class, a repository that does the work. It must never
-delegate *sideways*, into **another controller**. A controller that injects another controller and forwards
-to its actions —
+From that, four rules:
 
-```
-public function moveKey(Shop $shop, QuickPad $quickPad, MoveKeyRequest $request)
+1. **Delegate down, never sideways.** An action calls a service. It does not call another controller's action: that
+   is a second entry point to an operation that already has one.
+2. **One operation, one action.** Two actions with the same thin body are the same entry point twice.
+3. **One action, one route.** A second URL bound to the same `[Controller, method]` is two names for one handler,
+   and their middleware and names drift apart. (An invokable controller answering at several fixed URLs is fine.)
+4. **One operation, one implementation, whatever the entry.** A console command, an HTTP action and an MCP tool that
+   do the same thing each translate their own protocol and call the same application service.
+
+## The sins
+
+### route-delegates-to-controller
+
+A route action that forwards to another controller's action. The operation already has a home, and this is a second
+door to it that must be kept in step for ever. Move the shared work into a service both routes call, or point the
+route at the real action and delete the wrapper.
+
+```php
+// Bad
+final class ShopQuickPadController
 {
-    return $this->quickPadController->moveKey($request, $quickPad);   // wrapping a controller
+    public function __construct(private readonly QuickPadController $quickPads) {}
+
+    public function moveKey(Shop $shop, QuickPad $quickPad, MoveKeyRequest $request): JsonResponse
+    {
+        return $this->quickPads->moveKey($request, $quickPad);   // ← a controller calling a controller
+    }
+}
+
+// Good: both actions call the same service
+final class ShopQuickPadController
+{
+    public function __construct(private readonly MoveQuickPadKey $moveKey) {}
+
+    public function moveKey(Shop $shop, QuickPad $quickPad, MoveKeyRequest $request): JsonResponse
+    {
+        return new JsonResponse($this->moveKey->handle($quickPad, $request->move()));
+    }
 }
 ```
 
-— is a **redundant entry point**: the operation already has a home (the wrapped controller / its route),
-and this is a second door onto it that must be kept in sync forever. Extract the shared work into a
-service (or an invokable action class) both routes call, or point the second route at the real action and
-delete the wrapper.
+### duplicate-route-action
 
-### Don't duplicate a sibling action
+Two actions in different controllers that both only hand the request to the same operation. That is one entry point
+written twice. Keep one action and point both routes at it.
 
-Two actions with the same body — even a *thin* one — are the copy-paste smell the general duplication
-rules deliberately skip at small sizes, because in a controller a duplicated action is a duplicated *entry
-point*, not an incidental likeness. If `WorkflowExportController::export` and
-`WorkflowEditorExportController::export` both just hand the request to a `WorkflowExporter`, they are the
-same operation twice. Collapse them: one action, one route (or two routes → one action), the work in the
-exporter.
+```php
+// Bad
+final class WorkflowExportController
+{
+    public function export(Workflow $workflow): Response
+    {
+        return $this->exporter->export($workflow);
+    }
+}
 
-### One route per action
+final class WorkflowEditorExportController
+{
+    public function export(Workflow $workflow): Response
+    {
+        return $this->exporter->export($workflow);   // ← the same action, a second time
+    }
+}
 
-Two route registrations pointing at the same `[Controller, method]` are two names for one thing — a
-maintenance trap (middleware, names, and constraints drift apart). Register the action once; if you truly
-need a second URL, make it a redirect, not a second binding onto the same handler.
+// Good
+Route::get('/workflows/{workflow}/export', [WorkflowExportController::class, 'export'])->name('workflows.export');
+```
 
-**The exception — an invokable controller mapped to several URLs is fine.** A single-action controller
-(`__invoke`) IS one operation, and answering it at several canonical URLs — the OAuth/OIDC well-known
-discovery endpoints, an alias, a `/{path}` nested catch-all — is deliberate, not duplication. The
-maintenance-trap concern is about a `[Controller, method]` binding copied to two places, not about one
-invokable serving the paths a spec requires.
+### duplicate-route
 
-## Rules
+Two registrations of the same verb that bind different URLs to the same `[Controller, method]`. Keep one route. If a
+second URL is really needed, make it a redirect.
 
-- [ ] One operation, one implementation. A boundary translates its own protocol and calls the shared application service; it does not re-spell the operation.
-      _Hoist the shared sequence into one application service and have both faces call it._
-- [ ] The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
-      _Point the lookup at the registered name, or register the route the name promises._
-- [ ] Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
-      _Keep one route; if a second URL is truly needed, make it a redirect, or an invokable controller._
-- [ ] One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
-      _Delete the duplicate action and point its route at the surviving one (or a redirect)._
-- [ ] A route action delegates INTO the domain (a service/action class), never sideways into another controller.
-      _Extract the shared work into a service both routes call, or point the route at the real action and delete the wrapper._
+```php
+// Bad
+Route::get('/reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
+Route::get('/daily-report', [ReportController::class, 'daily']);   // ← a second URL for the same handler
+
+// Good
+Route::get('/reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
+Route::redirect('/daily-report', '/reports/daily');
+```
+
+### boundary-duplicated-operation
+
+The same domain operation written out by hand at two different entry points: a console command and an MCP tool, a
+controller and a command. One operation now has two implementations, and a fix reaches only one. Move the shared
+steps into one application service, and let each entry translate its own input and call it.
+
+```php
+// Bad
+final class ArchiveOrdersCommand extends Command
+{
+    public function handle(): int
+    {
+        $orders = Order::olderThan($this->option('days'))->get();
+        $orders->each->archive();                          // ← the operation, written here
+        $this->audit->record('orders.archived', $orders->count());
+
+        return self::SUCCESS;
+    }
+}
+
+final class ArchiveOrdersTool
+{
+    public function handle(ArchiveOrdersRequest $request): string
+    {
+        $orders = Order::olderThan($request->days())->get();
+        $orders->each->archive();                          // ← and written again here
+        $this->audit->record('orders.archived', $orders->count());
+
+        return "Archived {$orders->count()} orders";
+    }
+}
+
+// Good
+final class ArchiveOrders
+{
+    public function olderThan(int $days): int { … }
+}
+
+final class ArchiveOrdersCommand extends Command
+{
+    public function handle(ArchiveOrders $archive): int
+    {
+        $archive->olderThan((int) $this->option('days'));
+
+        return self::SUCCESS;
+    }
+}
+```
+
+### dangling-route-name
+
+A `route('…')` lookup for a name no route registers. Nothing checks the string until the request runs, and then it
+is a 500. Point the lookup at the registered name, or register the route the name promises. Renaming a route means
+renaming every reference in the same change.
+
+```php
+// Bad
+Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+
+return redirect()->route('order.show', $order);   // ← no route is named order.show
+
+// Good
+return redirect()->route('orders.show', $order);
+```
 
 ## Commands
 
@@ -77,7 +177,6 @@ invokable serving the paths a spec requires.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

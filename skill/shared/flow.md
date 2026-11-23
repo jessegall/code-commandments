@@ -363,6 +363,26 @@ for (session in expired) {
 }
 ```
 
+### query-in-loop
+
+A query that runs inside a loop: one query per turn. The code reads as one call, and the work grows with the data.
+Ask once, before the loop, for everything the loop needs, and let the loop read what is already in memory.
+
+```pseudo
+// Bad
+for (order in orders) {
+    customer = customers.find(order.customerId)   // ← one query for every order
+    send(order, customer)
+}
+
+// Good
+customersById = customers.findMany(orders.map(order => order.customerId)).keyBy(customer => customer.id)
+
+for (order in orders) {
+    send(order, customersById[order.customerId])
+}
+```
+
 ### inline-throw — in PHP
 
 A `?? throw` fed straight into a call or dereferenced on the same line. The check that stops the method is hidden in
