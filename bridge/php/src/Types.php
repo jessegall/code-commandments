@@ -694,12 +694,26 @@ final class Types
 
     private function property(Expr $fetch, ?string $class, string $name): ?array
     {
-        for ($at = $class; $at !== null; $at = $this->declaration($at)['parent'] ?? null) {
+        $seen = [];
+        $waiting = $class !== null ? [$class] : [];
+        while ($waiting !== []) {
+            $at = array_shift($waiting);
+            if (isset($seen[strtolower($at)])) {
+                continue;
+            }
+            $seen[strtolower($at)] = true;
             $declared = $this->declaration($at);
-            if ($declared !== null && array_key_exists($name, $declared['properties'])) {
-                $fetch->setAttribute('member', "{$at}::\${$name}");
+            if ($declared === null) {
+                continue;
+            }
+            if (array_key_exists($name, $declared['properties'])) {
+                $fetch->setAttribute('member', "{$declared['name']}::\${$name}");
 
                 return $declared['properties'][$name];
+            }
+            array_push($waiting, ...$declared['traits']);
+            if ($declared['parent'] !== null) {
+                $waiting[] = $declared['parent'];
             }
         }
 
