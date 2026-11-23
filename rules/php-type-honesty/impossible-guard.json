@@ -14,7 +14,7 @@
       "python-impossible-guard"
     ],
     "skill": "php/type-honesty",
-    "description": "`if ($order === null)` where `$order` is typed `Order`, with no `?` \u2014 one of the two is wrong, and both are worth knowing",
+    "description": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing",
     "rule": "A guard answers a question the type leaves open: if the type says the value is there, delete the guard; if the value really can be missing, say so in the type.",
     "suggestion": "Delete the check when the type is right. When callers really do pass null, type the parameter `?Order` and let the reader see it, then decide absence once where the value is born.",
     "reporting": {
@@ -100,6 +100,60 @@
                 "throw"
               ]
             ]
+          ]
+        ]
+      ]
+    },
+    "nulledNames": {
+      "args": [
+        "fn"
+      ],
+      "kept": true,
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              "$fn.body"
+            ],
+            "a",
+            [
+              "and",
+              [
+                "=",
+                "$a.kind",
+                "assignment"
+              ],
+              [
+                "some",
+                "$a.values",
+                "v",
+                [
+                  "nullLiteral",
+                  "$v"
+                ]
+              ]
+            ]
+          ],
+          "a",
+          [
+            "map",
+            [
+              "filter",
+              "$a.targets",
+              "t",
+              [
+                "in",
+                "$t.kind",
+                "reference",
+                "binding"
+              ]
+            ],
+            "t",
+            "$t.name"
           ]
         ]
       ]
@@ -197,47 +251,14 @@
           "reference"
         ],
         [
-          "none",
+          "not",
           [
-            "ownDescendants",
-            "$function.body"
-          ],
-          "a",
-          [
-            "and",
+            "has",
             [
-              "=",
-              "$a.kind",
-              "assignment"
+              "nulledNames",
+              "$function"
             ],
-            [
-              "some",
-              "$a.targets",
-              "t",
-              [
-                "and",
-                [
-                  "in",
-                  "$t.kind",
-                  "reference",
-                  "binding"
-                ],
-                [
-                  "=",
-                  "$t.name",
-                  "$tested.name"
-                ]
-              ]
-            ],
-            [
-              "some",
-              "$a.values",
-              "v",
-              [
-                "nullLiteral",
-                "$v"
-              ]
-            ]
+            "$tested.name"
           ]
         ]
       ]
