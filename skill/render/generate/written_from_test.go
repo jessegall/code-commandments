@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func aFixtureTree(t *testing.T, files map[string]string) string {
+func aFolder(t *testing.T, files map[string]string) string {
 	t.Helper()
 	root := t.TempDir()
 
@@ -24,16 +24,16 @@ func aFixtureTree(t *testing.T, files map[string]string) string {
 }
 
 func TestTheSameSourcesAnswerTheSameKey(t *testing.T) {
-	fixtures := aFixtureTree(t, map[string]string{
+	folder := aFolder(t, map[string]string{
 		"backend/app/Orders.php": "<?php\n",
 		"python/shop/cart.py":    "def total():\n    return 0\n",
 	})
 
-	first, err := writtenFrom(fixtures)
+	first, err := writtenFrom(folder)
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := writtenFrom(fixtures)
+	second, err := writtenFrom(folder)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestTheSameSourcesAnswerTheSameKey(t *testing.T) {
 	}
 }
 
-func TestAFixtureThatChangedAnswersANewKey(t *testing.T) {
+func TestAFolderThatChangedAnswersANewKey(t *testing.T) {
 	for name, change := range map[string]func(t *testing.T, root string){
 		"a file's content": func(t *testing.T, root string) {
 			if err := os.WriteFile(filepath.Join(root, "backend/app/Orders.php"), []byte("<?php\n\nfinal class Orders {}\n"), 0o644); err != nil {
@@ -70,19 +70,19 @@ func TestAFixtureThatChangedAnswersANewKey(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			fixtures := aFixtureTree(t, map[string]string{
+			folder := aFolder(t, map[string]string{
 				"backend/app/Orders.php": "<?php\n",
 				"python/shop/cart.py":    "def total():\n    return 0\n",
 			})
 
-			before, err := writtenFrom(fixtures)
+			before, err := writtenFrom(folder)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			change(t, fixtures)
+			change(t, folder)
 
-			after, err := writtenFrom(fixtures)
+			after, err := writtenFrom(folder)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -95,8 +95,8 @@ func TestAFixtureThatChangedAnswersANewKey(t *testing.T) {
 }
 
 func TestAnEmptiedFileIsNotTheSameAsOneThatWasAlwaysEmpty(t *testing.T) {
-	held := aFixtureTree(t, map[string]string{"backend/app/Orders.php": "<?php\n", "backend/app/Carts.php": ""})
-	moved := aFixtureTree(t, map[string]string{"backend/app/Orders.php": "", "backend/app/Carts.php": "<?php\n"})
+	held := aFolder(t, map[string]string{"backend/app/Orders.php": "<?php\n", "backend/app/Carts.php": ""})
+	moved := aFolder(t, map[string]string{"backend/app/Orders.php": "", "backend/app/Carts.php": "<?php\n"})
 
 	first, err := writtenFrom(held)
 	if err != nil {

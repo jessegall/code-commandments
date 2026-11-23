@@ -4,8 +4,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/jessegall/code-commandments/fixture"
 )
 
 func TestMain(m *testing.M) {
@@ -16,11 +14,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestTheSkillsAreGeneratedFromTodaysSources(t *testing.T) {
-	examples, err := fixture.Curriculum("tests/Fixtures")
-	if err != nil {
-		t.Skip(err)
-	}
-	stale, _, err := generate(examples, published, true)
+	stale, _, err := generate(published, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,11 +24,7 @@ func TestTheSkillsAreGeneratedFromTodaysSources(t *testing.T) {
 }
 
 func TestStaleDocumentsAreNamedInOrder(t *testing.T) {
-	examples, err := fixture.Curriculum("tests/Fixtures")
-	if err != nil {
-		t.Skip(err)
-	}
-	stale, _, err := generate(examples, t.TempDir(), true)
+	stale, _, err := generate(t.TempDir(), true)
 	if err != nil {
 		t.Fatal(err)
 	}

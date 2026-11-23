@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/info"
-	"github.com/jessegall/code-commandments/fixture"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/skill"
@@ -15,14 +14,10 @@ import (
 )
 
 func TestEverySkillRendersAsItIsPublished(t *testing.T) {
-	examples, err := fixture.Curriculum(filepath.Join("..", "..", "tests", "Fixtures"))
-	if err != nil {
-		t.Fatal(err)
-	}
 	for _, teaching := range skill.All() {
 		slug := teaching.Definition().Slug
 		folder := filepath.Join("..", "..", "skills", "commandments", slug)
-		for name, rendered := range render.Documents(teaching, examples) {
+		for name, rendered := range render.Documents(teaching) {
 			published, err := os.ReadFile(filepath.Join(folder, name))
 			if err != nil {
 				t.Errorf("%s/%s is not published: %v", slug, name, err)
@@ -64,11 +59,11 @@ func upToLine(text string) string {
 	return text
 }
 
-func TestAHandWrittenSkillShowsAnExampleForEverySinItFixes(t *testing.T) {
+func TestEverySkillIsALessonWithAnExampleForEverySinItFixes(t *testing.T) {
 	for _, teaching := range skill.All() {
 		definition := teaching.Definition()
-		if definition.Body == "" {
-			continue
+		if definition.Opening() == "" || definition.Principle() == "" {
+			t.Errorf("%s is no lesson: it opens on a quoted line saying what it teaches and holds a `## The principle` section", definition.Slug)
 		}
 		for _, sin := range rules.Sins() {
 			name := sin.Definition().Name

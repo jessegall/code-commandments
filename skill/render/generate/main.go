@@ -1,4 +1,4 @@
-// Command generate writes every skills/commandments/<slug>/ from the catalog: each skill's SKILL.md and the reference documents it spills into, with the worked examples its sins' fixtures carve.
+// Command generate writes every skills/commandments/<slug>/ from the catalog: each skill's hand-written lesson as its SKILL.md, and the reference documents beside it.
 package main
 
 import (
@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/jessegall/code-commandments/fixture"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skill/render"
@@ -18,21 +17,14 @@ const published = "skills/commandments"
 
 func main() {
 	check := slices.Contains(os.Args[1:], "--check")
-	const fixtures = "tests/Fixtures"
-
-	key, keyed := writtenFrom(fixtures)
+	key, keyed := writtenFrom(published)
 	if keyed == nil && alreadyWrittenFrom(key) {
 		fmt.Println("✓ All SKILL.md are current — nothing the skills are written from has changed.")
 
 		return
 	}
 
-	examples, err := fixture.Curriculum(fixtures)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "✗ The skills cannot be generated:", err)
-		os.Exit(1)
-	}
-	stale, written, err := generate(examples, published, check)
+	stale, written, err := generate(published, check)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "✗", err)
 		os.Exit(1)
@@ -63,11 +55,11 @@ func main() {
 	os.Exit(1)
 }
 
-func generate(examples render.Examples, into string, check bool) (stale []string, written int, err error) {
+func generate(into string, check bool) (stale []string, written int, err error) {
 	for _, teaching := range skill.All() {
 		slug := teaching.Definition().Slug
 		folder := filepath.Join(into, slug)
-		documents := render.Documents(teaching, examples)
+		documents := render.Documents(teaching)
 		for _, name := range slices.Sorted(maps.Keys(documents)) {
 			rendered := documents[name]
 			path := filepath.Join(folder, name)

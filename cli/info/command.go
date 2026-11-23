@@ -95,9 +95,9 @@ func (c Command) describe(detector rule.Detector, full bool, console cli.Console
 	}
 	paragraph(console, sin.Description)
 
-	why := teaching.Intro
+	why := teaching.Opening()
 	if full {
-		why += "\n\n" + teaching.WholePrinciple()
+		why += "\n\n" + teaching.Principle()
 	}
 
 	heading(console, "Why it is a sin")

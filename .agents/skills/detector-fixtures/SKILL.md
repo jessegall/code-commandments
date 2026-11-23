@@ -27,7 +27,7 @@ public function badge(Order $order): string
 - **missed** — a sin marker it did NOT flag (a hole),
 - **unexpected** — code it flagged that is NOT marked (a false positive, OR an unmarked sin you forgot to
   mark),
-- a flagged **righteous twin**, and a flagged **fix** (the published good example would still be the sin).
+- a flagged **righteous twin**, and a flagged **fix** (the repair would still be the sin).
 
 All must be empty. So the whole *unmarked* fixture is the false-positive guard. The backend fixture is read
 from its committed stream, so a change to it needs `scripts/dev go run ./engine/php/shop/generate` before
@@ -57,10 +57,10 @@ Every rule needs a deliberate **look-alike that it must NOT flag**, so the
 next to `::from()`-in-a-loop. A file can be righteous for one rule and sinful
 for another.
 
-## `#[Fixed]` — the RESOLUTION, and not the same thing as righteous
+## `#[Fixed]` — the repair, and not the same thing as righteous
 
 `#[Righteous]` is a claim about the **rule**: a look-alike it must not flag,
-which in practice is usually a documented *exemption* — code that legitimately
+which in practice is usually a documented *exemption*, code that legitimately
 dodges the rule. `#[Fixed]` is a claim about the **fix**: the `#[Sinful]` code
 repaired the way that sin's rule says to repair it.
 
@@ -72,75 +72,32 @@ public function run(Closure $work, ?Closure $onRetry = null): mixed   // null-no
 public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed   // the rule's own fix
 ```
 
-They coincide only by accident, and publishing the first as the second taught the
-exemption instead of the fix — a whole audit's worth of skills said "make the
-parameter required" where the rule said "default it to a Null Object". So the
-generated `## Bad → good` prefers `#[Fixed]` and falls back to `#[Righteous]`
-only where none exists; **the fallback is a stopgap, not a design**.
+A repair must go unflagged, so `#[Fixed]` implies `#[Righteous]`, never the
+reverse: the harness fails a rule that flags its own fix. Frontend twin:
+`<!-- @fixed Name -->` above a template element, `// @fixed Name` above a module
+declaration.
 
-Frontend twin: `<!-- @fixed Name -->` above a template element, `// @fixed Name`
-above a module declaration. Same claim, same preference over `@righteous`, same
-coverage gate.
+A repair is rarely one declaration: `$customer->suspend($reason)` is only the
+call site that got thinner, and the fix is `Customer::suspend()`. Mark every
+declaration that carries the repair, and never let one name something the
+fixture does not declare.
 
-### A fix that MOVES behaviour spans declarations — mark BOTH ends
+## A fixture proves a rule; it teaches nothing
 
-A repair is rarely one declaration. `$customer->suspend($reason)` is only the call
-site that got thinner; the fix is `Customer::suspend()`. Mark **every** declaration
-carrying the substance, and the generated good half publishes them together:
+No published skill takes an example from a fixture. A skill is one lesson
+written by hand, `skill/<package>/<subject>.md`, embedded as the `Body` of its
+definition: an opening, `## The principle`, then one `### <sin-name>` section
+for each sin it fixes, each with a short paragraph and one fenced example that
+shows the bad code, the good code and an arrow comment (`// ← why`) at the line
+the lesson is about. A subject every language shares is written once, in
+pseudocode, under `skill/shared/`; a sin only one language has gets a section
+headed `### <sin-name> — in PHP` in that language's own code.
 
-```php
-#[Fixed(TypeSwitch::class)]                  // the caller that stopped asking what it IS
-public function priceTold(PricedFreight $freight): int { … }
-
-#[Fixed(TypeSwitch::class)]                  // the contract it now asks
-interface PricedFreight { … }
-
-#[Fixed(TypeSwitch::class)]                  // and each type that answers
-public function priceCents(): int { … }
-```
-
-Which of them belong to ONE fix is decided by the file: the counterpart's own file,
-plus any file holding no `#[Sinful]` of that sin (a shared collaborator — a model,
-a Null Object, a generated type). That is what keeps a sin fixed three separate
-times from publishing all three repairs as one.
-
-Rules of thumb:
-
-- Put the counterpart `#[Fixed]` in the **same class** as its `#[Sinful]` — the
-  renderer pairs on the class, so the reader gets one coherent before/after — and
-  the collaborators wherever they honestly live.
-- **One scenario per sin per file.** Two classes in one file each holding a sin AND
-  its own repair is undecidable, and the harness fails it.
-- Repair *that* scenario. A fix for a different method teaches nothing.
-- Show the construct the sin's own `rule`/`suggestion` names — if the rule says
-  `#[WithCast]`, the fix must contain `#[WithCast]`.
-- Never let a resolution name something the fixture does not declare. A published
-  fix calling a method nothing defines teaches a repair a reader cannot follow.
-- A resolution must also go unflagged, so `#[Fixed]` implies `#[Righteous]`, never
-  the reverse. The harness fails a rule that flags its own fix.
-
-## `@example Name bad|good` — when the sin is not inside one declaration
-
-The generated example shows the declaration a marker binds to. That is wrong whenever the sin lives
-somewhere else: an import that crosses a layer (the Bad shows a method that merely uses the type), a
-cycle two files tell between them, a class header, or a Bad and Good that come from different scenarios.
-A reader then studies code the rule is not about.
-
-Mark the FILE instead. A comment `@example Name bad` or `@example Name good`, in the file's own comment
-syntax (`// …`, `# …`, `<!-- … -->`), publishes that whole file as that half of the rule's example,
-replacing what the declaration markers carve out for that language. Several files may share a half; each
-is headed with its path. Markers, the imports that bring them in and PHP's `<?php`/`declare` are left out.
-
-```cs
-// @example NamespaceCycle bad
-namespace Shop.Rewards;
-…
-```
-
-Keep example files small and about one thing — the whole file is what the reader sees, so a file
-holding other rules' scenarios is the wrong one to point at; write a dedicated file. The fixture proves
-each half: some Bad file holds the rule's sin marker, no Good file
-does, and some Good file holds its `@fixed` or `@righteous`.
+So a new rule needs two things beside its JSON file: its markers in the
+fixtures, and its section in the lesson of the skill it points at.
+`TestEverySkillIsALessonWithAnExampleForEverySinItFixes` (`skill/render`)
+fails until the section is there, and `commandments info <sin>` prints that
+section's example.
 
 ## Diagnostics
 

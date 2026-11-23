@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/rules"
 	"github.com/jessegall/code-commandments/sins"
 )
@@ -229,4 +230,13 @@ func covering(markers []Marker, finding engine.Match) int {
 	}
 
 	return -1
+}
+
+func Proven(found []rule.Detector) []Rule {
+	held := make([]Rule, len(found))
+	for at, each := range found {
+		held[at] = each
+	}
+
+	return held
 }

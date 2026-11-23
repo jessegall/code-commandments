@@ -16,7 +16,7 @@ import (
 
 const mark = published + "/.written-from"
 
-func writtenFrom(fixtures string) (string, error) {
+func writtenFrom(folder string) (string, error) {
 	sum := sha256.New()
 
 	binary, err := os.Executable()
@@ -27,11 +27,7 @@ func writtenFrom(fixtures string) (string, error) {
 		return "", err
 	}
 
-	if err := hashTree(sum, fixtures); err != nil {
-		return "", err
-	}
-
-	if err := hashTree(sum, published, mark); err != nil && !os.IsNotExist(err) {
+	if err := hashTree(sum, folder, mark); err != nil && !os.IsNotExist(err) {
 		return "", err
 	}
 

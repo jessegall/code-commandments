@@ -4,7 +4,6 @@ package render
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/jessegall/code-commandments/rules"
 	"slices"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/library"
-	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
@@ -22,87 +20,38 @@ const (
 	reminder     = "> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one."
 	reminderSelf = "> 🔱 **The rule above all — apply it ALWAYS.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This is that rule."
 	fixAtSource  = "shared/fix-at-the-source"
-	examplesDoc  = "examples"
 	detectorsDoc = "detectors"
 )
 
-// Example is one worked example: the language it is written in, and its two halves, nil where the fixture has none.
-type Example struct {
-	Language source.Language `json:"language"`
-	Bad      *string         `json:"bad"`
-	Good     *string         `json:"good"`
-}
-
-// Examples are the worked examples of each detector, by its Key.
-type Examples map[string][]Example
-
-func (e Examples) Add(more Examples) {
-	for key, each := range more {
-		e[key] = append(e[key], each...)
-	}
-}
-
-func Key(detector rule.Detector) string {
-	return detector.Sin().Definition().Slug() + ":" + catalog.Name(detector)
-}
-
-// worked is one example with every sin it demonstrates.
-type worked struct {
-	example Example
-	sins    []sins.Sin
-}
-
-func Documents(teaching skill.Skill, examples Examples) map[string]string {
+func Documents(teaching skill.Skill) map[string]string {
 	definition := teaching.Definition()
 	taught := sinsOf(definition.Slug)
-	examplesOf := workedExamples(taught, examples)
-	if definition.Body != "" {
-		examplesOf = nil
-	}
-	documents := map[string]string{"SKILL.md": body(definition, taught, examplesOf)}
-	if len(examplesOf) > 1 {
-		documents[path(examplesDoc)] = examplesDocument(definition, examplesOf)
-	}
+	documents := map[string]string{"SKILL.md": body(definition, taught)}
 	if len(taught) > 0 {
 		documents[path(detectorsDoc)] = detectorsDocument(definition, taught)
 	}
 	for _, reference := range definition.References {
-		documents[path(reference.Name)] = "# " + reference.Title + "\n\n" + strings.TrimSpace(reference.Body) + "\n"
+		documents[reference.Path()] = reference.Document()
 	}
 
 	return documents
 }
 
-func body(definition skill.Definition, taught []sins.Sin, examplesOf []worked) string {
+func body(definition skill.Definition, taught []sins.Sin) string {
 	opening := reminder
 	if definition.Slug == fixAtSource {
 		opening = reminderSelf
 	}
-	if definition.Body != "" {
-		return written(
-			frontmatter(definition),
-			"# "+definition.Title,
-			opening,
-			strings.TrimSpace(definition.Body),
-			commands(definition, taught),
-			referenceIndex(definition, taught, nil),
-			related(definition),
-		)
-	}
-	blocks := []string{
-		frontmatter(definition),
-		"# " + definition.Title,
-		opening,
-		blockquote(definition.Intro),
-		"## The principle\n\n" + strings.TrimSpace(definition.Principle),
-		ruleRows(taught),
-		workedExample(examplesOf),
-		commands(definition, taught),
-		referenceIndex(definition, taught, examplesOf),
-		related(definition),
-	}
 
-	return written(blocks...)
+	return written(
+		frontmatter(definition),
+		"# "+definition.Title,
+		opening,
+		strings.TrimSpace(definition.Body),
+		commands(definition, taught),
+		referenceIndex(definition, taught),
+		related(definition),
+	)
 }
 
 func written(blocks ...string) string {
@@ -117,11 +66,7 @@ func written(blocks ...string) string {
 }
 
 func path(name string) string {
-	return "reference/" + name + ".md"
-}
-
-func banner(half string) string {
-	return "----------[ " + half + " ]----------"
+	return skill.Reference{Name: name}.Path()
 }
 
 func frontmatter(definition skill.Definition) string {
@@ -131,32 +76,6 @@ func frontmatter(definition skill.Definition) string {
 	_ = encoder.Encode(definition.Trigger)
 
 	return "---\nname: " + definition.ID() + "\ndescription: " + strings.TrimSuffix(description.String(), "\n") + "\n---"
-}
-
-func blockquote(text string) string {
-	lines := strings.Split(strings.TrimSpace(text), "\n")
-	for i, line := range lines {
-		lines[i] = "> " + line
-	}
-
-	return strings.Join(lines, "\n")
-}
-
-func ruleRows(taught []sins.Sin) string {
-	var rows []string
-	for _, sin := range taught {
-		definition := sin.Definition()
-		row := "- [ ] " + definition.Rule
-		if definition.Suggestion != "" {
-			row += "\n      _" + definition.Suggestion + "_"
-		}
-		rows = append(rows, row)
-	}
-	if len(rows) == 0 {
-		return ""
-	}
-
-	return "## Rules\n\n" + strings.Join(rows, "\n")
 }
 
 func commands(definition skill.Definition, taught []sins.Sin) string {
@@ -211,62 +130,17 @@ func code(values []string) string {
 	return strings.Join(quoted, ", ")
 }
 
-func referenceIndex(definition skill.Definition, taught []sins.Sin, examplesOf []worked) string {
+func referenceIndex(definition skill.Definition, taught []sins.Sin) string {
 	var rows []string
-	if len(examplesOf) > 1 {
-		rows = append(rows, fmt.Sprintf("- [Worked examples](%s) — every rule's bad → good, %d of them.", path(examplesDoc), len(examplesOf)))
-	}
 	if len(taught) > 0 {
 		rows = append(rows, "- [What fires, and why]("+path(detectorsDoc)+") — the symptom each detector flags, for when you are holding a finding.")
 	}
-	for _, reference := range definition.References {
-		rows = append(rows, "- ["+reference.Title+"]("+path(reference.Name)+")")
-	}
+	rows = append(rows, definition.ReferenceLinks()...)
 	if len(rows) == 0 {
 		return ""
 	}
 
 	return "## Reference\n\n" + strings.Join(rows, "\n")
-}
-
-func workedExample(examplesOf []worked) string {
-	if len(examplesOf) == 0 {
-		return ""
-	}
-	named := len(languagesOf(examplesOf)) > 1
-	first := examplesOf[0].sins[0]
-	var shown []string
-	for _, each := range examplesOf {
-		if !slices.ContainsFunc(each.sins, func(sin sins.Sin) bool { return sin.Definition().Name == first.Definition().Name }) {
-			continue
-		}
-		if rendered := example(each, named); rendered != "" {
-			shown = append(shown, rendered)
-		}
-	}
-	if len(shown) == 0 {
-		return ""
-	}
-	block := "## Worked example\n\n" + strings.Join(shown, "\n\n")
-	if others := len(examplesOf) - len(shown); others > 0 {
-		block += fmt.Sprintf("\n\nThe other %d — one per rule — are in [`%s`](%s).", others, path(examplesDoc), path(examplesDoc))
-	}
-
-	return block
-}
-
-func examplesDocument(definition skill.Definition, examplesOf []worked) string {
-	named := len(languagesOf(examplesOf)) > 1
-	var blocks []string
-	for _, group := range examplesOf {
-		if block := example(group, named); block != "" {
-			blocks = append(blocks, block)
-		}
-	}
-
-	return "# " + definition.Title + " — worked examples\n\n" +
-		"One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code " +
-		"that really fires and really passes.\n\n" + strings.Join(blocks, "\n\n") + "\n"
 }
 
 func detectorsDocument(definition skill.Definition, taught []sins.Sin) string {
@@ -283,89 +157,6 @@ func detectorsDocument(definition skill.Definition, taught []sins.Sin) string {
 		"Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `" +
 		info("<sin>") + "` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.\n\n" +
 		strings.Join(rows, "\n") + "\n"
-}
-
-func workedExamples(taught []sins.Sin, examples Examples) []worked {
-	var grouped []worked
-	index := map[string]int{}
-	for _, sin := range taught {
-		detector, found := detectorOf(sin)
-		if !found {
-			continue
-		}
-		for _, each := range examples[Key(detector)] {
-			key := text(each.Bad) + "\x00" + text(each.Good)
-			if text(each.Bad) == "" {
-				key += "\x00" + sin.Definition().Name
-			}
-			at, seen := index[key]
-			if !seen {
-				at = len(grouped)
-				index[key] = at
-				grouped = append(grouped, worked{})
-			}
-			grouped[at].example = each
-			grouped[at].sins = append(grouped[at].sins, sin)
-		}
-	}
-
-	return grouped
-}
-
-func text(half *string) string {
-	if half == nil {
-		return ""
-	}
-
-	return *half
-}
-
-func languagesOf(examplesOf []worked) []source.Language {
-	var languages []source.Language
-	for _, group := range examplesOf {
-		if !contains(languages, group.example.Language) {
-			languages = append(languages, group.example.Language)
-		}
-	}
-
-	return languages
-}
-
-func contains(languages []source.Language, language source.Language) bool {
-	for _, each := range languages {
-		if each == language {
-			return true
-		}
-	}
-
-	return false
-}
-
-func example(group worked, named bool) string {
-	var parts []string
-	if group.example.Bad != nil {
-		parts = append(parts, banner("Bad")+"\n\n"+*group.example.Bad)
-	}
-	if group.example.Good != nil {
-		parts = append(parts, banner("Good")+"\n\n"+*group.example.Good)
-	}
-	if len(parts) == 0 || len(group.sins) == 0 {
-		return ""
-	}
-	var names, symptoms []string
-	for _, sin := range group.sins {
-		names = append(names, sin.Definition().Name)
-		symptoms = append(symptoms, "_"+sin.Definition().Name+"_ — "+sin.Definition().Description)
-	}
-	if len(group.sins) == 1 {
-		symptoms = []string{group.sins[0].Definition().Description}
-	}
-	heading := "### " + strings.Join(names, " · ")
-	if named {
-		heading += " — in " + group.example.Language.Label()
-	}
-
-	return heading + "\n\n" + strings.Join(symptoms, "\n\n") + "\n\n```" + string(group.example.Language) + "\n" + strings.Join(parts, "\n\n") + "\n```"
 }
 
 func related(definition skill.Definition) string {

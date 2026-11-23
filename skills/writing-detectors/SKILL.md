@@ -38,7 +38,7 @@ quietly winning. A file in an older format is refused, naming the file and the f
 
 **`engine`** is the engine the rule judges, or a list of them: `php`, `python`, `csharp`, `typescript`, `vue`,
 `go`. **`sin`** names what it finds: its `name` (the `--sin=` id), the `skill` that teaches the fix (your own, or
-a shipped one such as `php/absence`), the `description` (the symptom) and the `rule` (the directive the fix
+a shipped one such as `shared/absence`), the `description` (the symptom) and the `rule` (the directive the fix
 follows).
 
 **`find`** is the question. `select` names the kind of node a match starts from, `as` the name it is bound to,
@@ -432,7 +432,7 @@ it (`description`), what the briefing lists (`summary`), how often it comes up (
 `keep-in-mind`) and which languages it teaches (`languages: [php]`).
 
 **The sin names.** Inside the rule: a `name` (the `--sin=` id), the `skill` it points at by slug — your
-own, or a shipped one such as `php/absence` — the `description` (the symptom) and the `rule` (the
+own, or a shipped one such as `shared/absence` — the `description` (the symptom) and the `rule` (the
 positive directive the fix follows).
 
 **The find finds.** Nothing else. It has no fix logic, and it knows nothing about the report.

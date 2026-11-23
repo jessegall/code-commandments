@@ -257,7 +257,7 @@ when you install, with a schema beside it, so your editor can complete every nam
     "exclude": ["app/Generated", "**/vendor"],
     "disable": {
         "sins": ["php/swallow-catch"],
-        "skills": ["php/Exceptions"],
+        "skills": ["shared/exceptions"],
         "languages": ["python"]
     },
     "parallel": 2,

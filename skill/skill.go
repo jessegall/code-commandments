@@ -24,20 +24,17 @@ type Skill interface {
 // Definition is what a skill states about itself. Body is the whole lesson, written by hand, with one section for each
 // sin the skill fixes; Formerly are the slugs of the skills it took the place of, which still find it.
 type Definition struct {
-	Slug                  string
-	Formerly              []string
-	Body                  string
-	Tier                  Tier
-	Order                 int
-	Title                 string
-	Trigger               string
-	Intro                 string
-	Summary               string
-	Principle             string
-	ExamplesKeepDocblocks bool
-	Languages             []string
-	Related               []Relation
-	References            []Reference
+	Slug       string
+	Formerly   []string
+	Body       string
+	Tier       Tier
+	Order      int
+	Title      string
+	Trigger    string
+	Summary    string
+	Languages  []string
+	Related    []Relation
+	References []Reference
 }
 
 // Reference is a page of detail published beside a skill.
@@ -45,6 +42,27 @@ type Reference struct {
 	Name  string
 	Title string
 	Body  string
+}
+
+func (r Reference) Path() string {
+	return "reference/" + r.Name + ".md"
+}
+
+func (r Reference) Link() string {
+	return "- [" + r.Title + "](" + r.Path() + ")"
+}
+
+func (r Reference) Document() string {
+	return "# " + r.Title + "\n\n" + strings.TrimSpace(r.Body) + "\n"
+}
+
+func (d Definition) ReferenceLinks() []string {
+	links := make([]string, len(d.References))
+	for at, reference := range d.References {
+		links[at] = reference.Link()
+	}
+
+	return links
 }
 
 // Relation is a skill another one points its reader on to, by slug, with the one line that says why.
@@ -108,11 +126,20 @@ func Slugged(slug string) (Skill, bool) {
 	return nil, false
 }
 
-func (d Definition) WholePrinciple() string {
-	if d.Principle != "" {
-		return d.Principle
+func (d Definition) Opening() string {
+	var said []string
+	for _, line := range strings.Split(d.Body, "\n") {
+		sentence, quoted := strings.CutPrefix(line, "> ")
+		if !quoted || strings.HasPrefix(sentence, "Read this") {
+			break
+		}
+		said = append(said, sentence)
 	}
 
+	return strings.Join(said, " ")
+}
+
+func (d Definition) Principle() string {
 	_, after, found := strings.Cut(d.Body, "## The principle\n")
 	if !found {
 		return ""

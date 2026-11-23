@@ -7,10 +7,12 @@ one static Go binary; each language brings only a small bridge that parses it.
 
 Two layers:
 
-- **Skills** (`skill/<engine>/`, rendered into `skills/commandments/<engine>/<slug>/`) —
-  the teaching layer, one per architectural subject, split by engine: `php/absence`,
-  `shared/flow`, `vue/vue-components`, `python/absence`, `csharp/flow`, … The
-  engine-prefixed slug is what a sin points at. The source of truth for what good looks like.
+- **Skills** (`skill/<package>/<subject>.md`, rendered into `skills/commandments/<engine>/<slug>/`) —
+  the teaching layer, one hand-written lesson per architectural subject. A subject every
+  language shares is taught ONCE, in pseudocode (`shared/flow`, `shared/absence`, …); only a
+  subject that belongs to one language or framework has a skill of its own, in real code
+  (`php/laravel-idioms`, `php/spatie-data`, `vue/vue-components`). The engine-prefixed slug is
+  what a sin points at. The source of truth for what good looks like.
 - **Rules** (`rules/<engine>-<subject>/<name>.json`) — one JSON file per sin, in the format
   `commandments:generic-rule/v2`: the sin's name and aliases, the skill slug that fixes it, the
   one-line description the docs project from, and the `find` that locates it over the generic
@@ -84,11 +86,12 @@ Before you write or touch any rule, load these via the **Skill tool**:
    the evaluator's operators, pipelines over program relations, shared definitions, and
    where a missing fact belongs (the bridge).
 3. **`detector-fixtures`** — the self-checking fixture: `#[Sinful]` = spec, `#[Fixed]` =
-   the RESOLUTION the docs publish as "Good" — **and every declaration it moved behaviour
-   into**, since a fix showing only the call site that got thinner teaches a reader to call
-   a method nothing declares (distinct from `#[Righteous]`, which is a look-alike the
-   rule must not flag — usually an exemption, not a fix), the ≥3-diverse-scenarios
-   rule, righteous twins.
+   the repair the rule must NOT flag (distinct from `#[Righteous]`, a look-alike the
+   rule must not flag, usually an exemption), the ≥3-diverse-scenarios rule, righteous
+   twins — and where a rule's lesson is written: a fixture proves a rule, it teaches
+   nothing. The skill a rule points at is one hand-written lesson
+   (`skill/<package>/<subject>.md`) with a `### <sin-name>` section and a curated,
+   fenced example for every sin it fixes; a test fails until a new rule has its section.
 
 They encode the cardinal rules: **tree and type signals over name/suffix matching**
 (a name check is a smell to justify); **one check per line of a `where`**; try it first

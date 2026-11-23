@@ -58,6 +58,8 @@ no list to add it to. `aliases` keep every former name a config, a report or a m
 4. **Prove it in the fixtures** ([[detector-fixtures]]): mark ≥3 DIVERSE examples in every language the rule
    judges, a righteous twin it must not flag, and a fixed twin. `commandments rule prove --all` and
    `fixture/rules_test.go` check every rule against every fixture project.
+   Then write the sin's section in the lesson of the skill it points at (`### <sin-name>`, a short
+   paragraph and one fenced bad and good example): the skills take nothing from a fixture.
 5. **Calibrate on real code**: `bin/commandments judge ../some-app/src --sin=your-sin --no-checklist`, and
    read every hit. A real false positive tightens the `find` with a principled check, or drops the
    language from `engine`.
