@@ -45,6 +45,10 @@
       "and",
       [
         "not",
+        "$c.file.test"
+      ],
+      [
+        "not",
         [
           "conditional",
           "$c"
@@ -123,6 +127,56 @@
                 "enclosing",
                 "$c",
                 "function"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "some",
+          [
+            "list",
+            [
+              "enclosing",
+              "$c",
+              "function"
+            ]
+          ],
+          "f",
+          [
+            "and",
+            [
+              "exists",
+              "$f"
+            ],
+            [
+              "=",
+              "$f.parent.kind",
+              "argument"
+            ],
+            [
+              "=",
+              "$f.parent.parent.callee.kind",
+              "reference"
+            ],
+            [
+              "=",
+              "$f.parent.parent.callee.refers",
+              "array_map"
+            ],
+            [
+              "!=",
+              [
+                "fingerprint",
+                "$f.body",
+                "exact"
+              ],
+              [
+                "fingerprint",
+                "$c",
+                "exact"
               ]
             ]
           ]

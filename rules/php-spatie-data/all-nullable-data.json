@@ -131,7 +131,7 @@
           "count",
           "$slots"
         ],
-        0
+        1
       ],
       [
         "every",
@@ -149,32 +149,6 @@
         [
           "declaresNull",
           "$s"
-        ]
-      ],
-      [
-        "not",
-        [
-          "and",
-          [
-            "=",
-            [
-              "count",
-              "$slots"
-            ],
-            1
-          ],
-          [
-            "none",
-            "$slots",
-            "s",
-            [
-              "exists",
-              [
-                "spatie.slotDefault",
-                "$s"
-              ]
-            ]
-          ]
         ]
       ],
       [
