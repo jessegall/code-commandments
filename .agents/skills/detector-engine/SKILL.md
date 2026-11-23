@@ -64,15 +64,29 @@ tree cannot place makes "two slots name Data" unknown for the whole class. Count
 ## What a judging keeps
 
 A definition sees only its own arguments, so the evaluator keeps its answer for the whole judging by the values it is
-handed. It does so by itself for a definition that reads the whole program (`referrers`, `overriders`, `subtypes`,
-`programEnums`, `programTexts`, or a definition that calls one), and for one written `"kept": true`. So gather what
-repeats per site into a definition taking what it depends on: a callee's calls as `callsOf(callee)`, a type's chain as
-`chainOf(declared)`. Write `kept` only where many sites ask with the same arguments; a definition asked once per node
-gains nothing from it and costs memory.
+handed: a node, a name, a number. One that reads the whole program (`referrers`, `overriders`, `subtypes`,
+`programEnums`, `programTexts`, or a definition that calls one) or is written `"kept": true` is kept from its first
+answer; any other from the second time it is asked with the same values. A definition handed a list or a type is not
+kept, so hand it the node the list comes from.
+
+So work out what repeats per site once, in a definition taking the node it depends on, and write it `"kept": true`:
+a callee's calls as `callsOf(callee)`, a function's assignments as `assignmentsOf(fn)`, a class's field names as
+`fieldNames(type)`. Have it give back what the rule needs (names, a count, the few nodes of one kind), so each site
+reads that answer and does not walk the body again. `["groupItems", nodes, "n", "$n.kind"]` sorts a body by kind in
+one pass.
+
+## A rule goes over a file a few times, never once per site
+
+The engine counts how many nodes of each file a rule's lists hand it. A rule handed one file's nodes more than 25
+times over is stopped and skipped, and the run says which rule and which file; every other rule still runs. It is
+what a scan inside a loop looks like: for every call, every other call of its callee; for every assignment, the whole
+function; for every element, the whole template. `commandments rule try <file> <path> --work` prints the most times
+the rule went over one file, so read that number on a real project before a rule ships, and bring it towards two.
 
 ## Testing
 
-`commandments rule try <file> <path> --work` runs one rule and counts its cost; `fixture/rules_test.go`
+`commandments rule try <file> <path> --work` runs one rule and counts its cost, with the most times it went over
+one file; `fixture/rules_test.go`
 proves every rule on every fixture project; a rule's own edge cases go in `tests/rules/<language>`. Run Go
 only through `scripts/dev`, scoped to the package you touched.
 

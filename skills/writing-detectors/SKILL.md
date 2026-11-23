@@ -512,8 +512,27 @@ without turning it on:
 vendor/bin/commandments rule try NoRawSql app/
 ```
 
-`--work` with `try` prints how many nodes and checks the rule cost, and `rule schema` prints the JSON Schema
-an editor checks a rule file by.
+`--work` with `try` prints how many nodes and checks the rule cost and the most times it went over one file,
+and `rule schema` prints the JSON Schema an editor checks a rule file by.
+
+**A rule goes over a file a few times, never once per site.** A rule whose lists hand it one file's nodes more
+than 25 times over is stopped and skipped, and the run names the rule and the file; every other rule still runs.
+That is what a scan inside a loop costs: for every call, every other call of the function; for every assignment,
+the whole function body. Work the scan out once, in a definition that takes the node it depends on and is written
+`"kept": true`, and let each site read its answer:
+
+```json
+"definitions": {
+  "assignmentsOf": {
+    "args": ["fn"],
+    "kept": true,
+    "expr": ["filter", ["ownDescendants", "$fn.body"], "a", ["=", "$a.kind", "assignment"]]
+  }
+}
+```
+
+The engine keeps a definition's answer by the values it is handed, so the function is walked once however many
+of its nodes ask.
 
 ## Prove it fires — a rule nobody has watched is a guess
 

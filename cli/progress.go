@@ -53,7 +53,7 @@ func SayWorkWhen(asked bool, console Console, work engine.Work) {
 		return
 	}
 
-	fmt.Fprintf(console.Err, "· work: %d nodes, %d checks, %d analyses\n", work.Nodes, work.Checks, work.Analyses)
+	fmt.Fprintf(console.Err, "· work: %d nodes, %d checks, %d analyses, %.1f times over one file at most\n", work.Nodes, work.Checks, work.Analyses, float64(work.MostWalks)/10)
 }
 
 func Watched() bool {

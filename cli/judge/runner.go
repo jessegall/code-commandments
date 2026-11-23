@@ -76,7 +76,11 @@ func try(task Task, warn io.Writer) (result attempt) {
 		}
 
 		warning.Lock()
-		fmt.Fprintf(warn, "⚠ %s failed and was skipped — everything else still ran: %v\n%s\n", name, failure, debug.Stack())
+		if stopped, wasStopped := failure.(rule.WentOverAFileAgain); wasStopped {
+			fmt.Fprintf(warn, "⚠ %s was stopped and skipped — everything else still ran: %s\n", name, stopped.Error())
+		} else {
+			fmt.Fprintf(warn, "⚠ %s failed and was skipped — everything else still ran: %v\n%s\n", name, failure, debug.Stack())
+		}
 		warning.Unlock()
 
 		result = attempt{skipped: name}

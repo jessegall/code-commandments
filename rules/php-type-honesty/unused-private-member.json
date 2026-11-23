@@ -241,6 +241,92 @@
           ]
         ]
       ]
+    },
+    "untargetedCallNames": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "descendants",
+            "$t"
+          ],
+          "c",
+          [
+            "and",
+            [
+              "=",
+              "$c.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$c.callee.kind",
+              "access"
+            ],
+            [
+              "not",
+              [
+                "exists",
+                "$c.target"
+              ]
+            ]
+          ]
+        ],
+        "c",
+        "$c.callee.member.name"
+      ],
+      "kept": true
+    },
+    "literalValues": {
+      "args": [
+        "root"
+      ],
+      "expr": [
+        "map",
+        [
+          "descendants",
+          "$root",
+          "literal"
+        ],
+        "l",
+        "$l.value"
+      ],
+      "kept": true
+    },
+    "selfReadNames": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "descendants",
+            "$t"
+          ],
+          "x",
+          [
+            "and",
+            [
+              "=",
+              "$x.kind",
+              "access"
+            ],
+            [
+              "isSelf",
+              "$x.subject"
+            ]
+          ]
+        ],
+        "x",
+        "$x.member.name"
+      ],
+      "kept": true
     }
   },
   "find": {
@@ -442,34 +528,14 @@
           [
             "some",
             [
-              "descendants",
+              "untargetedCallNames",
               "$owner"
             ],
-            "c",
+            "name",
             [
-              "and",
-              [
-                "=",
-                "$c.kind",
-                "call"
-              ],
-              [
-                "=",
-                "$c.callee.kind",
-                "access"
-              ],
-              [
-                "=",
-                "$c.callee.member.name",
-                "$m.name"
-              ],
-              [
-                "not",
-                [
-                  "exists",
-                  "$c.target"
-                ]
-              ]
+              "=",
+              "$name",
+              "$m.name"
             ]
           ]
         ]
@@ -491,20 +557,19 @@
       [
         "none",
         [
-          "descendants",
+          "literalValues",
           [
             "last",
             [
               "ancestors",
               "$m"
             ]
-          ],
-          "literal"
+          ]
         ],
-        "l",
+        "held",
         [
           "=",
-          "$l.value",
+          "$held",
           "$named.name"
         ]
       ],
@@ -548,26 +613,14 @@
         [
           "some",
           [
-            "descendants",
+            "selfReadNames",
             "$d"
           ],
-          "x",
+          "name",
           [
-            "and",
-            [
-              "=",
-              "$x.kind",
-              "access"
-            ],
-            [
-              "isSelf",
-              "$x.subject"
-            ],
-            [
-              "=",
-              "$x.member.name",
-              "$named.name"
-            ]
+            "=",
+            "$name",
+            "$named.name"
           ]
         ]
       ],

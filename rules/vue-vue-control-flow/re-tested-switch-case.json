@@ -276,15 +276,12 @@
       [
         "switch",
         [
-          "at",
+          "last",
           [
             "filter",
             [
-              "ownDescendants",
-              [
-                "root",
-                "$e"
-              ]
+              "ownAncestors",
+              "$e"
             ],
             "s",
             [
@@ -298,23 +295,9 @@
                 "=",
                 "$s.tag",
                 "SwitchCase"
-              ],
-              [
-                "some",
-                [
-                  "ownDescendants",
-                  "$s"
-                ],
-                "d",
-                [
-                  "=",
-                  "$d",
-                  "$e"
-                ]
               ]
             ]
-          ],
-          0
+          ]
         ]
       ]
     ],

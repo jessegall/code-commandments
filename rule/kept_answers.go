@@ -1,6 +1,7 @@
 package rule
 
 import (
+	"hash/maphash"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -9,13 +10,24 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// keptAnswers holds, for one judging, the answer of each definition that reads the whole program or is written kept, by
-// the values it was handed and the language of the site asking: a definition sees only its own arguments, so the same
-// arguments give the same answer, and a callee's calls or a type's supertypes are gathered once, not once per site.
+// keptAnswers holds, for one judging, the answer of each definition by the values it was handed and the language of
+// the site asking: a definition sees only its own arguments, so the same arguments give the same answer, and a
+// callee's calls, a type's supertypes or what a value converts to are worked out once, not once per site. A definition
+// that reads the whole program or is written kept is held from its first answer; any other from the second time it
+// is asked with the same values, so an answer asked once costs no room, and no more than mostAnswersHeld of those
+// are held at once.
 type keptAnswers struct {
 	kept    map[string]bool
+	seed    maphash.Seed
+	asked   [askedBeforeSlots]atomic.Uint64
+	held    atomic.Int64
 	answers sync.Map
 }
+
+const (
+	askedBeforeSlots = 1 << 16
+	mostAnswersHeld  = 1 << 20
+)
 
 var answersAsked atomic.Int64
 
@@ -50,7 +62,7 @@ func keepingAnswers(definitions map[string]definition) *keptAnswers {
 		reads[name] = reads[name] || defined.Kept
 	}
 
-	return &keptAnswers{kept: reads}
+	return &keptAnswers{kept: reads, seed: maphash.MakeSeed()}
 }
 
 func (k *keptAnswers) answer(name string, site engine.Match, arguments []value, ask func() value) value {
@@ -66,13 +78,21 @@ func (k *keptAnswers) answer(name string, site engine.Match, arguments []value, 
 	answersAsked.Add(1)
 	engine.CountedCheck()
 	answered := ask()
-	k.answers.Store(key, answered)
+	if k.kept[name] || k.askedBefore(key) && k.held.Add(1) <= mostAnswersHeld {
+		k.answers.Store(key, answered)
+	}
 
 	return answered
 }
 
+func (k *keptAnswers) askedBefore(key answerKey) bool {
+	print := maphash.Comparable(k.seed, key)
+
+	return k.asked[print%askedBeforeSlots].Swap(print) == print
+}
+
 func (k *keptAnswers) keyOf(name string, site engine.Match, arguments []value) (answerKey, bool) {
-	if k == nil || !k.kept[name] || len(arguments) > len(answerKey{}.arguments) {
+	if k == nil || len(arguments) > len(answerKey{}.arguments) {
 		return answerKey{}, false
 	}
 	key := answerKey{definition: name}

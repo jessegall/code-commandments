@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestADefinitionReadingTheWholeTreeOrWrittenKeptIsAskedOnceForTheSameArguments(t *testing.T) {
+func TestADefinitionIsAskedOnceForTheSameArguments(t *testing.T) {
 	var defined map[string]definition
 	if err := json.Unmarshal([]byte(`{
 		"callsOf": {"args": ["d"], "expr": ["count", ["referrers", "$d"]]},
@@ -35,7 +35,51 @@ func TestADefinitionReadingTheWholeTreeOrWrittenKeptIsAskedOnceForTheSameArgumen
 	}
 	asked.evaluate(calling, bindings{}.with("x", known("Shop\\Order::pay")))
 
-	if did := answersAsked.Load() - before; did != 5 {
-		t.Errorf("thirty asks of one callee and one of another asked the definitions %d times, not once for each kept definition and callee", did)
+	if did := answersAsked.Load() - before; did != 7 {
+		t.Errorf("thirty asks of one callee and one of another asked the definitions %d times, not once for each kept definition and callee and twice for the plain one", did)
+	}
+}
+
+func TestAnAnswerAskedOnceIsNotHeld(t *testing.T) {
+	var defined map[string]definition
+	if err := json.Unmarshal([]byte(`{"plain": {"args": ["d"], "expr": ["count", "$d"]}}`), &defined); err != nil {
+		t.Fatal(err)
+	}
+	var plain Expr
+	if err := json.Unmarshal([]byte(`["plain", "$x"]`), &plain); err != nil {
+		t.Fatal(err)
+	}
+	kept := keepingAnswers(defined)
+	asked := evaluation{definitions: defined, kept: kept}
+
+	for at := range 10000 {
+		asked.evaluate(plain, bindings{}.with("x", known(float64(at))))
+	}
+
+	if held := kept.held.Load(); held != 0 {
+		t.Errorf("ten thousand questions, each asked once, held %d answers, where an answer is held from the second time it is asked", held)
+	}
+}
+
+func TestNoMoreAnswersAreHeldThanTheLimit(t *testing.T) {
+	var defined map[string]definition
+	if err := json.Unmarshal([]byte(`{"plain": {"args": ["d"], "expr": ["count", "$d"]}}`), &defined); err != nil {
+		t.Fatal(err)
+	}
+	var plain Expr
+	if err := json.Unmarshal([]byte(`["plain", "$x"]`), &plain); err != nil {
+		t.Fatal(err)
+	}
+	kept := keepingAnswers(defined)
+	kept.held.Store(mostAnswersHeld)
+	asked := evaluation{definitions: defined, kept: kept}
+	before := answersAsked.Load()
+
+	for range 4 {
+		asked.evaluate(plain, bindings{}.with("x", known("Shop\\Order::total")))
+	}
+
+	if did := answersAsked.Load() - before; did != 4 {
+		t.Errorf("with the limit of held answers reached, four asks worked the answer out %d times, not four: an answer was held past the limit", did)
 	}
 }

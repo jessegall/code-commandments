@@ -446,114 +446,180 @@
     }
   },
   "find": {
-    "select": [
-      "call",
-      "construction"
-    ],
-    "as": "c",
-    "where": [
-      "not",
-      "$c.file.test"
-    ],
-    "let": [
-      [
-        "declared",
-        [
-          "declarationOf",
-          "$c"
-        ]
-      ],
-      [
-        "calls",
-        [
-          "tree.callsOf",
-          "$declared"
-        ]
-      ]
-    ],
-    "having": [
-      "some",
-      "$c.arguments",
-      "g",
-      [
-        "and",
-        [
-          "conversion",
-          "$g.value"
-        ],
-        [
-          "not",
+    "from": "argument",
+    "as": "g",
+    "pipeline": [
+      {
+        "where": [
+          "and",
           [
-            "some",
-            "$declared.parameters",
-            "p",
+            "not",
+            "$g.file.test"
+          ],
+          [
+            "in",
+            "$g.parent.kind",
+            "call",
+            "construction"
+          ],
+          [
+            "conversion",
+            "$g.value"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$g.parent",
+          "declared": [
+            "declarationOf",
+            "$g.parent"
+          ],
+          "at": [
+            "position",
+            "$g"
+          ],
+          "value": "$g.value"
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            "exists",
+            "$declared"
+          ],
+          [
+            "exists",
+            "$at"
+          ],
+          [
+            "not",
             [
-              "proven",
+              "some",
+              "$declared.parameters",
+              "p",
               [
-                "decodes",
-                "$g.value",
-                "$p"
+                "proven",
+                [
+                  "decodes",
+                  "$value",
+                  "$p"
+                ]
               ]
             ]
           ]
-        ],
-        [
-          ">=",
-          [
-            "count",
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$anchor",
+          "declared": "$declared",
+          "key": [
+            "concat",
+            "$declared.file.path",
+            "@",
             [
-              "filter",
-              "$calls",
-              "o",
-              [
-                "sameConversion",
-                [
-                  "tree.valueAt",
-                  "$o",
-                  [
-                    "position",
-                    "$g"
-                  ]
-                ],
-                "$g.value"
-              ]
+              "text",
+              "$declared.span.start"
+            ],
+            "#",
+            [
+              "text",
+              "$at"
+            ],
+            "#",
+            [
+              "conversionKey",
+              "$value"
             ]
-          ],
-          2
-        ],
-        [
-          ">=",
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          "and",
           [
-            "multiply",
+            ">=",
             [
               "count",
               [
                 "filter",
-                "$calls",
-                "o",
+                "$rows",
+                "r",
                 [
-                  "sameConversion",
+                  "=",
                   [
-                    "tree.valueAt",
-                    "$o",
+                    "get",
                     [
-                      "position",
-                      "$g"
-                    ]
+                      "get",
+                      "$r",
+                      "anchor"
+                    ],
+                    "kind"
                   ],
-                  "$g.value"
+                  "call"
                 ]
               ]
             ],
             2
           ],
           [
-            "count",
-            "$calls"
+            ">=",
+            [
+              "multiply",
+              [
+                "count",
+                [
+                  "filter",
+                  "$rows",
+                  "r",
+                  [
+                    "=",
+                    [
+                      "get",
+                      [
+                        "get",
+                        "$r",
+                        "anchor"
+                      ],
+                      "kind"
+                    ],
+                    "call"
+                  ]
+                ]
+              ],
+              2
+            ],
+            [
+              "count",
+              [
+                "tree.callsOf",
+                [
+                  "get",
+                  [
+                    "first",
+                    "$rows"
+                  ],
+                  "declared"
+                ]
+              ]
+            ]
           ]
         ]
-      ]
-    ],
-    "emit": "$c"
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "distinct": "$row.anchor"
+      },
+      {
+        "emit": "$row.anchor"
+      }
+    ]
   }
 }

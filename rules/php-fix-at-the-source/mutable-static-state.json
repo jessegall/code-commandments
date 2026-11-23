@@ -159,32 +159,14 @@
         [
           "some",
           [
-            "ownDescendants",
-            "$fn.body"
+            "globalNames",
+            "$fn"
           ],
-          "s",
+          "name",
           [
-            "and",
-            [
-              "=",
-              "$s.kind",
-              "scope-declaration"
-            ],
-            [
-              "=",
-              "$s.form",
-              "global"
-            ],
-            [
-              "some",
-              "$s.bindings",
-              "b",
-              [
-                "=",
-                "$b.name",
-                "$target.name"
-              ]
-            ]
+            "=",
+            "$name",
+            "$target.name"
           ]
         ]
       ],
@@ -322,17 +304,12 @@
           [
             "some",
             [
-              "ownDescendants",
-              "$fn.body"
+              "ifsOf",
+              "$fn"
             ],
             "g",
             [
               "and",
-              [
-                "=",
-                "$g.kind",
-                "if"
-              ],
               [
                 "<",
                 "$g.line",
@@ -440,74 +417,154 @@
       "expr": [
         "some",
         [
-          "ownDescendants",
-          "$fn.body"
+          "assignedAccesses",
+          "$fn"
         ],
-        "b",
+        "t",
         [
           "and",
           [
-            "=",
-            "$b.kind",
-            "assignment"
-          ],
-          [
-            "=",
-            "$b.mode",
-            "assign"
-          ],
-          [
             "some",
-            "$b.targets",
-            "t",
+            [
+              "list",
+              [
+                "enclosing",
+                [
+                  "declarationOf",
+                  "$t"
+                ],
+                "field"
+              ]
+            ],
+            "d",
+            [
+              "and",
+              [
+                "exists",
+                "$d"
+              ],
+              [
+                "some",
+                "$d.modifiers",
+                "m",
+                [
+                  "=",
+                  "$m",
+                  "static"
+                ]
+              ]
+            ]
+          ],
+          [
+            "tree.names",
+            "$y",
+            "$t.member.name"
+          ]
+        ]
+      ]
+    },
+    "globalNames": {
+      "args": [
+        "fn"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "ownDescendants",
+              "$fn.body"
+            ],
+            "s",
             [
               "and",
               [
                 "=",
-                "$t.kind",
-                "access"
+                "$s.kind",
+                "scope-declaration"
               ],
               [
-                "some",
-                [
-                  "list",
-                  [
-                    "enclosing",
-                    [
-                      "declarationOf",
-                      "$t"
-                    ],
-                    "field"
-                  ]
-                ],
-                "d",
-                [
-                  "and",
-                  [
-                    "exists",
-                    "$d"
-                  ],
-                  [
-                    "some",
-                    "$d.modifiers",
-                    "m",
-                    [
-                      "=",
-                      "$m",
-                      "static"
-                    ]
-                  ]
-                ]
-              ],
-              [
-                "tree.names",
-                "$y",
-                "$t.member.name"
+                "=",
+                "$s.form",
+                "global"
               ]
             ]
+          ],
+          "s",
+          [
+            "map",
+            "$s.bindings",
+            "b",
+            "$b.name"
           ]
         ]
-      ]
+      ],
+      "kept": true
+    },
+    "assignedAccesses": {
+      "args": [
+        "fn"
+      ],
+      "expr": [
+        "filter",
+        [
+          "flatten",
+          [
+            "map",
+            [
+              "filter",
+              [
+                "ownDescendants",
+                "$fn.body"
+              ],
+              "b",
+              [
+                "and",
+                [
+                  "=",
+                  "$b.kind",
+                  "assignment"
+                ],
+                [
+                  "=",
+                  "$b.mode",
+                  "assign"
+                ]
+              ]
+            ],
+            "b",
+            "$b.targets"
+          ]
+        ],
+        "t",
+        [
+          "=",
+          "$t.kind",
+          "access"
+        ]
+      ],
+      "kept": true
+    },
+    "ifsOf": {
+      "args": [
+        "fn"
+      ],
+      "expr": [
+        "filter",
+        [
+          "ownDescendants",
+          "$fn.body"
+        ],
+        "g",
+        [
+          "=",
+          "$g.kind",
+          "if"
+        ]
+      ],
+      "kept": true
     }
   }
 }

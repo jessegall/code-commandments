@@ -360,15 +360,13 @@
                 ]
               ],
               [
-                "none",
+                "not",
                 [
-                  "referrers",
-                  "$s"
-                ],
-                "r",
-                [
-                  "=",
-                  "$r.file.path",
+                  "has",
+                  [
+                    "referrerFiles",
+                    "$s"
+                  ],
                   "$callee.file.path"
                 ]
               ]
@@ -555,6 +553,24 @@
               0
             ]
           ]
+        ]
+      ]
+    },
+    "referrerFiles": {
+      "args": [
+        "s"
+      ],
+      "kept": true,
+      "expr": [
+        "distinct",
+        [
+          "map",
+          [
+            "referrers",
+            "$s"
+          ],
+          "r",
+          "$r.file.path"
         ]
       ]
     }

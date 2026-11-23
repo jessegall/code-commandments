@@ -31,24 +31,16 @@
       "expr": [
         "filter",
         [
-          "ownDescendants",
-          "$f.body"
+          "ownAssignments",
+          "$f"
         ],
         "a",
         [
-          "and",
+          "tree.selfField",
           [
-            "=",
-            "$a.kind",
-            "assignment"
-          ],
-          [
-            "tree.selfField",
-            [
-              "at",
-              "$a.targets",
-              0
-            ]
+            "at",
+            "$a.targets",
+            0
           ]
         ]
       ]
@@ -166,7 +158,7 @@
           [
             "filter",
             [
-              "bodyAndBelow",
+              "marked",
               "$m"
             ],
             "l",
@@ -367,16 +359,8 @@
               [
                 "distinctCount",
                 [
-                  "map",
-                  [
-                    "ownFields",
-                    "$t"
-                  ],
-                  "n",
-                  [
-                    "nameOf",
-                    "$n"
-                  ]
+                  "fieldNames",
+                  "$t"
                 ]
               ]
             ]
@@ -414,18 +398,8 @@
             [
               "some",
               [
-                "filter",
-                [
-                  "members",
-                  "$ht"
-                ],
-                "hm",
-                [
-                  "in",
-                  "$hm.kind",
-                  "field",
-                  "parameter"
-                ]
+                "fieldFacts",
+                "$ht"
               ],
               "hm",
               [
@@ -463,8 +437,9 @@
                       [
                         "tree.canon",
                         [
-                          "nameOf",
-                          "$hm"
+                          "at",
+                          "$hm",
+                          0
                         ]
                       ]
                     ]
@@ -476,8 +451,9 @@
                       "$f"
                     ],
                     [
-                      "typeOf",
-                      "$hm"
+                      "at",
+                      "$hm",
+                      1
                     ]
                   ]
                 ]
@@ -490,7 +466,6 @@
     "usedTogether": {
       "args": [
         "t",
-        "kinds",
         "an",
         "bn",
         "via"
@@ -498,136 +473,51 @@
       "expr": [
         "some",
         [
-          "filter",
-          [
-            "members",
-            "$t"
-          ],
-          "m",
-          [
-            "=",
-            "$m.kind",
-            "function"
-          ]
+          "useReads",
+          "$t"
         ],
-        "m",
+        "read",
         [
-          "some",
+          "and",
           [
-            "filter",
+            "has",
             [
-              "bodyAndBelow",
-              "$m"
+              "at",
+              "$read",
+              0
             ],
-            "u",
+            "$an"
+          ],
+          [
+            "case",
+            [
+              "=",
+              "$via",
+              ""
+            ],
+            {
+              "true": [
+                "has",
+                [
+                  "at",
+                  "$read",
+                  0
+                ],
+                "$bn"
+              ]
+            },
             [
               "has",
-              "$kinds",
-              "$u.kind"
-            ]
-          ],
-          "u",
-          [
-            "and",
-            [
-              "some",
               [
-                "flatten",
-                [
-                  "list",
-                  [
-                    "list",
-                    "$u"
-                  ],
-                  [
-                    "descendants",
-                    "$u"
-                  ]
-                ]
+                "at",
+                "$read",
+                1
               ],
-              "x",
               [
-                "and",
-                [
-                  "tree.selfField",
-                  "$x"
-                ],
-                [
-                  "=",
-                  [
-                    "readName",
-                    "$x"
-                  ],
-                  "$an"
-                ]
-              ]
-            ],
-            [
-              "some",
-              [
-                "flatten",
-                [
-                  "list",
-                  [
-                    "list",
-                    "$u"
-                  ],
-                  [
-                    "descendants",
-                    "$u"
-                  ]
-                ]
-              ],
-              "x",
-              [
-                "case",
-                [
-                  "=",
-                  "$via",
-                  ""
-                ],
-                {
-                  "true": [
-                    "and",
-                    [
-                      "tree.selfField",
-                      "$x"
-                    ],
-                    [
-                      "=",
-                      [
-                        "readName",
-                        "$x"
-                      ],
-                      "$bn"
-                    ]
-                  ]
-                },
-                [
-                  "and",
-                  [
-                    "=",
-                    "$x.kind",
-                    "access"
-                  ],
-                  [
-                    "=",
-                    "$x.member.name",
-                    "$via"
-                  ],
-                  [
-                    "tree.selfField",
-                    "$x.subject"
-                  ],
-                  [
-                    "=",
-                    [
-                      "readName",
-                      "$x.subject"
-                    ],
-                    "$bn"
-                  ]
-                ]
+                "concat",
+                "$bn",
+                ".",
+                "$via"
               ]
             ]
           ]
@@ -689,18 +579,8 @@
                 [
                   "some",
                   [
-                    "filter",
-                    [
-                      "members",
-                      "$bt"
-                    ],
-                    "bm",
-                    [
-                      "in",
-                      "$bm.kind",
-                      "field",
-                      "parameter"
-                    ]
+                    "fieldFacts",
+                    "$bt"
                   ],
                   "bm",
                   [
@@ -712,19 +592,14 @@
                         "$a"
                       ],
                       [
-                        "typeOf",
-                        "$bm"
+                        "at",
+                        "$bm",
+                        1
                       ]
                     ],
                     [
                       "usedTogether",
                       "$t",
-                      [
-                        "list",
-                        "call",
-                        "construction",
-                        "collection"
-                      ],
                       [
                         "nameOf",
                         "$a"
@@ -734,8 +609,9 @@
                         "$b"
                       ],
                       [
-                        "nameOf",
-                        "$bm"
+                        "at",
+                        "$bm",
+                        0
                       ]
                     ]
                   ]
@@ -752,74 +628,7 @@
       ],
       "expr": [
         "clumpAmong",
-        "$t",
-        [
-          "filter",
-          [
-            "flatten",
-            [
-              "map",
-              [
-                "filter",
-                [
-                  "members",
-                  "$t"
-                ],
-                "m",
-                [
-                  "=",
-                  "$m.kind",
-                  "function"
-                ]
-              ],
-              "m",
-              [
-                "bodyAndBelow",
-                "$m"
-              ]
-            ]
-          ],
-          "u",
-          [
-            "and",
-            [
-              "=",
-              "$u.kind",
-              "construction"
-            ],
-            [
-              "!=",
-              "$u.resolved.name",
-              "$t.symbol"
-            ]
-          ]
-        ]
-      ]
-    },
-    "handedIn": {
-      "args": [
-        "u",
-        "n"
-      ],
-      "expr": [
-        "some",
-        "$u.arguments",
-        "g",
-        [
-          "and",
-          [
-            "tree.selfField",
-            "$g.value"
-          ],
-          [
-            "=",
-            [
-              "readName",
-              "$g.value"
-            ],
-            "$n"
-          ]
-        ]
+        "$t"
       ]
     },
     "valueField": {
@@ -840,8 +649,7 @@
     },
     "clumpAmong": {
       "args": [
-        "t",
-        "built"
+        "t"
       ],
       "expr": [
         "some",
@@ -884,16 +692,8 @@
               [
                 "distinctCount",
                 [
-                  "map",
-                  [
-                    "ownFields",
-                    "$t"
-                  ],
-                  "n",
-                  [
-                    "nameOf",
-                    "$n"
-                  ]
+                  "fieldNames",
+                  "$t"
                 ]
               ]
             ],
@@ -903,21 +703,24 @@
                 "count",
                 [
                   "filter",
-                  "$built",
-                  "u",
+                  [
+                    "builtHands",
+                    "$t"
+                  ],
+                  "handed",
                   [
                     "and",
                     [
-                      "handedIn",
-                      "$u",
+                      "has",
+                      "$handed",
                       [
                         "nameOf",
                         "$a"
                       ]
                     ],
                     [
-                      "handedIn",
-                      "$u",
+                      "has",
+                      "$handed",
                       [
                         "nameOf",
                         "$b"
@@ -1037,17 +840,8 @@
       "expr": [
         "some",
         [
-          "filter",
-          [
-            "ownDescendants",
-            "$m.body"
-          ],
-          "a",
-          [
-            "=",
-            "$a.kind",
-            "assignment"
-          ]
+          "ownAssignments",
+          "$m"
         ],
         "a",
         [
@@ -1286,29 +1080,21 @@
           [
             "filter",
             [
-              "ownDescendants",
-              "$m.body"
+              "ownAssignments",
+              "$m"
             ],
             "w",
             [
-              "and",
+              "some",
+              "$w.targets",
+              "x",
               [
                 "=",
-                "$w.kind",
-                "assignment"
-              ],
-              [
-                "some",
-                "$w.targets",
-                "x",
                 [
-                  "=",
-                  [
-                    "fieldWritten",
-                    "$x"
-                  ],
-                  "$n"
-                ]
+                  "fieldWritten",
+                  "$x"
+                ],
+                "$n"
               ]
             ]
           ]
@@ -1356,6 +1142,296 @@
               ],
               "$n"
             ]
+          ]
+        ]
+      ]
+    },
+    "usesIn": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "members",
+              "$t"
+            ],
+            "m",
+            [
+              "=",
+              "$m.kind",
+              "function"
+            ]
+          ],
+          "m",
+          [
+            "filter",
+            [
+              "marked",
+              "$m"
+            ],
+            "u",
+            [
+              "in",
+              "$u.kind",
+              "call",
+              "construction",
+              "collection"
+            ]
+          ]
+        ]
+      ],
+      "kept": true
+    },
+    "selfFieldsIn": {
+      "args": [
+        "u"
+      ],
+      "expr": [
+        "filter",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$u"
+            ],
+            [
+              "descendants",
+              "$u"
+            ]
+          ]
+        ],
+        "x",
+        [
+          "proven",
+          [
+            "tree.selfField",
+            "$x"
+          ]
+        ]
+      ],
+      "kept": true
+    },
+    "marked": {
+      "args": [
+        "m"
+      ],
+      "expr": [
+        "filter",
+        [
+          "bodyAndBelow",
+          "$m"
+        ],
+        "n",
+        [
+          "in",
+          "$n.kind",
+          "logical",
+          "construction",
+          "call",
+          "collection"
+        ]
+      ],
+      "kept": true
+    },
+    "ownAssignments": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "filter",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "a",
+        [
+          "=",
+          "$a.kind",
+          "assignment"
+        ]
+      ],
+      "kept": true
+    },
+    "useReads": {
+      "args": [
+        "t"
+      ],
+      "kept": true,
+      "expr": [
+        "map",
+        [
+          "usesIn",
+          "$t"
+        ],
+        "u",
+        [
+          "list",
+          [
+            "map",
+            [
+              "selfFieldsIn",
+              "$u"
+            ],
+            "x",
+            [
+              "readName",
+              "$x"
+            ]
+          ],
+          [
+            "map",
+            [
+              "filter",
+              [
+                "selfFieldsIn",
+                "$u"
+              ],
+              "x",
+              [
+                "and",
+                [
+                  "=",
+                  "$x.role",
+                  "subject"
+                ],
+                [
+                  "=",
+                  "$x.parent.kind",
+                  "access"
+                ]
+              ]
+            ],
+            "x",
+            [
+              "concat",
+              [
+                "readName",
+                "$x"
+              ],
+              ".",
+              "$x.parent.member.name"
+            ]
+          ]
+        ]
+      ]
+    },
+    "fieldFacts": {
+      "args": [
+        "t"
+      ],
+      "kept": true,
+      "expr": [
+        "map",
+        [
+          "ownFields",
+          "$t"
+        ],
+        "m",
+        [
+          "list",
+          [
+            "nameOf",
+            "$m"
+          ],
+          [
+            "typeOf",
+            "$m"
+          ]
+        ]
+      ]
+    },
+    "fieldNames": {
+      "args": [
+        "t"
+      ],
+      "kept": true,
+      "expr": [
+        "map",
+        [
+          "ownFields",
+          "$t"
+        ],
+        "n",
+        [
+          "nameOf",
+          "$n"
+        ]
+      ]
+    },
+    "builtHands": {
+      "args": [
+        "t"
+      ],
+      "kept": true,
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "filter",
+                [
+                  "members",
+                  "$t"
+                ],
+                "m",
+                [
+                  "=",
+                  "$m.kind",
+                  "function"
+                ]
+              ],
+              "m",
+              [
+                "marked",
+                "$m"
+              ]
+            ]
+          ],
+          "u",
+          [
+            "and",
+            [
+              "=",
+              "$u.kind",
+              "construction"
+            ],
+            [
+              "!=",
+              "$u.resolved.name",
+              "$t.symbol"
+            ]
+          ]
+        ],
+        "u",
+        [
+          "map",
+          [
+            "filter",
+            "$u.arguments",
+            "g",
+            [
+              "proven",
+              [
+                "tree.selfField",
+                "$g.value"
+              ]
+            ]
+          ],
+          "g",
+          [
+            "readName",
+            "$g.value"
           ]
         ]
       ]

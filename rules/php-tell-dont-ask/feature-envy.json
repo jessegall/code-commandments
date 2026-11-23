@@ -143,16 +143,17 @@
         [
           "none",
           [
-            "descendants",
-            "$f.body"
+            "ofKind",
+            "$f",
+            "function"
           ],
           "n",
           [
             "and",
             [
-              "=",
-              "$n.kind",
-              "function"
+              "!=",
+              "$n",
+              "$f.body"
             ],
             [
               "within",
@@ -572,21 +573,14 @@
             [
               "filter",
               [
-                "descendants",
-                "$f.body"
+                "ofKind",
+                "$f",
+                "return"
               ],
               "n",
               [
-                "and",
-                [
-                  "=",
-                  "$n.kind",
-                  "return"
-                ],
-                [
-                  "nonempty",
-                  "$n.values"
-                ]
+                "nonempty",
+                "$n.values"
               ]
             ],
             "n",
@@ -601,7 +595,8 @@
           "list",
           "$f.body"
         ]
-      ]
+      ],
+      "kept": true
     },
     "projection": {
       "args": [
@@ -781,34 +776,12 @@
           ],
           "t",
           [
-            "some",
+            "has",
             [
-              "tree.insideOf",
+              "registeredNames",
               "$t"
             ],
-            "n",
-            [
-              "and",
-              [
-                "=",
-                "$n.kind",
-                "entry"
-              ],
-              [
-                "exists",
-                "$n.key"
-              ],
-              [
-                "=",
-                "$n.value.kind",
-                "literal"
-              ],
-              [
-                "=",
-                "$n.value.value",
-                "$f.name"
-              ]
-            ]
+            "$f.name"
           ]
         ]
       ]
@@ -936,7 +909,7 @@
     "heavyParams": {
       "args": [
         "envies",
-        "body"
+        "f"
       ],
       "expr": [
         "distinctCount",
@@ -975,16 +948,8 @@
                   ]
                 ],
                 [
-                  "count",
-                  [
-                    "filter",
-                    "$body",
-                    "n",
-                    [
-                      "ownReach",
-                      "$n"
-                    ]
-                  ]
+                  "ownReachCount",
+                  "$f"
                 ]
               ]
             ]
@@ -1262,35 +1227,45 @@
     },
     "walksWithState": {
       "args": [
-        "f",
-        "body"
+        "f"
       ],
       "expr": [
         "and",
         [
           "some",
-          "$body",
+          [
+            "ofKind",
+            "$f",
+            "call"
+          ],
           "c",
           [
-            "and",
+            "proven",
             [
               "=",
-              "$c.kind",
-              "call"
-            ],
-            [
-              "proven",
-              [
-                "=",
-                "$c.target.symbol",
-                "$f.symbol"
-              ]
+              "$c.target.symbol",
+              "$f.symbol"
             ]
           ]
         ],
         [
           "some",
-          "$body",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "ofKind",
+                "$f",
+                "access"
+              ],
+              [
+                "ofKind",
+                "$f",
+                "reference"
+              ]
+            ]
+          ],
           "n",
           [
             "or",
@@ -1325,7 +1300,6 @@
       "args": [
         "r",
         "envies",
-        "body",
         "f"
       ],
       "expr": [
@@ -1341,16 +1315,8 @@
             ]
           ],
           [
-            "count",
-            [
-              "filter",
-              "$body",
-              "n",
-              [
-                "ownReach",
-                "$n"
-              ]
-            ]
+            "ownReachCount",
+            "$f"
           ]
         ],
         [
@@ -1422,8 +1388,7 @@
                   "not",
                   [
                     "walksWithState",
-                    "$f",
-                    "$body"
+                    "$f"
                   ]
                 ],
                 [
@@ -1610,8 +1575,9 @@
         [
           "some",
           [
-            "descendants",
-            "$f.body"
+            "ofKind",
+            "$f",
+            "loop"
           ],
           "l",
           [
@@ -1692,6 +1658,136 @@
             ]
           ]
         ]
+      ]
+    },
+    "byKind": {
+      "args": [
+        "f"
+      ],
+      "kept": true,
+      "expr": [
+        "groupItems",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$f.body"
+            ],
+            [
+              "descendants",
+              "$f.body"
+            ]
+          ]
+        ],
+        "n",
+        "$n.kind"
+      ]
+    },
+    "ofKind": {
+      "args": [
+        "f",
+        "kind"
+      ],
+      "kept": true,
+      "expr": [
+        "flatten",
+        [
+          "map",
+          [
+            "filter",
+            [
+              "byKind",
+              "$f"
+            ],
+            "g",
+            [
+              "=",
+              [
+                "get",
+                "$g",
+                "key"
+              ],
+              "$kind"
+            ]
+          ],
+          "g",
+          [
+            "get",
+            "$g",
+            "items"
+          ]
+        ]
+      ]
+    },
+    "ownReachCount": {
+      "args": [
+        "f"
+      ],
+      "kept": true,
+      "expr": [
+        "count",
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "list",
+              [
+                "ofKind",
+                "$f",
+                "access"
+              ],
+              [
+                "ofKind",
+                "$f",
+                "reference"
+              ]
+            ]
+          ],
+          "n",
+          [
+            "ownReach",
+            "$n"
+          ]
+        ]
+      ]
+    },
+    "registeredNames": {
+      "args": [
+        "t"
+      ],
+      "kept": true,
+      "expr": [
+        "map",
+        [
+          "filter",
+          [
+            "tree.insideOf",
+            "$t"
+          ],
+          "n",
+          [
+            "and",
+            [
+              "=",
+              "$n.kind",
+              "entry"
+            ],
+            [
+              "exists",
+              "$n.key"
+            ],
+            [
+              "=",
+              "$n.value.kind",
+              "literal"
+            ]
+          ]
+        ],
+        "n",
+        "$n.value.value"
       ]
     }
   },
@@ -1780,27 +1876,14 @@
     ],
     "let": [
       [
-        "body",
-        [
-          "flatten",
-          [
-            "list",
-            [
-              "list",
-              "$f.body"
-            ],
-            [
-              "descendants",
-              "$f.body"
-            ]
-          ]
-        ]
-      ],
-      [
         "envies",
         [
           "filter",
-          "$body",
+          [
+            "ofKind",
+            "$f",
+            "access"
+          ],
           "x",
           [
             "proven",
@@ -1817,25 +1900,21 @@
       "and",
       [
         "none",
-        "$body",
+        [
+          "ofKind",
+          "$f",
+          "construction"
+        ],
         "x",
         [
           "proven",
           [
-            "and",
+            "exists",
             [
-              "=",
-              "$x.kind",
-              "construction"
-            ],
-            [
-              "exists",
+              "typeDeclaration",
               [
-                "typeDeclaration",
-                [
-                  "typeName",
-                  "$x"
-                ]
+                "typeName",
+                "$x"
               ]
             ]
           ]
@@ -1846,7 +1925,7 @@
         [
           "heavyParams",
           "$envies",
-          "$body"
+          "$f"
         ],
         1
       ],
@@ -1858,7 +1937,6 @@
           "envyOf",
           "$r",
           "$envies",
-          "$body",
           "$f"
         ]
       ]

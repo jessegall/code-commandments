@@ -95,6 +95,7 @@ type evaluation struct {
 	relations func(name string) []value
 	graphs    *sync.Map
 	kept      *keptAnswers
+	walks     *fileWalks
 }
 
 // Judge asks the rule of every node it selects: selection first, then where, then the let bindings in order, then
@@ -106,9 +107,10 @@ func (r Rule) Judge(codebase *engine.Codebase) Judged {
 		return judgeRows(asked, codebase, r.parameters())
 	}
 	run := rows{evaluation{definitions: asked.Definitions, parameters: r.parameters(), codebase: codebase}, codebase, written.Relations, map[string][]value{}}
-	parameters, relations, graphs, kept := r.parameters(), run.relationRows, &sync.Map{}, keepingAnswers(asked.Definitions)
+	parameters, relations, graphs, kept, walks := r.parameters(), run.relationRows, &sync.Map{}, keepingAnswers(asked.Definitions), &fileWalks{}
+	defer walks.count()
 	asking := func(site engine.Match) evaluation {
-		return evaluation{definitions: asked.Definitions, site: site, parameters: parameters, codebase: codebase, relations: relations, graphs: graphs, kept: kept}
+		return evaluation{definitions: asked.Definitions, site: site, parameters: parameters, codebase: codebase, relations: relations, graphs: graphs, kept: kept, walks: walks}
 	}
 	var judged Judged
 	note := func(site, emitted engine.Match, verdict engine.Truth) {
@@ -793,7 +795,11 @@ func (e evaluation) iterate(expression Expr, bound bindings) value {
 	name, _ := expression.Operands[1].Value.(string)
 	body := expression.Operands[2]
 	outer := &bound
-	answer := func(item value) value { return e.evaluate(body, outer.link(name, item)) }
+	answer := func(item value) value {
+		e.walks.hand(item)
+
+		return e.evaluate(body, outer.link(name, item))
+	}
 
 	switch expression.Operator {
 	case "distinctBy", "groupItems", "sortBy", "minBy", "maxBy":

@@ -6,7 +6,8 @@ import "sync/atomic"
 // idle one, so it can be held to a number where a duration can only be read. Nodes is every node a query looked
 // at, Checks every check it put to one, Queries how many queries were opened, Walked every file a pass over the
 // codebase went by whether or not it held anything, Files every file whose text a rule read, and Parsed every file
-// a bridge parsed into the tree, which is what reading a project costs.
+// a bridge parsed into the tree, which is what reading a project costs. MostWalks is the most times one rule went
+// over one file, in tenths: 25 is two and a half times.
 type Work struct {
 	Nodes    int64
 	Checks   int64
@@ -22,7 +23,8 @@ type Work struct {
 	Judged     int64
 	Remembered int64
 	// Kept is every file the one cache served, so its bridge did not read it: Parsed less Kept is what bridges read.
-	Kept int64
+	Kept      int64
+	MostWalks int64
 }
 
 var nodes, checks, queries, analyses, parts, visited, resolved, walked, files, parsed, judged, remembered, kept atomic.Int64
@@ -33,6 +35,7 @@ func Counted() Work {
 		Analyses: analyses.Load(), Parts: parts.Load(), Visited: visited.Load(),
 		Resolved: resolved.Load(), Walked: walked.Load(), Files: files.Load(), Parsed: parsed.Load(),
 		Judged: judged.Load(), Remembered: remembered.Load(), Kept: kept.Load(),
+		MostWalks: mostWalks.Load(),
 	}
 }
 
@@ -46,6 +49,18 @@ func Since(before Work) Work {
 		Resolved: now.Resolved - before.Resolved, Walked: now.Walked - before.Walked, Files: now.Files - before.Files,
 		Parsed: now.Parsed - before.Parsed,
 		Judged: now.Judged - before.Judged, Remembered: now.Remembered - before.Remembered, Kept: now.Kept - before.Kept,
+		MostWalks: now.MostWalks,
+	}
+}
+
+var mostWalks atomic.Int64
+
+func CountedWalks(tenths int64) {
+	for {
+		most := mostWalks.Load()
+		if tenths <= most || mostWalks.CompareAndSwap(most, tenths) {
+			return
+		}
 	}
 }
 
