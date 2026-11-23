@@ -65,7 +65,10 @@
         ],
         [
           "assignable",
-          "$c.callee.subject.resolved",
+          [
+            "typeOf",
+            "$c.callee.subject"
+          ],
           "$identity"
         ]
       ]
