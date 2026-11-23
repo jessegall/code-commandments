@@ -1,8 +1,8 @@
 title: Judging the code
-^(?:\S+, line \d+:|\d+ sins? across \d+ skills?\.$|\d+ sins? in \d+ files?$|[✓✗⚠] |↳ checklist written to )
+^(?:\S+, line \d+:|\d+ sins? across \d+ skills?\.$|\d+ sins? in \d+ files?$|[✓✗⚠] |· read \d+ files |↳ checklist written to )
 progress: ^(?:parsing|reading|detector) (\d+)/(\d+)$
 label: Judging the project against its commandments
-commands: commandments(-release|-go)? judge
+commands: *commandments judge*,*commandments-release judge*,*commandments-go judge*
 finished: ^(?:\d+ sins? across \d+ skills?\.$|\d+ sins? in \d+ files?$|✓ |↳ checklist written to )
 failed: ^(?:✗ )
 summary: ^(\d+ sins? across \d+ skills?\.|\d+ sins? in \d+ files?|✓ .+|✗ .+)$

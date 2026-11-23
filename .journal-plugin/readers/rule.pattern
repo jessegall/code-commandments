@@ -2,7 +2,7 @@ title: Working on a project rule
 ^(?:[✓✗⚠] |\S+:\d+  |\d+ match\(es\) of )
 label: Working on a rule of the project's own
 topic: rule (try|prove|explain|schema)
-commands: commandments(-release|-go)? rule
+commands: *commandments rule *,*commandments-release rule *,*commandments-go rule *
 finished: ^(?:\d+ match\(es\) of |[✓✗] |No )
 failed: ^(?:✗ |No rules in|No samples at|No node starts)
 summary: ^(\d+ match\(es\) of .+|[✓✗] .+)$

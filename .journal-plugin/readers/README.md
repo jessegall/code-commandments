@@ -10,16 +10,20 @@ output is what the reader answers with.
 
 ## `judge.pattern`
 
-Reads the judge, which the `sins` alias runs. The commands it names the binary in every spelling it is
-really run under, `commandments`, `commandments-release` and `commandments-go`, and names the verb: a
+Reads the judge, which the `sins` alias runs. The journal matches `commands:` as wildcards over the whole
+command, with the variables set in front of it left off, never as a regular expression, so each spelling
+is one pattern with a `*` on both sides: that reads the judge started from a terminal, from the journal's
+queue (`env … commandments-release judge`) and from the alias (`( export …; …/commandments-release judge … )`).
+The commands name the binary in every spelling it is really run under, `commandments`,
+`commandments-release` and `commandments-go`, and name the verb: a
 reader whose commands matched the binary alone was handed the output of `rule prove` as well, whose lines
 its summary cannot match, and a run a reader cannot summarise holds the agent at every edit after it.
 Reported by a consumer whose workers were held that way.
 
 - **Picks** a sin said plainly (`typed_lines.py, line 52: oldest_line_at, a sentence used as a method
   name`), the count the run ends on (`4 sins in 3 files`), the clean verdict (`✓ No sins found in 1181
-  files.`), where the checklist was written, and a run that could not read everything (`⚠ 10 file(s)
-  left unread`). A run a journal watches says what it found in words rather than printing the report a
+  files.`), how many files it read and how many of them came from the cache (`· read 836 files in 4.2s`),
+  where the checklist was written, and a run that could not read everything (`⚠ 10 file(s) left unread`). A run a journal watches says what it found in words rather than printing the report a
   terminal gets, so there is no path, no node kind and no detector class in a line, and the teaching
   prose is left where it belongs, in the skill the checklist names.
 - **Counts** `parsing`, `reading` and `detector` steps. Those are the words the counted form prints;

@@ -197,9 +197,9 @@ problem in it.
 
 The plugin connects Code Commandments to the journal's events. It needs no service running in the background.
 
-- **Judging.** `journal sins` runs judge. When you type `commandments judge` in a terminal inside a journal project,
-  the run goes through the journal's queue, so it never competes with the agents' own runs. Set
-  `COMMANDMENTS_QUEUED=1` to run it directly in your terminal instead.
+- **Judging.** `journal sins` runs judge for an agent, and the journal queues it with the agents' other runs. A
+  `commandments judge` you type in a terminal runs right there and never waits in that queue. Both read through
+  the same cache.
 - **Live judging.** When it is on, every file an agent edits is judged, and the agent is told which problems it just
   added and which it fixed.
 - **Settings.** The journal's plugin page has a switch for every rule and every language. A switch writes the same

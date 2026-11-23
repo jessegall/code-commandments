@@ -133,12 +133,6 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return list(cwd, console)
 	}
 
-	if c.Reading == nil && space.IsJournalDriven() && !insideTheJournal() {
-		if code, taken := throughTheQueue(space, cwd, in, console); taken {
-			return code, nil
-		}
-	}
-
 	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {
 		remembered.Load()
 		defer remembered.Save()

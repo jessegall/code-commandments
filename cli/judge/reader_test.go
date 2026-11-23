@@ -19,21 +19,76 @@ type judgeReader struct {
 
 func shippedJudgeReader(t *testing.T) judgeReader {
 	t.Helper()
-	content, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "readers", "judge.pattern"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	patterns := map[string]*regexp.Regexp{}
-	for _, line := range strings.Split(string(content), "\n") {
-		key, value, named := strings.Cut(line, ": ")
-		if !named {
-			continue
+	for key, value := range shippedReaderSettings(t, "judge.pattern") {
+		if key != "commands" {
+			patterns[key] = regexp.MustCompile(value)
 		}
-		patterns[key] = regexp.MustCompile(value)
 	}
 
 	return judgeReader{failed: patterns["failed"], summary: patterns["summary"]}
+}
+
+func shippedReaderSettings(t *testing.T, file string) map[string]string {
+	t.Helper()
+	content, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "readers", file))
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings := map[string]string{}
+	for _, line := range strings.Split(string(content), "\n") {
+		if key, value, named := strings.Cut(line, ": "); named {
+			settings[key] = value
+		}
+	}
+
+	return settings
+}
+
+var variablesInFront = regexp.MustCompile(`^(?:[A-Za-z_]\w*=\S*\s+)+`)
+
+func readsCommand(commands, command string) bool {
+	bare := variablesInFront.ReplaceAllString(command, "")
+	for _, pattern := range strings.Split(commands, ",") {
+		wildcards := strings.NewReplacer(`\*`, ".*", `\?`, ".").Replace(regexp.QuoteMeta(strings.TrimSpace(pattern)))
+		if regexp.MustCompile("^(?s:" + wildcards + ")$").MatchString(bare) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func TestTheShippedReadersReadEveryWayTheirCommandIsStarted(t *testing.T) {
+	judge := shippedReaderSettings(t, "judge.pattern")["commands"]
+	rule := shippedReaderSettings(t, "rule.pattern")["commands"]
+
+	for _, started := range []string{
+		"vendor/bin/commandments judge app",
+		"bin/commandments-go judge --changes",
+		"/project/.journal/plugins/code-commandments/bin/commandments-release judge --changes",
+		"COMMANDMENTS_QUEUED=1 .journal/plugins/code-commandments/bin/commandments-release judge",
+		"env COMMANDMENTS_QUEUED=1 COMMANDMENTS_PLAIN_PROGRESS=1 /project/.journal/plugins/code-commandments/bin/commandments-release judge",
+		"( export COMMANDMENTS_PLAIN_PROGRESS=1; /project/.journal/plugins/code-commandments/bin/commandments-release judge --changes  )",
+	} {
+		if !readsCommand(judge, started) {
+			t.Errorf("the judge's reader names the commands %q, which the journal matches as wildcards, and they do not read a judge started as %q", judge, started)
+		}
+		if readsCommand(rule, started) {
+			t.Errorf("the rule verbs' reader also reads a judge started as %q, whose lines it cannot summarise", started)
+		}
+	}
+	for _, started := range []string{
+		"vendor/bin/commandments rule prove",
+		"/project/.journal/plugins/code-commandments/bin/commandments-release rule try NoRawSql app",
+	} {
+		if !readsCommand(rule, started) {
+			t.Errorf("the rule verbs' reader names the commands %q, and they do not read %q", rule, started)
+		}
+		if readsCommand(judge, started) {
+			t.Errorf("the judge's reader also reads %q, whose lines it cannot summarise", started)
+		}
+	}
 }
 
 func (r judgeReader) settle(output string) (failed bool, summary string) {
