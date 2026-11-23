@@ -673,13 +673,28 @@
                   ],
                   "r",
                   [
-                    "assignable",
+                    "or",
                     [
-                      "enclosing",
-                      "$r",
-                      "type"
+                      "assignable",
+                      [
+                        "enclosing",
+                        "$r",
+                        "type"
+                      ],
+                      "model"
                     ],
-                    "model"
+                    [
+                      "proven",
+                      [
+                        "exemptedBy",
+                        "no-container",
+                        [
+                          "enclosing",
+                          "$r",
+                          "type"
+                        ]
+                      ]
+                    ]
                   ]
                 ]
               ]

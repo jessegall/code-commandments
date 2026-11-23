@@ -2542,7 +2542,8 @@
     {
       "classes": [
         "Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes",
-        "Illuminate\\Contracts\\Database\\Eloquent\\CastsInboundAttributes"
+        "Illuminate\\Contracts\\Database\\Eloquent\\CastsInboundAttributes",
+        "Illuminate\\Database\\Eloquent\\Scope"
       ],
       "tag": "no-container",
       "why": "A type the framework instantiates itself, without the container."
