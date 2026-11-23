@@ -35,7 +35,7 @@ final class BayClearance
     public function summary(): string
     {
         return implode(', ', array_map(
-            static fn (string $reference, string $where): string => $reference.' held at '.$where,
+            static fn (string $reference, string $where) => $reference.' held at '.$where,
             array_keys($this->reasons),
             array_values($this->reasons),
         ));

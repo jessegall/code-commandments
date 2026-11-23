@@ -18,7 +18,7 @@ trait FiltersLedgerByDay
     {
         return array_values(array_filter(
             $this->entries[$till] ?? [],
-            static fn (string $day): bool => $day >= $firstDay && $day <= $lastDay,
+            static fn (string $day) => $day >= $firstDay && $day <= $lastDay,
         ));
     }
 }

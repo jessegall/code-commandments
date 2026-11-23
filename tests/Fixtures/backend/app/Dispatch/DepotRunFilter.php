@@ -19,12 +19,12 @@ final readonly class DepotRunFilter
 
     public function outOf(Depot $depot): self
     {
-        return new self(array_values(array_filter($this->runs, fn (DepotRun $run): bool => $run->depot() === $depot)));
+        return new self(array_values(array_filter($this->runs, fn (DepotRun $run) => $run->depot() === $depot)));
     }
 
     public function referenced(string $prefix): self
     {
-        return new self(array_values(array_filter($this->runs, fn (DepotRun $run): bool => str_starts_with($run->reference, $prefix))));
+        return new self(array_values(array_filter($this->runs, fn (DepotRun $run) => str_starts_with($run->reference, $prefix))));
     }
 
     #[Righteous(TrainWreck::class)]

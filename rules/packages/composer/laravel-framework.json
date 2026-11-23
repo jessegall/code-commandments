@@ -3093,6 +3093,10 @@
       "type": "session"
     },
     {
+      "name": "service-locator",
+      "type": "auth"
+    },
+    {
       "name": "migration",
       "type": "Illuminate\\Database\\Migrations\\Migration"
     },

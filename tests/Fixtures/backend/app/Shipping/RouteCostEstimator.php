@@ -42,7 +42,7 @@ final class RouteCostEstimator
         rsort($sorted);
         $top = array_slice($sorted, 0, 3);
 
-        return implode(' > ', array_map(static fn (int $km): string => $km . 'km', $top));
+        return implode(' > ', array_map(static fn (int $km) => $km . 'km', $top));
     }
 
     #[Sinful(NearDuplicateFunction::class)]

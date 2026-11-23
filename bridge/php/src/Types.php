@@ -419,6 +419,16 @@ final class Types
                 default => null,
             },
             $expression instanceof Expr\Clone_ => $expression->expr->getAttribute('type'),
+            $expression instanceof Expr\BinaryOp\Equal, $expression instanceof Expr\BinaryOp\NotEqual,
+            $expression instanceof Expr\BinaryOp\Identical, $expression instanceof Expr\BinaryOp\NotIdentical,
+            $expression instanceof Expr\BinaryOp\Smaller, $expression instanceof Expr\BinaryOp\SmallerOrEqual,
+            $expression instanceof Expr\BinaryOp\Greater, $expression instanceof Expr\BinaryOp\GreaterOrEqual,
+            $expression instanceof Expr\BinaryOp\BooleanAnd, $expression instanceof Expr\BinaryOp\BooleanOr,
+            $expression instanceof Expr\BinaryOp\LogicalAnd, $expression instanceof Expr\BinaryOp\LogicalOr,
+            $expression instanceof Expr\BinaryOp\LogicalXor, $expression instanceof Expr\BooleanNot,
+            $expression instanceof Expr\Isset_, $expression instanceof Expr\Empty_, $expression instanceof Expr\Instanceof_ => ['keyword' => 'bool'],
+            $expression instanceof Expr\BinaryOp\Concat => ['keyword' => 'string'],
+            $expression instanceof Expr\BinaryOp\Spaceship => ['keyword' => 'int'],
             default => null,
         };
     }
@@ -604,7 +614,7 @@ final class Types
             return null;
         }
 
-        return $function->isInternal() ? null : $this->reflectedType($function->getReturnType(), null) ?? self::documentedReturn($function->getDocComment());
+        return $this->reflectedType($function->getReturnType(), null) ?? ($function->isInternal() ? null : self::documentedReturn($function->getDocComment()));
     }
 
     /**

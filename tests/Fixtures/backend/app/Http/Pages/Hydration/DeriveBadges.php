@@ -29,7 +29,7 @@ final class CatalogBadgesComposer
     #[Sinful(DerivedCollectionCast::class)]
     public function compose(): CatalogBadges
     {
-        $active = array_values(array_filter($this->skus, static fn (string $sku): bool => $sku !== ''));
+        $active = array_values(array_filter($this->skus, static fn (string $sku) => $sku !== ''));
 
         return CatalogBadges::from(['badges' => array_map(fn (string $sku) => ProductBadge::forProduct($sku), $active)]);
     }

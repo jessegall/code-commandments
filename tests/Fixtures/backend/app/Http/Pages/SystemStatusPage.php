@@ -31,6 +31,12 @@ final class SystemStatusPage extends Data
         return app(ContainersService::class)->healthy();
     }
 
+    #[Sinful(ServiceLocationInPageObject::class)]
+    public function viewedBy(): ?int
+    {
+        return auth()->id();
+    }
+
     public function status(): string
     {
         return match (true) {

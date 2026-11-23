@@ -29,7 +29,7 @@ final class PrefixStack
         $this->prefix = ltrim($parent . '/' . $segment, '/');
 
         try {
-            return array_map(fn (string $route): string => $this->prefix . '#' . $route, $routes);
+            return array_map(fn (string $route) => $this->prefix . '#' . $route, $routes);
         } finally {
             $this->prefix = $parent;
         }
@@ -44,6 +44,6 @@ final class PrefixStack
     {
         $nested = ltrim($prefix . '/' . $segment, '/');
 
-        return array_map(fn (string $route): string => $nested . '#' . $route, $routes);
+        return array_map(fn (string $route) => $nested . '#' . $route, $routes);
     }
 }

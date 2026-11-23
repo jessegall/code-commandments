@@ -34,7 +34,7 @@ final class PlacementFactory
      */
     public function present(array $mapped): array
     {
-        return array_values(array_filter($mapped, static fn (OptRange|Optional $entry): bool => ! $entry instanceof Optional));
+        return array_values(array_filter($mapped, static fn (OptRange|Optional $entry) => ! $entry instanceof Optional));
     }
 
     #[Sinful(NullToOptionalMap::class)]

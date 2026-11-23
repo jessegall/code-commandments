@@ -14,7 +14,7 @@ final class TillStepFinder
     public function wire(TillSteps $steps): void
     {
         $steps->addAll(array_map(
-            fn (string $file): string => __NAMESPACE__.'\\Steps\\'.basename($file, '.php'),
+            fn (string $file) => __NAMESPACE__.'\\Steps\\'.basename($file, '.php'),
             glob(__DIR__.'/Steps/*.php'),
         ));
     }
