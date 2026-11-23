@@ -196,6 +196,29 @@
             "$f.obligations"
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "not",
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                [
+                  "get",
+                  [
+                    "typeOf",
+                    "$c.callee.subject"
+                  ],
+                  "name"
+                ]
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$c"
