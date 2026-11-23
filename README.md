@@ -1,11 +1,93 @@
 # Code Commandments
 
-Code Commandments checks the architecture of your code. It finds the places where the code breaks a design rule,
-points at each one by file and line, and links the short lesson that explains the fix. It supports PHP, TypeScript,
-Vue, Python, C# and Go.
+Code Commandments is a compiler for architecture. A compiler checks the types of your code; this checks its design.
+It finds the places where the code breaks a design rule, points at each one by file and line, and links the short
+lesson that explains the fix. It supports PHP, TypeScript, Vue, Python, C# and Go.
 
 It ships with a set of ready-made rules that check a codebase for common patterns and common architectural mistakes.
 You can also write rules of your own, so the architecture your team agreed on is checked the same way.
+
+## One tree for every language
+
+What makes this work is the **generic tree**.
+
+Every language is first read by its own real compiler: php-parser for PHP, the TypeScript compiler for TypeScript and
+Vue, mypy for Python, Roslyn for C# and go/types for Go. So the tool knows what the compiler knows: the type of an
+expression, and the declaration a name refers to. Nothing is guessed from the text of your code.
+
+Each language is then translated into the same tree. An `if` becomes an `if` node with a `condition`, a `then` and an
+`else`, whether it was written in PHP, Python or Go. A method call becomes a `call` with a `callee` and `arguments`.
+A class, a struct and a record all become a `type`. What is left is what the code does, with no trace of how one
+language spells it.
+
+Take the same few lines in three languages:
+
+```php
+if ($order->isPaid()) {
+    return $order->receipt();
+} else {
+    $this->charge($order);
+}
+```
+
+```python
+if order.is_paid():
+    return order.receipt()
+else:
+    self.charge(order)
+```
+
+```go
+if order.IsPaid() {
+	return order.Receipt()
+} else {
+	charge(order)
+}
+```
+
+To Code Commandments all three are one tree (simplified here):
+
+```
+if
+├─ condition   call  →  order . isPaid
+├─ then        block →  return (call  →  order . receipt)
+└─ else        block →  call  →  charge(order)
+```
+
+Every rule is written once, as one small JSON file that searches that tree. This is the heart of the rule that finds
+the `else` above, which is not needed because the branch before it already returned (shortened; the whole file is
+[rules/shared-flow/redundant-else.json](rules/shared-flow/redundant-else.json)):
+
+```json
+"find": {
+  "select": "if",
+  "as": "b",
+  "where": ["and", ["exists", "$b.else"], ["not", ["completes", "$b.then"]]],
+  "emit": "$b"
+}
+```
+
+It reads: take every `if` that has an `else` and whose `then` branch never runs to its end. It names no language,
+and it judges five of them. Run on the three files above, that one rule reports all three:
+
+```
+Checkout.php:20  Checkout::settle  [redundant-else]
+checkout.py:11  checkout.Checkout::settle  [redundant-else]
+shop/checkout.go:12  (file)::Settle  [redundant-else]
+```
+
+That is the whole idea:
+
+- **A rule is a concept, written once.** It lists the languages it judges, and it is proven on each of them before it
+  ships. No rule is written a second time for another language.
+- **A language only brings facts.** The small program that translates a language into the tree is called a bridge. It
+  says what the code is and never decides a rule. A language that gains a bridge can be judged by the rules that
+  already exist.
+- **Your own rules are the same kind of file.** A rule you write for your project searches the same tree with the
+  same operators as the rules that ship, so it can ask about types, calls and structure, never about text.
+
+The tree itself is documented in [contract/CONTRACT.md](contract/CONTRACT.md): every kind of node, its named parts
+and the facts it carries.
 
 ## Installation
 
@@ -84,10 +166,9 @@ belongs on another class, and why.
 It never changes your code. You fix each problem yourself, or your coding agent does, using the lesson the problem
 points to.
 
-1. **Reading.** Each language is read by its own compiler: php-parser for PHP, the TypeScript compiler for TypeScript
-   and Vue, mypy for Python, Roslyn for C# and go/types for Go. A small program for each language, called a bridge,
-   turns what the compiler read into one shared format: the same tree shape for every language.
-2. **Judging.** Every rule is one JSON file that searches that shared tree. Because the tree looks the same for every
+1. **Reading.** Each language is read by its own compiler, and its bridge turns what the compiler read into the
+   generic tree described above: the same tree shape for every language.
+2. **Judging.** Every rule is one JSON file that searches that tree. Because the tree looks the same for every
    language, a rule is written once and works for every language it lists.
 3. **Teaching.** Every rule points to a skill: a short document that explains the design rule and shows the fix.
 
