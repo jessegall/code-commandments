@@ -67,7 +67,7 @@ func (r *Reader) Next() (Line, error) {
 	}
 	if checksSchema() {
 		if err := Validate(raw); err != nil {
-			return Line{}, fmt.Errorf("line %d: %w", r.number, err)
+			return Line{}, &RefusedLine{Number: r.number, Path: pathOf(raw), Reason: err}
 		}
 	}
 	line, err := decode(raw)
@@ -345,4 +345,37 @@ type VersionRefused struct {
 
 func (v *VersionRefused) Error() string {
 	return fmt.Sprintf("the %s stream is written in contract version %d, and this reader reads only version %d", v.Bridge, v.Written, SupportedVersions[len(SupportedVersions)-1])
+}
+
+// RefusedLine is a line of a bridge's stream the tree's schema refuses: the bridge wrote a fact the contract does not
+// declare, so reading it again, or a part of it, refuses it again.
+type RefusedLine struct {
+	Number int
+	Path   string
+	Reason error
+}
+
+func (r *RefusedLine) Error() string {
+	if r.Path == "" {
+		return fmt.Sprintf("line %d is refused by the tree's schema: %v", r.Number, r.Reason)
+	}
+
+	return fmt.Sprintf("line %d, the tree of %s, is refused by the tree's schema: %v", r.Number, r.Path, r.Reason)
+}
+
+func (r *RefusedLine) Unwrap() error {
+	return r.Reason
+}
+
+func pathOf(raw []byte) string {
+	var line struct {
+		File *struct {
+			Path string `json:"path"`
+		} `json:"file"`
+	}
+	if json.Unmarshal(raw, &line) != nil || line.File == nil {
+		return ""
+	}
+
+	return line.File.Path
 }

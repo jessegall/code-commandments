@@ -654,7 +654,7 @@ func onceEach(stream *contract.Stream) *contract.Stream {
 // on its own, so one file the bridge cannot read costs only itself.
 func (b Bridge) readHalving(kept *keptLines, roots, files, written []string, tally func(), halvings int) (*contract.Stream, error) {
 	stream, err := read(b, kept, roots, files, written, tally)
-	if err == nil || halvings <= 0 || len(written) < 2 || isUnavailable(err) {
+	if err == nil || halvings <= 0 || len(written) < 2 || isUnavailable(err) || errors.As(err, new(*contract.RefusedLine)) {
 		return stream, err
 	}
 

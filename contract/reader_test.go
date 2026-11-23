@@ -142,3 +142,19 @@ func TestAStreamWrittenBackReadsTheSameWithItsTypesStillShared(t *testing.T) {
 		t.Errorf("the caught type's resolved type came back as %v", caught.Resolved)
 	}
 }
+
+func TestALineTheSchemaRefusesEndsTheReadNamingItsFileKindAndFact(t *testing.T) {
+	refused := strings.Replace(handler, `"kind": "try",`, `"kind": "try", "form": "guarded",`, 1)
+
+	_, err := ReadAll(strings.NewReader(stream(header, refused, trailer)))
+
+	var line *RefusedLine
+	if !errors.As(err, &line) {
+		t.Fatalf("a refused line reads as %v, not as a refused line", err)
+	}
+	for _, named := range []string{"/src/Reader.php", "try", `"form"`} {
+		if !strings.Contains(err.Error(), named) {
+			t.Errorf("the refusal %q does not name %s", err, named)
+		}
+	}
+}

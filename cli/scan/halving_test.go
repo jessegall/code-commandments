@@ -160,3 +160,26 @@ func TestABridgeThatCannotRunIsAskedOnceAndNeverHalved(t *testing.T) {
 		t.Errorf("a bridge with no toolchain was started %d times; it can never run, so once is enough", asked)
 	}
 }
+
+func TestAStreamTheSchemaRefusesIsReadOnce(t *testing.T) {
+	var asked [][]string
+	route := read
+	read = func(_ Bridge, _ *keptLines, _, _, files []string, _ func()) (*contract.Stream, error) {
+		asked = append(asked, files)
+
+		return nil, &contract.RefusedLine{Number: 2, Path: files[0], Reason: errors.New(`a call carries no fact "form"`)}
+	}
+	t.Cleanup(func() { read = route })
+
+	held := Bridge{Kind: "php", Word: "php", Label: "PHP"}
+	files := []string{filepath.Join("src", "A.php"), filepath.Join("src", "B.php"), filepath.Join("src", "C.php")}
+
+	_, err := held.readHalving(&keptLines{}, []string{"src"}, files, files, func() {}, halvingsAtMost)
+
+	if !errors.As(err, new(*contract.RefusedLine)) {
+		t.Errorf("a refused stream ends the read as %v", err)
+	}
+	if len(asked) != 1 {
+		t.Errorf("a stream the schema refuses was asked for %d times", len(asked))
+	}
+}
