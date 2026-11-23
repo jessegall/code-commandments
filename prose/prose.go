@@ -11,15 +11,17 @@ import (
 
 var history = []phrase{
 	{pattern: words(`formerly`), notAfter: endsWith(`a|an|the`)},
-	{pattern: words(`refactored|renamed from|ported from`)},
+	{pattern: words(`refactored|renamed from|ported from`), notAfter: endsWith(`be|been`)},
 	{pattern: words(`was extracted`), notBefore: regexp.MustCompile(`^\s+from`)},
-	{pattern: words(`used to (?:be|live|have|hold|contain|return|exist|sit|post|fire)`), notAfter: endsWith(`is|are|be|only`)},
+	{pattern: words(`used to (?:be|live|have|hold|contain|return|exist|sit|post|fire|support)`), notAfter: endsWith(`is|are|be|only`)},
 	{pattern: words(`(?:this|the) (?:code|helper|method|class|function|implementation|detector|rule) (?:is retired|no longer (?:an?|reads|runs|fires|handles|unwraps|posts|matters))`)},
 	{pattern: words(`no longer (?:does|offers up)`)},
 	{pattern: words(`(?:code|method|function|class|block|lines?)(?: below| above)? (?:is|are) no longer (?:relevant|needed|necessary|used)`)},
 	{pattern: regexp.MustCompile(`(?i)^[\s/#*]*no longer an?\b`)},
 	{pattern: words(`now lives (?:in|inside)`)},
-	{pattern: words(`previously\s+(?:this|every|we|it)`)},
+	{pattern: words(`previously\s+(?:this|every|we|it|attempted)`)},
+	{pattern: words(`was previously (?:started|attempted|tried|done)`)},
+	{pattern: words(`happens here any ?more`)},
 	{pattern: words(`equivalent of the old`)},
 }
 
