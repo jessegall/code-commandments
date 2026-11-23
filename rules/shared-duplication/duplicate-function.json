@@ -414,6 +414,41 @@
           ]
         ]
       ]
+    },
+    "resolvedRequestAction": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "some",
+        "$f.parameters",
+        "p",
+        [
+          "and",
+          [
+            "proven",
+            [
+              "assignable",
+              "$p",
+              "form-request"
+            ]
+          ],
+          [
+            "some",
+            [
+              "descendants",
+              "$f.body",
+              "call"
+            ],
+            "c",
+            [
+              "=",
+              "$c.callee.subject.name",
+              "$p.binding.name"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -450,6 +485,10 @@
           ],
           [
             "accessorDeclaration",
+            "$f"
+          ],
+          [
+            "resolvedRequestAction",
             "$f"
           ]
         ]
