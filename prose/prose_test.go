@@ -38,6 +38,8 @@ func TestAStrawmanIsToldFromARuntimeCondition(t *testing.T) {
 		"There is no green anywhere in this palette, and that is not an oversight.":            true,
 		"This is deliberate, not a mistake.":                                                   true,
 		"Not using a strict comparison is on purpose as the token might be null.":              false,
+		"we do not delete logs here on purpose (you can run these queries to delete all data)": false,
+		"We never retry here on purpose.":                                                      true,
 		"Visibility is deliberately not re-checked.":                                           true,
 		"The website is not here either: it is on the record.":                                 true,
 		"Operation capabilities are NOT declared here.":                                        true,

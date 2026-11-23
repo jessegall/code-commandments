@@ -16,7 +16,7 @@
       "python-mutable-static-state"
     ],
     "skill": "php/fix-at-the-source",
-    "description": "A write to a static property \u2014 really a global variable with a namespace attached \u2014 where whichever write happens last wins, so the order code runs in changes the result.",
+    "description": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
     "rule": "Hold changing state on an INSTANCE someone owns and passes; never write a static property.",
     "suggestion": "Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down."
   },
@@ -219,16 +219,24 @@
                 ],
                 "y",
                 [
-                  "tree.names",
-                  "$y",
+                  "or",
                   [
-                    "case",
-                    "$root.kind",
-                    {
-                      "access": "$root.member.name",
-                      "reference": "$root.name"
-                    },
-                    ""
+                    "tree.names",
+                    "$y",
+                    [
+                      "case",
+                      "$root.kind",
+                      {
+                        "access": "$root.member.name",
+                        "reference": "$root.name"
+                      },
+                      ""
+                    ]
+                  ],
+                  [
+                    "namesMemo",
+                    "$y",
+                    "$fn"
                   ]
                 ]
               ]
@@ -278,16 +286,24 @@
               ],
               "y",
               [
-                "tree.names",
-                "$y",
+                "or",
                 [
-                  "case",
-                  "$root.kind",
-                  {
-                    "access": "$root.member.name",
-                    "reference": "$root.name"
-                  },
-                  ""
+                  "tree.names",
+                  "$y",
+                  [
+                    "case",
+                    "$root.kind",
+                    {
+                      "access": "$root.member.name",
+                      "reference": "$root.name"
+                    },
+                    ""
+                  ]
+                ],
+                [
+                  "namesMemo",
+                  "$y",
+                  "$fn"
                 ]
               ]
             ]
@@ -334,16 +350,24 @@
                 ],
                 "y",
                 [
-                  "tree.names",
-                  "$y",
+                  "or",
                   [
-                    "case",
-                    "$root.kind",
-                    {
-                      "access": "$root.member.name",
-                      "reference": "$root.name"
-                    },
-                    ""
+                    "tree.names",
+                    "$y",
+                    [
+                      "case",
+                      "$root.kind",
+                      {
+                        "access": "$root.member.name",
+                        "reference": "$root.name"
+                      },
+                      ""
+                    ]
+                  ],
+                  [
+                    "namesMemo",
+                    "$y",
+                    "$fn"
                   ]
                 ]
               ],
@@ -369,16 +393,24 @@
                     ],
                     "y",
                     [
-                      "tree.names",
-                      "$y",
+                      "or",
                       [
-                        "case",
-                        "$root.kind",
-                        {
-                          "access": "$root.member.name",
-                          "reference": "$root.name"
-                        },
-                        ""
+                        "tree.names",
+                        "$y",
+                        [
+                          "case",
+                          "$root.kind",
+                          {
+                            "access": "$root.member.name",
+                            "reference": "$root.name"
+                          },
+                          ""
+                        ]
+                      ],
+                      [
+                        "namesMemo",
+                        "$y",
+                        "$fn"
                       ]
                     ]
                   ]
@@ -398,5 +430,84 @@
       ]
     ],
     "emit": "$a"
+  },
+  "definitions": {
+    "namesMemo": {
+      "args": [
+        "y",
+        "fn"
+      ],
+      "expr": [
+        "some",
+        [
+          "ownDescendants",
+          "$fn.body"
+        ],
+        "b",
+        [
+          "and",
+          [
+            "=",
+            "$b.kind",
+            "assignment"
+          ],
+          [
+            "=",
+            "$b.mode",
+            "assign"
+          ],
+          [
+            "some",
+            "$b.targets",
+            "t",
+            [
+              "and",
+              [
+                "=",
+                "$t.kind",
+                "access"
+              ],
+              [
+                "some",
+                [
+                  "list",
+                  [
+                    "enclosing",
+                    [
+                      "declarationOf",
+                      "$t"
+                    ],
+                    "field"
+                  ]
+                ],
+                "d",
+                [
+                  "and",
+                  [
+                    "exists",
+                    "$d"
+                  ],
+                  [
+                    "some",
+                    "$d.modifiers",
+                    "m",
+                    [
+                      "=",
+                      "$m",
+                      "static"
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "tree.names",
+                "$y",
+                "$t.member.name"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
   }
 }
