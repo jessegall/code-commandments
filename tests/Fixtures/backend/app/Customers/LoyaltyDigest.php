@@ -75,7 +75,7 @@ final class DigestFingerprint
     #[Fixed(DuplicateFunction::class)]
     public static function of(int $base, int $count): string
     {
-        $steps = array_map(static fn (int $i): int => $i * 2, range(0, max(0, $count - 1)));
+        $steps = array_map(static fn (int $i) => $i * 2, range(0, max(0, $count - 1)));
 
         return md5((string) ($base + array_sum($steps)));
     }

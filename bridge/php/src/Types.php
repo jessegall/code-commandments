@@ -102,6 +102,12 @@ final class Types
                 $properties[$declared->name->toString()] = $this->written($property->type, $name);
             }
         }
+        if ($class instanceof Stmt\Enum_) {
+            $properties['name'] = ['keyword' => 'string'];
+            if ($class->scalarType !== null) {
+                $properties['value'] = $this->written($class->scalarType, $name);
+            }
+        }
         $constants = [];
         $cases = [];
         foreach ($class->stmts as $statement) {
@@ -430,6 +436,13 @@ final class Types
             $expression instanceof Expr\Isset_, $expression instanceof Expr\Empty_, $expression instanceof Expr\Instanceof_ => ['keyword' => 'bool'],
             $expression instanceof Expr\BinaryOp\Concat => ['keyword' => 'string'],
             $expression instanceof Expr\BinaryOp\Spaceship => ['keyword' => 'int'],
+            $expression instanceof Expr\Cast\String_ => ['keyword' => 'string'],
+            $expression instanceof Expr\Cast\Int_ => ['keyword' => 'int'],
+            $expression instanceof Expr\Cast\Double => ['keyword' => 'float'],
+            $expression instanceof Expr\Cast\Bool_ => ['keyword' => 'bool'],
+            $expression instanceof Expr\Cast\Array_ => ['keyword' => 'array'],
+            $expression instanceof Expr\BinaryOp\Plus, $expression instanceof Expr\BinaryOp\Minus,
+            $expression instanceof Expr\BinaryOp\Mul, $expression instanceof Expr\BinaryOp\Mod => self::arithmetic($expression),
             default => null,
         };
     }
@@ -922,6 +935,22 @@ final class Types
         }
 
         return null;
+    }
+
+    /**
+     * The number an arithmetic operation gives: an int of two ints (`%` always), a float when either side is a float.
+     */
+    private static function arithmetic(Expr\BinaryOp $operation): ?array
+    {
+        $sides = [$operation->left->getAttribute('type')['keyword'] ?? null, $operation->right->getAttribute('type')['keyword'] ?? null];
+        if ($operation instanceof Expr\BinaryOp\Mod) {
+            return ['keyword' => 'int'];
+        }
+        if ($sides === ['int', 'int']) {
+            return ['keyword' => 'int'];
+        }
+
+        return array_diff($sides, ['int', 'float']) === [] ? ['keyword' => 'float'] : null;
     }
 
     /**
