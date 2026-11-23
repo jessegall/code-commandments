@@ -1,11 +1,9 @@
 # Code Commandments
 
-> A compiler for architecture: a static checker for PHP, Vue, TypeScript, Python, C# and Go.
+Code Commandments checks the architecture of your code. It reads a project, finds the places where the code breaks a
+design rule, and tells you which lesson explains the fix.
 
-**code-commandments** judges a codebase against a set of architectural disciplines.
-Every violation (a "sin") is reported as a `file:line`, grouped under the **skill**
-that teaches the fix. It is one static binary, and it reads six languages, each parsed
-by its own compiler:
+It reads PHP, Vue, TypeScript, Python, C# and Go:
 
 <!-- BEGIN: languages-table (auto-generated, run `composer readme`) -->
 | Language | Files |
@@ -18,131 +16,78 @@ by its own compiler:
 | **Go** | `.go` |
 <!-- END: languages-table -->
 
-One set of disciplines covers them all. A rule is written once against a generic
-syntax tree, so *tell, don't ask* reads the same whether it is judging PHP or C#;
-only the parse differs.
+## What you get
 
-It reports and teaches; it changes no code. Whoever fixes a sin, you or a coding
-agent, reads the skill the finding names and writes the fix at the source. Since
-version 8 there are no automatic fixes: the agent writes every one from the
-finding and its skill.
+Run it on a project and you get a list of problems. Each one names a file and a line, says what is wrong, and points
+to a short lesson (a "skill") that explains how to fix it. For example:
 
-A linter tells you a line is too long. code-commandments tells you *this array
-should be a value object, and here's the discipline that explains why*.
+```
+app/Orders/RefundService.php, line 42: a catch block that swallows the error [swallow-catch]
+app/Checkout/PricingService.php, line 18: passing three pieces of one object instead of the object [derived-argument]
+```
 
-## Contents
+A linter tells you a line is too long. This tool tells you that an array should be a value object, or that a method
+belongs on another class, and why.
 
-- [How it works](#how-it-works)
-- [Install](#install)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [Freezing a file](#freezing-a-file)
-- [Agents](#agents)
-- [Hooks](#hooks)
-- [How rules are tested](#how-rules-are-tested)
-- [Skills](#skills)
-- [Sins & rules](#sins--rules)
-- [Scaffolding](#scaffolding)
-- [Writing your own rules](#writing-your-own-rules)
-- [License](#license)
+It never changes your code. You fix each problem yourself, or your coding agent does, using the lesson the problem
+points to.
 
 ## How it works
 
-The loop is simple:
+1. **Reading.** Each language is read by its own compiler: php-parser for PHP, the TypeScript compiler for TypeScript
+   and Vue, mypy for Python, Roslyn for C# and go/types for Go. A small program for each language, called a bridge,
+   turns what the compiler read into one shared format: the same tree shape for every language.
+2. **Judging.** Every rule is one JSON file that searches that shared tree. Because the tree looks the same for every
+   language, a rule is written once and works for every language it lists.
+3. **Teaching.** Every rule points to a skill: a short document that explains the design rule and shows the fix.
 
-1. **Judge**: `commandments judge` prints every sin as a `file:line`, grouped by skill.
-2. **Learn**: each sin names a **skill**; you (or your agent) read it.
-3. **Fix**: fix at the source.
-4. **Repeat**: re-run until clean (exit code `0`).
-
-One pass of that loop, with an agent driving:
-
-<p align="center">
-  <img src="docs/agent-loop-session.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, the agent drops two redundant elses, fixes feature envy and an array bag at the source, judge comes back clean." />
-</p>
-
-Under the hood:
-
-- **Bridges**: each language is parsed by its own compiler (php-parser for PHP,
-  TypeScript's compiler for Vue and TypeScript, mypy for Python, Roslyn for C#,
-  go/types for Go). Its bridge writes what it read as the **generic tree**: one node
-  shape, named roles, and the same type, symbol and comment facts for every language.
-  A bridge supplies facts only; it never decides a rule.
-- **Rules**: one JSON file per sin that finds it in the generic tree. Every rule is
-  written once and judges every language in its `engine` list the same way. The files
-  are built into the binary.
-- **Sins**: the vocabulary. Each sin is one named fault: what it flags, and the skill
-  that teaches the fix. It is what `--sin=` selects and what a finding is reported as.
-- **Skills**: the teaching layer. One document per discipline, the source of truth for
-  what "good" looks like. Rules *find*, skills *teach*.
-
-A judge reads a file once and keeps what it read in one cache keyed on the file's
-contents, shared by every checkout of the project, so a second run, or a worktree,
-re-reads and re-judges only what changed and the files that import it.
-
-**You don't need the packages a rule is about.** Rules match on real *types*,
-so a rule for a package your project doesn't use never fires. Nothing to install
-or configure to keep it quiet.
+Code Commandments is one program. It remembers what it read and what each rule decided, keyed on the contents of each
+file. A second run only reads and judges the files that changed, plus the files that depend on them. Every copy of a
+project on your machine, including git worktrees, shares that memory.
 
 ## Install
 
-With composer, in a project that has one:
+**With the agent journal.** If your project uses the [agent journal](https://github.com/jessegall/agent-journal),
+install Code Commandments as a journal plugin:
+
+```bash
+journal plugin install https://github.com/jessegall/code-commandments
+```
+
+This downloads one program for your machine and checks it against the release's checksums. It needs `sh`, `curl`,
+`sha256sum` or `shasum`, and Python 3.9 or newer. It does not need PHP, Composer, Go or Docker. Journals from version
+5 on read `journal-plugin.5.json`; older journals read `journal-plugin.json`. Both install the same release.
+
+**With Composer.** In a PHP project:
 
 ```bash
 composer require --dev jessegall/code-commandments
 vendor/bin/commandments install
 ```
 
-That needs PHP 8.3 and composer. In a project running the
-[agent journal](https://github.com/jessegall/agent-journal), install it as a journal
-plugin instead — it fetches one static binary and needs no PHP, composer, Go or Docker:
+Composer downloads the same program, checked the same way. It runs on macOS and Linux; see
+[docs/requirements.md](docs/requirements.md#platforms) for what each platform needs.
+
+## Use it
 
 ```bash
-journal plugin install https://github.com/jessegall/code-commandments
+commandments judge                       # judge the folders listed in your config
+commandments judge src                   # judge one folder
+commandments judge --changes             # judge only what you changed and have not committed
+commandments judge --branch              # judge only what differs from main
+commandments judge --sin=swallow-catch   # look for one kind of problem
+commandments judge --skill=exceptions    # look for every problem one skill covers
+commandments info swallow-catch          # explain a problem: what it is, why, and how to fix it
 ```
 
-The two ways share everything but the install: the same rules, the same skills, the same
-commands. See [Under the agent journal](#under-the-agent-journal) for what the plugin
-takes over. It runs on macOS and Linux; the
-[platforms](docs/requirements.md#platforms) say what each way of installing it needs.
+Use `vendor/bin/commandments` when you installed with Composer. Under the journal, `journal sins` runs the same
+judge and shows its progress.
 
-## Usage
+The program exits with code 1 when it finds problems and 0 when the code is clean. Each run also writes a checklist
+file. Work through it top to bottom: fix one problem, delete its line, and move on. Run judge again at the end to
+confirm.
 
-```bash
-# scan. With no path, judge reads the source roots from .commandments/config.json
-# (auto-detected from composer.json on the first run)
-vendor/bin/commandments judge
-vendor/bin/commandments judge src                  # or point it at a path
-
-# scope to one skill (group) or one sin
-vendor/bin/commandments judge src --skill=exceptions
-vendor/bin/commandments judge src --sin=swallow-catch
-
-# scope to what you changed
-vendor/bin/commandments judge src --branch         # branch vs main (--branch=BASE to override)
-vendor/bin/commandments judge src --changes        # uncommitted working-tree changes
-
-# detectors run across 2 workers by default (capped at CPU cores); --parallel=1 disables
-vendor/bin/commandments judge src --parallel=4
-
-# skip paths (comma-separated fragments); list everything
-vendor/bin/commandments judge src --exclude=Generated,Legacy
-vendor/bin/commandments judge --list
-
-# read the dependency stack you already have, and propose the layer declaration for it
-vendor/bin/commandments layers                # print it
-vendor/bin/commandments layers --write        # add it to .commandments/config.json
-vendor/bin/commandments layers --floor        # only the namespaces nothing of yours sits below
-
-# and as the codebase grows, edit the declared stack in place
-vendor/bin/commandments layers add 'App\Parts' --may-use='App\Ui\Tokens'
-vendor/bin/commandments layers allow 'App\Ui\Pages' 'App\Parts'   # one arrow
-vendor/bin/commandments layers --write --refresh                   # regenerate the block
-```
-
-Exit code is non-zero when sins are found.
-
-### Every command
+Every command explains itself with `--help`:
 
 <!-- BEGIN: commands-table (auto-generated, run `composer readme`) -->
 | Command | Purpose |
@@ -186,133 +131,64 @@ Exit code is non-zero when sins are found.
 | `commandments trigger-eval` | Measure whether skill descriptions pull their own skill in — and stay out of their neighbours'. |
 <!-- END: commands-table -->
 
-Run `commandments <command> --help` for a command's forms, options and notes — every help screen is
-projected from the command itself, so it is never out of date.
+## Configure it
 
-## Configuration
-
-**You don't have to configure anything.** Every detector is enabled out of the box.
-Configuration is opt-out: silence a rule, tune a threshold, or add a detector of
-your own.
-
-A `.commandments/config.json` is scaffolded on install, with a schema beside it
-(`config.schema.json`) so an editor completes every rule, sin and skill by name:
+You do not have to configure anything: every rule is on. The settings live in `.commandments/config.json`, created
+when you install, with a schema beside it, so your editor can complete every name.
 
 ```json
 {
     "$schema": "./config.schema.json",
     "paths": ["app", "src"],
-    "exclude": ["app/Generated"],
+    "exclude": ["app/Generated", "**/vendor"],
     "disable": {
-        "sins": ["php/NonFinalData"],
-        "detectors": ["php/FacadeCallDetector"],
-        "skills": ["php/ValueObjects"],
+        "sins": ["php/swallow-catch"],
+        "skills": ["php/Exceptions"],
         "languages": ["python"]
     },
-    "configure": {
-        "php/DataClumpDetector": [{"minClasses": [3]}],
-        "NoRawSqlDetector": [{"judges": ["tests"]}]
-    },
-    "detectors": ["NoRawSqlDetector"]
+    "parallel": 2,
+    "base": "main"
 }
 ```
 
-- `paths`: the source roots judge scans with no path given (auto-detected on first run).
-- `exclude`: paths judge does not read at all, so nothing in them is reported on or rewritten.
-- `judges`, written under a rule inside `configure`: that one rule reads an excluded folder anyway, and
-  no other rule does. `"configure": {"NoRawSqlDetector": [{"judges": ["tests"]}]}` judges `tests/` for
-  your own SQL rule while every naming rule stays out of it.
-- `disable`: rules turned off by their sin, their detector, or their whole skill — and whole
-  languages, agents or hooks.
-- `configure`: a shipped detector tuned, each step one of its methods with its arguments in order.
-- `detectors` / `packages`: your own rules and exemption packages from `.commandments/custom/`
-  (see [Writing your own rules](#writing-your-own-rules)), turned on.
+- `paths`: the folders judge reads when you give it no folder.
+- `exclude`: folders and files judge never reads.
+- `disable`: rules to switch off, by problem, by skill, or a whole language.
+- `parallel`: how many rules run at once.
+- `base`: the branch `--branch` compares against.
 
-`commandments disable <sin>` and `enable <sin>` edit the file for you, leaving the rest as you wrote
-it. Run `commandments config` for a summary of what's in effect. A `config.php` from an earlier
-version is not read: write its settings into `config.json` and delete it. A name the config writes
-that no rule answers to, or a setting a rule does not declare, stops the run with one message naming
-every line to change.
+`commandments disable <name>` and `commandments enable <name>` edit the file for you. `commandments config` shows
+what is in effect. A name in the file that no rule knows stops the run with a message that names every line to fix.
 
-### Declaring your layers
+### Layers
 
-Most rules know a sin when they see one. Dependency *direction* is the exception:
-only your project knows which way its arrows are meant to point, so
-`NamespaceDependencyDetector` stays completely inert until you say. Declare the
-stack top-down and each layer names what it may reach:
+One rule needs to know your design first: which part of the code may use which. Declare your layers from the top
+down, and the rule reports every reference that points the wrong way. `commandments layers` reads the layers your
+code already has and prints the declaration, and `commandments layers --write` adds it to your config, so everything
+that passes today keeps passing.
 
-```json
-"configure": {
-    "php/NamespaceDependencyDetector": [
-        {"layer": ["App\\Ui\\Tokens"]},
-        {"layer": ["App\\Ui\\Elements", ["App\\Ui\\Tokens"]]},
-        {"layer": ["App\\Ui\\Shared", ["App\\Ui\\Elements", "App\\Ui\\Tokens"]]},
-        {"layer": ["App\\Ui\\Pages", ["App\\Ui\\Shared", "App\\Ui\\Elements"]]}
-    ]
-}
-```
+### Files that must not change
 
-Every reference out of a declared layer is then judged — `extends`, `implements`, a
-trait `use`, a parameter/return/property type, `new X`, `X::method()`, `instanceof`,
-a `catch`, an attribute. They are all the same arrow.
+Some files carry problems on purpose, such as generated code or a frozen migration. `commandments freeze <file>`
+marks one. Judge still reads a frozen file, so the files around it are judged correctly, but it never reports a
+problem in it.
 
-- **Both ends must be declared.** A namespace you never named (the framework,
-  vendor, code you haven't got to yet) is always allowed, in both directions — so a
-  declaration bites in proportion to how much of your tree it covers.
-- **A layer contains its own sub-namespaces**, so `App\Ui\Elements\Button` is inside
-  `App\Ui\Elements` and references within a layer are always fine.
-- **The most specific declared layer wins**, and layers match on segment boundaries —
-  `App\UiKit` is not inside `App\Ui`.
+## Under the agent journal
 
-You don't have to write any of that by hand. `commandments layers` reads the stack
-already implied by your code and prints the declaration; `--write` adds it to
-`config.json`, leaving the rest of the file as you wrote it. What it
-proposes is today's shape, so everything already passing keeps passing — it costs
-nothing to adopt and refuses the *next* arrow pointing somewhere new.
+The plugin connects Code Commandments to the journal's events. It needs no service running in the background.
 
-What it emits is green by construction: every reference already in your tree either
-stays inside a layer or is named in that layer's `mayUse`, and no layer is ever
-declared inside another. Write it and the next judge is silent — the declaration
-starts earning its keep on the arrow you draw tomorrow.
-
-Namespaces caught in a cycle are declared as they stand, each permitting the other,
-because this command records the shape you have rather than the one you want. They're
-listed separately too, since no order can place them: break them with
-`judge --sin=namespace-cycle`, which needs no configuration at all, because a cycle is
-wrong under any stack.
-
-## Freezing a file
-
-Some files must not change even though they carry sins — a frozen graph migration
-whose body deliberately mirrors its siblings, a snapshot committed for the record,
-generated code checked into the tree. Freeze such a file:
-
-```bash
-vendor/bin/commandments freeze database/migrations/V5ToV6.php
-vendor/bin/commandments unfreeze database/migrations/V5ToV6.php   # lift it
-```
-
-`freeze` stamps a `@code-commandments-frozen` comment; you can equally mark a class
-by hand with a `#[Frozen]` attribute or an `@frozen` docblock tag.
-
-A frozen file is still **scanned** — the call graph, provenance and type resolution
-read it, so findings in *other* files stay correct — but it is never a **target**:
-it is never flagged by `judge`. Freezing is a scope, compounded into every scope the
-tools resolve.
-
-Freeze only what is genuinely immutable. A finding you disagree with belongs in a
-`report`; a rule you want off belongs in `disable` — freezing is for files that by
-their nature cannot move.
+- **Judging.** `journal sins` runs judge. When you type `commandments judge` in a terminal inside a journal project,
+  the run goes through the journal's queue, so it never competes with the agents' own runs. Set
+  `COMMANDMENTS_QUEUED=1` to run it directly in your terminal instead.
+- **Live judging.** When it is on, every file an agent edits is judged, and the agent is told which problems it just
+  added and which it fixed.
+- **Settings.** The journal's plugin page has a switch for every rule and every language. A switch writes the same
+  `disable` entry you would write by hand.
 
 ## Agents
 
-The disciplines are documents, not one assistant's format — so they are published
-once and every agent reads the same copy.
-
-`install` (and every `composer update`, via `sync`) writes the skills into your
-project's `.agents/skills/` library and points each agent at them. Nothing to
-configure: an agent enrols itself, and `"disable": {"agents": ["CodexAgent"]}` in `.commandments/config.json`
-turns one off like any other rule.
+The skills are plain documents, written once into your project's `.agents/skills/` folder. Every coding agent reads
+them from there:
 
 <!-- BEGIN: agents-table (auto-generated, run `composer readme`) -->
 | Agent | Skills | Instructions | Enforced by hooks | What it gets |
@@ -321,55 +197,16 @@ turns one off like any other rule.
 | **Codex** | `.agents/skills` _(read directly)_ | `AGENTS.md` | no | skills and `AGENTS.md`, both read where they already live — no links, no hooks |
 <!-- END: agents-table -->
 
-The briefing splits the same way. **`AGENTS.md`** carries the canon — the cardinal
-rule, the skills to load, the checklist workflow — addressed to no agent in
-particular, and read natively by Codex, Cursor, Copilot and the rest of the
-`AGENTS.md` ecosystem. **`CLAUDE.md`** is a thin file that imports it (`@AGENTS.md`)
-and adds only what is true in that harness. Both are **injected, never overwritten**:
-a block between markers, appended if your file has none, and every other line of
-your own left exactly as it was.
+`AGENTS.md` holds the instructions every agent reads. `CLAUDE.md` imports it and adds what is true only for Claude
+Code. Both are edited in place: only the block between their markers is ever written, and the rest of the file stays
+yours.
 
-These two are the agents the tool ships, and a project cannot add one of its own. An
-agent that reads `AGENTS.md` or `.agents/skills/` already gets the canon and the
-skills where they are.
+### Hooks
 
-### Hooks are Claude Code only
-
-A hook needs a harness that fires events at us — `PostToolUse`, `Stop`,
-`UserPromptSubmit` — and hands over a project root to anchor on. Claude Code offers
-that protocol; Codex has a rich customisation stack of its own (skills, MCP,
-subagents, `config.toml`) but no hook events, so there is nothing to wire.
-
-That difference is worth being plain about, because it is the difference between a
-discipline that is **enforced** and one that is merely **written down**. Under Claude
-Code the rule you just broke is named on the edit that broke it, `judge` is nudged
-before risky commands and on stop. Under any other agent all of that is still available —
-the skills, `AGENTS.md`, and `judge` as an ordinary CLI verb — but nothing checks
-that the agent used them.
-
-One further gap: session state is scoped by `CLAUDE_CODE_SESSION_ID`, so under another agent every run shares the
-`default` session folder. Fine for one session at a time; concurrent runs would
-share a checklist.
-
-**Migrating from an older release.** It happens on the next `composer update`, with
-nothing to configure: the skills move to the library, `.claude/skills/` becomes
-links, the inline `CLAUDE.md` briefing becomes the `@AGENTS.md` import, and the
-ignore rules are corrected. Expect a one-time diff — files genuinely move, and if
-you had force-committed `.claude/skills/` you will see those deletions.
-
-## Hooks
-
-`install` (and every `composer update`, via `sync`) wires a set of **Claude Code
-hooks** into `.claude/settings.json`: the per-edit rule check, the "did you
-judge?" nudge, the skill-invocation nudge. They self-heal: a hook change reaches
-every project on the next `composer update`. They are Claude Code only — see
-[Agents](#agents) for what that means under a different assistant.
-
-**Your own hooks are never touched.** Every wired command carries a
-`# @code-commandments-managed` stamp, and re-wiring strips only stamped commands.
-A hook you wrote by hand is always preserved.
-
-The wired hooks — one dispatcher entry per Claude Code event, each fanning out to these handlers:
+Claude Code can run commands on its events, so it is the one agent where the rules are checked as it works, not only
+written down. Composer's install wires these hooks into `.claude/settings.json`. Every hook it wires is stamped, and
+only stamped hooks are ever changed, so your own hooks are safe. Under the agent journal, the journal runs them
+instead.
 
 <!-- BEGIN: hooks-table (auto-generated, run `composer readme`) -->
 | Hook | Events | What it does |
@@ -381,187 +218,11 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit, PostToolUse/Bash` | After an edit — including one made with the shell — checks the files against the rules that can judge one file and names the skill that teaches the fix. |
 <!-- END: hooks-table -->
 
-### Under the agent journal
+## Write your own rules
 
-In a project that runs the [agent journal](https://github.com/jessegall/agent-journal), the journal
-already owns the hooks — it sees every tool call and decides what reaches the agent. Install this
-package as a journal plugin and the two share one chain instead of wiring two:
-
-```
-journal plugin install <path-or-url-to-this-package>
-```
-
-The install needs only `sh`, `curl`, `sha256sum` or `shasum`, and `python3` 3.9 or newer: no PHP, no composer, no Go and no Docker. Its
-setup runs `.journal-plugin/fetch`, which fetches the release binary the manifest pins in
-`COMMANDMENTS_RELEASE`, checks it against the release's `SHA256SUMS` and writes it to
-`bin/commandments-release`; the plugin's script and every check run that binary. A sum that does not match, or a
-release that cannot be fetched, fails the install, and nothing is ever built.
-
-It installs wherever the journal runs on macOS and Linux, and [docs/requirements.md](docs/requirements.md#platforms)
-says what each platform needs.
-
-The plugin declares itself in `journal-plugin.5.json`, generated from `.journal-plugin/plugin.json`. On install it files `commandments judge` as a
-journal **check**, so a failing judge files a notification and is told to the agent, and the next
-clean pass clears it. Every event the journal hears is handed to the plugin's script, as the next paragraphs
-tell.
-
-Its settings, in the journal's Plugins page, are a switch for every sin — named, with what it
-flags, grouped under the skill that teaches its fix — and a switch per language. They are generated
-from the registry by `composer readme`, so they never drift. Flipping one writes
-`.commandments/config.json` through `commandments journal-config`, the same `disable` entry you
-would write by hand; the rest of the file is kept.
-
-Journals from version 5 read `journal-plugin.5.json`; older journals read `journal-plugin.json`, whose script is in
-`.journal-plugin/v4`. Both manifests pin the same release, so a journal before version 5 judges with the same
-binary and rules. For every event it hears, a journal from version 5 runs `.journal-plugin/hook`, a Python script
-(3.9 or newer) that decides what happens and leaves only the judging to the release binary. It answers each event
-at once, through the binary's answer in the journal's words, and **nothing the journal waits for is worked out**:
-with live judging on, an edit joins its agent's edit window, at most one judge run waits in the journal's queue per
-agent, and that run, started through `journal plugin run --kind judge`, takes every edit gathered when it starts.
-What a run finds goes to the queue the journal drains at the agent's next hook, one file per answer, renamed into
-place so a drain never reads a half-written one. Every sin found and every file made clean is a card of its own,
-in the order they came. A change to the settings arrives as `plugin.updated` and is written by `journal-config`.
-Because the script ships with the plugin's files, a change to how events are handled is released without building
-a binary.
-
-The plugin keeps nothing running between events. The journal runs the plugin's program once for each event it
-hears or holds, and a judge starts the language bridges it needs, reads what their caches already hold, and stops
-them when it ends. A project with live edits off therefore runs no process of ours while nobody judges.
-
-While the plugin is installed, `install` and `sync` wire **no** Claude Code hooks of their own: the
-journal calls them. Take the plugin away and the next `composer update` wires them back.
-
-### Turning hooks on and off
-
-The hooks are the tool's own. Every project runs the default set; one that is off by default is turned on by
-name under `"hooks"` in `.commandments/config.json`, and any is turned off under `"disable": {"hooks": […]}` —
-the schema beside the config lists every one by name.
-
-## How rules are tested
-
-Every rule is proven against a **self-checking fixture**: one small, deliberately
-imperfect example app per language, never run, only scanned.
-
-You mark the exact spots where a rule should fire by naming the **sin**
-(any of its former names works too) — an attribute in PHP, and elsewhere a comment
-in the language's own syntax:
-
-- in PHP, a `#[Sinful(...)]` attribute;
-- in Vue, a `<!-- @sin ... -->` comment;
-- in TypeScript, C# and Go, a `// @sin ...` comment;
-- in Python, a `# @sin ...` comment.
-
-```php
-// tests/Fixtures/backend/app/Orders/RefundService.php
-use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
-use JesseGall\CodeCommandments\Testing\Sinful;
-
-final class RefundService
-{
-    // the marker IS the assertion: the swallow-catch rule must flag this method.
-    // if it doesn't fire here, the fixture test fails.
-    #[Sinful(SwallowCatch::class)]
-    public function refund(Order $order): void
-    {
-        try {
-            $this->gateway->refund($order->id);
-        } catch (\Throwable) {
-            // swallowed into silence: the sin
-        }
-    }
-}
-```
-
-```vue
-<!-- tests/Fixtures/frontend/components/UserBadge.vue -->
-<template>
-  <!-- the marker IS the assertion: the next element must be flagged -->
-  <!-- @sin ControlFlowOnElement -->
-  <div v-if="user">{{ user.name }}</div>
-
-  <!-- the good-code example; if this gets flagged, the test fails -->
-  <!-- @righteous ControlFlowOnElement -->
-  <template v-if="user">
-    <div>{{ user.name }}</div>
-  </template>
-</template>
-```
-
-Those markers are the test spec. The harness runs every rule over the fixture of
-every language it judges and fails if either:
-
-- a marked spot is **missed** (the rule has a hole), or
-- an **unmarked** spot is flagged (a false positive).
-
-Each rule must also fire on **≥3 genuinely different** examples.
-
-Any unmarked code is already "righteous", so the whole rest of the fixture guards
-against false positives; you don't mark good code. One `#[Righteous]` /
-`<!-- @righteous -->` per rule is required: a deliberate look-alike the
-rule must NOT flag.
-
-Where the sin is not inside one declaration — an import that crosses a layer, a cycle
-two files tell between them — a `@example <Sin> bad` or `@example <Sin> good` comment
-marks the whole **file** as that half of the published example instead.
-
-A third marker, `#[Fixed(...)]`, is the one the docs publish as "Good": the
-sinful code **repaired the way the rule says**. It is a different claim from
-`#[Righteous]` — a righteous twin is usually a documented *exemption*, code that
-legitimately dodges the rule, whereas a fixed twin is what the bad code should
-become. The generated `## Bad → good` prefers `#[Fixed]` and falls back to
-`#[Righteous]` only where none exists.
-
-### Testing your own rules
-
-A rule of your own is proven the same way the shipped ones are: samples in `.commandments/custom/samples/`
-marking every form it must catch and the near-misses it must not, checked by `commandments rule prove`, then a
-scoped run over your real code read by eye. The `commandments-writing-detectors` skill walks through it.
-
-## Skills
-
-The teaching layer: one discipline each, the doc an agent reads to fix a sin.
-Every `SKILL.md` is rendered from its source under `skill/<engine>/`, with its
-"when it fires" rows projected from the rule files (`composer sins`).
-
-<!-- BEGIN: skills (auto-generated, run `composer readme`) -->
-_75 skills. Full table in [README.skills.md](README.skills.md)._
-<!-- END: skills -->
-
-## Sins & rules
-
-Every sin (the `--sin=` key) and what it flags. Each sin has one rule file under `rules/`
-that finds it, named after the sin (e.g. `rules/shared-exceptions/swallow-catch.json`).
-
-<!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_175 sins across 40 skills. Full tables in [README.sins.md](README.sins.md)._
-<!-- END: detectors -->
-
-## Scaffolding
-
-Some fixes need a reusable construct to point at: a no-op invokable to default an
-optional callback to, a `<SwitchCase>` component to hoist a `v-if` chain into. The
-package ships these as stubs and generates them into your project:
-
-```bash
-# generate every helper the applicable sins need (idempotent; existing files are skipped)
-vendor/bin/commandments scaffold
-
-# ...or just one sin's construct
-vendor/bin/commandments scaffold --sin=switch-case
-vendor/bin/commandments scaffold --sin=nullable-callback --dry-run
-```
-
-A scaffold lands in the right root for its kind (a PHP helper under your PSR-4
-source root with your namespace injected, a Vue component under `resources/js`)
-and is never overwritten, so it's safe to re-run and safe to edit.
-
-## Writing your own rules
-
-A rule of your own is data the binary runs: a `.json` file in `.commandments/custom/`, in the same format as
-every rule the package ships (`commandments:neutral-rule/v2`), naming the engines it judges, the sin it finds,
-and the `find` that locates it over the generic tree — a kind to **select**, a **`where`** check it must pass,
-and the node to **emit**. Beside it, a skill of your own (a folder holding a `SKILL.md`) teaches the fix. A file
-in an older format is refused, naming the file.
+A rule of your own is a JSON file in `.commandments/custom/`, in the same format as every rule this package ships
+(`commandments:neutral-rule/v2`). It names the languages it judges, the problem it finds, the skill that teaches the
+fix, and a search over the shared tree:
 
 ```json
 {
@@ -582,21 +243,32 @@ in an older format is refused, naming the file.
 }
 ```
 
-`commandments make <Name>` scaffolds both and turns the rule on in your config; the published
-**`commandments-writing-detectors`** skill teaches every kind, role and check, and the prove-then-calibrate
-discipline that proves a rule fires on what you meant — classify by what the code **is**, never by a name
-or a hardcoded list.
+`commandments make <Name>` creates a rule and its skill to start from. `commandments rule explain <file> --line=N`
+shows the tree a rule reads, `commandments rule try <rule> <folder>` runs one rule, and `commandments rule prove`
+checks it against your own examples. The `commandments-writing-detectors` skill explains the whole format. A rule
+file in an older format is refused, and the message names the file.
 
-A rule of yours may also name the folders it judges although you left them out of `paths` or named them
-under `exclude` — `"judges": ["tests"]`, beside its `engine`. They stay out of reach of every other rule,
-and because the list sits in the file you wrote, nothing an install or a rewritten config does can lose it.
-A shipped rule takes the same key from your config instead (`"configure": {"php/XDetector": [{"judges":
-["tests"]}]}`), since a folder list inside a rule the package ships would not be yours to change.
+## How the rules are tested
 
-A rule you own is marked as yours everywhere it is named: `judge` prints its findings as
-`[YourDetector (custom)]` (in the console and in the checklist, with a note that the fix belongs in
-`.commandments/custom/`), `judge --list` tags it, and `commandments report --detector=YourDetector` refuses
-to file — the package cannot answer for a rule it does not ship.
+Every rule is proven against a small example project for each language. In those projects, a comment or attribute
+marks each place a rule must report: `#[Sinful(...)]` in PHP, `// @sin Name` in TypeScript, C# and Go, `# @sin Name`
+in Python and `<!-- @sin Name -->` in Vue. The tests fail when a rule misses a marked place, or reports a place
+nobody marked. Each rule must also catch at least three genuinely different examples, and leave alone a look-alike
+it must not report. Before a rule ships, it is run on real open-source projects and every report is read by hand.
+
+## Skills
+
+<!-- BEGIN: skills (auto-generated, run `composer readme`) -->
+_75 skills. Full table in [README.skills.md](README.skills.md)._
+<!-- END: skills -->
+
+## Problems and rules
+
+Every problem the tool finds, and the rule file that finds it:
+
+<!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
+_175 sins across 40 skills. Full tables in [README.sins.md](README.sins.md)._
+<!-- END: detectors -->
 
 ## License
 
