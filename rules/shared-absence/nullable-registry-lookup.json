@@ -26,6 +26,57 @@
       "expr": [
         "or",
         [
+          "handlesAt",
+          "$c"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$c.parent.kind",
+            "conditional"
+          ],
+          [
+            "handlesAt",
+            "$c.parent"
+          ]
+        ]
+      ]
+    },
+    "calleeParameters": {
+      "args": [
+        "call"
+      ],
+      "expr": [
+        "parametersOfDeclaration",
+        [
+          "declarationOf",
+          "$call"
+        ]
+      ]
+    },
+    "parametersOfDeclaration": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "function": "$d.parameters"
+        },
+        [
+          "list"
+        ]
+      ]
+    },
+    "handlesAt": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "or",
+        [
           "=",
           "$c.parent.kind",
           "fallback"
@@ -137,16 +188,37 @@
                       "$x.arguments",
                       "g",
                       [
-                        "and",
+                        "or",
                         [
-                          "=",
-                          "$g.value.kind",
-                          "reference"
+                          "and",
+                          [
+                            "=",
+                            "$g.value.kind",
+                            "reference"
+                          ],
+                          [
+                            "=",
+                            "$g.value.name",
+                            "$t.name"
+                          ]
                         ],
                         [
-                          "=",
-                          "$g.value.name",
-                          "$t.name"
+                          "and",
+                          [
+                            "=",
+                            "$g.value.kind",
+                            "index"
+                          ],
+                          [
+                            "=",
+                            "$g.value.subject.kind",
+                            "reference"
+                          ],
+                          [
+                            "=",
+                            "$g.value.subject.name",
+                            "$t.name"
+                          ]
                         ]
                       ]
                     ]
@@ -213,33 +285,6 @@
           "=",
           "$c.parent.parent.form",
           "presence"
-        ]
-      ]
-    },
-    "calleeParameters": {
-      "args": [
-        "call"
-      ],
-      "expr": [
-        "parametersOfDeclaration",
-        [
-          "declarationOf",
-          "$call"
-        ]
-      ]
-    },
-    "parametersOfDeclaration": {
-      "args": [
-        "d"
-      ],
-      "expr": [
-        "case",
-        "$d.kind",
-        {
-          "function": "$d.parameters"
-        },
-        [
-          "list"
         ]
       ]
     }
