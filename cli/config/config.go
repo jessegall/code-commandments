@@ -191,5 +191,5 @@ func (c Config) Holds(root string, language source.Language) bool {
 }
 
 func (c Config) Reads(root string, language source.Language) bool {
-	return c.Writes(language) && language.DeclaredIn(root)
+	return c.Writes(language) && language.DeclaredIn(root, source.Under(root, c.Excluded))
 }

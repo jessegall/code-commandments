@@ -53,6 +53,20 @@ func TestAGoModuleIsAGoProject(t *testing.T) {
 	}
 }
 
+func TestAModuleInsideAFolderTheProjectExcludesDeclaresNothing(t *testing.T) {
+	kept := tree(t, map[string]string{
+		"storage/tools/go.mod": "module example.com/tool\n",
+		"app/cart.php":         "<?php\n",
+	})
+
+	if (config.Config{Excluded: []string{"**/storage"}}).Reads(kept, source.Go) {
+		t.Error("a module inside an excluded folder makes the project read as written in Go, where nothing in that folder is read")
+	}
+	if !(config.Config{}).Reads(kept, source.Go) {
+		t.Error("the same module no longer declares Go once the folder is not excluded")
+	}
+}
+
 func TestALanguageThatNeedsNoDeclaringIsReadAnywhere(t *testing.T) {
 	empty := tree(t, map[string]string{"README.md": "# nothing here\n"})
 	project := config.Config{}

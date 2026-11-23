@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jessegall/code-commandments/engine"
@@ -13,9 +14,19 @@ import (
 
 const barWidth = 24
 
-// Progress is a carriage-return bar drawn on stderr, so it never mixes into findings or a checklist on stdout.
+var spinnerFrames = [...]string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+
+// Progress is a carriage-return bar drawn on stderr, so it never mixes into findings or a checklist on stdout. On a
+// terminal it opens on a spinner that a clock keeps turning from the first word to the last, whatever the work reports.
 type Progress struct {
+	drawing    sync.Mutex
 	stream     io.Writer
+	clock      clock
+	ended      chan struct{}
+	stopped    chan struct{}
+	turns      int
+	phase      string
+	label      string
 	enabled    bool
 	plain      bool
 	total      int
@@ -87,24 +98,119 @@ func NewProgress(stream io.Writer) *Progress {
 		return &Progress{stream: progressLines(relay.Send), enabled: true, plain: true, total: 1, lastFilled: -1, lastShare: -1}
 	}
 
-	terminal := isTerminal(stream)
-	plain := !terminal && (Watched() || IsRelayed())
+	if isTerminal(stream) {
+		return liveProgress(stream, tenthsOfASecond)
+	}
 
-	return &Progress{stream: stream, enabled: terminal || plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
+	plain := Watched() || IsRelayed()
+
+	return &Progress{stream: stream, enabled: plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
+}
+
+// clock starts a run of moments a spinner turns on, and the way to end it.
+type clock func() (<-chan time.Time, func())
+
+func tenthsOfASecond() (<-chan time.Time, func()) {
+	ticker := time.NewTicker(100 * time.Millisecond)
+
+	return ticker.C, ticker.Stop
+}
+
+func liveProgress(stream io.Writer, turning clock) *Progress {
+	return &Progress{stream: stream, clock: turning, enabled: true, total: 1, lastFilled: -1, lastShare: -1}
 }
 
 func (p *Progress) Status(message string) {
-	if !p.enabled || p.plain {
+	if !p.Live() {
 		return
 	}
 
-	fmt.Fprintf(p.stream, "\r\033[2K\033[2m%s\033[0m", message)
+	p.drawing.Lock()
+	defer p.drawing.Unlock()
+	p.show(message, "")
+}
+
+func (p *Progress) show(phase, label string) {
+	p.phase, p.label = phase, label
+	if p.ended == nil {
+		p.ended, p.stopped = make(chan struct{}), make(chan struct{})
+		moments, stop := p.clock()
+		go p.spin(moments, stop, p.ended, p.stopped)
+	}
+
+	p.draw()
+}
+
+func (p *Progress) spin(moments <-chan time.Time, stop func(), ended, stopped chan struct{}) {
+	defer close(stopped)
+	defer stop()
+
+	for {
+		select {
+		case <-ended:
+			return
+		case <-moments:
+			p.turn(ended)
+		}
+	}
+}
+
+func (p *Progress) turn(ended chan struct{}) {
+	p.drawing.Lock()
+	defer p.drawing.Unlock()
+
+	if p.ended != ended {
+		return
+	}
+
+	p.turns++
+	p.draw()
+}
+
+func (p *Progress) draw() {
+	line := fmt.Sprintf("\r\033[2K%s \033[2m%s\033[0m", spinnerFrames[p.turns%len(spinnerFrames)], p.phase)
+	if p.active {
+		filled := p.filled()
+		line += fmt.Sprintf(" [%s] %d/%d \033[2m%s\033[0m", strings.Repeat("█", filled)+strings.Repeat("░", barWidth-filled), p.current, p.total, p.label)
+	}
+
+	fmt.Fprint(p.stream, line)
+}
+
+// Above is the console of the run a progress is drawn for: whatever it writes lands on a line of its own, and the
+// clock draws the spinner again under it.
+func (p *Progress) Above(console Console) Console {
+	if !p.Live() {
+		return console
+	}
+
+	return Console{Out: above{console.Out, p}, Err: above{console.Err, p}}
+}
+
+// above is a stream written above a spinner: each write first clears the spinner's line.
+type above struct {
+	io.Writer
+	progress *Progress
+}
+
+func (a above) Write(text []byte) (int, error) {
+	a.progress.drawing.Lock()
+	defer a.progress.drawing.Unlock()
+
+	if a.progress.ended != nil {
+		fmt.Fprint(a.progress.stream, "\r\033[2K")
+	}
+
+	return a.Writer.Write(text)
 }
 
 func (p *Progress) Plan(steps int) {
 	if !p.enabled {
 		return
 	}
+
+	p.drawing.Lock()
+	defer p.drawing.Unlock()
 
 	if !p.planned {
 		p.planned, p.total = true, 0
@@ -118,20 +224,29 @@ func (p *Progress) Restart(steps int) {
 		return
 	}
 
+	p.drawing.Lock()
+	defer p.drawing.Unlock()
+
 	p.total, p.current, p.planned, p.active = max(1, steps), 0, steps > 0, true
 	p.lastFilled, p.lastShare = -1, -1
 }
 
 func (p *Progress) Start() {
-	p.reach(p.current, "judging", "")
+	_, reached := p.standing()
+	p.reach(reached, "judging", "")
 }
 
 func (p *Progress) Advance(label string) {
-	if !p.active {
-		return
+	if active, reached := p.standing(); active {
+		p.reach(reached+1, "judging", label)
 	}
+}
 
-	p.reach(p.current+1, "judging", label)
+func (p *Progress) standing() (active bool, reached int) {
+	p.drawing.Lock()
+	defer p.drawing.Unlock()
+
+	return p.active, p.current
 }
 
 func (p *Progress) Phase(phase string) func(done, total int) {
@@ -139,7 +254,8 @@ func (p *Progress) Phase(phase string) func(done, total int) {
 
 	return func(done, _ int) {
 		if !started || done < last {
-			base, started = p.current, true
+			_, base = p.standing()
+			started = true
 		}
 
 		last = done
@@ -152,49 +268,50 @@ func (p *Progress) reach(at int, phase, label string) {
 		return
 	}
 
+	p.drawing.Lock()
+	defer p.drawing.Unlock()
+
 	p.active = true
 	p.current = min(p.total, max(p.current, at))
 
 	if p.plain {
-		p.render(phase, label)
+		p.render(phase)
 
 		return
 	}
 
-	if filled := p.filled(); filled != p.lastFilled || p.current == p.total {
+	if filled := p.filled(); filled != p.lastFilled || p.current == p.total || phase != p.phase || p.ended == nil {
 		p.lastFilled = filled
-		p.render(phase, label)
+		p.show(phase, label)
 	}
 }
 
 func (p *Progress) Finish() {
-	if !p.active {
-		return
-	}
+	p.drawing.Lock()
+	ended, stopped := p.ended, p.stopped
+	shown := p.active || ended != nil
+	p.ended, p.active = nil, false
 
-	if !p.plain {
+	if shown && !p.plain {
 		fmt.Fprint(p.stream, "\r\033[2K")
 	}
-	p.active = false
+	p.drawing.Unlock()
+
+	if ended != nil {
+		close(ended)
+		<-stopped
+	}
 }
 
 func (p *Progress) filled() int {
 	return int(math.Round(float64(barWidth*p.current) / float64(p.total)))
 }
 
-func (p *Progress) render(phase, label string) {
-	if p.plain {
-		if share := p.current * 100 / p.total; share != p.lastShare || counting(phase) != p.lastWord {
-			p.lastShare, p.lastWord = share, counting(phase)
-			fmt.Fprintf(p.stream, "%s %d/%d\n", counting(phase), p.current, p.total)
-		}
-
-		return
+func (p *Progress) render(phase string) {
+	if share := p.current * 100 / p.total; share != p.lastShare || counting(phase) != p.lastWord {
+		p.lastShare, p.lastWord = share, counting(phase)
+		fmt.Fprintf(p.stream, "%s %d/%d\n", counting(phase), p.current, p.total)
 	}
-	filled := p.filled()
-	bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
-
-	fmt.Fprintf(p.stream, "\r\033[2K\033[2m%s\033[0m [%s] %d/%d \033[2m%s\033[0m", phase, bar, p.current, p.total, label)
 }
 
 // Live is a bar drawn in place on a terminal, not written as lines.
@@ -208,9 +325,18 @@ func (p *Progress) At(phase string, done, total int) {
 		return
 	}
 
+	p.drawing.Lock()
+	defer p.drawing.Unlock()
+
 	p.total, p.active = max(1, total), true
 	p.current = min(p.total, max(0, done))
-	p.render(phase, "")
+	if p.plain {
+		p.render(phase)
+
+		return
+	}
+
+	p.show(phase, "")
 }
 
 // PlainProgressOf reads a line a plain progress wrote back into its phase and count.
@@ -232,6 +358,10 @@ func PlainProgressOf(line string) (phase string, done, total int, read bool) {
 }
 
 func isTerminal(stream io.Writer) bool {
+	if over, isAbove := stream.(above); isAbove {
+		return isTerminal(over.Writer)
+	}
+
 	file, isFile := stream.(*os.File)
 
 	if !isFile {

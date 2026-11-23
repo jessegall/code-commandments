@@ -109,15 +109,19 @@ func (Command) Help() help.Help {
 			"names the rules that could not run and exits 3 (rather than 0) when nothing else was found, " +
 			"because a run missing a rule has not judged what that rule judges. A bridge that stops partway " +
 			"is treated the same: the files it read and every other language are judged, and the run names it.").
-		Note("In a project whose agent journal has this plugin installed, a judge typed in a terminal runs in the " +
-			"journal's queue (`journal plugin queue code-commandments --kind judge`) and prints the queued run's " +
-			"output as it comes, ending with its exit code. A judge the journal itself started runs at once, and " +
-			"one the journal will not queue runs here.").
+		Note("A judge typed in a terminal runs at once and draws what it is doing from its first moment, also in a " +
+			"project whose agent journal has this plugin installed: only the runs that journal's agents start wait " +
+			"their turn in its queue.").
 		Note("Judge writes a Markdown checklist into your session folder (the run prints the exact path). " +
 			"A full scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its sin; re-run judge at the end to confirm. Files marked @code-commandments-generated are skipped — they are regenerated, not hand-authored.")
 }
 
-func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
+func (c Command) Run(in *cli.Input, direct cli.Console) (int, error) {
+	progress := cli.NewProgress(direct.Err)
+	console := progress.Above(direct)
+	progress.Status("starting")
+	defer progress.Finish()
+
 	cwd, err := c.folder()
 	if err != nil {
 		return 0, err
@@ -134,6 +138,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {
+		progress.Status("recalling what was judged before")
 		remembered.Load()
 		defer remembered.Save()
 	}
@@ -154,6 +159,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		file, options.path = options.path, filepath.Dir(options.path)
 	}
 
+	progress.Status("loading the rules")
 	project, err := config.Load(cwd)
 	if err != nil {
 		return 0, err
@@ -215,6 +221,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	judged = judged.Judging(selected)
 
+	progress.Status("choosing the files")
 	targets, err := c.Edited.Scope(in.Raw(), options.path, worklist, judged.Excluded)
 
 	if cli.Timed() {
@@ -235,10 +242,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		targets = targets.And(givenFolder(options.path))
 	}
 
-	return c.judge(options, selected, judged, targets, space, console)
+	return c.judge(options, selected, judged, targets, space, progress, console)
 }
 
-func (c Command) judge(options options, selected []rule.Detector, judged config.Config, targets scope.Scope, space workspace.Workspace, console cli.Console) (int, error) {
+func (c Command) judge(options options, selected []rule.Detector, judged config.Config, targets scope.Scope, space workspace.Workspace, progress *cli.Progress, console cli.Console) (int, error) {
 	defer profiled(options.profile, console)()
 	if !options.parallelGiven && judged.Parallel > 0 {
 		options.parallel = judged.Parallel
@@ -265,8 +272,7 @@ func (c Command) judge(options options, selected []rule.Detector, judged config.
 
 	languages = source.Reaching(slices.Collect(maps.Keys(targets.Files())), languages)
 
-	progress := cli.NewProgress(console.Err)
-	progress.Status("parsing")
+	progress.Status("listing the files")
 	parsing, counted := time.Now(), engine.Counted()
 
 	sources := scan.Walk(roots, judged.Exclusions(options.path)).Only(languages...).ReadingAtOnce(judged.ReadAtOnce)
@@ -329,6 +335,7 @@ func (c Command) judge(options options, selected []rule.Detector, judged config.
 	}
 	judgingTook, work := time.Since(judging), engine.Since(counted)
 
+	progress.Status("sorting what was found")
 	targets = targets.WithParsedFiles(codebase.Files())
 	judgement.Findings = keep(asWalked(outside(judgement.Findings, readOnly), sources.GivenOf()), options.exclude, targets, judged)
 
@@ -349,6 +356,7 @@ func (c Command) judge(options options, selected []rule.Detector, judged config.
 			"an active one. Put it back as the record it was, or delete it and report what is still wrong again.")
 	}
 	judgement.Findings = active
+	progress.Finish()
 	cli.SayJudged(console.Err, judging.Sub(parsing), judgingTook, len(judgement.Findings), work)
 
 	skipped := Skipped(joined(judgement.Skipped, options.unreadableRules...))
@@ -594,10 +602,16 @@ func readAlongside(engines []catalog.Engine) []source.Language {
 
 func languagesFor(selected []rule.Detector, project config.Config, root string) []source.Language {
 	var languages []source.Language
+	asked := map[source.Language]bool{}
 
 	for _, detector := range selected {
 		for _, language := range readAlongside(rule.EnginesOf(detector)) {
-			if project.Reads(root, language) && !slices.Contains(languages, language) {
+			if asked[language] {
+				continue
+			}
+
+			asked[language] = true
+			if project.Reads(root, language) {
 				languages = append(languages, language)
 			}
 		}

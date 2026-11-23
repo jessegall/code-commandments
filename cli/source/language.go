@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync/atomic"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
@@ -81,13 +82,13 @@ func OfFile(path string) Language {
 	return named
 }
 
-func (l Language) DeclaredIn(root string) bool {
+func (l Language) DeclaredIn(root string, excluded Excluded) bool {
 	named := described[l].manifests
 	if len(named) == 0 {
 		return true
 	}
 
-	return declaredAt(root, named) || declaredAbove(root, named) || declaredUnder(root, named)
+	return declaredAt(root, named) || declaredAbove(root, named) || declaredUnder(root, excluded, named)
 }
 
 func declaredAt(folder string, named []string) bool {
@@ -114,9 +115,16 @@ func declaredAbove(root string, named []string) bool {
 	}
 }
 
-func declaredUnder(root string, named []string) bool {
+var manifestSearches atomic.Int64
+
+func ManifestSearches() int64 {
+	return manifestSearches.Load()
+}
+
+func declaredUnder(root string, excluded Excluded, named []string) bool {
+	manifestSearches.Add(1)
 	found := false
-	walk.Folders(root, Excluded{}, func(dir string) {
+	walk.Folders(root, excluded, func(dir string) {
 		found = found || slices.ContainsFunc(named, func(name string) bool { return walk.IsFile(filepath.Join(dir, name)) })
 	})
 
