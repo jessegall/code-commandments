@@ -278,6 +278,7 @@ final class Types
                 if ($node instanceof Stmt\Foreach_ && $node->valueVar instanceof Expr\Variable && is_string($node->valueVar->name)) {
                     $this->scopes[array_key_last($this->scopes)]['variables'][$node->valueVar->name] = null;
                     $node->expr->setAttribute('iteratedInto', $node->valueVar->name);
+                    $node->expr->setAttribute('iteratedAs', ($node->getAttribute('documentedVariables') ?? [])[$node->valueVar->name] ?? null);
                 }
                 if ($node instanceof Node\FunctionLike) {
                     $variables = $node instanceof Expr\ArrowFunction ? end($this->scopes)['variables'] : [];
@@ -334,7 +335,7 @@ final class Types
                         }
                     }
                     if (($into = $node->getAttribute('iteratedInto')) !== null) {
-                        $this->scopes[$scope]['variables'][$into] = $type['element'] ?? null;
+                        $this->scopes[$scope]['variables'][$into] = $this->types->narrowedBy($node->getAttribute('iteratedAs'), $type['element'] ?? null);
                     }
                 }
                 if ($node instanceof Stmt\If_ || $node instanceof Stmt\TryCatch || $node instanceof Stmt\Switch_) {
@@ -468,7 +469,7 @@ final class Types
     }
 
     /**
-     * A parameter's written type, or the class its doc comment documents when that class is the written one or a subtype of it.
+     * A parameter's or a loop value's written type, or the class its doc comment documents when that class is the written one, a subtype of it, or narrows a mixed or object.
      */
     public function narrowedBy(?array $documented, ?array $written): ?array
     {
@@ -478,10 +479,10 @@ final class Types
         if ($documented === null || $this->declaration($documented['name']) === null) {
             return $written;
         }
-        if ($written !== null && ($written['name'] ?? null) === null) {
+        if ($written !== null && ($written['name'] ?? null) === null && ! in_array($written['keyword'] ?? null, ['mixed', 'object'], true)) {
             return $written;
         }
-        if ($written !== null && ! $this->isSubtype($documented['name'], $written['name'])) {
+        if (($written['name'] ?? null) !== null && ! $this->isSubtype($documented['name'], $written['name'])) {
             return $written;
         }
 
