@@ -34,7 +34,7 @@ func (ClassLayout) Definition() skill.Definition {
 		Languages: []string{"php"},
 		Related: []skill.Relation{
 			{Slug: "php/behaviour-per-method", Note: `a crowded head of class is usually a class doing several jobs; split the behaviour and the state follows.`},
-			{Slug: "php/documentation", Note: "a structural section divider is fine, but it never justifies state living below the methods."},
+			{Slug: "shared/documentation", Note: "a structural section divider is fine, but it never justifies state living below the methods."},
 		},
 	}
 }

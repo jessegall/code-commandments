@@ -55,5 +55,5 @@ its own. If both have an obvious name, they are already two functions — give t
 ## Related skills
 
 - [`php/behaviour-per-method`](../../php/behaviour-per-method/SKILL.md) — the same discipline over PHP methods.
-- [`python/enums`](../enums/SKILL.md) — when the choice has more than two cases, it is an `Enum` — and the behaviour belongs on it.
+- [`shared/enums`](../../shared/enums/SKILL.md) — when the choice has more than two cases, it is an `Enum` — and the behaviour belongs on it.
 - [`shared/flow`](../../shared/flow/SKILL.md) — an early return that guards is the shape this one is NOT.

@@ -12,7 +12,7 @@ const claimingSkill = "---\n" +
 	"description: Reach for this before you write a query.\n" +
 	"---\n\n" +
 	"# No raw SQL\n\n" +
-	"Load `commandments-php-fix-at-the-source` first, and keep `.commandments/custom/lists.json` current.\n\n" +
+	"Load `commandments-shared-fix-at-the-source` first, and keep `.commandments/custom/lists.json` current.\n\n" +
 	"## When it fires\n\n" +
 	"- **`raw-sql`** - a query written at a call site.\n" +
 	"- **`docstring-in-method`** - a docstring inside a method.\n" +
@@ -75,7 +75,7 @@ func TestTheSinsLineOfARenderedSkillIsReadWhereverItStands(t *testing.T) {
 
 func TestANameInProseIsNoClaim(t *testing.T) {
 	const prose = "---\nname: No raw SQL\ndescription: x\n---\n\n# No raw SQL\n\n" +
-		"Never write `no-such-rule` here, and load `commandments-php-absence` before you do.\n\n" +
+		"Never write `no-such-rule` here, and load `commandments-shared-absence` before you do.\n\n" +
 		"- `another-missing-rule` - a bullet under no heading about what fires.\n"
 
 	loaded := Load(project(t, map[string]string{

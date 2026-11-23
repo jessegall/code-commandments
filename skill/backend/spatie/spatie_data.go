@@ -33,7 +33,7 @@ func (SpatieData) Definition() skill.Definition {
 		Principle: spatieDataPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/fix-at-the-source", Note: `a Data class IS a boundary; type it total so consumers don't re-validate. The all-nullable DTO is the canonical symptom-deferral.`},
+			{Slug: "shared/fix-at-the-source", Note: `a Data class IS a boundary; type it total so consumers don't re-validate. The all-nullable DTO is the canonical symptom-deferral.`},
 			{Slug: "shared/absence", Note: "owns the `Optional` vs `?T` vs default decision; this skill only gives the Spatie mechanics for each."},
 			{Slug: "shared/exceptions", Note: "a required field missing at `::from()` should fail hard; surface it named when you catch the framework's exception at a tolerant boundary."},
 		},

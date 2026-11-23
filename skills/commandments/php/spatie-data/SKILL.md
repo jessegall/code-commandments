@@ -278,6 +278,6 @@ if you think you need one, you probably want a typed accessor / method on the cl
 
 ## Related skills
 
-- [`php/fix-at-the-source`](../fix-at-the-source/SKILL.md) — a Data class IS a boundary; type it total so consumers don't re-validate. The all-nullable DTO is the canonical symptom-deferral.
+- [`shared/fix-at-the-source`](../../shared/fix-at-the-source/SKILL.md) — a Data class IS a boundary; type it total so consumers don't re-validate. The all-nullable DTO is the canonical symptom-deferral.
 - [`shared/absence`](../../shared/absence/SKILL.md) — owns the `Optional` vs `?T` vs default decision; this skill only gives the Spatie mechanics for each.
 - [`shared/exceptions`](../../shared/exceptions/SKILL.md) — a required field missing at `::from()` should fail hard; surface it named when you catch the framework's exception at a tolerant boundary.

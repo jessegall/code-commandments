@@ -56,7 +56,7 @@ func TestTheIndexWithoutCommandsKeepsTheDisciplinesAndNamesNoCommand(t *testing.
 
 	namesNoCommand(t, "the index without commands", without)
 
-	for _, kept := range []string{"TRACE TO THE SOURCE", "commandments-php-fix-at-the-source", "commandments-php-absence", "When in doubt, load", "Leave it cleaner"} {
+	for _, kept := range []string{"TRACE TO THE SOURCE", "commandments-shared-fix-at-the-source", "commandments-shared-absence", "When in doubt, load", "Leave it cleaner"} {
 		if !strings.Contains(without, kept) {
 			t.Errorf("the index without commands leaves out %q:\n%s", kept, without)
 		}

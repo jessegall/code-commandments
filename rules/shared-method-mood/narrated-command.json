@@ -1,0 +1,178 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "narrated-command",
+    "aliases": [
+      "NarratedCommandDetector",
+      "NarratedCommand",
+      "python-narrated-command"
+    ],
+    "skill": "shared/method-mood",
+    "description": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one",
+    "rule": "Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\\$user)` — never the third-person `hides()`, and never a participle.",
+    "suggestion": "drop the -s: the call site is giving the order, not narrating it"
+  },
+  "definitions": {
+    "noResult": {
+      "args": [
+        "f"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$f.body.kind",
+          "block"
+        ],
+        [
+          "none",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "y",
+          [
+            "=",
+            "$y.kind",
+            "yield"
+          ]
+        ],
+        [
+          "none",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.kind",
+              "return"
+            ],
+            [
+              "or",
+              [
+                "=",
+                "$r.namedResults",
+                true
+              ],
+              [
+                "some",
+                "$r.values",
+                "v",
+                [
+                  "not",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$v.kind",
+                      "reference"
+                    ],
+                    [
+                      "=",
+                      "$v.form",
+                      "self"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "tree.method",
+        "$f"
+      ],
+      [
+        "not",
+        [
+          "in",
+          "$f.form",
+          "get",
+          "set"
+        ]
+      ],
+      [
+        "not",
+        [
+          "has",
+          [
+            "functionRole",
+            "$f"
+          ],
+          "test"
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            [
+              "typeCategory",
+              [
+                "typeOf",
+                "$f"
+              ]
+            ],
+            "never"
+          ]
+        ]
+      ],
+      [
+        "reads",
+        "$f.name",
+        "third-person"
+      ],
+      [
+        "not",
+        [
+          "reads",
+          "$f.name",
+          "question"
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "noResult",
+        "$f"
+      ],
+      [
+        "some",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "x",
+        [
+          "in",
+          "$x.kind",
+          "call",
+          "assignment"
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

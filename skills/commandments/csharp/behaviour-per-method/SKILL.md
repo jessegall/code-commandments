@@ -55,5 +55,5 @@ name, they are already two methods — give them their names.
 ## Related skills
 
 - [`php/behaviour-per-method`](../../php/behaviour-per-method/SKILL.md) — the same discipline in PHP.
-- [`csharp/enums`](../enums/SKILL.md) — when the choice has more than two cases, it is an `enum` — and the behaviour belongs beside it.
+- [`shared/enums`](../../shared/enums/SKILL.md) — when the choice has more than two cases, it is an `enum` — and the behaviour belongs beside it.
 - [`shared/flow`](../../shared/flow/SKILL.md) — an early return that guards is the shape this one is NOT.

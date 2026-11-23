@@ -176,14 +176,6 @@
         "help": "Enables Go sin detection"
     },
     {
-        "key": "sin_csharp-blocked-await",
-        "title": "csharp-blocked-await",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
-    },
-    {
         "key": "sin_flag-argument",
         "title": "flag-argument",
         "type": "flag",
@@ -214,62 +206,6 @@
         "kind": "flag",
         "default": true,
         "help": "Class `extends Concurrent` instead of composing `Concurrent<self>`"
-    },
-    {
-        "key": "sin_namespace-dependency",
-        "title": "namespace-dependency",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a declared layer references a layer it may not use (the arrow points back up)"
-    },
-    {
-        "key": "sin_inline-docblock",
-        "title": "inline-docblock",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content"
-    },
-    {
-        "key": "sin_compare-self",
-        "title": "compare-self",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A strict comparison bypasses an enum's verified comparison method."
-    },
-    {
-        "key": "sin_enum-value-match",
-        "title": "enum-value-match",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `match` or `switch` over an enum's backing value at the call site: logic that belongs on the enum but lives elsewhere instead."
-    },
-    {
-        "key": "sin_constructor-side-effect",
-        "title": "constructor-side-effect",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it."
-    },
-    {
-        "key": "sin_mutable-static-state",
-        "title": "mutable-static-state",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result."
-    },
-    {
-        "key": "sin_unread-collaborator",
-        "title": "unread-collaborator",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so"
     },
     {
         "key": "sin_bare-scope-escape",
@@ -384,28 +320,20 @@
         "help": "Raw `->input()/->get()/->query()/->post()` on a Request"
     },
     {
+        "key": "sin_repeated-query-chain",
+        "title": "repeated-query-chain",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "One Eloquent query chain written alike at three or more sites outside its model"
+    },
+    {
         "key": "sin_request-accessor-recast",
         "title": "request-accessor-recast",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method."
-    },
-    {
-        "key": "sin_bare-state-predicate",
-        "title": "bare-state-predicate",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs"
-    },
-    {
-        "key": "sin_narrated-command",
-        "title": "narrated-command",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one"
     },
     {
         "key": "sin_constructor-orchestration",
@@ -454,46 +382,6 @@
         "kind": "flag",
         "default": true,
         "help": "On a Data class exported with `#[TypeScript]`, a custom `#[WithTransformer]` changes the wire shape and the generated type still describes the PHP value."
-    },
-    {
-        "key": "sin_computed-boolean-argument",
-        "title": "computed-boolean-argument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A parameter that's just true/false, computed by every caller from the same object it could be given instead."
-    },
-    {
-        "key": "sin_derived-argument",
-        "title": "derived-argument",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Passing the same object twice, once whole and once broken into a piece, or broken into several pieces at once, when the callee could derive each piece itself from the one object."
-    },
-    {
-        "key": "sin_param-resolved-from-param",
-        "title": "param-resolved-from-param",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Unpacking the target out of a container parameter: a method takes a container and a key (a workflow and a node id) and resolves the node itself, when it could just receive the node."
-    },
-    {
-        "key": "sin_repeated-named-call",
-        "title": "repeated-named-call",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "The same `with`-style method is called with the same named argument at 2+ sites, instead of a named helper on the type."
-    },
-    {
-        "key": "sin_repeated-query-chain",
-        "title": "repeated-query-chain",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "One Eloquent query chain written alike at three or more sites outside its model"
     },
     {
         "key": "sin_hand-rolled-registry",
@@ -696,68 +584,12 @@
         "help": "A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array"
     },
     {
-        "key": "sin_feature-envy",
-        "title": "feature-envy",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object"
-    },
-    {
-        "key": "sin_guard-beside-transition",
-        "title": "guard-beside-transition",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards"
-    },
-    {
-        "key": "sin_middle-man",
-        "title": "middle-man",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work."
-    },
-    {
-        "key": "sin_train-wreck",
-        "title": "train-wreck",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller."
-    },
-    {
         "key": "sin_assembled-template",
         "title": "assembled-template",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
-    },
-    {
-        "key": "sin_python-blocked-await",
-        "title": "python-blocked-await",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too"
-    },
-    {
-        "key": "sin_python-frozen-default",
-        "title": "python-frozen-default",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported"
-    },
-    {
-        "key": "sin_python-mutable-default",
-        "title": "python-mutable-default",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it"
     },
     {
         "key": "sin_blank-string-default",
@@ -928,14 +760,6 @@
         "help": "A function returns decoded data before checking and giving it a type"
     },
     {
-        "key": "sin_redundant-arrow-return-type",
-        "title": "redundant-arrow-return-type",
-        "type": "flag",
-        "kind": "flag",
-        "default": true,
-        "help": "An arrow repeats the type already inferred from its expression"
-    },
-    {
         "key": "sin_concrete-cross-module-dependency",
         "title": "concrete-cross-module-dependency",
         "type": "flag",
@@ -966,6 +790,14 @@
         "kind": "flag",
         "default": true,
         "help": "Two independent modules import each other"
+    },
+    {
+        "key": "sin_namespace-dependency",
+        "title": "namespace-dependency",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a declared layer references a layer it may not use (the arrow points back up)"
     },
     {
         "key": "sin_undeclared-member",
@@ -1008,12 +840,28 @@
         "help": "A document reference points at a declaration the project does not have"
     },
     {
+        "key": "sin_inline-docblock",
+        "title": "inline-docblock",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content"
+    },
+    {
         "key": "sin_negative-space-comment",
         "title": "negative-space-comment",
         "type": "flag",
         "kind": "flag",
         "default": true,
         "help": "A comment defends the code against an assumption the reader has no reason to make"
+    },
+    {
+        "key": "sin_redundant-arrow-return-type",
+        "title": "redundant-arrow-return-type",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "An arrow repeats the type already inferred from its expression"
     },
     {
         "key": "sin_restated-comment",
@@ -1088,6 +936,14 @@
         "help": "A compound condition about an object is written out at more than one site"
     },
     {
+        "key": "sin_repeated-named-call",
+        "title": "repeated-named-call",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "The same `with`-style method is called with the same named argument at 2+ sites, instead of a named helper on the type."
+    },
+    {
         "key": "sin_repeated-static-factory",
         "title": "repeated-static-factory",
         "type": "flag",
@@ -1112,6 +968,14 @@
         "help": "A string literal fills a parameter that already has a named constant for that value"
     },
     {
+        "key": "sin_compare-self",
+        "title": "compare-self",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A strict comparison bypasses an enum's verified comparison method."
+    },
+    {
         "key": "sin_const-class-enum",
         "title": "const-class-enum",
         "type": "flag",
@@ -1126,6 +990,14 @@
         "kind": "flag",
         "default": true,
         "help": "An or-chain asks about several cases of one enum"
+    },
+    {
+        "key": "sin_enum-value-match",
+        "title": "enum-value-match",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A `match` or `switch` over an enum's backing value at the call site: logic that belongs on the enum but lives elsewhere instead."
     },
     {
         "key": "sin_in-array-mirrors-enum",
@@ -1198,6 +1070,62 @@
         "kind": "flag",
         "default": true,
         "help": "A new failure thrown inside a `catch` without the caught one as its cause: the trace of where it started is lost"
+    },
+    {
+        "key": "sin_constructor-side-effect",
+        "title": "constructor-side-effect",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it."
+    },
+    {
+        "key": "sin_csharp-blocked-await",
+        "title": "csharp-blocked-await",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
+    },
+    {
+        "key": "sin_mutable-static-state",
+        "title": "mutable-static-state",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result."
+    },
+    {
+        "key": "sin_python-blocked-await",
+        "title": "python-blocked-await",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too"
+    },
+    {
+        "key": "sin_python-frozen-default",
+        "title": "python-frozen-default",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported"
+    },
+    {
+        "key": "sin_python-mutable-default",
+        "title": "python-mutable-default",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it"
+    },
+    {
+        "key": "sin_unread-collaborator",
+        "title": "unread-collaborator",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so"
     },
     {
         "key": "sin_collection-mutated-while-iterated",
@@ -1326,6 +1254,78 @@
         "kind": "flag",
         "default": true,
         "help": "A statement after one that never completes (a return, throw, break or continue, an if whose every arm leaves, a loop that never ends): it can never run."
+    },
+    {
+        "key": "sin_bare-state-predicate",
+        "title": "bare-state-predicate",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs"
+    },
+    {
+        "key": "sin_narrated-command",
+        "title": "narrated-command",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one"
+    },
+    {
+        "key": "sin_computed-boolean-argument",
+        "title": "computed-boolean-argument",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter that's just true/false, computed by every caller from the same object it could be given instead."
+    },
+    {
+        "key": "sin_derived-argument",
+        "title": "derived-argument",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Passing the same object twice, once whole and once broken into a piece, or broken into several pieces at once, when the callee could derive each piece itself from the one object."
+    },
+    {
+        "key": "sin_param-resolved-from-param",
+        "title": "param-resolved-from-param",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Unpacking the target out of a container parameter: a method takes a container and a key (a workflow and a node id) and resolves the node itself, when it could just receive the node."
+    },
+    {
+        "key": "sin_feature-envy",
+        "title": "feature-envy",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object"
+    },
+    {
+        "key": "sin_guard-beside-transition",
+        "title": "guard-beside-transition",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards"
+    },
+    {
+        "key": "sin_middle-man",
+        "title": "middle-man",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work."
+    },
+    {
+        "key": "sin_train-wreck",
+        "title": "train-wreck",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller."
     },
     {
         "key": "sin_filled-parameter",

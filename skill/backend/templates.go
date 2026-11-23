@@ -33,7 +33,7 @@ func (Templates) Definition() skill.Definition {
 		Principle: templatesPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/documentation", Note: "the same instinct one scale down: say a thing once, in the form a reader can check."},
+			{Slug: "shared/documentation", Note: "the same instinct one scale down: say a thing once, in the form a reader can check."},
 			{Slug: "shared/value-objects", Note: "a shape worth stating repeatedly is usually a type, not a string."},
 		},
 	}

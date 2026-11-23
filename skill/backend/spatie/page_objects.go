@@ -35,7 +35,7 @@ func (PageObjects) Definition() skill.Definition {
 		Related: []skill.Relation{
 			{Slug: "php/spatie-data", Note: "the mechanics of a `Data` class this builds on — `::from()`, honest types, `#[DataCollectionOf]`; a page object is a Data used as a composed view-model."},
 			{Slug: "php/laravel-idioms", Note: "owns the general 'no service location — inject through the container' rule; a page object's `#[FromContainer]` is that rule applied to a Data."},
-			{Slug: "php/fix-at-the-source", Note: `a page object is a boundary; build each slot where it is projected, not by threading half-built state through a constructor.`},
+			{Slug: "shared/fix-at-the-source", Note: `a page object is a boundary; build each slot where it is projected, not by threading half-built state through a constructor.`},
 		},
 	}
 }

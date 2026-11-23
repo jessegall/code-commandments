@@ -75,22 +75,24 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
       _Load what the loop needs in one query before it: eager-load the relation with `with()`, or fetch the rows by their keys and index them, then let the loop read what is already in memory._
 - [ ] Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
       _A named getter on a `FormRequest` subclass (`$request->productId()`)._
+- [ ] A query several callers run is one named finder or scope on the model, written once.
+      _Add a named static finder or scope to the model (`CommandRequest::lockedFor($id)`) and call it from each site._
 - [ ] Use `toString()` to read a plain string from the typed request accessor.
       _Call `$request->string('id')->toString()` for the string value._
 
 ## Commands
 
 - `{{binary}} judge --skill=php/laravel-idioms` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `bare-scope-escape`, `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `handed-out-collection`, `hard-coded-route-path`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `request-accessor-recast`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `bare-scope-escape`, `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `handed-out-collection`, `hard-coded-route-path`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `repeated-query-chain`, `request-accessor-recast`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 15 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 16 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 
 - [`shared/value-objects`](../../shared/value-objects/SKILL.md) — a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge.
-- [`php/fix-at-the-source`](../fix-at-the-source/SKILL.md) — read input typed at the boundary so nothing downstream re-coerces a `mixed`.
+- [`shared/fix-at-the-source`](../../shared/fix-at-the-source/SKILL.md) — read input typed at the boundary so nothing downstream re-coerces a `mixed`.
 - [`shared/absence`](../../shared/absence/SKILL.md) — a typed accessor for an optional field still answers "can this be missing?" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`.

@@ -34,7 +34,7 @@ func (LaravelIdioms) Definition() skill.Definition {
 		Languages: []string{"php"},
 		Related: []skill.Relation{
 			{Slug: "shared/value-objects", Note: "a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge."},
-			{Slug: "php/fix-at-the-source", Note: "read input typed at the boundary so nothing downstream re-coerces a `mixed`."},
+			{Slug: "shared/fix-at-the-source", Note: "read input typed at the boundary so nothing downstream re-coerces a `mixed`."},
 			{Slug: "shared/absence", Note: "a typed accessor for an optional field still answers \"can this be missing?\" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`."},
 		},
 	}

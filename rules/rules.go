@@ -28,7 +28,6 @@ import (
 	_ "github.com/jessegall/code-commandments/skill/frontend"
 	_ "github.com/jessegall/code-commandments/skill/python"
 	_ "github.com/jessegall/code-commandments/skill/shared"
-	_ "github.com/jessegall/code-commandments/skill/typescript"
 )
 
 //go:embed */*.json packages/*/*.json exemption-tags.json

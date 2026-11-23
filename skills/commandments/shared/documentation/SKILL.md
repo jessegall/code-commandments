@@ -1,42 +1,220 @@
 ---
 name: commandments-shared-documentation
-description: "Read before writing a comment or changing a declaration's documentation."
+description: "How to document, and mostly NOT to. A doc comment is one or two lines (three at most), present tense, about the code as it is NOW; an inline comment is rare and only explains a non-obvious *why*; never narrate the past or a change (\"previously…\", \"used to…\", \"now we…\", \"refactored to…\"). Read this the MOMENT you are about to write a doc comment, an inline comment, a class or method description, or an annotation that repeats what is already there, and when a documentation finding points here."
 ---
 
-# Documentation: explain the code as it is
+# Documentation — say only what the code cannot
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> A useful comment tells the reader why the code takes its shape or what contract a caller can rely on.
+> Document little, and only what the code cannot say: what a thing is for, and why a surprising line is the way it is.
+> Read this the moment you are about to write a doc comment, an inline comment or a type annotation that repeats
+> what is already there, and when a documentation finding points here.
+> The examples are pseudocode: read them as the language you are writing.
 
 ## The principle
 
-Use names and types for what the code already says. Keep decisions and their history in the change record, and give any explanation that belongs in the source one place near its declaration.
+**A comment says what the code cannot. Everything else is the code's job.**
 
-## Rules
+A comment is not checked by anything. The code changes, the comment stays, and from then on it is a false statement
+that readers trust more than the code beside it. So every comment must earn its upkeep:
 
-- [ ] Explain why the code is written this way today.
-      _Move the history to the change record._
-- [ ] Keep the type description short.
-      _Move supporting detail to the place where it is needed._
-- [ ] Keep documentation for information the signature does not already say.
-      _Remove the redundant tags and leave any useful explanation._
-- [ ] Keep references tied to existing declarations.
-      _Correct the target or remove the reference._
-- [ ] Say what the code does.
-      _Keep a comment only when it explains a real constraint._
-- [ ] Give the statement clear names and let it speak for itself.
-      _Delete the comment or explain the reason for the statement._
-- [ ] Keep one doc comment per declaration.
-      _Merge useful text into one doc comment._
+- **A doc comment is one or two lines** (three at most), in the present tense, about the code as it is now: what
+  this type or function is for.
+- **An inline comment is rare**, and only ever explains a non-obvious *why*: a constraint, a workaround, a reason
+  the obvious code would be wrong.
+- **Never the what.** If a comment repeats the line below it, delete it. If the line needs explaining, rename
+  things until it does not.
+- **Never the past.** "Previously", "used to", "now we", "refactored to": history belongs in the commit message,
+  where it is attached to the change it describes.
+
+```pseudo
+// Bad
+/**
+ * OrderTotals class.
+ *
+ * This class was introduced when we moved away from the old Calculator. It previously lived in
+ * the Cart, but now handles totals for orders too. Note that it does not handle refunds.
+ *
+ * @param lines  The lines
+ * @return Money The money
+ */
+function total(lines: Line[]): Money {
+    // loop over the lines
+    for (line in lines) { … }
+}
+
+// Good
+/** The amount a customer pays for a set of lines, tax included. */
+function total(lines: Line[]): Money {
+    for (line in lines) { … }
+}
+```
+
+## The sins
+
+### restated-comment
+
+A comment that repeats the words of the statement it sits on. It adds nothing today and will be wrong tomorrow.
+Delete it, or say the reason instead.
+
+```pseudo
+// Bad
+// increment the retry count
+retries = retries + 1
+
+// Good: nothing, or the why
+retries = retries + 1
+
+// The gateway counts the first attempt as a retry, so we start at one.
+retries = 1
+```
+
+### archaeology-comment
+
+A comment that narrates how the code came to be. The reader wants to know what the code does now; the story of the
+change belongs to the change record.
+
+```pseudo
+// Bad
+// Previously this used the legacy mailer, but we switched to the queue in v2 after the outage.
+queue.push(mail)
+
+// Good
+queue.push(mail)
+```
+
+### negative-space-comment
+
+A comment that defends the code against an assumption the reader had no reason to make: what it does *not* do, what
+it is *not* responsible for. Keep a comment only when it explains a real constraint.
+
+```pseudo
+// Bad
+// Note: this does not send an email, and it does not touch the inventory.
+function markPaid(order) { order.status = Status.Paid }
+
+// Good
+function markPaid(order) { order.status = Status.Paid }
+```
+
+### ceremony-docblock
+
+A doc comment that repeats the signature: a tag per parameter saying its name and type again, a `@return` that
+restates the return type. Remove the tags that add nothing and keep any sentence that actually explains.
+
+```pseudo
+// Bad
+/**
+ * Find a customer.
+ *
+ * @param id    int       The id
+ * @return      Customer  The customer
+ */
+function find(id: int): Customer
+
+// Good
+/** The customer with this id; fails with CustomerNotFound when there is none. */
+function find(id: int): Customer
+```
+
+### bloated-docblock
+
+A type whose description runs to several paragraphs. Nobody maintains an essay. Say in a line or two what the type
+is for, and move the supporting detail to where it is needed: the method it concerns, or a document.
+
+```pseudo
+// Bad
+/**
+ * The Scheduler.
+ *
+ * The scheduler is responsible for … (four paragraphs on the retry policy, the queue layout,
+ * the history of the cron format and three usage examples)
+ */
+class Scheduler
+
+// Good
+/** Runs each due job once and reschedules it by its own interval. */
+class Scheduler
+```
+
+### stacked-docblock
+
+Several doc comments stacked on one declaration. Only one of them is attached to it; the others are noise, usually
+left by a merge. Merge the useful text into one.
+
+```pseudo
+// Bad
+/** Sends the invoice. */
+/** @deprecated use deliver() */
+/** Send an invoice to the customer by mail. */
+function send(invoice)
+
+// Good
+/** Sends the invoice to its customer by mail. */
+function send(invoice)
+```
+
+### dangling-doc-reference
+
+A doc reference (`@see`, `{@link …}`, a cross-reference) that points at a declaration the project does not have. It
+was renamed or deleted, and the comment was not. Correct the target or remove the reference.
+
+```pseudo
+// Bad
+/** @see LegacyTaxTable.rateFor */        // LegacyTaxTable no longer exists
+function rate(country)
+
+// Good
+/** @see TaxRates.for */
+function rate(country)
+```
+
+### redundant-arrow-return-type
+
+A one-expression function that annotates the return type its expression already has. It is the type-level form of
+a restated comment: the reader sees the same fact twice. Let the expression supply the type.
+
+```pseudo
+// Bad
+names = users.map((user): string => user.name)
+
+// Good
+names = users.map(user => user.name)
+```
+
+### inline-docblock — in PHP
+
+A docblock whose delimiter shares a line with its text: a one-liner, or a block that opens or closes next to
+content. Give the delimiters their own lines.
+
+```php
+// Bad
+/** The amount a customer pays, tax included. */
+public function total(): Money
+
+// Good
+/**
+ * The amount a customer pays, tax included.
+ */
+public function total(): Money
+```
+
+## In your language
+
+- **PHP.** A docblock is multi-line, one to three lines of text; `@param`/`@return` only when they say more than
+  the native types (a generic, an array shape).
+- **Python.** A docstring is a line or two; `Args:`/`Returns:` sections that repeat the annotations are ceremony.
+- **C#.** `/// <summary>` in one or two lines; no `<param>` that repeats the parameter's name.
+- **TypeScript.** JSDoc types are redundant beside TypeScript's own: keep the sentence, drop `@param {string}`.
+- **Go.** A doc comment starts with the name it documents and is a sentence, not a history.
 
 ## Commands
 
 - `{{binary}} judge --skill=shared/documentation` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `archaeology-comment`, `bloated-docblock`, `ceremony-docblock`, `dangling-doc-reference`, `negative-space-comment`, `restated-comment`, `stacked-docblock`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `archaeology-comment`, `bloated-docblock`, `ceremony-docblock`, `dangling-doc-reference`, `inline-docblock`, `negative-space-comment`, `redundant-arrow-return-type`, `restated-comment`, `stacked-docblock`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

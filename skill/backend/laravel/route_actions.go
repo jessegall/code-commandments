@@ -33,7 +33,7 @@ func (RouteActions) Definition() skill.Definition {
 		Principle: routeActionsPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/fix-at-the-source", Note: `a redundant controller is duplication at the boundary — hoist the shared work to the one place it belongs (a service), then both routes call it.`},
+			{Slug: "shared/fix-at-the-source", Note: `a redundant controller is duplication at the boundary — hoist the shared work to the one place it belongs (a service), then both routes call it.`},
 			{Slug: "php/laravel-idioms", Note: `controllers/routes are Laravel's HTTP edge; this is the discipline for keeping that edge thin and single.`},
 		},
 	}

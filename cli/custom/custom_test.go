@@ -121,7 +121,7 @@ func TestARuleNamesItsEngineByEitherName(t *testing.T) {
 		t.Errorf("the rule judges %q, want php", engine)
 	}
 
-	if slug := read.Rules[0].Sin().Definition().Skill.Definition().Slug; slug != "php/absence" {
-		t.Errorf("its sin names the skill %q, want php/absence", slug)
+	if slug := read.Rules[0].Sin().Definition().Skill.Definition().Slug; slug != "shared/absence" {
+		t.Errorf("its sin names the skill %q, want shared/absence, which took the place of backend/absence", slug)
 	}
 }

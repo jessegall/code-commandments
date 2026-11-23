@@ -65,8 +65,8 @@ func TestSyncLeavesWhatTheJournalPublishedSinceItStoodAside(t *testing.T) {
 
 	index := filepath.Join(root, ".claude/skills", "commandments", "SKILL.md")
 
-	for _, skill := range []string{filepath.Join(root, library.Dir, "commandments-php-absence"),
-		filepath.Join(root, ".claude/skills", "commandments-php-absence"), filepath.Dir(index)} {
+	for _, skill := range []string{filepath.Join(root, library.Dir, "commandments-shared-absence"),
+		filepath.Join(root, ".claude/skills", "commandments-shared-absence"), filepath.Dir(index)} {
 		if err := os.MkdirAll(skill, 0o755); err != nil {
 			t.Fatal(err)
 		}

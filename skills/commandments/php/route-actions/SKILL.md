@@ -82,5 +82,5 @@ invokable serving the paths a spec requires.
 
 ## Related skills
 
-- [`php/fix-at-the-source`](../fix-at-the-source/SKILL.md) — a redundant controller is duplication at the boundary — hoist the shared work to the one place it belongs (a service), then both routes call it.
+- [`shared/fix-at-the-source`](../../shared/fix-at-the-source/SKILL.md) — a redundant controller is duplication at the boundary — hoist the shared work to the one place it belongs (a service), then both routes call it.
 - [`php/laravel-idioms`](../laravel-idioms/SKILL.md) — controllers/routes are Laravel's HTTP edge; this is the discipline for keeping that edge thin and single.

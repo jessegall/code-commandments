@@ -1,0 +1,212 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "train-wreck",
+    "aliases": [
+      "TrainWreckDetector",
+      "TrainWreck"
+    ],
+    "skill": "shared/tell-dont-ask",
+    "description": "A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller.",
+    "rule": "Ask the object you have for the answer you want; never walk through its neighbours to find it.",
+    "suggestion": "Give the object you hold a method that answers the question, so the walk happens where the objects live (`order.city()`), each type asking only its own neighbour.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": [
+      "call",
+      "access"
+    ],
+    "as": "x",
+    "where": [
+      "and",
+      [
+        "not",
+        [
+          "or",
+          [
+            "and",
+            [
+              "in",
+              "$x.parent.kind",
+              "access"
+            ],
+            [
+              "=",
+              "$x.role",
+              "subject"
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$x.parent.kind",
+              "call"
+            ],
+            [
+              "=",
+              "$x.role",
+              "callee"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$x.kind",
+            "access"
+          ],
+          [
+            "or",
+            [
+              "and",
+              [
+                "in",
+                "$x.member.name",
+                "value",
+                "name"
+              ],
+              [
+                "=",
+                [
+                  "tree.formOf",
+                  [
+                    "typeDeclaration",
+                    "$x.subject.resolved.name"
+                  ]
+                ],
+                "enum"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$x.member.name",
+                "value"
+              ],
+              [
+                "=",
+                "$x.resolved.kind",
+                "keyword"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        "$x.file.test"
+      ]
+    ],
+    "let": [
+      [
+        "owner",
+        [
+          "enclosing",
+          "$x",
+          "type"
+        ]
+      ],
+      [
+        "types",
+        [
+          "filter",
+          [
+            "map",
+            [
+              "filter",
+              [
+                "ownDescendants",
+                "$x"
+              ],
+              "r",
+              [
+                "and",
+                [
+                  "in",
+                  "$r.role",
+                  "subject"
+                ],
+                [
+                  "none",
+                  [
+                    "ownAncestors",
+                    "$r"
+                  ],
+                  "a",
+                  [
+                    "and",
+                    [
+                      "=",
+                      "$a.kind",
+                      "argument"
+                    ],
+                    [
+                      "within",
+                      "$a",
+                      "$x"
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            "r",
+            [
+              "typeDeclaration",
+              [
+                "get",
+                [
+                  "typeOf",
+                  "$r"
+                ],
+                "name"
+              ]
+            ]
+          ],
+          "d",
+          [
+            "and",
+            [
+              "exists",
+              "$d"
+            ],
+            [
+              "!=",
+              "$d.symbol",
+              "$owner.symbol"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      ">=",
+      [
+        "distinctCount",
+        [
+          "map",
+          "$types",
+          "d",
+          "$d.symbol"
+        ]
+      ],
+      3
+    ],
+    "emit": "$x"
+  }
+}

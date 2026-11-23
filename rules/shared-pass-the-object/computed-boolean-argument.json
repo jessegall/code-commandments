@@ -1,0 +1,331 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "computed-boolean-argument",
+    "aliases": [
+      "ComputedBooleanArgumentDetector",
+      "ComputedBooleanArgument",
+      "python-computed-boolean-argument"
+    ],
+    "skill": "shared/pass-the-object",
+    "description": "A parameter that's just true/false, computed by every caller from the same object it could be given instead.",
+    "rule": "Take the SUBJECT and ask it — never a bool every caller derives from that same object.",
+    "suggestion": "swap the flags for the object the callers already hold: `CornerInset::for($editor)`",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "values": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "map",
+        "$c.arguments",
+        "g",
+        "$g.value"
+      ]
+    },
+    "derived": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "in",
+        "$x.kind",
+        "call",
+        "comparison",
+        "logical",
+        "unary",
+        "conditional",
+        "binary"
+      ]
+    },
+    "textOf": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "stripPrefix",
+        [
+          "case",
+          "$t.kind",
+          {
+            "pointer": "$t.element.text"
+          },
+          "$t.text"
+        ],
+        "?"
+      ]
+    },
+    "computed": {
+      "args": [
+        "handed",
+        "positions"
+      ],
+      "expr": [
+        "and",
+        [
+          "every",
+          "$positions",
+          "n",
+          [
+            "or",
+            [
+              "derived",
+              [
+                "at",
+                "$handed",
+                "$n"
+              ]
+            ],
+            [
+              "and",
+              [
+                ">=",
+                [
+                  "count",
+                  "$positions"
+                ],
+                2
+              ],
+              [
+                "=",
+                [
+                  "tree.kindOf",
+                  [
+                    "at",
+                    "$handed",
+                    "$n"
+                  ]
+                ],
+                "access"
+              ]
+            ]
+          ]
+        ],
+        [
+          "=",
+          [
+            "distinctCount",
+            [
+              "flatten",
+              [
+                "map",
+                "$positions",
+                "n",
+                [
+                  "map",
+                  [
+                    "booleanParts",
+                    [
+                      "at",
+                      "$handed",
+                      "$n"
+                    ]
+                  ],
+                  "r",
+                  "$r.name"
+                ]
+              ]
+            ]
+          ],
+          1
+        ],
+        [
+          "none",
+          [
+            "flatten",
+            [
+              "map",
+              "$positions",
+              "n",
+              [
+                "booleanParts",
+                [
+                  "at",
+                  "$handed",
+                  "$n"
+                ]
+              ]
+            ]
+          ],
+          "r",
+          [
+            "=",
+            "$r.form",
+            "self"
+          ]
+        ]
+      ]
+    },
+    "booleanParts": {
+      "args": [
+        "x"
+      ],
+      "expr": [
+        "filter",
+        [
+          "descendants",
+          "$x",
+          "reference"
+        ],
+        "r",
+        [
+          "not",
+          [
+            "or",
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$r.role",
+                "member"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "$r.parent.kind",
+                "call"
+              ],
+              [
+                "=",
+                "$r.role",
+                "callee"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "not",
+      "$c.file.test"
+    ],
+    "let": [
+      [
+        "declared",
+        [
+          "declarationOf",
+          "$c"
+        ]
+      ],
+      [
+        "calls",
+        [
+          "tree.callsOf",
+          "$declared"
+        ]
+      ],
+      [
+        "positions",
+        [
+          "map",
+          [
+            "filter",
+            "$declared.parameters",
+            "p",
+            [
+              "tree.boolean",
+              "$p.declaredType"
+            ]
+          ],
+          "p",
+          [
+            "position",
+            "$p"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        ">=",
+        [
+          "count",
+          "$calls"
+        ],
+        2
+      ],
+      [
+        ">=",
+        [
+          "count",
+          "$positions"
+        ],
+        1
+      ],
+      [
+        "every",
+        "$calls",
+        "o",
+        [
+          "computed",
+          [
+            "values",
+            "$o"
+          ],
+          "$positions"
+        ]
+      ],
+      [
+        "=",
+        [
+          "distinctCount",
+          [
+            "map",
+            "$calls",
+            "o",
+            [
+              "textOf",
+              [
+                "typeOf",
+                [
+                  "at",
+                  [
+                    "booleanParts",
+                    [
+                      "at",
+                      [
+                        "values",
+                        "$o"
+                      ],
+                      [
+                        "at",
+                        "$positions",
+                        0
+                      ]
+                    ]
+                  ],
+                  0
+                ]
+              ]
+            ]
+          ]
+        ],
+        1
+      ]
+    ],
+    "emit": "$c"
+  }
+}

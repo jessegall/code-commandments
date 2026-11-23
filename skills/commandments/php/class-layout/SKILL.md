@@ -61,4 +61,4 @@ not solve a crowded inventory by scattering the inventory.
 ## Related skills
 
 - [`php/behaviour-per-method`](../behaviour-per-method/SKILL.md) — a crowded head of class is usually a class doing several jobs; split the behaviour and the state follows.
-- [`php/documentation`](../documentation/SKILL.md) — a structural section divider is fine, but it never justifies state living below the methods.
+- [`shared/documentation`](../../shared/documentation/SKILL.md) — a structural section divider is fine, but it never justifies state living below the methods.

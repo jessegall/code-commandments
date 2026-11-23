@@ -24,12 +24,17 @@ func (r Rule) Names(detector rule.Detector) bool {
 }
 
 func (r Rule) namesSkill(taught skill.Skill) bool {
-	slug := taught.Definition().Slug
-	if r.Engine == "" {
-		return catalog.Normalise(r.Name) == catalog.Normalise(path.Base(slug)) || catalog.Normalise(r.Name) == catalog.Normalise(catalog.Name(taught))
+	if r.Engine == "" && catalog.Normalise(r.Name) == catalog.Normalise(catalog.Name(taught)) {
+		return true
 	}
 
-	return catalog.Normalise(r.ID()) == catalog.Normalise(slug)
+	return slices.ContainsFunc(taught.Definition().Slugs(), func(slug string) bool {
+		if r.Engine == "" {
+			return catalog.Normalise(r.Name) == catalog.Normalise(path.Base(slug))
+		}
+
+		return catalog.Normalise(r.ID()) == catalog.Normalise(slug)
+	})
 }
 
 func (r Rule) mayBeTheProjects() bool {

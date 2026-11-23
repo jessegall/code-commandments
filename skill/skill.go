@@ -148,8 +148,12 @@ func (d Definition) Bullet() string {
 	return "- **`" + d.ID() + "`** — " + d.Summary
 }
 
+func (d Definition) Slugs() []string {
+	return append([]string{d.Slug}, d.Formerly...)
+}
+
 func (d Definition) Matches(query string) bool {
-	return slices.ContainsFunc(append([]string{d.Slug}, d.Formerly...), func(slug string) bool {
+	return slices.ContainsFunc(d.Slugs(), func(slug string) bool {
 		return strings.Contains(catalog.Normalise(slug), catalog.Normalise(query))
 	})
 }

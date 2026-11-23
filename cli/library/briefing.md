@@ -3,7 +3,7 @@
 Code style in this project lives in the code-commandments skills, published to
 `{{library}}/` and loaded **by the exact id in each bullet below** —
 `commandments-php-<name>` / `commandments-vue-<name>` (e.g.
-`commandments-php-absence`). HOW you load one is your own business: some agents
+`commandments-shared-absence`). HOW you load one is your own business: some agents
 have a tool for it, some a `/`-command, some want the file read. The id is the same
 either way, and so is the rule — read the relevant skill before writing or reviewing
 code. Two tiers.
@@ -75,7 +75,7 @@ with is a `report`; a rule you want off is `disable`; freezing is for files that
 by their nature cannot move.
 <!-- /commands -->
 
-When in doubt, load `commandments-php-fix-at-the-source` and re-read it. It is the parent move
+When in doubt, load `commandments-shared-fix-at-the-source` and re-read it. It is the parent move
 behind every other skill.
 
 **Leave it cleaner than you found it — the gentleman's duty.** When you touch a
@@ -86,7 +86,7 @@ rule above. Every finding on code you come across is yours to resolve.
 reach for it — the syntax you are about to write, the decision you are about to make. Load
 one when its subject comes up. {{finding}} names the skill that fixes it, so you are never guessing.
 
-Load **`commandments-php-fix-at-the-source`** before your first edit whatever else you
+Load **`commandments-shared-fix-at-the-source`** before your first edit whatever else you
 do — every other discipline defers to it. And **`commandments`** is this whole list as a
 loadable skill, for when you want the map in front of you.
 

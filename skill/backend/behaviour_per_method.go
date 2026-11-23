@@ -33,9 +33,9 @@ func (BehaviourPerMethod) Definition() skill.Definition {
 		Principle: behaviourPerMethodPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "php/enums-with-behaviour", Note: "when the choice has more than two cases, it is an enum — and the behaviour belongs on it."},
+			{Slug: "shared/enums", Note: "when the choice has more than two cases, it is an enum — and the behaviour belongs on it."},
 			{Slug: "shared/flow", Note: "an early return that guards is the shape this one is NOT; check preconditions at the top and leave."},
-			{Slug: "php/pass-the-object", Note: `the sibling on the other side: a caller that pre-decides with a bool it computed from an object it holds.`},
+			{Slug: "shared/pass-the-object", Note: `the sibling on the other side: a caller that pre-decides with a bool it computed from an object it holds.`},
 		},
 	}
 }

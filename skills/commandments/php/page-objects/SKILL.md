@@ -153,4 +153,4 @@ page object — the composed thing on the wire — is exactly where they earn th
 
 - [`php/spatie-data`](../spatie-data/SKILL.md) — the mechanics of a `Data` class this builds on — `::from()`, honest types, `#[DataCollectionOf]`; a page object is a Data used as a composed view-model.
 - [`php/laravel-idioms`](../laravel-idioms/SKILL.md) — owns the general 'no service location — inject through the container' rule; a page object's `#[FromContainer]` is that rule applied to a Data.
-- [`php/fix-at-the-source`](../fix-at-the-source/SKILL.md) — a page object is a boundary; build each slot where it is projected, not by threading half-built state through a constructor.
+- [`shared/fix-at-the-source`](../../shared/fix-at-the-source/SKILL.md) — a page object is a boundary; build each slot where it is projected, not by threading half-built state through a constructor.

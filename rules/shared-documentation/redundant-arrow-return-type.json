@@ -1,0 +1,153 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "php",
+    "typescript"
+  ],
+  "sin": {
+    "name": "redundant-arrow-return-type",
+    "aliases": [
+      "RedundantArrowReturnTypeDetector",
+      "RedundantArrowReturnType"
+    ],
+    "skill": "shared/documentation",
+    "description": "An arrow repeats the type already inferred from its expression",
+    "rule": "Let the expression supply its return type.",
+    "suggestion": "Let the expression supply its return type."
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "in",
+        "$f.form",
+        "arrow",
+        "lambda"
+      ],
+      [
+        "exists",
+        "$f.returnType"
+      ],
+      [
+        "!=",
+        "$f.body.kind",
+        "block"
+      ]
+    ],
+    "let": [
+      [
+        "written",
+        [
+          "case",
+          "$f.returnType.form",
+          {
+            "keyword": "$f.returnType.name",
+            "named": "$f.returnType.refers"
+          },
+          ""
+        ]
+      ],
+      [
+        "inferred",
+        [
+          "case",
+          "$f.body.resolved.kind",
+          {
+            "keyword": "$f.body.resolved.name",
+            "named": "$f.body.resolved.name",
+            "array": "array"
+          },
+          ""
+        ]
+      ],
+      [
+        "writtenMembers",
+        [
+          "sort",
+          [
+            "map",
+            [
+              "typeMembers",
+              [
+                "typeOf",
+                "$f"
+              ]
+            ],
+            "m",
+            "$m.name"
+          ]
+        ]
+      ],
+      [
+        "inferredMembers",
+        [
+          "sort",
+          [
+            "map",
+            [
+              "typeMembers",
+              [
+                "typeOf",
+                "$f.body"
+              ]
+            ],
+            "m",
+            "$m.name"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "or",
+      [
+        "and",
+        [
+          "nonempty",
+          "$f.body.resolved.text"
+        ],
+        [
+          "=",
+          "$f.body.resolved.text",
+          "$f.resolved.returns.text"
+        ]
+      ],
+      [
+        "and",
+        [
+          "nonempty",
+          "$written"
+        ],
+        [
+          "=",
+          "$written",
+          "$inferred"
+        ]
+      ],
+      [
+        "and",
+        [
+          "in",
+          "$f.returnType.form",
+          "union",
+          "nullable"
+        ],
+        [
+          ">",
+          [
+            "count",
+            "$writtenMembers"
+          ],
+          1
+        ],
+        [
+          "=",
+          "$writtenMembers",
+          "$inferredMembers"
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

@@ -223,19 +223,6 @@
             "default": "true",
             "group": "Languages"
         },
-        "sin_csharp-blocked-await": {
-            "title": "csharp-blocked-await",
-            "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
-            "type": "flag",
-            "default": "true",
-            "group": "csharp/fix-at-the-source",
-            "when": [
-                {
-                    "language_cs": true
-                }
-            ],
-            "detail": true
-        },
         "sin_flag-argument": {
             "title": "flag-argument",
             "help": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name",
@@ -281,97 +268,6 @@
             "type": "flag",
             "default": "true",
             "group": "php/concurrent-state",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_namespace-dependency": {
-            "title": "namespace-dependency",
-            "help": "a declared layer references a layer it may not use (the arrow points back up)",
-            "type": "flag",
-            "default": "true",
-            "group": "php/dependency-direction",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_inline-docblock": {
-            "title": "inline-docblock",
-            "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content",
-            "type": "flag",
-            "default": "true",
-            "group": "php/documentation",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_compare-self": {
-            "title": "compare-self",
-            "help": "A strict comparison bypasses an enum's verified comparison method.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/enums-with-behaviour",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_enum-value-match": {
-            "title": "enum-value-match",
-            "help": "A `match` or `switch` over an enum's backing value at the call site: logic that belongs on the enum but lives elsewhere instead.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/enums-with-behaviour",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_constructor-side-effect": {
-            "title": "constructor-side-effect",
-            "help": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/fix-at-the-source",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_mutable-static-state": {
-            "title": "mutable-static-state",
-            "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/fix-at-the-source",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_unread-collaborator": {
-            "title": "unread-collaborator",
-            "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
-            "type": "flag",
-            "default": "true",
-            "group": "php/fix-at-the-source",
             "when": [
                 {
                     "language_php": true
@@ -561,9 +457,9 @@
             ],
             "detail": true
         },
-        "sin_request-accessor-recast": {
-            "title": "request-accessor-recast",
-            "help": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method.",
+        "sin_repeated-query-chain": {
+            "title": "repeated-query-chain",
+            "help": "One Eloquent query chain written alike at three or more sites outside its model",
             "type": "flag",
             "default": "true",
             "group": "php/laravel-idioms",
@@ -574,25 +470,12 @@
             ],
             "detail": true
         },
-        "sin_bare-state-predicate": {
-            "title": "bare-state-predicate",
-            "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs",
+        "sin_request-accessor-recast": {
+            "title": "request-accessor-recast",
+            "help": "Casting the Stringable returned by a typed request accessor instead of using its `toString()` method.",
             "type": "flag",
             "default": "true",
-            "group": "php/method-mood",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_narrated-command": {
-            "title": "narrated-command",
-            "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one",
-            "type": "flag",
-            "default": "true",
-            "group": "php/method-mood",
+            "group": "php/laravel-idioms",
             "when": [
                 {
                     "language_php": true
@@ -671,71 +554,6 @@
             "type": "flag",
             "default": "true",
             "group": "php/page-objects",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_computed-boolean-argument": {
-            "title": "computed-boolean-argument",
-            "help": "A parameter that's just true/false, computed by every caller from the same object it could be given instead.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/pass-the-object",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_derived-argument": {
-            "title": "derived-argument",
-            "help": "Passing the same object twice, once whole and once broken into a piece, or broken into several pieces at once, when the callee could derive each piece itself from the one object.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/pass-the-object",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_param-resolved-from-param": {
-            "title": "param-resolved-from-param",
-            "help": "Unpacking the target out of a container parameter: a method takes a container and a key (a workflow and a node id) and resolves the node itself, when it could just receive the node.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/pass-the-object",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_repeated-named-call": {
-            "title": "repeated-named-call",
-            "help": "The same `with`-style method is called with the same named argument at 2+ sites, instead of a named helper on the type.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/repeated-call-helper",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_repeated-query-chain": {
-            "title": "repeated-query-chain",
-            "help": "One Eloquent query chain written alike at three or more sites outside its model",
-            "type": "flag",
-            "default": "true",
-            "group": "php/repeated-call-helper",
             "when": [
                 {
                     "language_php": true
@@ -1068,58 +886,6 @@
             ],
             "detail": true
         },
-        "sin_feature-envy": {
-            "title": "feature-envy",
-            "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
-            "type": "flag",
-            "default": "true",
-            "group": "php/tell-dont-ask",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_guard-beside-transition": {
-            "title": "guard-beside-transition",
-            "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards",
-            "type": "flag",
-            "default": "true",
-            "group": "php/tell-dont-ask",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_middle-man": {
-            "title": "middle-man",
-            "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/tell-dont-ask",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_train-wreck": {
-            "title": "train-wreck",
-            "help": "A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller.",
-            "type": "flag",
-            "default": "true",
-            "group": "php/tell-dont-ask",
-            "when": [
-                {
-                    "language_php": true
-                }
-            ],
-            "detail": true
-        },
         "sin_assembled-template": {
             "title": "assembled-template",
             "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it",
@@ -1129,45 +895,6 @@
             "when": [
                 {
                     "language_php": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-blocked-await": {
-            "title": "python-blocked-await",
-            "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too",
-            "type": "flag",
-            "default": "true",
-            "group": "python/fix-at-the-source",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-frozen-default": {
-            "title": "python-frozen-default",
-            "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported",
-            "type": "flag",
-            "default": "true",
-            "group": "python/fix-at-the-source",
-            "when": [
-                {
-                    "language_py": true
-                }
-            ],
-            "detail": true
-        },
-        "sin_python-mutable-default": {
-            "title": "python-mutable-default",
-            "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it",
-            "type": "flag",
-            "default": "true",
-            "group": "python/fix-at-the-source",
-            "when": [
-                {
-                    "language_py": true
                 }
             ],
             "detail": true
@@ -1760,34 +1487,6 @@
             ],
             "detail": true
         },
-        "sin_redundant-arrow-return-type": {
-            "title": "redundant-arrow-return-type",
-            "help": "An arrow repeats the type already inferred from its expression",
-            "type": "flag",
-            "default": "true",
-            "group": "shared/arguments",
-            "when": [
-                {
-                    "language_php": true
-                },
-                {
-                    "language_vue": true
-                },
-                {
-                    "language_ts": true
-                },
-                {
-                    "language_py": true
-                },
-                {
-                    "language_cs": true
-                },
-                {
-                    "language_go": true
-                }
-            ],
-            "detail": true
-        },
         "sin_concrete-cross-module-dependency": {
             "title": "concrete-cross-module-dependency",
             "help": "A constructor takes another module's concrete service",
@@ -1875,6 +1574,34 @@
         "sin_namespace-cycle": {
             "title": "namespace-cycle",
             "help": "Two independent modules import each other",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/dependencies",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_namespace-dependency": {
+            "title": "namespace-dependency",
+            "help": "a declared layer references a layer it may not use (the arrow points back up)",
             "type": "flag",
             "default": "true",
             "group": "shared/dependencies",
@@ -2040,9 +1767,65 @@
             ],
             "detail": true
         },
+        "sin_inline-docblock": {
+            "title": "inline-docblock",
+            "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/documentation",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_negative-space-comment": {
             "title": "negative-space-comment",
             "help": "A comment defends the code against an assumption the reader has no reason to make",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/documentation",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_redundant-arrow-return-type": {
+            "title": "redundant-arrow-return-type",
+            "help": "An arrow repeats the type already inferred from its expression",
             "type": "flag",
             "default": "true",
             "group": "shared/documentation",
@@ -2320,6 +2103,34 @@
             ],
             "detail": true
         },
+        "sin_repeated-named-call": {
+            "title": "repeated-named-call",
+            "help": "The same `with`-style method is called with the same named argument at 2+ sites, instead of a named helper on the type.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/duplication",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_repeated-static-factory": {
             "title": "repeated-static-factory",
             "help": "One function asks a static factory for the same object twice, with the same arguments, and asks each one something, instead of holding the object and asking it",
@@ -2404,6 +2215,34 @@
             ],
             "detail": true
         },
+        "sin_compare-self": {
+            "title": "compare-self",
+            "help": "A strict comparison bypasses an enum's verified comparison method.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/enums",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_const-class-enum": {
             "title": "const-class-enum",
             "help": "A class of constants defines a closed set of cases",
@@ -2435,6 +2274,34 @@
         "sin_enum-case-or-chain": {
             "title": "enum-case-or-chain",
             "help": "An or-chain asks about several cases of one enum",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/enums",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_enum-value-match": {
+            "title": "enum-value-match",
+            "help": "A `match` or `switch` over an enum's backing value at the call site: logic that belongs on the enum but lives elsewhere instead.",
             "type": "flag",
             "default": "true",
             "group": "shared/enums",
@@ -2690,6 +2557,202 @@
             "type": "flag",
             "default": "true",
             "group": "shared/exceptions",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_constructor-side-effect": {
+            "title": "constructor-side-effect",
+            "help": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_csharp-blocked-await": {
+            "title": "csharp-blocked-await",
+            "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_mutable-static-state": {
+            "title": "mutable-static-state",
+            "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-blocked-await": {
+            "title": "python-blocked-await",
+            "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-frozen-default": {
+            "title": "python-frozen-default",
+            "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-mutable-default": {
+            "title": "python-mutable-default",
+            "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_unread-collaborator": {
+            "title": "unread-collaborator",
+            "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/fix-at-the-source",
             "when": [
                 {
                     "language_php": true
@@ -3138,6 +3201,258 @@
             "type": "flag",
             "default": "true",
             "group": "shared/flow",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_bare-state-predicate": {
+            "title": "bare-state-predicate",
+            "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/method-mood",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_narrated-command": {
+            "title": "narrated-command",
+            "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/method-mood",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_computed-boolean-argument": {
+            "title": "computed-boolean-argument",
+            "help": "A parameter that's just true/false, computed by every caller from the same object it could be given instead.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_derived-argument": {
+            "title": "derived-argument",
+            "help": "Passing the same object twice, once whole and once broken into a piece, or broken into several pieces at once, when the callee could derive each piece itself from the one object.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_param-resolved-from-param": {
+            "title": "param-resolved-from-param",
+            "help": "Unpacking the target out of a container parameter: a method takes a container and a key (a workflow and a node id) and resolves the node itself, when it could just receive the node.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_feature-envy": {
+            "title": "feature-envy",
+            "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_guard-beside-transition": {
+            "title": "guard-beside-transition",
+            "help": "A caller checks an object's state against an enum case and throws, then tells that object to change: the rule sits outside the transition it guards",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_middle-man": {
+            "title": "middle-man",
+            "help": "A class whose every public method only hands its arguments, unchanged, to the same field: it adds nothing between the caller and the object that does the work.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_train-wreck": {
+            "title": "train-wreck",
+            "help": "A call chain through three of the project's own types (`order.customer().address().city()`), so a change three objects away reaches this caller.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/tell-dont-ask",
             "when": [
                 {
                     "language_php": true

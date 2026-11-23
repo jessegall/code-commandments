@@ -16,4 +16,5 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`orphaned-binding`** — A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor — `orphaned-binding`
 - **`query-in-loop`** — a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call — `query-in-loop`
 - **`raw-request-input`** — Raw `->input()/->get()/->query()/->post()` on a Request — `raw-request-input`
+- **`repeated-query-chain`** — One Eloquent query chain written alike at three or more sites outside its model — `repeated-query-chain`
 - **`request-accessor-recast`** — Casting the Stringable returned by a typed request accessor instead of using its `toString()` method. — `request-accessor-recast`

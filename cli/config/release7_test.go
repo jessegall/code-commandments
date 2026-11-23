@@ -63,8 +63,8 @@ func TestAConfigWrittenForRelease7RunsWithTheSameEffect(t *testing.T) {
 	var names []string
 	for _, each := range enabled {
 		names = append(names, each.Sin().Definition().Name)
-		if each.Sin().Definition().Skill.Definition().Slug == "php/value-objects" {
-			t.Errorf("%s runs, and its skill php/value-objects is turned off", catalog.Name(each))
+		if each.Sin().Definition().Skill.Definition().Slug == "shared/value-objects" {
+			t.Errorf("%s runs, and its skill is turned off under its former name php/ValueObjects", catalog.Name(each))
 		}
 	}
 

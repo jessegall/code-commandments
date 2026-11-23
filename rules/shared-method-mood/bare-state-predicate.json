@@ -1,0 +1,170 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "csharp",
+    "go",
+    "php",
+    "python",
+    "typescript"
+  ],
+  "sin": {
+    "name": "bare-state-predicate",
+    "aliases": [
+      "BareStatePredicateDetector",
+      "BareStatePredicate",
+      "csharp-bare-state-predicate",
+      "python-bare-state-predicate"
+    ],
+    "skill": "shared/method-mood",
+    "description": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs",
+    "rule": "A `bool` answering about the object itself wears a question: `isBound()`, `isSpinning()`, `hasParent()`, `awaitsAnswer()`. (A predicate that takes what it compares against — `contains(\\$item)`, `matches(\\$name)` — is already a sentence and stays as it is.)",
+    "suggestion": "make it a question: `is…`, `has…`, `can…`, `awaits…`",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "find": {
+    "select": "function",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "tree.method",
+        "$f"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.parameters"
+        ],
+        0
+      ],
+      [
+        "or",
+        [
+          "=",
+          [
+            "typeCategory",
+            [
+              "typeOf",
+              "$f"
+            ]
+          ],
+          "boolean"
+        ],
+        [
+          "some",
+          [
+            "siblings",
+            "$f"
+          ],
+          "m",
+          [
+            "and",
+            [
+              "=",
+              "$m.kind",
+              "field"
+            ],
+            [
+              "some",
+              "$m.hooks",
+              "h",
+              [
+                "=",
+                "$h",
+                "$f"
+              ]
+            ],
+            [
+              "=",
+              [
+                "typeCategory",
+                [
+                  "typeOf",
+                  "$m"
+                ]
+              ],
+              "boolean"
+            ]
+          ]
+        ]
+      ],
+      [
+        "reads",
+        "$f.name",
+        "bare-state"
+      ],
+      [
+        "not",
+        [
+          "contains",
+          [
+            "snakeCase",
+            "$f.name"
+          ],
+          "_"
+        ]
+      ]
+    ],
+    "having": [
+      "or",
+      [
+        "some",
+        [
+          "ownDescendants",
+          "$f.body"
+        ],
+        "x",
+        [
+          "tree.selfField",
+          "$x"
+        ]
+      ],
+      [
+        "not",
+        [
+          "exists",
+          "$f.body"
+        ]
+      ],
+      [
+        "and",
+        [
+          "exists",
+          "$f.body"
+        ],
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "x",
+          [
+            "=",
+            "$x.kind",
+            "literal"
+          ]
+        ],
+        [
+          "none",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "x",
+          [
+            "in",
+            "$x.kind",
+            "call",
+            "reference",
+            "access"
+          ]
+        ]
+      ]
+    ],
+    "emit": "$f"
+  }
+}

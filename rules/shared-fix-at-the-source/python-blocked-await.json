@@ -1,0 +1,85 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "python"
+  ],
+  "sin": {
+    "name": "python-blocked-await",
+    "aliases": [
+      "BlockedAwaitDetector",
+      "BlockedAwait"
+    ],
+    "skill": "shared/fix-at-the-source",
+    "description": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too",
+    "rule": "A coroutine never stops its own thread: await the asynchronous counterpart, or hand the blocking work to a thread.",
+    "suggestion": "Use the asynchronous form and `await` it (`asyncio.sleep`, an async client), or `await asyncio.to_thread(...)` when only a blocking call exists. Stopping the loop here is what makes the slowdown appear under load and nowhere else."
+  },
+  "definitions": {
+    "asyncOf": {
+      "args": [
+        "f"
+      ],
+      "expr": "$f.async"
+    }
+  },
+  "find": {
+    "select": "call",
+    "as": "c",
+    "where": [
+      "proven",
+      [
+        "hasEffect",
+        "$c",
+        "blocks-thread"
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        [
+          "enclosing",
+          "$c",
+          "function"
+        ]
+      ],
+      [
+        "=",
+        [
+          "asyncOf",
+          [
+            "enclosing",
+            "$c",
+            "function"
+          ]
+        ],
+        true
+      ],
+      [
+        "none",
+        [
+          "ownAncestors",
+          "$c"
+        ],
+        "a",
+        [
+          "and",
+          [
+            "=",
+            "$a.kind",
+            "call"
+          ],
+          [
+            "proven",
+            [
+              "hasEffect",
+              "$a",
+              "runs-on-thread"
+            ]
+          ]
+        ]
+      ]
+    ],
+    "emit": "$c"
+  }
+}
