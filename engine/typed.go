@@ -39,8 +39,30 @@ func (m Match) Typed() *contract.Type {
 	if m.Kind() == "access" && m.node.Form == "instance" {
 		return m.relationResults()
 	}
+	if m.Kind() == "reference" {
+		return m.iteratedElement()
+	}
 
 	return nil
+}
+
+func (m Match) iteratedElement() *contract.Type {
+	bound := m.node.Linked("binding")
+	if len(bound) != 1 {
+		return nil
+	}
+	binding := m.file.Match(bound[0])
+	loop := binding.Parent()
+	bindings := loop.ChildrenIn("bindings")
+	if loop.Kind() != "loop" || loop.Node().Form != "for-each" || len(bindings) == 0 || bindings[len(bindings)-1] != binding {
+		return nil
+	}
+	iterated := loop.Child("iterable").Typed()
+	if iterated == nil {
+		return nil
+	}
+
+	return iterated.Element
 }
 
 func (m Match) relationResults() *contract.Type {
@@ -57,24 +79,58 @@ func (m Match) relationResults() *contract.Type {
 			if !m.declaredBy(owner.Name, relation.Type) {
 				continue
 			}
+			method := m.declaredMethod(owner.Name, property)
 			if returned == nil {
-				returned = m.declaredMethod(owner.Name, property).ResultType()
+				returned = method.ResultType()
 			}
-			if returned == nil || returned.Kind != "named" || len(returned.Args) == 0 {
+			if returned == nil || returned.Kind != "named" {
 				return nil
 			}
 			if !m.declaredBy(returned.Name, relation.Relation) {
 				continue
 			}
+			related := builtClass(method)
+			if len(returned.Args) != 0 {
+				related = returned.Args[0]
+			}
+			if related == nil {
+				return nil
+			}
 			if relation.Collection == "" {
-				return returned.Args[0]
+				return related
 			}
 
-			return &contract.Type{Text: relation.Collection, Kind: "named", Name: relation.Collection, Args: returned.Args[:1], Element: returned.Args[0], Origin: "inferred"}
+			return &contract.Type{Text: relation.Collection, Kind: "named", Name: relation.Collection, Args: []*contract.Type{related}, Element: related, Origin: "inferred"}
 		}
 	}
 
 	return nil
+}
+
+func builtClass(method Match) *contract.Type {
+	var built string
+	for _, statement := range method.OwnDescendants() {
+		if statement.Kind() != "return" {
+			continue
+		}
+		for _, value := range statement.ChildrenIn("values") {
+			arguments := value.ChildrenIn("arguments")
+			if value.Kind() != "call" || len(arguments) == 0 {
+				return nil
+			}
+			class := arguments[0].Child("value")
+			named := class.Child("subject").Refers()
+			if class.Kind() != "access" || class.Child("member").Name() != "class" || named == "" || built != "" && built != named {
+				return nil
+			}
+			built = named
+		}
+	}
+	if built == "" {
+		return nil
+	}
+
+	return &contract.Type{Text: built, Kind: "named", Name: built, Origin: "inferred"}
 }
 
 func (m Match) declaredMethod(class, name string) Match {

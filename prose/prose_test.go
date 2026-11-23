@@ -102,6 +102,7 @@ func TestAStateVerbNamesABareStateWhereNoQuestionDoes(t *testing.T) {
 		"bursts":     true,
 		"proposes":   true,
 		"narrows":    true,
+		"negates":    true,
 		"isDivided":  false,
 		"canPropose": false,
 	} {

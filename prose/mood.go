@@ -40,7 +40,7 @@ var prepositions = []string{
 
 var stateVerbs = []string{
 	"admit", "alarm", "allow", "bill", "burst", "complete", "contain", "declare", "derive", "differ", "divide", "earn", "gate",
-	"ignore", "minify", "mirror", "narrow", "need", "override", "overwrite", "permit", "pin", "presume", "propose", "reference",
+	"ignore", "minify", "mirror", "narrow", "need", "negate", "override", "overwrite", "permit", "pin", "presume", "propose", "reference",
 	"refuse", "return",
 	"staff", "stand", "state", "suggest", "support", "take", "use", "walk", "want", "work",
 }
