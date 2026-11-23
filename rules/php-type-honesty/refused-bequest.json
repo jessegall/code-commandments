@@ -44,6 +44,82 @@
           "throw"
         ]
       ]
+    },
+    "thrownClass": {
+      "args": [
+        "s"
+      ],
+      "expr": [
+        "get",
+        [
+          "typeOf",
+          [
+            "case",
+            "$s.kind",
+            {
+              "throw": "$s.value"
+            },
+            [
+              "get",
+              [
+                "tree.valueOf",
+                "$s"
+              ],
+              "value"
+            ]
+          ]
+        ],
+        "name"
+      ]
+    },
+    "caughtInProject": {
+      "args": [
+        "n"
+      ],
+      "expr": [
+        "some",
+        [
+          "flatten",
+          [
+            "list",
+            [
+              "list",
+              "$n"
+            ],
+            [
+              "knownSupertypes",
+              [
+                "typeDeclaration",
+                "$n"
+              ]
+            ]
+          ]
+        ],
+        "t",
+        [
+          "some",
+          [
+            "referrers",
+            [
+              "typeDeclaration",
+              "$t"
+            ]
+          ],
+          "r",
+          [
+            "and",
+            [
+              "=",
+              "$r.role",
+              "caughtTypes"
+            ],
+            [
+              "not",
+              "$r.file.test"
+            ]
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -142,6 +218,23 @@
                 "=",
                 "$x.kind",
                 "throw"
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "caughtInProject",
+            [
+              "thrownClass",
+              [
+                "at",
+                "$f.body.statements",
+                0
               ]
             ]
           ]
