@@ -68,3 +68,21 @@ func TestAServedStreamIsNamedForTheFilesItHolds(t *testing.T) {
 		t.Errorf("a stream of TypeScript files alone under a Vue header is named %s, not typescript", named)
 	}
 }
+
+func TestAFolderWithItsPackagesInstalledIsNotWarnedOfAnotherFoldersMissingAutoloader(t *testing.T) {
+	folder := t.TempDir()
+	withoutVendor := &keptLines{folder: folder, identity: "a bridge", packages: "no vendor"}
+	withoutVendor.program(&contract.Program{Loader: "vendor/autoload.php is not there"})
+	installed := &keptLines{folder: folder, identity: "a bridge", packages: "installed"}
+
+	if said := installed.program(nil).Loader; said != "" {
+		t.Errorf("a folder with its packages installed reads another folder's loader reason %q", said)
+	}
+	if said := withoutVendor.program(nil).Loader; said == "" {
+		t.Error("a folder without its packages installed lost its own loader reason on a run that read nothing")
+	}
+	installed.program(&contract.Program{})
+	if said := withoutVendor.program(nil).Loader; said == "" {
+		t.Error("a run that read another folder took away the loader reason of the folder without its packages")
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -542,17 +543,33 @@ func (k *keptLines) program(fresh *contract.Program) *contract.Program {
 	if fresh != nil {
 		defer atomic.Hold(k.programPath() + ".lock")()
 	}
-	var kept contract.Program
+	var kept keptProgram
 	if raw, err := used(k.programPath()); err == nil {
 		_ = json.Unmarshal(k.unmarked(raw), &kept)
 	}
-	joined := joinedPrograms(kept, fresh)
+	joined := joinedPrograms(kept.Program, fresh)
+	if fresh != nil && fresh.Loader != "" {
+		kept.Loaders = maps.Clone(kept.Loaders)
+		if kept.Loaders == nil {
+			kept.Loaders = map[string]string{}
+		}
+		kept.Loaders[k.packages] = fresh.Loader
+	}
 	if fresh != nil {
-		raw, _ := json.Marshal(joined)
+		raw, _ := json.Marshal(keptProgram{Program: joined, Loaders: kept.Loaders})
 		_ = atomic.Write(k.programPath(), k.marked(string(raw)))
 	}
+	joined.Loader = kept.Loaders[k.packages]
 
 	return &joined
+}
+
+// keptProgram is the program line every kept run of a bridge wrote, with why each set of judged folders read no
+// package's classes, keyed on the package files above those folders: the loader is a fact about the folders a run
+// judged, never about the contents another run read.
+type keptProgram struct {
+	contract.Program
+	Loaders map[string]string `json:"loaders,omitempty"`
 }
 
 func (k *keptLines) programPath() string {
@@ -569,7 +586,6 @@ func joinedPrograms(kept contract.Program, fresh *contract.Program) contract.Pro
 		Packages:       onceBy(kept.Packages, fresh.Packages, func(held contract.Package) string { return held.Ecosystem + "\x00" + held.Name }),
 		PackageFolders: onceBy(kept.PackageFolders, fresh.PackageFolders, func(folder string) string { return folder }),
 		Aliases:        onceBy(kept.Aliases, fresh.Aliases, func(alias contract.Alias) string { return alias.Prefix }),
-		Loader:         fresh.Loader,
 	}
 }
 
