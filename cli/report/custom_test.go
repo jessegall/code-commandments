@@ -26,7 +26,7 @@ func TestAReportAgainstTheProjectsOwnRuleIsRefusedByEitherNameItIsKnownBy(t *tes
 		t.Fatal(err)
 	}
 
-	os.WriteFile(rule, []byte(`{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "raw-sql", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "as": "c", "where": true, "emit": "$c"}}`), 0o644)
+	os.WriteFile(rule, []byte(`{"$schema": "commandments:generic-rule/v2", "engine": ["php"], "sin": {"name": "raw-sql", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "as": "c", "where": true, "emit": "$c"}}`), 0o644)
 
 	previous, _ := os.Getwd()
 	t.Cleanup(func() { os.Chdir(previous) })

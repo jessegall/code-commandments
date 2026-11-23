@@ -1,4 +1,4 @@
-// Package rule is a detector written as data, in the commandments:neutral-rule/v2 format: the engines it judges, the
+// Package rule is a detector written as data, in the commandments:generic-rule/v2 format: the engines it judges, the
 // sin it finds, the definitions it names, and the query over the generic tree that finds it. The same reading serves
 // the rules the tool ships and the rules a project writes.
 package rule
@@ -20,7 +20,15 @@ import (
 )
 
 // Format is the one rule format the tool reads.
-const Format = "commandments:neutral-rule/v2"
+const Format = "commandments:generic-rule/v2"
+
+// FormerFormat is the name the format carried before it was called the generic rule: a file that still names it is
+// read as the same format.
+const FormerFormat = "commandments:neutral-rule/v2"
+
+func isTheFormat(named string) bool {
+	return named == Format || named == FormerFormat
+}
 
 var languages = map[catalog.Engine][]contract.Language{
 	catalog.PHP:        {contract.PHP},
@@ -208,7 +216,7 @@ func (e *engines) UnmarshalJSON(text []byte) error {
 // Skills finds the skill a rule's sin names: the project's own, else a shipped one.
 type Skills func(slug string) (skill.Skill, bool)
 
-// OldFormat is a rule file written before commandments:neutral-rule/v2: the step it is first written with, when it has
+// OldFormat is a rule file written before commandments:generic-rule/v2: the step it is first written with, when it has
 // one. A loader that knows the file's path names it in File.
 type OldFormat struct {
 	File    string
@@ -474,7 +482,7 @@ var knownKeys = []string{
 	"rule", "suggestion", "args", "expr", "kept", "select", "as", "where", "let", "having", "emit", "from", "pipeline", "relations",
 }
 
-// formatOf refuses a file in any format but commandments:neutral-rule/v2, naming the old step it is written with.
+// formatOf refuses a file in any format but commandments:generic-rule/v2, naming the old step it is written with.
 func formatOf(name string, text []byte) error {
 	var written struct {
 		Schema string `json:"$schema"`
@@ -488,9 +496,9 @@ func formatOf(name string, text []byte) error {
 	}
 
 	switch {
-	case written.Schema == Format:
+	case isTheFormat(written.Schema):
 		return nil
-	case strings.HasPrefix(written.Schema, "commandments:neutral-rule/"):
+	case strings.HasPrefix(written.Schema, "commandments:generic-rule/"), strings.HasPrefix(written.Schema, "commandments:neutral-rule/"):
 		return fmt.Errorf("%s: the rule names the format %s, and this tool reads %s", name, written.Schema, Format)
 	}
 

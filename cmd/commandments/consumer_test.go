@@ -151,7 +151,7 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		t.Errorf("make said\n%s", made)
 	}
 
-	c.write(".commandments/custom/NoEvalDetector.json", `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"], "sin": {"name": "no-eval", "description": "eval runs text as code", "skill": "no-eval"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.name", "eval"], "emit": "$c"}}`)
+	c.write(".commandments/custom/NoEvalDetector.json", `{"$schema": "commandments:generic-rule/v2", "engine": ["python"], "sin": {"name": "no-eval", "description": "eval runs text as code", "skill": "no-eval"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.name", "eval"], "emit": "$c"}}`)
 
 	if synced := c.run(0, "commandments", "sync"); !strings.Contains(synced, "synced") {
 		t.Errorf("resync said\n%s", synced)

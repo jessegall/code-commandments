@@ -10,7 +10,7 @@ import (
 
 func parameterisedRule(t *testing.T) rule.Rule {
 	t.Helper()
-	read, err := rule.Parse("layered-imports", []byte(`{"$schema":"commandments:neutral-rule/v2","engine":"php",
+	read, err := rule.Parse("layered-imports", []byte(`{"$schema":"commandments:generic-rule/v2","engine":"php",
 		"sin":{"name":"layered-imports","aliases":["NamespaceDependencyDetector"],"skill":"shared/dependencies"},
 		"parameters":{"minClasses":{"type":"number","default":2,"description":"owners"},"layer":{"type":"list","default":[],"description":"layers"}},
 		"find":{"select":"import","as":"i","where":[">=",["count","$param.layer"],"$param.minClasses"]}}`),

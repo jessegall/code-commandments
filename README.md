@@ -246,12 +246,12 @@ instead.
 ## Writing your own rules
 
 A rule of your own is a JSON file in `.commandments/custom/`, in the same format as every rule this package ships
-(`commandments:neutral-rule/v2`). It names the languages it judges, the problem it finds, the skill that teaches the
+(`commandments:generic-rule/v2`). It names the languages it judges, the problem it finds, the skill that teaches the
 fix, and a search over the shared tree:
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": ["php", "python", "go"],
     "sin": {
         "name": "too-many-parameters",

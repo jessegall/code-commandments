@@ -12,7 +12,7 @@ Two layers:
   `shared/flow`, `vue/vue-components`, `python/absence`, `csharp/flow`, … The
   engine-prefixed slug is what a sin points at. The source of truth for what good looks like.
 - **Rules** (`rules/<engine>-<subject>/<name>.json`) — one JSON file per sin, in the format
-  `commandments:neutral-rule/v2`: the sin's name and aliases, the skill slug that fixes it, the
+  `commandments:generic-rule/v2`: the sin's name and aliases, the skill slug that fixes it, the
   one-line description the docs project from, and the `find` that locates it over the generic
   tree. A rule has no fix logic. Every file under `rules/` is embedded in the binary and enrols
   itself; `rule/` loads (`library.go`), evaluates (`evaluate.go`) and registers (`detector.go`)

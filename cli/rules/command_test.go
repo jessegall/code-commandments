@@ -49,7 +49,7 @@ func project(t *testing.T) string {
 }
 
 func ruleFlagging(sin, call string) string {
-	return `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "` + sin + `", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "as": "c", "where": ["or", ["=", "$c.callee.name", "` + call + `"], ["=", "$c.callee.member.name", "` + call + `"]], "emit": "$c"}}`
+	return `{"$schema": "commandments:generic-rule/v2", "engine": ["php"], "sin": {"name": "` + sin + `", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "as": "c", "where": ["or", ["=", "$c.callee.name", "` + call + `"], ["=", "$c.callee.member.name", "` + call + `"]], "emit": "$c"}}`
 }
 
 func run(t *testing.T, root string, args ...string) (string, int) {

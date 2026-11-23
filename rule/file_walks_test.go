@@ -8,7 +8,7 @@ import (
 func TestARuleThatGoesOverOneFileAgainAndAgainIsStopped(t *testing.T) {
 	codebase := expected(t, "flags", "python")
 	again := parsed(t, []byte(`{
-		"$schema": "commandments:neutral-rule/v2",
+		"$schema": "commandments:generic-rule/v2",
 		"engine": ["python"],
 		"sin": {"name": "walks-again", "skill": "probe", "description": "probe", "rule": "probe"},
 		"find": {
@@ -38,7 +38,7 @@ func TestARuleThatGoesOverOneFileAgainAndAgainIsStopped(t *testing.T) {
 func TestARuleThatGoesOverAFileOnceIsNotStopped(t *testing.T) {
 	codebase := expected(t, "flags", "python")
 	once := parsed(t, []byte(`{
-		"$schema": "commandments:neutral-rule/v2",
+		"$schema": "commandments:generic-rule/v2",
 		"engine": ["python"],
 		"sin": {"name": "walks-once", "skill": "probe", "description": "probe", "rule": "probe"},
 		"find": {

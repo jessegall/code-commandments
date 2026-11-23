@@ -1,5 +1,5 @@
 {
-  "$schema":"commandments:neutral-rule/v2",
+  "$schema":"commandments:generic-rule/v2",
   "engine":["php","python","csharp","typescript","vue","go"],
   "sin":{"name":"swallow-catch","skill":"shared/exceptions","description":"A failure handler discards the failure it accepts."},
   "definitions":{

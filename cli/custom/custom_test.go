@@ -13,7 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/skill"
 )
 
-const rawSQL = `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "raw-sql", "description": "SQL written inline", "skill": "no-raw-sql"},
+const rawSQL = `{"$schema": "commandments:generic-rule/v2", "engine": ["php"], "sin": {"name": "raw-sql", "description": "SQL written inline", "skill": "no-raw-sql"},
  "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`
 
 const ownSkill = `---
@@ -82,7 +82,7 @@ func TestOnlyTheRulesTheConfigTurnsOnRun(t *testing.T) {
 
 func TestEverythingTheBinaryCannotRunIsNamed(t *testing.T) {
 	loaded := Load(project(t, map[string]string{
-		"Broken.json":          `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"]}`,
+		"Broken.json":          `{"$schema": "commandments:generic-rule/v2", "engine": ["php"]}`,
 		"NoRawSqlDetector.php": "<?php final class NoRawSqlDetector {}",
 	}))
 
@@ -105,7 +105,7 @@ func TestAShippedRuleIsNeverTheProjectsOwn(t *testing.T) {
 
 func TestARuleNamesItsEngineByEitherName(t *testing.T) {
 	root := project(t, map[string]string{
-		"FormerName.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["backend"], "sin": {"name": "former-name", "description": "written before the rename", "skill": "backend/absence"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`,
+		"FormerName.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["backend"], "sin": {"name": "former-name", "description": "written before the rename", "skill": "backend/absence"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`,
 	})
 
 	read := Load(root)

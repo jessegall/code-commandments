@@ -76,7 +76,7 @@ func workerProject(t *testing.T) (root, data string) {
 
 	for path, text := range map[string]string{
 		".commandments/config.json": `{"paths": ["src"], "detectors": ["DocumentedAnywhereDetector"]}`,
-		".commandments/custom/DocumentedAnywhereDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
+		".commandments/custom/DocumentedAnywhereDetector.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["python"],
  "sin": {"name": "documented-anywhere", "description": "a documented method", "skill": "python/absence"},
  "find": {"select": "function", "as": "f", "where": ["nonempty", ["commentsOf", "$f"]], "emit": "$f"}}`,
 		"src/__init__.py": "",

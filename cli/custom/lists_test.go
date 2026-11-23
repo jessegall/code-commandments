@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const poetic = `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"],
+const poetic = `{"$schema": "commandments:generic-rule/v2", "engine": ["php"],
  "sin": {"name": "poetic-name", "description": "a name from a poem", "skill": "no-raw-sql"},
  "find": {"select": "function", "as": "f", "where": ["or", ["in", "$f.name", "${poetry}", "plain"], ["matchesText", "$f.name", "^(${poetry})_"]], "emit": "$f"}}`
 

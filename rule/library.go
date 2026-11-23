@@ -151,7 +151,7 @@ func sharedDefinitions(each Source) (map[string]definition, bool, error) {
 	if err := decoder.Decode(&read); err != nil {
 		return nil, true, fmt.Errorf("%s: %w", each.Path, err)
 	}
-	if read.Schema != Format {
+	if !isTheFormat(read.Schema) {
 		return nil, true, fmt.Errorf("%s: a definitions file is written in %s", each.Path, Format)
 	}
 
@@ -172,7 +172,7 @@ func sharedRelation(each Source) (relation, bool, error) {
 	if err := decoder.Decode(&read); err != nil {
 		return relation{}, true, fmt.Errorf("%s: %w", each.Path, err)
 	}
-	if read.Schema != Format {
+	if !isTheFormat(read.Schema) {
 		return relation{}, true, fmt.Errorf("%s: a relation file is written in %s", each.Path, Format)
 	}
 	prefix := each.name() + "."

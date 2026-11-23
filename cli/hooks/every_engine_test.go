@@ -19,13 +19,13 @@ func TestEveryEngineARuleJudgesIsAskedAboutAnEditedFile(t *testing.T) {
 
 	files := map[string]string{
 		".commandments/config.json": `{"paths": ["shop"], "detectors": ["DocumentedAnywhereDetector", "DocumentedInShopDetector", "DocumentedInTwoLanguagesDetector"]}`,
-		".commandments/custom/DocumentedAnywhereDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
+		".commandments/custom/DocumentedAnywhereDetector.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["python"],
  "sin": {"name": "documented-anywhere", "description": "a documented method", "skill": "python/absence"},
  "find": {"select": "function", "as": "f", "where": ["nonempty", ["commentsOf", "$f"]], "emit": "$f"}}`,
-		".commandments/custom/DocumentedInShopDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
+		".commandments/custom/DocumentedInShopDetector.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["python"],
  "sin": {"name": "documented-in-shop", "description": "a documented method under shop", "skill": "python/absence"},
  "find": {"select": "function", "as": "f", "where": ["and", ["nonempty", ["commentsOf", "$f"]], ["contains", "$f.file.path", "shop/"]], "emit": "$f"}}`,
-		".commandments/custom/DocumentedInTwoLanguagesDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["go", "python"],
+		".commandments/custom/DocumentedInTwoLanguagesDetector.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["go", "python"],
  "sin": {"name": "documented-in-two-languages", "description": "a documented method, in either language", "skill": "python/absence"},
  "find": {"select": "function", "as": "f", "where": ["nonempty", ["commentsOf", "$f"]], "emit": "$f"}}`,
 		"shop/__init__.py": "",

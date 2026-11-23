@@ -1,5 +1,5 @@
 {
-  "$schema": "commandments:neutral-rule/v2",
+  "$schema": "commandments:generic-rule/v2",
   "description": "Definitions over spatie/laravel-data classes that the Spatie rules share: a data class, its slots and the slot a value fills.",
   "definitions": {
     "composes": {

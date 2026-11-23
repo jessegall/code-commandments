@@ -17,7 +17,7 @@ func ownRuleProject(t *testing.T) string {
 
 	for path, contents := range map[string]string{
 		".commandments/config.json":                       `{"paths": ["src"], "detectors": ["RawSqlDetector"]}`,
-		".commandments/custom/RawSqlDetector.json":        `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "raw-sql", "description": "SQL inline", "skill": "no-raw-sql"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`,
+		".commandments/custom/RawSqlDetector.json":        `{"$schema": "commandments:generic-rule/v2", "engine": ["php"], "sin": {"name": "raw-sql", "description": "SQL inline", "skill": "no-raw-sql"}, "find": {"select": "call", "as": "c", "where": ["=", "$c.callee.member.name", "select"], "emit": "$c"}}`,
 		".commandments/custom/skills/no-raw-sql/SKILL.md": "---\nname: No raw SQL\ndescription: before a query.\n---\n",
 		"src/Orders.php":                                  "<?php\nnamespace App;\nfinal class Orders { public function all(): array { return DB::select('x'); } }\n",
 	} {
@@ -67,10 +67,10 @@ func layeredProject(t *testing.T) string {
 	for path, contents := range map[string]string{
 		".commandments/config.json": `{"paths": ["src", "tests"], "detectors": ["DomainQueriesDetector", "LongParametersDetector"],
 			"configure": {"php/NamespaceDependencyDetector": [{"layer": ["App\\Domain"]}, {"layer": ["App\\Http", ["App\\Domain"]]}]}}`,
-		".commandments/custom/DomainQueriesDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "domain-queries", "description": "The domain queries the database.", "skill": "php/absence"},
+		".commandments/custom/DomainQueriesDetector.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["php"], "sin": {"name": "domain-queries", "description": "The domain queries the database.", "skill": "php/absence"},
 			"find": {"select": "function", "as": "f", "where": ["and", ["withinModule", ["moduleOf", "$f"], "App\\Domain"], ["not", "$f.file.test"],
 				["some", ["descendants", "$f", "call"], "c", ["matchesText", "$c.callee.subject.name", "(^|\\\\)DB$"]]], "emit": "$f"}}`,
-		".commandments/custom/LongParametersDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["php"], "sin": {"name": "long-parameters", "description": "Too many parameters.", "skill": "php/absence"},
+		".commandments/custom/LongParametersDetector.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["php"], "sin": {"name": "long-parameters", "description": "Too many parameters.", "skill": "php/absence"},
 			"find": {"select": "function", "as": "f", "where": [">=", ["count", "$f.parameters"], 3], "emit": "$f"}}`,
 		"src/Domain/Orders.php":       "<?php\nnamespace App\\Domain;\nfinal class Orders {\n    public function all(): array { return DB::select('x'); }\n    public function one(int $a, int $b, int $c): int { return $a; }\n}\n",
 		"src/Http/Page.php":           "<?php\nnamespace App\\Http;\nfinal class Page { public function show(): array { return DB::select('y'); } }\n",

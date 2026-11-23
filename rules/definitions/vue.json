@@ -1,5 +1,5 @@
 {
-  "$schema": "commandments:neutral-rule/v2",
+  "$schema": "commandments:generic-rule/v2",
   "description": "Definitions over Vue elements that the Vue rules share: directives, bindings and an element's size.",
   "definitions": {
     "bound": {

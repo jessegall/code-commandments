@@ -229,7 +229,7 @@ func TestRelationOfLaravelRouteRegistrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	probe := []byte(`{"$schema":"commandments:neutral-rule/v2","engine":"php","sin":{"name":"route-probe","skill":"x"},
+	probe := []byte(`{"$schema":"commandments:generic-rule/v2","engine":"php","sin":{"name":"route-probe","skill":"x"},
 		"find":{"from":"laravel-route-registrations","as":"r","pipeline":[{"where":["some","$r.actions","a",["in","$a","Shop\\OrderController::index","Shop\\ExportOrders::__invoke","Shop\\Admin\\ShowController::index"]]},{"emit":"$r.anchor"}]}}`)
 	sources := []rule.Source{
 		{Origin: rule.Installed, Path: "rules/relations/laravel-route-registrations.json", Text: relationText},

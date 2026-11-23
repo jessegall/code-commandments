@@ -14,7 +14,7 @@ type object = map[string]any
 
 const expressionReference = "#/definitions/expression"
 
-// Schema is the JSON Schema of a commandments:neutral-rule/v2 file, for an editor to check a rule as it is written. The
+// Schema is the JSON Schema of a commandments:generic-rule/v2 file, for an editor to check a rule as it is written. The
 // load-time checks go further: bound names, the roles a kind defines and the operands each operator takes.
 func Schema() []byte {
 	expression := object{"$ref": expressionReference}
@@ -37,7 +37,7 @@ func Schema() []byte {
 			},
 		},
 		"properties": object{
-			"$schema": object{"const": Format},
+			"$schema": object{"enum": []string{Format, FormerFormat}},
 			"engine": object{"description": "The engine the rule judges, or the engines.", "anyOf": []object{
 				{"enum": engineNames()},
 				{"type": "array", "minItems": 1, "items": object{"enum": engineNames()}},

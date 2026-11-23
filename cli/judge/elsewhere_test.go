@@ -50,7 +50,7 @@ func sinfulProject(t *testing.T) string {
 
 	for path, text := range map[string]string{
 		".commandments/config.json": `{"paths": ["src"], "detectors": ["DocstringInMethodDetector"]}`,
-		".commandments/custom/DocstringInMethodDetector.json": `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
+		".commandments/custom/DocstringInMethodDetector.json": `{"$schema": "commandments:generic-rule/v2", "engine": ["python"],
  "sin": {"name": "docstring-in-method", "description": "a docstring inside a method", "skill": "python/absence"},
  "find": {"select": "function", "as": "f", "where": ["nonempty", ["commentsOf", "$f"]], "emit": "$f"}}`,
 		"src/__init__.py": "",

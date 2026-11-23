@@ -11,7 +11,7 @@ teaches, the rule finds. There is no Go detector, no sin type and no language pa
 
 ```json
 {
-  "$schema": "commandments:neutral-rule/v2",
+  "$schema": "commandments:generic-rule/v2",
   "engine": ["csharp", "go", "php", "python", "typescript"],
   "sin": {
     "name": "redundant-else",

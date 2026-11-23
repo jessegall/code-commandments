@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -16,7 +17,7 @@ func anySkill(string) (skill.Skill, bool) {
 
 // written is a v2 rule over every engine whose find is the one given.
 func written(find string) []byte {
-	return []byte(`{"$schema":"commandments:neutral-rule/v2","engine":["php","python","csharp","typescript","vue","go"],"sin":{"name":"empty-handler","skill":"shared-exceptions"},` + find + `}`)
+	return []byte(`{"$schema":"commandments:generic-rule/v2","engine":["php","python","csharp","typescript","vue","go"],"sin":{"name":"empty-handler","skill":"shared-exceptions"},` + find + `}`)
 }
 
 func refused(t *testing.T, text []byte, wanted ...string) {
@@ -54,7 +55,7 @@ func TestParseRefusesAnOldFormatFileNamingItsStep(t *testing.T) {
 		t.Fatalf("an old file is refused with %v", err)
 	}
 	format.File = ".commandments/custom/Guard.json"
-	if wanted := ".commandments/custom/Guard.json:1 uses the old redundantElse step. Rewrite this rule using commandments:neutral-rule/v2: `commandments rule schema` lists the operators a step becomes."; format.Error() != wanted {
+	if wanted := ".commandments/custom/Guard.json:1 uses the old redundantElse step. Rewrite this rule using commandments:generic-rule/v2: `commandments rule schema` lists the operators a step becomes."; format.Error() != wanted {
 		t.Errorf("the refusal reads %q", format.Error())
 	}
 }
@@ -79,14 +80,14 @@ func TestAnOldScaffoldIsRefusedAtItsStepsLineWithTheStepsNewForm(t *testing.T) {
 	if !errors.As(err, &format) {
 		t.Fatalf("an old scaffold is refused with %v", err)
 	}
-	if wanted := `NoRawSqlDetector.json:9 uses the old name step. Rewrite this rule using commandments:neutral-rule/v2, where it reads ["=", "$<the name its select binds>.name", "TODO-the-call-this-rule-flags"].`; format.Error() != wanted {
+	if wanted := `NoRawSqlDetector.json:9 uses the old name step. Rewrite this rule using commandments:generic-rule/v2, where it reads ["=", "$<the name its select binds>.name", "TODO-the-call-this-rule-flags"].`; format.Error() != wanted {
 		t.Errorf("the refusal reads %q", format.Error())
 	}
 }
 
 func TestParseRefusesAnotherSchemaVersion(t *testing.T) {
-	refused(t, []byte(`{"$schema":"commandments:neutral-rule/v3","engine":"php","sin":{"name":"x","skill":"y"},"find":{"select":"handler","as":"site"}}`),
-		"commandments:neutral-rule/v3", "commandments:neutral-rule/v2")
+	refused(t, []byte(`{"$schema":"commandments:generic-rule/v3","engine":"php","sin":{"name":"x","skill":"y"},"find":{"select":"handler","as":"site"}}`),
+		"commandments:generic-rule/v3", "commandments:generic-rule/v2")
 }
 
 func TestValidateRefusesARoleTheKindDoesNotDefine(t *testing.T) {
@@ -143,8 +144,8 @@ func TestSchemaNamesTheV2Format(t *testing.T) {
 		t.Fatal(err)
 	}
 	properties := schema["properties"].(map[string]any)
-	if format := properties["$schema"].(map[string]any)["const"]; format != Format {
-		t.Errorf("the schema asks for the format %v", format)
+	if formats := properties["$schema"].(map[string]any)["enum"]; !reflect.DeepEqual(formats, []any{Format, FormerFormat}) {
+		t.Errorf("the schema asks for the format %v, where a file names it %s or by its former name %s", formats, Format, FormerFormat)
 	}
 	for _, key := range []string{"definitions", "find", "sin"} {
 		if _, declared := properties[key]; !declared {
@@ -165,4 +166,15 @@ func TestPipelineRefusesAGroupedNameReadBeforeItsExpand(t *testing.T) {
 
 func TestPipelineRefusesAFindThatEmitsNothing(t *testing.T) {
 	refused(t, written(`"find":{"from":"function","as":"f","pipeline":[{"where":true}]}`), "no stage emits")
+}
+
+func TestAFileThatNamesTheFormatByItsFormerNameIsReadAsTheSameFormat(t *testing.T) {
+	for _, named := range []string{Format, FormerFormat} {
+		if err := formatOf("a-rule", []byte(`{"$schema": "`+named+`"}`)); err != nil {
+			t.Errorf("a rule that names its format %s is refused: %v", named, err)
+		}
+	}
+	if err := formatOf("a-rule", []byte(`{"$schema": "commandments:generic-rule/v9"}`)); err == nil {
+		t.Error("a rule that names a version this tool does not read is taken")
+	}
 }

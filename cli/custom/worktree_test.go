@@ -12,7 +12,7 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-const ownRule = `{"$schema": "commandments:neutral-rule/v2", "engine": ["python"],
+const ownRule = `{"$schema": "commandments:generic-rule/v2", "engine": ["python"],
  "find": {"select": "function", "as": "f", "where": ["nonempty", ["commentsOf", "$f"]], "emit": "$f"},
  "sin": {"name": "docstring-in-method", "description": "a docstring inside a method", "skill": "python/documentation"}}`
 

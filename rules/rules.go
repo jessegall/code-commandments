@@ -1,4 +1,4 @@
-// Package rules is the installed rule catalogue: every rule the tool ships, each a commandments:neutral-rule/v2 file
+// Package rules is the installed rule catalogue: every rule the tool ships, each a commandments:generic-rule/v2 file
 // in the folder of the skill that teaches its fix, read through the same loader as a project's own and registered
 // beside the detectors.
 package rules

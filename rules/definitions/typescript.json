@@ -1,5 +1,5 @@
 {
-  "$schema": "commandments:neutral-rule/v2",
+  "$schema": "commandments:generic-rule/v2",
   "description": "Definitions over TypeScript and Vue script code that their rules share: the path a string, template or + chain spells.",
   "definitions": {
     "piece": {

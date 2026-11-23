@@ -12,14 +12,14 @@ description: "How to write a commandment of your OWN — a project-local rule th
 
 A rule of your own is a `.json` file in `.commandments/custom/`, in that folder or any folder under it, so a
 project with rules for several parts of its code groups them by what they protect (`custom/core/`,
-`custom/viewer/`). It is written in the same format as every rule the tool ships, `commandments:neutral-rule/v2`,
+`custom/viewer/`). It is written in the same format as every rule the tool ships, `commandments:generic-rule/v2`,
 and judged by the same engine. A rule is named by its FILE wherever it sits, so moving one into a folder leaves
 every mention of it in the config standing, and two files of one name are both refused rather than one of them
 quietly winning. A file in an older format is refused, naming the file and the format to rewrite it in.
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": ["php", "python", "go"],
     "sin": {
         "name": "too-many-parameters",
@@ -395,7 +395,7 @@ wrote and no install rewrites:
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": "python",
     "judges": ["tests"],
     "sin": {"name": "tests-drive-the-real-path", "skill": "tests-drive-the-real-path"},
@@ -478,7 +478,7 @@ known to be" says so.
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": ["python", "go", "csharp", "php"],
     "sin": {"name": "loop-wrapped-in-if", "skill": "flat-loops", "description": "…"},
     "find": {

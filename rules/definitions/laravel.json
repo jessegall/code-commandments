@@ -1,5 +1,5 @@
 {
-  "$schema": "commandments:neutral-rule/v2",
+  "$schema": "commandments:generic-rule/v2",
   "description": "Definitions over Laravel calls that the Laravel rules share: a call's receiver, its owner and the request.",
   "definitions": {
     "named": {

@@ -38,7 +38,7 @@ func (Command) Help() help.Help {
 		Option("--skill=NAME", "the skill that teaches the fix — a lenient name/slug match against the existing skills, or a new slug to create one").
 		Option("--from=<template>", "the ready rule to start from, its query written over the generic tree").
 		Option("--force", "overwrite files that already exist").
-		Note("A rule is data the binary runs: `<Name>Detector.json`, written in commandments:neutral-rule/v2, names " +
+		Note("A rule is data the binary runs: `<Name>Detector.json`, written in commandments:generic-rule/v2, names " +
 			"the engines it judges, its sin and one query over the generic tree — a kind to select, the name each " +
 			"node is bound to, and a `where` expression it must hold. A new skill is `skills/<slug>/SKILL.md`, " +
 			"published as you write it. The folder is kept OUT of the .commandments/ gitignore — your rules are " +

@@ -7,7 +7,7 @@ import (
 func TestATraceReadsTheRelationsItsFindBuildsAsAJudgeDoes(t *testing.T) {
 	codebase := expected(t, "flags", "php")
 	probe := parsed(t, []byte(`{
-		"$schema": "commandments:neutral-rule/v2",
+		"$schema": "commandments:generic-rule/v2",
 		"engine": ["php"],
 		"sin": {"name": "traced-relation", "skill": "php/flow", "description": "a call the relation lists", "rule": "probe", "suggestion": "probe"},
 		"find": {

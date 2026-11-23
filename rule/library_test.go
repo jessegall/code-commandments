@@ -37,13 +37,13 @@ func TestLoaderNamesAnOldFormatFileByItsPath(t *testing.T) {
 	library := Load([]Source{old}, anySkill)
 	var format *OldFormat
 	if len(library.Problems) != 1 || !errors.As(library.Problems[0], &format) ||
-		library.Problems[0].Error() != ".commandments/custom/Guard.json:1 uses the old redundantElse step. Rewrite this rule using commandments:neutral-rule/v2: `commandments rule schema` lists the operators a step becomes." {
+		library.Problems[0].Error() != ".commandments/custom/Guard.json:1 uses the old redundantElse step. Rewrite this rule using commandments:generic-rule/v2: `commandments rule schema` lists the operators a step becomes." {
 		t.Errorf("the loader said %v", library.Problems)
 	}
 }
 
 func TestAliasClaimedTwiceIsADiagnosticNamingBothFiles(t *testing.T) {
-	first := Source{Origin: Installed, Path: "rules/shared-dependencies/namespace-cycle.json", Text: []byte(`{"$schema":"commandments:neutral-rule/v2","engine":"php","sin":{"name":"namespace-cycle","aliases":["python-namespace-cycle"],"skill":"x"},"find":{"select":"import","as":"i"}}`)}
+	first := Source{Origin: Installed, Path: "rules/shared-dependencies/namespace-cycle.json", Text: []byte(`{"$schema":"commandments:generic-rule/v2","engine":"php","sin":{"name":"namespace-cycle","aliases":["python-namespace-cycle"],"skill":"x"},"find":{"select":"import","as":"i"}}`)}
 	second := named(Project, ".commandments/custom/Cycle.json", "python-namespace-cycle", `"find":{"select":"import","as":"i"}`)
 	library := Load([]Source{first, second}, anySkill)
 	if len(library.Rules) != 1 || len(library.Problems) != 1 ||

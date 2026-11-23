@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Expr is one expression of a commandments:neutral-rule/v2 file, read from its JSON: a list whose first item is the
+// Expr is one expression of a commandments:generic-rule/v2 file, read from its JSON: a list whose first item is the
 // operator it applies, a string beginning with $ that refers to a bound name and the roles read through it, an object
 // holding a case's arms, or a plain value.
 type Expr struct {

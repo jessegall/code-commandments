@@ -52,7 +52,7 @@ func TestParameterRefusals(t *testing.T) {
 }
 
 func TestRequiresGatesARuleOnItsPackage(t *testing.T) {
-	read, err := Parse("probe", []byte(`{"$schema":"commandments:neutral-rule/v2","engine":"php","sin":{"name":"probe","skill":"x","requires":{"name":"laravel/framework","ecosystem":"composer"}},"find":{"select":"call","as":"c"}}`), anySkill)
+	read, err := Parse("probe", []byte(`{"$schema":"commandments:generic-rule/v2","engine":"php","sin":{"name":"probe","skill":"x","requires":{"name":"laravel/framework","ecosystem":"composer"}},"find":{"select":"call","as":"c"}}`), anySkill)
 	if err != nil {
 		t.Fatal(err)
 	}

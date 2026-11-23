@@ -13,7 +13,7 @@ function.
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": "php",
     "sin": {
         "name": "repository-call-in-a-loop",
@@ -38,7 +38,7 @@ What a name cannot see: the value copied into a variable first.
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": "python",
     "sin": {
         "name": "whole-line-read",
@@ -64,7 +64,7 @@ Every language writes the same tree, so a loop's body is a block of statements w
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": ["python", "go", "csharp", "php", "typescript"],
     "sin": {
         "name": "loop-wrapped-in-if",
@@ -89,7 +89,7 @@ A fact about the place: the class around a string, and what that class extends.
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": "php",
     "sin": {
         "name": "sql-in-a-controller",
@@ -115,7 +115,7 @@ A count, with its limit a parameter the project's config can change.
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": ["php", "python", "go", "csharp", "typescript"],
     "sin": {
         "name": "too-many-parameters",
@@ -141,7 +141,7 @@ The declaration a call reaches, found by the resolver, not by the name written a
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": ["php", "python", "go", "csharp", "typescript"],
     "sin": {
         "name": "production-calls-test-code",
@@ -167,7 +167,7 @@ A check two rules need is a definition: written once in one rule, and called by 
 
 ```json
 {
-    "$schema": "commandments:neutral-rule/v2",
+    "$schema": "commandments:generic-rule/v2",
     "engine": ["php", "python", "go", "csharp", "typescript"],
     "sin": {
         "name": "todo-in-a-function",
