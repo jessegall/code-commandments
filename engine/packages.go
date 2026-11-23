@@ -625,7 +625,7 @@ func (m Match) writtenCallEffect(effect string) Truth {
 	for _, facts := range registeredPackageFacts() {
 		answering := []string{}
 		for _, forward := range facts.Forwards {
-			if m.declaredBy(receiver, forward.Type) {
+			if m.declaredBy(receiver, forward.Type) && !m.classDeclares(receiver, method) {
 				answering = append(answering, forward.To)
 			}
 		}
@@ -666,6 +666,16 @@ func (m Match) writtenReceiver() string {
 	}
 
 	return ""
+}
+
+func (m Match) classDeclares(symbol, method string) bool {
+	types, typed := m.Types()
+	if !typed {
+		return false
+	}
+	return slices.ContainsFunc(append([]string{symbol}, Supertypes(types, symbol)...), func(owner string) bool {
+		return m.declaresMember(owner, method)
+	})
 }
 
 func (m Match) forwardedResult() string {
