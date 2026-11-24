@@ -109,7 +109,7 @@
         "type": "number",
         "kind": "number",
         "default": 1,
-        "help": "How many judging runs the plugin starts may run side by side. Each one the plugin starts goes through the journal's process queue, which holds the next back until fewer than this many run."
+        "help": "How many judging runs may run side by side. Every judge the journal starts, the plugin's own and an agent's alias alike, waits in the journal's process queue, which holds the next back until fewer than this many run. A judge typed in a terminal runs right there."
     },
     {
         "key": "cache_hours",
