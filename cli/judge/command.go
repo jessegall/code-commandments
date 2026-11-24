@@ -137,12 +137,6 @@ func (c Command) Run(in *cli.Input, direct cli.Console) (int, error) {
 		return list(cwd, console)
 	}
 
-	if c.Reading == nil && space.IsJournalDriven() && waitsForTheQueue() {
-		if code, taken := throughTheQueue(space, cwd, in, console, progress); taken {
-			return code, nil
-		}
-	}
-
 	if remembered, keeps := RememberedFor(space.Root(), console.Warn); keeps && c.Reading == nil {
 		progress.Status("recalling what was judged before")
 		remembered.Load()
