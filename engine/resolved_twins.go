@@ -59,7 +59,7 @@ func resolveTwins(codebase *Codebase) TwinPairs {
 	functions := codebase.Reporting().WhereFunction().Reject(Match.IsTest).Get()
 	for _, function := range functions {
 		key := function.Node().Symbol
-		if key == "" || !function.Child("body").Exists() {
+		if key == "" || !function.Child("body").Exists() || returnsOneCollection(function) {
 			continue
 		}
 		matches[key], reach[key] = function, reachedSymbols(function)
@@ -74,6 +74,17 @@ func resolveTwins(codebase *Codebase) TwinPairs {
 	}
 
 	return TwinPairs{Units: units, Pairs: DivergentTwins(resolvedTwinJudge{matches}, units)}
+}
+
+// returnsOneCollection is a body that only declares entries, so an entry another one has is never a step it missed.
+func returnsOneCollection(function Match) bool {
+	statements := function.Child("body").ChildrenIn("statements")
+	if len(statements) != 1 || statements[0].Kind() != "return" {
+		return false
+	}
+	values := statements[0].ChildrenIn("values")
+
+	return len(values) == 1 && values[0].Kind() == "collection"
 }
 
 func reachedSymbols(unit Match) map[string]bool {
