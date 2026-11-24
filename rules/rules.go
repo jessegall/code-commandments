@@ -44,36 +44,57 @@ func overrideFolder() string {
 	return filepath.Join(filepath.Dir(running), "rules")
 }
 
-// shipped is the catalogue as it is read: the embedded files, each replaced by a file at the same path in the override
-// folder, and every further file there added.
-var shipped = catalogue(overrideFolder())
-
-func catalogue(override string) fs.FS {
-	files := fstest.MapFS{}
-	_ = fs.WalkDir(embedded, ".", func(name string, entry fs.DirEntry, err error) error {
-		if err == nil && !entry.IsDir() {
-			text, _ := fs.ReadFile(embedded, name)
-			files[name] = &fstest.MapFile{Data: text}
-		}
-
-		return nil
-	})
-	if info, err := os.Stat(override); override == "" || err != nil || !info.IsDir() {
-		return files
+// installedFolder is the installed version's rules folder, read loose so a release that changes only rules runs on the
+// binary it already has: the folder COMMANDMENTS_SHIPPED_RULES names, else the package's rules folder above the binary.
+func installedFolder() string {
+	if named := os.Getenv("COMMANDMENTS_SHIPPED_RULES"); named != "" {
+		return named
 	}
-	_ = filepath.WalkDir(override, func(name string, entry fs.DirEntry, err error) error {
+	running, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+
+	return filepath.Join(filepath.Dir(running), "..", "rules")
+}
+
+// shipped is the catalogue as it is read: the installed version's rules folder whole, or the embedded files where there
+// is none, each replaced by a file at the same path in the override folder, and every further file there added.
+var shipped = catalogue(installedFolder(), overrideFolder())
+
+func catalogue(installed, override string) fs.FS {
+	files := fstest.MapFS{}
+	if _, err := os.Stat(filepath.Join(installed, "exemption-tags.json")); installed != "" && err == nil {
+		addFiles(files, installed)
+	} else {
+		_ = fs.WalkDir(embedded, ".", func(name string, entry fs.DirEntry, err error) error {
+			if err == nil && !entry.IsDir() {
+				text, _ := fs.ReadFile(embedded, name)
+				files[name] = &fstest.MapFile{Data: text}
+			}
+
+			return nil
+		})
+	}
+	if info, err := os.Stat(override); override != "" && err == nil && info.IsDir() {
+		addFiles(files, override)
+	}
+
+	return files
+}
+
+func addFiles(files fstest.MapFS, folder string) {
+	_ = filepath.WalkDir(folder, func(name string, entry fs.DirEntry, err error) error {
 		if err != nil || entry.IsDir() || filepath.Ext(name) != ".json" {
 			return nil
 		}
-		relative, _ := filepath.Rel(override, name)
+		relative, _ := filepath.Rel(folder, name)
 		if text, read := os.ReadFile(name); read == nil {
 			files[filepath.ToSlash(relative)] = &fstest.MapFile{Data: text}
 		}
 
 		return nil
 	})
-
-	return files
 }
 
 // Export writes every embedded file of the catalogue under the folder, to edit as an override.
@@ -99,9 +120,14 @@ func Export(folder string) (int, error) {
 	return written, err
 }
 
+// LoadInstalled reads the catalogue as an installed version's rules folder makes it.
+func LoadInstalled(installed string) rule.Library {
+	return rule.Load(sourcesIn(catalogue(installed, "")), skill.Slugged)
+}
+
 // LoadFrom reads the catalogue as an override folder makes it, for a test of an edited rule.
 func LoadFrom(override string) rule.Library {
-	return rule.Load(sourcesIn(catalogue(override)), skill.Slugged)
+	return rule.Load(sourcesIn(catalogue("", override)), skill.Slugged)
 }
 
 // Sources is every installed rule file, by its path under rules/.

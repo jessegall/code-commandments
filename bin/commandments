@@ -224,6 +224,10 @@ function remember(string $binary): void
 
 $binary = binary();
 remember($binary);
+// The binary reads this version's rules loose, so a release that changes only rules runs on the binary it has.
+if (! getenv('COMMANDMENTS_SHIPPED_RULES')) {
+    putenv('COMMANDMENTS_SHIPPED_RULES=' . dirname(__DIR__) . '/rules');
+}
 $process = proc_open([$binary, ...array_slice($argv, 1)], [STDIN, STDOUT, STDERR], $pipes);
 
 exit($process === false ? 1 : proc_close($process));

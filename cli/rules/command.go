@@ -40,6 +40,7 @@ func (Command) Help() help.Help {
 		Form("rule prove --all [path]", "check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed").
 		Form("rule trace <Rule> <file> --line=N [--lines=A-B] [--within=folder]", "ask a rule of every node it selects on that line, or in that range of lines (where only the nodes its where lets through are shown), and print each part of its where, let and having with what it answered, the folder read whole as its own project (the file's own folder by default)").
 		Form("rule schema", "print the JSON Schema of a rule file").
+		Form("rule check", "load every installed rule and print each file that cannot be read; fails when one cannot").
 		Form("rule export <folder>", "write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
 		Option("--work", "with `try`, print how many nodes, checks and analyses the rule cost").
@@ -69,6 +70,16 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		console.Write(string(rule.Schema()))
 
 		return 0, nil
+	case "check":
+		for _, problem := range rules.Problems() {
+			console.Write(problem.Error() + "\n")
+		}
+		if len(rules.Problems()) > 0 {
+			return 1, nil
+		}
+		console.Write(fmt.Sprintf("%d installed rules load\n", len(rules.Sins())))
+
+		return 0, nil
 	case "export":
 		folder, named := in.Argument(1)
 		if !named {
@@ -82,7 +93,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 		return 0, nil
 	default:
-		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule trace`, `rule prove`, `rule schema` or `rule export`."), nil
+		return help.Usage(console.Err, c, "name what to do: `rule explain`, `rule try`, `rule trace`, `rule prove`, `rule check`, `rule schema` or `rule export`."), nil
 	}
 }
 

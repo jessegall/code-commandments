@@ -79,3 +79,25 @@ func TestOverrideFileReplacesTheEmbeddedRuleAndRemovingItRestoresIt(t *testing.T
 		t.Errorf("removing the override does not restore the embedded rule")
 	}
 }
+
+func TestAnInstalledRulesFolderIsTheWholeCatalogueSoARemovedRuleIsGone(t *testing.T) {
+	folder := t.TempDir()
+	if _, err := rules.Export(folder); err != nil {
+		t.Fatal(err)
+	}
+	named := func(library rule.Library) bool {
+		return slices.ContainsFunc(library.Rules, func(each rule.Rule) bool { return each.Sin().Definition().Name == "data-clump" })
+	}
+	if !named(rules.LoadInstalled(folder)) {
+		t.Fatalf("the installed folder does not hold data-clump before it is removed")
+	}
+	if err := os.Remove(filepath.Join(folder, "shared-value-objects", "data-clump.json")); err != nil {
+		t.Fatal(err)
+	}
+	if named(rules.LoadInstalled(folder)) {
+		t.Errorf("a rule removed from the installed folder is still read from the embedded catalogue")
+	}
+	if !named(rules.LoadInstalled(t.TempDir())) {
+		t.Errorf("a folder that holds no catalogue does not fall back to the embedded rules")
+	}
+}

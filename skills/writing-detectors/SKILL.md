@@ -636,6 +636,7 @@ never against what the code happens to do today.
 | `commandments rule prove --all [path]` | check every shipped rule and every rule of the project against each fixture project under the path (tests/Fixtures by default): what each missed, flagged unmarked, flagged as righteous and flagged as fixed |
 | `commandments rule trace <Rule> <file> --line=N [--lines=A-B] [--within=folder]` | ask a rule of every node it selects on that line, or in that range of lines (where only the nodes its where lets through are shown), and print each part of its where, let and having with what it answered, the folder read whole as its own project (the file's own folder by default) |
 | `commandments rule schema` | print the JSON Schema of a rule file |
+| `commandments rule check` | load every installed rule and print each file that cannot be read; fails when one cannot |
 | `commandments rule export <folder>` | write the installed rules into a folder, to edit them: a file there at the same path replaces the installed one when COMMANDMENTS_RULES names the folder or it sits beside the binary as rules/ |
 
 <!-- END: commands:make,rule -->
