@@ -146,8 +146,9 @@ final class LayoutData extends Data
 
 ### nullable-wire-object
 
-On a `#[TypeScript]` Data class, a nested Data or enum typed `T|null`. It sends `null` to the frontend, where the
-frontend expects the key to be missing (`x?.`). Type it `T|Optional` so the key is left out.
+On a `#[TypeScript]` Data class, a nested Data or pure enum typed `T|null`. It sends `null` to the frontend, where the
+frontend expects the key to be missing (`x?.`). Type it `T|Optional` so the key is left out. A backed enum is a scalar
+on the wire, so `?Status` for a scalar-or-null field stays.
 
 ```php
 // Bad

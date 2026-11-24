@@ -10,8 +10,8 @@
       "NullableWireObject"
     ],
     "skill": "php/spatie-data",
-    "description": "A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
-    "rule": "On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested Data or enum (a backed enum included: its absence is a missing key, not a null case) `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`.",
+    "description": "A nested Data or pure enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")",
+    "rule": "On a `#[TypeScript]` (frontend-bound) Data, type a genuinely-absent nested Data or pure enum `T | Optional = new Optional()`, not `T | null` — so the wire omits it rather than carrying a `null`. A backed enum carries a scalar or null, so `?Status` stays.",
     "suggestion": "`public readonly UiChrome|Optional $chrome = new Optional();`, not `public readonly UiChrome|null $chrome = null;`.",
     "requires": {
       "name": "spatie/laravel-data",
@@ -241,14 +241,12 @@
             "enum"
           ],
           [
-            "every",
-            "$inner.bases",
-            "b",
+            "=",
             [
-              "=",
-              "$b.form",
-              "keyword"
-            ]
+              "count",
+              "$inner.bases"
+            ],
+            0
           ]
         ]
       ]

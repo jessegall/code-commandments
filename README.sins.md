@@ -67,7 +67,7 @@ _175 sins across 27 skills._
 | `new-data-object` | PHP | `new <Data subclass>` instead of `::from()` / a `fromX()` factory |
 | `non-final-data` | PHP | Data class not `final` / props not `readonly` promoted |
 | `null-to-optional-map` | PHP | A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T\|Optional` slot needs) |
-| `nullable-wire-object` | PHP | A nested Data or enum on a `#[TypeScript]` Data is typed `T \| null` — it ships `null` on the wire where `T \| Optional` would OMIT it (what the frontend's `x?.` reads for "absent") |
+| `nullable-wire-object` | PHP | A nested Data or pure enum on a `#[TypeScript]` Data is typed `T \| null` — it ships `null` on the wire where `T \| Optional` would OMIT it (what the frontend's `x?.` reads for "absent") |
 | `prefer-optional-create` | PHP | A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer |
 
 #### `commandments-php-spatie-data-hydration`

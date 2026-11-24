@@ -13,5 +13,5 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`new-data-object`** — `new <Data subclass>` instead of `::from()` / a `fromX()` factory — `new-data-object`
 - **`non-final-data`** — Data class not `final` / props not `readonly` promoted — `non-final-data`
 - **`null-to-optional-map`** — A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs) — `null-to-optional-map`
-- **`nullable-wire-object`** — A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent") — `nullable-wire-object`
+- **`nullable-wire-object`** — A nested Data or pure enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for "absent") — `nullable-wire-object`
 - **`prefer-optional-create`** — A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer — `prefer-optional-create`

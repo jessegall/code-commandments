@@ -461,7 +461,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "A nested Data or enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")"
+        "help": "A nested Data or pure enum on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")"
     },
     {
         "key": "sin_prefer-optional-create",
