@@ -116,7 +116,7 @@ export const read = marked
 		collect(typed.Element)
 	}
 	for _, file := range codebase.Files() {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			collect(node.Resolved)
 		}
 	}
@@ -140,7 +140,7 @@ func TestALargeTypeIsPrintedShortAndDescribedWhole(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"options.ts": "export declare const typed: {\n" + fields.String() + "}\nexport const read = typed\n"})
 	var widest *contract.Type
 	for _, file := range codebase.Files() {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if typed := node.Resolved; typed != nil && len(typed.Fields) == 120 {
 				widest = typed
 			}

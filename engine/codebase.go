@@ -303,7 +303,7 @@ func (c *Codebase) Declarations(symbol string) []Match {
 func declarationsOf(c *Codebase) map[string][]Match {
 	index := map[string][]Match{}
 	for _, file := range c.files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Symbol != "" {
 				index[node.Symbol] = append(index[node.Symbol], Match{node: node, file: file})
 			}

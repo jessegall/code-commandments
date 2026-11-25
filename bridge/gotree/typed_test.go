@@ -53,7 +53,7 @@ func TestAnExpressionCarriesTheTypeTheCheckerGave(t *testing.T) {
 	}
 
 	texts := map[string]bool{}
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Resolved != nil {
 			texts[node.Resolved.Text] = true
 		}
@@ -134,7 +134,7 @@ func TestADeclarationCarriesItsOwnId(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
 	ids := map[string]bool{}
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Symbol != "" {
 			ids[node.Symbol] = true
 		}
@@ -154,7 +154,7 @@ func TestACallReachesTheDeclarationItCalls(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
 	reached := map[string]string{}
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Target != nil {
 			reached[node.Target.Symbol] = node.Target.Type
 		}
@@ -174,7 +174,7 @@ func TestANameSaysWhatItRefersTo(t *testing.T) {
 	file := fileNamed(t, typedStream(t), "cart.go")
 
 	refers := map[string]bool{}
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Refers != "" {
 			refers[node.Refers] = true
 		}
@@ -208,7 +208,7 @@ func TestATypeOutsideTheModuleAndTheStandardLibraryIsUnknownRatherThanWrong(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, node := range fileNamed(t, stream, "ledger.go").Nodes() {
+	for node := range fileNamed(t, stream, "ledger.go").Nodes() {
 		if node.Resolved != nil && node.Resolved.Text == "github.com/acme/ledger.Entry" {
 			t.Errorf("a type of a package nobody read was resolved as %q", node.Resolved.Text)
 		}
@@ -217,7 +217,7 @@ func TestATypeOutsideTheModuleAndTheStandardLibraryIsUnknownRatherThanWrong(t *t
 
 func typeNamed(t *testing.T, file *contract.File, text string) *contract.Type {
 	t.Helper()
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		for _, held := range []*contract.Type{node.Resolved} {
 			if held != nil && held.Text == text {
 				return held
@@ -232,7 +232,7 @@ func typeNamed(t *testing.T, file *contract.File, text string) *contract.Type {
 func textsIn(file *contract.File) []string {
 	var texts []string
 	seen := map[string]bool{}
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		for _, held := range []*contract.Type{node.Resolved} {
 			if held == nil || seen[held.Text] {
 				continue

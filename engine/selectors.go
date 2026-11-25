@@ -65,7 +65,7 @@ func (c *Codebase) nodes() *Query {
 
 	return &Query{selected: func(yield func(Match) bool) {
 		for _, file := range c.opened() {
-			for _, node := range file.Nodes() {
+			for node := range file.Nodes() {
 				if !yield(Match{node: node, file: file}) {
 					return
 				}

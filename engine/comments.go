@@ -252,7 +252,7 @@ func (cm Commented) StackedOn() Match {
 }
 
 func (cm Commented) headsTheFile() bool {
-	return !slices.ContainsFunc(cm.File.Nodes(), func(node *contract.Node) bool {
+	return !cm.File.Any(func(node *contract.Node) bool {
 		return node.Kind != "file" && node.Kind != "module" && node.Span.Start < cm.Span.Start
 	}) && !slices.ContainsFunc(cm.File.File.Comments, func(comment contract.Comment) bool { return comment.Span.Start < cm.Span.Start })
 }

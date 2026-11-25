@@ -186,7 +186,7 @@ func (m Match) EnclosingFile() Match {
 func (f *File) OfKind(kind string) []*contract.Node {
 	f.indexing.Do(func() {
 		f.byKind = map[string][]*contract.Node{}
-		for _, node := range f.Nodes() {
+		for node := range f.Nodes() {
 			f.byKind[node.Kind] = append(f.byKind[node.Kind], node)
 		}
 	})

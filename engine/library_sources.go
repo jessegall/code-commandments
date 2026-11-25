@@ -58,7 +58,7 @@ func (c *Codebase) librarySources(language contract.Language) librarySources {
 			if file.Language() != language {
 				continue
 			}
-			for _, node := range file.Nodes() {
+			for node := range file.Nodes() {
 				if node.Kind != "type" && node.Kind != "alias" || node.Symbol == "" {
 					continue
 				}

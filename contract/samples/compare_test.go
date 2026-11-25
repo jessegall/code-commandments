@@ -25,7 +25,7 @@ func TestTheComparatorFindsEveryKindOfDifference(t *testing.T) {
 		t.Fatalf("a tree differs from itself: %v", differences)
 	}
 	changed := tree.CopiedTo(tree.Path, func(symbol string) string { return symbol })
-	for _, node := range changed.Nodes() {
+	for node := range changed.Nodes() {
 		if node.Kind == "comparison" {
 			node.Own().Operator = "equal"
 			node.Span.End++

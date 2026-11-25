@@ -43,7 +43,7 @@ func (w *fileWalks) hand(item value) {
 	if !found {
 		counted, _ = w.handed.LoadOrStore(file, &atomic.Int64{})
 	}
-	nodes := len(file.Nodes())
+	nodes := file.NodeCount()
 	if counted.(*atomic.Int64).Add(1) > int64(mostWalksOfAFile*max(nodes, fewestNodesAFileCountsFor)) {
 		panic(WentOverAFileAgain{Path: file.Path, Nodes: nodes})
 	}
@@ -53,7 +53,7 @@ func (w *fileWalks) most() int64 {
 	var tenths int64
 	w.handed.Range(func(file, counted any) bool {
 		held := file.(*engine.File)
-		tenths = max(tenths, 10*counted.(*atomic.Int64).Load()/int64(max(len(held.Nodes()), fewestNodesAFileCountsFor)))
+		tenths = max(tenths, 10*counted.(*atomic.Int64).Load()/int64(max(held.NodeCount(), fewestNodesAFileCountsFor)))
 
 		return true
 	})

@@ -13,7 +13,7 @@ func TestPHPFillsWhereverTheCodebaseIsBuilt(t *testing.T) {
 	resolved, targeted := 0, 0
 
 	for _, file := range codebase.Of(contract.PHP).Files() {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Resolved != nil {
 				resolved++
 			}

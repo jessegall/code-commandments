@@ -88,7 +88,7 @@ func measure(path, heap, judged string, fields bool) (reading, error) {
 	read := reading{load: time.Since(started)}
 	for _, file := range codebase.Files() {
 		read.files++
-		read.nodes += len(file.Nodes())
+		read.nodes += file.NodeCount()
 	}
 	read.heap = settled()
 	fmt.Fprintf(os.Stderr, "loaded %s\t%s\n", path, read)
@@ -160,7 +160,7 @@ func population(codebase *engine.Codebase) {
 	distinct := make([]map[string]bool, kind.NumField())
 	total := 0
 	for _, file := range codebase.Files() {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			total++
 			counted(node, kind, set, distinct)
 		}

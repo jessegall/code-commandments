@@ -32,7 +32,7 @@ func TestGoReachesTheEngineThroughTheOneFunnel(t *testing.T) {
 	}
 
 	var methods, loops int
-	for _, node := range files[0].File.Nodes() {
+	for node := range files[0].File.Nodes() {
 		if node.Kind == "function" {
 			methods++
 		}
@@ -137,7 +137,7 @@ func TestAGoLineKeptForTheCacheCarriesItsResolvedTypes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, node := range stream.Files[0].Nodes() {
+	for node := range stream.Files[0].Nodes() {
 		if node.Kind == "reference" && node.Facts != nil && node.Name == "err" {
 			if node.Resolved == nil || node.Resolved.Name != "error" {
 				t.Errorf("err read back from the kept line has the type %+v, not error", node.Resolved)

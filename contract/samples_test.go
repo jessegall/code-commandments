@@ -54,7 +54,7 @@ func TestSamplesEveryConstructIsReadmeListed(t *testing.T) {
 
 func pointsInto(t *testing.T, file *File, source []byte) {
 	t.Helper()
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Span.End > len(source) {
 			t.Errorf("node %d ends at %d, past the file's %d bytes", node.ID, node.Span.End, len(source))
 		}

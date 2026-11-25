@@ -19,7 +19,7 @@ func declaresFrozen(file *engine.File) bool {
 	if err != nil {
 		return false
 	}
-	for _, node := range file.File.Nodes() {
+	for node := range file.File.Nodes() {
 		if node.Kind != "annotation" {
 			continue
 		}

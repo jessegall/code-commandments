@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"reflect"
 	"slices"
 	"strings"
@@ -94,8 +95,16 @@ func (f *File) Node(id int) (*Node, bool) {
 	return f.nodes[id], true
 }
 
-func (f *File) Nodes() []*Node {
-	return f.nodes
+func (f *File) Nodes() iter.Seq[*Node] {
+	return slices.Values(f.nodes)
+}
+
+func (f *File) NodeCount() int {
+	return len(f.nodes)
+}
+
+func (f *File) Any(test func(*Node) bool) bool {
+	return slices.ContainsFunc(f.nodes, test)
 }
 
 // Knows says whether the file's evidence for a fact is complete enough to read it: a compiler fact is unknown on every
@@ -128,10 +137,11 @@ func (f *File) CopiedTo(path string, moved func(string) string) *File {
 		copied.nodes = append(copied.nodes, &own)
 		own.Parts = make(Parts, len(node.Parts))
 		for at, part := range node.Parts {
-			own.Parts[at] = Part{Role: part.Role, List: part.List, Nodes: make([]*Node, len(part.Nodes))}
+			children := make([]*Node, len(part.Nodes))
 			for index, child := range part.Nodes {
-				own.Parts[at].Nodes[index] = walk(child, &own)
+				children[index] = walk(child, &own)
 			}
+			own.Parts[at] = Part{Role: part.Role, List: part.List, Nodes: children}
 		}
 
 		return &own

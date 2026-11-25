@@ -595,7 +595,7 @@ func outsideOnly(program *contract.Program, files []*contract.File) *contract.Pr
 	}
 	declared := map[string]bool{}
 	for _, file := range files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Facts != nil && node.Symbol != "" {
 				declared[node.Symbol] = true
 			}

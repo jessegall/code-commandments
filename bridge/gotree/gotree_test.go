@@ -90,7 +90,7 @@ func TestTheTreeIsTheContractsOwnShape(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Span.Start < 0 || node.Span.End > len(source) || node.Span.Start > node.Span.End {
 			t.Fatalf("%s at %d has the span [%d, %d) of a file %d bytes long", node.Kind, node.ID, node.Span.Start, node.Span.End, len(source))
 		}
@@ -119,7 +119,7 @@ func TestALiteralCarriesWhatItDecodesTo(t *testing.T) {
 	file := streamOf(t, map[string]string{"values.go": "package shop\n\nvar (\n\tname = \"a \\\"quoted\\\" name\"\n\thex  = 0x1f\n\tmark = 'x'\n\trate = 1.5\n)\n"}).Files[0]
 
 	values := map[string]string{}
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Kind != "literal" || node.Value == nil {
 			continue
 		}
@@ -182,7 +182,7 @@ func TestACommentLeadingADeclarationGroupBelongsToItsFirstDeclaration(t *testing
 	if len(file.Comments) != 1 || file.Comments[0].Attached == nil {
 		t.Fatalf("the comment above the group belongs to no node: %+v", file.Comments)
 	}
-	owner := file.Nodes()[*file.Comments[0].Attached]
+	owner, _ := file.Node(*file.Comments[0].Attached)
 	if owner.Kind != "constant" || !strings.HasPrefix(source[owner.Span.Start:], "Composer") {
 		t.Errorf("the comment above the group documents the %s at %q, where it documents the group's first constant", owner.Kind, source[owner.Span.Start:owner.Span.End])
 	}
@@ -195,7 +195,7 @@ func TestAPackageDocCommentDocumentsTheModule(t *testing.T) {
 	if len(file.Comments) != 1 || file.Comments[0].Attached == nil {
 		t.Fatalf("the package's doc comment belongs to no node: %+v", file.Comments)
 	}
-	if owner := file.Nodes()[*file.Comments[0].Attached]; owner.Kind != "module" {
+	if owner, _ := file.Node(*file.Comments[0].Attached); owner.Kind != "module" {
 		t.Errorf("the package's doc comment documents a %s, where it documents the module", owner.Kind)
 	}
 }
@@ -240,7 +240,7 @@ func TestTheSameFileAlwaysWritesTheSameStream(t *testing.T) {
 }
 
 func holdsKind(file *contract.File, kind string) bool {
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Kind == kind {
 			return true
 		}

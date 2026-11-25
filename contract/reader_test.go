@@ -134,8 +134,8 @@ func TestAStreamWrittenBackReadsTheSameWithItsTypesStillShared(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the stream written back does not read: %v\n%s", err, written.String())
 	}
-	if len(again.Files[0].Nodes()) != 8 {
-		t.Errorf("the stream written back holds %d nodes, want 8", len(again.Files[0].Nodes()))
+	if again.Files[0].NodeCount() != 8 {
+		t.Errorf("the stream written back holds %d nodes, want 8", again.Files[0].NodeCount())
 	}
 	caught, _ := again.Files[0].Node(5)
 	if caught.Resolved == nil || caught.Resolved.Name != `App\ReadFailure` {

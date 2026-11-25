@@ -50,7 +50,7 @@ func written(t *testing.T, files map[string]string) string {
 }
 
 func find(file *contract.File, check func(*contract.Node) bool) *contract.Node {
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if check(node) {
 			return node
 		}
@@ -75,7 +75,7 @@ func TestTheShopStreamsWholeAndPointsIntoItsSources(t *testing.T) {
 		if file.Root.Kind != "file" || file.Root.Span.End != len(source) {
 			t.Errorf("%s's root is %s over %v, not the whole file", file.Path, file.Root.Kind, file.Root.Span)
 		}
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			parent, ok := node.Parent()
 			if ok && (node.Span.Start < parent.Span.Start || node.Span.End > parent.Span.End) {
 				t.Errorf("%s: node %d %v lies outside its parent %v", file.Path, node.ID, node.Span, parent.Span)
@@ -381,7 +381,7 @@ trait Sorts { public function sort(array $rows): array { return $rows; } }
 class Board { use Sorts; public function sort(array $rows): array { return $rows; } }
 `})
 	obligations := map[string][]string{}
-	for _, node := range bridged(t, folder).Files[0].Nodes() {
+	for node := range bridged(t, folder).Files[0].Nodes() {
 		if node.Kind == "function" && node.Facts != nil && node.Symbol != "" {
 			for _, each := range node.Obligations {
 				obligations[node.Symbol] = append(obligations[node.Symbol], each.Symbol)
@@ -413,7 +413,7 @@ final class Till {
 `, "Stock/Order.php": "<?php\nnamespace App\\Stock;\nfinal class Order { public function total(): int { return 0; } }\n"})
 	var targets []string
 	for _, file := range bridged(t, folder).Files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Target != nil && strings.HasSuffix(node.Target.Symbol, "::total") {
 				targets = append(targets, node.Target.Symbol)
 			}
@@ -446,7 +446,7 @@ final class Shift {
 }
 `})
 	var targets []string
-	for _, node := range bridged(t, folder).Files[0].Nodes() {
+	for node := range bridged(t, folder).Files[0].Nodes() {
 		if node.Kind == "call" && node.Span.Line == 17 {
 			if node.Target != nil {
 				targets = append(targets, node.Target.Symbol)
@@ -472,7 +472,7 @@ final class Casters {
 }
 `})
 	var targets []string
-	for _, node := range bridged(t, folder).Files[0].Nodes() {
+	for node := range bridged(t, folder).Files[0].Nodes() {
 		if node.Kind == "collection" && node.Target != nil {
 			targets = append(targets, node.Target.Symbol)
 		}
@@ -496,7 +496,7 @@ final class Sorter {
 }
 `})
 	var targets []string
-	for _, node := range bridged(t, folder).Files[0].Nodes() {
+	for node := range bridged(t, folder).Files[0].Nodes() {
 		if node.Kind == "literal" && node.Target != nil {
 			targets = append(targets, node.Target.Symbol)
 		}
@@ -524,7 +524,7 @@ spl_autoload_register(function (string $class): void {
 	})
 	var targets []string
 	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Target != nil {
 				targets = append(targets, node.Target.Symbol)
 			}
@@ -549,7 +549,7 @@ class Report {
 }
 `})
 	bound := map[string]int{}
-	for _, node := range bridged(t, folder).Files[0].Nodes() {
+	for node := range bridged(t, folder).Files[0].Nodes() {
 		if node.Kind == "function" && node.Name != "" {
 			bound[node.Name] += len(node.Obligations)
 		}
@@ -596,7 +596,7 @@ spl_autoload_register(function (string $class): void {
 	})
 	var targets []string
 	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Target != nil {
 				targets = append(targets, node.Target.Symbol)
 			}
@@ -618,7 +618,7 @@ func TestAParameterIsTypedAsTheSubtypeItsDocCommentDocuments(t *testing.T) {
 	})
 	var targets []string
 	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Target != nil {
 				targets = append(targets, node.Target.Symbol)
 			}
@@ -642,7 +642,7 @@ func TestAPropertyAClassDocumentsIsTypedAsTheClassItNames(t *testing.T) {
 	})
 	var targets []string
 	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Target != nil {
 				targets = append(targets, node.Target.Symbol)
 			}
@@ -663,7 +663,7 @@ func TestAForeachValueIsTypedAsTheElementItsListIsDocumentedToHold(t *testing.T)
 	})
 	count := 0
 	for _, file := range bridged(t, filepath.Join(folder, "app")).Files {
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Target != nil && node.Target.Symbol == `App\Delivery\Zone::code` {
 				count++
 			}

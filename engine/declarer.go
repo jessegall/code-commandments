@@ -236,7 +236,7 @@ func readersOf(c *Codebase) map[string][]Match {
 	return Analysis(c, "readers", func(c *Codebase) map[string][]Match {
 		index := map[string][]Match{}
 		for _, file := range c.files {
-			for _, node := range file.Nodes() {
+			for node := range file.Nodes() {
 				reader := Match{node: node, file: file}
 				if declared := reader.Declared(); declared.Exists() {
 					index[declared.Location()] = append(index[declared.Location()], reader)

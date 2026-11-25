@@ -81,13 +81,13 @@ func descendants(node *contract.Node) []*contract.Node {
 }
 
 func resolvesOnLine(file *contract.File, line int, symbol string) bool {
-	return slices.ContainsFunc(file.Nodes(), func(node *contract.Node) bool {
+	return file.Any(func(node *contract.Node) bool {
 		return node.Span.Line == line && node.Facts != nil && (node.Refers == symbol || node.Target != nil && node.Target.Symbol == symbol)
 	})
 }
 
 func shownNodes(file *contract.File) string {
-	shown, err := json.Marshal(file.Nodes())
+	shown, err := json.Marshal(slices.Collect(file.Nodes()))
 	if err != nil {
 		return err.Error()
 	}

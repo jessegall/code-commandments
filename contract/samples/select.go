@@ -71,7 +71,7 @@ func NodeAt(file *contract.File, source []byte, line int, kind string, column in
 
 func NestedNodeAt(file *contract.File, source []byte, line int, kind string, column int, inner bool) (*contract.Node, error) {
 	var candidates []*contract.Node
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		if node.Kind == kind && node.Span.Line == line && (column == 0 || ColumnOf(source, node.Span.Start) == column) {
 			candidates = append(candidates, node)
 		}
@@ -92,7 +92,7 @@ func NestedNodeAt(file *contract.File, source []byte, line int, kind string, col
 	}
 	if len(candidates) == 0 {
 		var there []string
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Span.Line == line {
 				there = append(there, fmt.Sprintf("%s at %d", node.Kind, ColumnOf(source, node.Span.Start)))
 			}

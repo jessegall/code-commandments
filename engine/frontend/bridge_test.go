@@ -45,7 +45,7 @@ func TestTheFixtureStreamKeepsTheContract(t *testing.T) {
 		if file.Errors != 0 {
 			t.Errorf("%s: %d syntax errors in a fixture that parses", file.Path, file.Errors)
 		}
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Span.End > len(source) || node.Span.Start > node.Span.End {
 				t.Fatalf("%s: node %d (%s) spans [%d, %d) of %d bytes", file.Path, node.ID, node.Kind, node.Span.Start, node.Span.End, len(source))
 			}

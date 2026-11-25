@@ -34,7 +34,7 @@ func TestTheRoslynBridgeWritesAValidTreeOfTheCSharpFixture(t *testing.T) {
 		for _, comment := range file.Comments {
 			refs += len(comment.Refs)
 		}
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			if node.Kind == "unary" && node.Operator == "assert-present" {
 				forgiven++
 			}

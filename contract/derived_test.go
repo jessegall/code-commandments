@@ -22,7 +22,7 @@ func TestTheReaderLinksEachJumpToWhatItLeaves(t *testing.T) {
 		file := stream.Files[0]
 		var outer *Node
 		jumps := 0
-		for _, node := range file.Nodes() {
+		for node := range file.Nodes() {
 			switch {
 			case node.Kind == "loop" && outer == nil:
 				outer = node

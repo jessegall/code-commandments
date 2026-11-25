@@ -132,7 +132,7 @@ func referrers(c *Codebase) map[string][]Match {
 	return Analysis(c, "referrers", func(c *Codebase) map[string][]Match {
 		index := map[string][]Match{}
 		for _, file := range c.files {
-			for _, node := range file.Nodes() {
+			for node := range file.Nodes() {
 				if node.Facts == nil {
 					continue
 				}
@@ -162,7 +162,7 @@ func linkedReaders(c *Codebase) map[*contract.Node][]Match {
 	return Analysis(c, "reads linked to a binding", func(c *Codebase) map[*contract.Node][]Match {
 		index := map[*contract.Node][]Match{}
 		for _, file := range c.files {
-			for _, node := range file.Nodes() {
+			for node := range file.Nodes() {
 				for _, id := range node.Linked("binding") {
 					if bound := file.Match(id).node; bound != nil && bound != node {
 						index[bound] = append(index[bound], Match{node: node, file: file})
@@ -188,7 +188,7 @@ func overridersBySymbol(c *Codebase) map[string][]Match {
 	return Analysis(c, "functions by the symbols they override", func(c *Codebase) map[string][]Match {
 		index := map[string][]Match{}
 		for _, file := range c.files {
-			for _, node := range file.Nodes() {
+			for node := range file.Nodes() {
 				if node.Facts == nil {
 					continue
 				}

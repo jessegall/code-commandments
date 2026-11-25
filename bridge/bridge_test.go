@@ -48,7 +48,7 @@ func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
 
 func inSourceOrder(t *testing.T, file *contract.File) {
 	t.Helper()
-	for _, node := range file.Nodes() {
+	for node := range file.Nodes() {
 		parent, ok := node.Parent()
 		if ok && (node.Span.Start < parent.Span.Start || node.Span.End > parent.Span.End) {
 			t.Errorf("%s: node %d %v lies outside its parent %d %v", file.Path, node.ID, node.Span, parent.ID, parent.Span)
