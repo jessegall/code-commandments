@@ -31,6 +31,7 @@ and calls inside are still read) or translates with a loss, and why.
 | `role/break/label` | `break` and `continue` take no level or label |
 | `role/continue/label` | `break` and `continue` take no level or label |
 | `fact/directive/shorthand` | Vue markup; a Python file has no template |
+| `fact/module/perInstance` | a Vue `<script setup>` only: a module of this language runs its top-level code once, not once per instance |
 | `fact/element/form` | Vue markup; a Python file has no template |
 | `fact/element/resolves` | Vue markup; a Python file has no template |
 | `fact/element/tag` | Vue markup; a Python file has no template |

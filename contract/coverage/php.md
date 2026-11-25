@@ -33,6 +33,7 @@ and calls inside are still read) or translates with a loss, and why.
 | `role/comprehension-clause/condition` | PHP has no comprehension; `array_map` is a call. |
 | `role/comprehension-clause/iterable` | PHP has no comprehension; `array_map` is a call. |
 | `fact/directive/shorthand` | Markup kinds: only a Vue template has them. A PHP `#[...]` is an `annotation`, not the markup `attribute`. |
+| `fact/module/perInstance` | a Vue `<script setup>` only: a module of this language runs its top-level code once, not once per instance |
 | `fact/element/form` | Markup kinds: only a Vue template has them. A PHP `#[...]` is an `annotation`, not the markup `attribute`. |
 | `fact/element/resolves` | Markup kinds: only a Vue template has them. A PHP `#[...]` is an `annotation`, not the markup `attribute`. |
 | `fact/element/tag` | Markup kinds: only a Vue template has them. A PHP `#[...]` is an `annotation`, not the markup `attribute`. |

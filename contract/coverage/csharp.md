@@ -39,6 +39,7 @@ and calls inside are still read) or translates with a loss, and why.
 | `role/comprehension-clause/condition` | Python's. A C# query expression is a different construct and `contract/coverage/csharp.md` records it as unsupported. |
 | `role/comprehension-clause/iterable` | Python's. A C# query expression is a different construct and `contract/coverage/csharp.md` records it as unsupported. |
 | `fact/directive/shorthand` | Vue markup. A C# `[Attr]` is an `annotation`. |
+| `fact/module/perInstance` | a Vue `<script setup>` only: a module of this language runs its top-level code once, not once per instance |
 | `fact/element/form` | Vue markup. A C# `[Attr]` is an `annotation`. |
 | `fact/element/resolves` | Vue markup. A C# `[Attr]` is an `annotation`. |
 | `fact/element/tag` | Vue markup. A C# `[Attr]` is an `annotation`. |

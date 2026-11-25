@@ -28,6 +28,7 @@ names and calls inside are still read) or translates with a loss, and why.
 | `role/directive/value` | a Vue directive |
 | `link/directive/body` | a Vue directive |
 | `fact/directive/shorthand` | a Vue directive |
+| `fact/module/perInstance` | a Vue `<script setup>` only: a module of this language runs its top-level code once, not once per instance |
 | `kind/element` | Vue markup; TypeScript has no template (JSX is written as `unsupported`, coverage row) |
 | `role/element/attributes` | Vue markup; TypeScript has no template (JSX is written as `unsupported`, coverage row) |
 | `role/element/children` | Vue markup; TypeScript has no template (JSX is written as `unsupported`, coverage row) |

@@ -50,6 +50,7 @@ and calls inside are still read) or translates with a loss, and why.
 | `kind/embedded-expression` | Vue markup |
 | `kind/attribute` | Vue markup |
 | `fact/directive/shorthand` | Vue markup |
+| `fact/module/perInstance` | a Vue `<script setup>` only: a module of this language runs its top-level code once, not once per instance |
 | `fact/element/form` | Vue markup |
 | `fact/element/resolves` | Vue markup |
 | `fact/element/tag` | Vue markup |
