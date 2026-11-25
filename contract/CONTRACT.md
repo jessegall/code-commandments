@@ -165,7 +165,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   other language has one). Facts are the file's own (see *A file*).
 - **`module`**: a namespace, package or module scope. `imports[]`, `declarations[]`, `statements[]` (the
   executable top-level code of a script, in source order). Fact `name?` (the namespace or package as written;
-  absent for PHP's global namespace and a TypeScript file).
+  absent for PHP's global namespace and a TypeScript file), and `perInstance` when the module's top-level code runs
+  once per instance of what it defines, so its top-level variables are that instance's state (Vue `<script setup>`).
 - **`import`**: `bindings[]` (`import-binding`), `alias?` (`binding`: `import x as y`, Go's `import y "x"`).
   Facts: `source` (the module or path as written), `form` (`module`, `names`, `wildcard`, `side-effect`),
   `typeOnly`, `relativeLevel` (Python's leading dots), `resolves` (the absolute path of the file it reaches;
@@ -592,4 +593,4 @@ lists it in `implicitMembers`, as a promoted constructor parameter is listed els
 
 The file's root `file` holds one `module` per `<script>` block, and the template's elements under a `template`
 module, all with spans into the `.vue` file. A `<script setup>` beside a plain `<script>` is two modules of one
-component, and a template's references link to the script bindings they read.
+component, the setup one `perInstance`, and a template's references link to the script bindings they read.

@@ -96,13 +96,13 @@ export class VueWriter {
         return scope
     }
 
-    /** A script block's module, spanning its first statement to its last. */
+    /** A script block's module, spanning its first statement to its last; a `<script setup>` runs once per component instance. */
     script(block) {
         const [start, end] = inner(block)
         const statements = this.sourceFile.statements.filter((statement) => statement.getStart(this.sourceFile) >= start && statement.end <= end)
-        if (!statements.length) return new Node('module', start, start)
+        const module = statements.length ? this.scripts.module(statements, statements[0].getStart(this.sourceFile), statements.at(-1).end) : new Node('module', start, start)
 
-        return this.scripts.module(statements, statements[0].getStart(this.sourceFile), statements.at(-1).end)
+        return module.fact('perInstance', hasAttribute(block, 'setup'))
     }
 
     /** The template block's module, named `template`, spanning its first child to its last. */

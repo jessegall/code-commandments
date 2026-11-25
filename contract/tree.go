@@ -237,6 +237,7 @@ type RareFacts struct {
 	Conversion      string         `json:"conversion,omitempty"`
 	Tag             string         `json:"tag,omitempty"`
 	Shorthand       bool           `json:"shorthand,omitempty"`
+	PerInstance     bool           `json:"perInstance,omitempty"`
 	Construct       string         `json:"construct,omitempty"`
 	Label           string         `json:"label,omitempty"`
 	Mode            string         `json:"mode,omitempty"`

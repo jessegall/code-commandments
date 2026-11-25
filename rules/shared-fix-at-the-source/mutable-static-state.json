@@ -80,6 +80,14 @@
           "$declared",
           "field"
         ]
+      ],
+      [
+        "home",
+        [
+          "enclosing",
+          "$declared",
+          "module"
+        ]
       ]
     ],
     "having": [
@@ -153,6 +161,14 @@
                 "$declared",
                 "type"
               ]
+            ]
+          ],
+          [
+            "not",
+            [
+              "=",
+              "$home.perInstance",
+              true
             ]
           ]
         ],

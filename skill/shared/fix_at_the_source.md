@@ -89,7 +89,8 @@ class Importer {
 
 A write to a static field: a global variable with a namespace attached. Whichever write happens last wins, so the
 order code runs in changes the result, and no signature shows who depends on it. Hold changing state on an instance
-that someone owns and passes.
+that someone owns and passes. A module-level variable counts too, unless the module's top-level code runs once per
+instance, as a Vue `<script setup>` does: its variables are that component's own state.
 
 ```pseudo
 // Bad

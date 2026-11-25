@@ -1047,6 +1047,9 @@
         "shorthand": {
           "type": "boolean"
         },
+        "perInstance": {
+          "type": "boolean"
+        },
         "construct": {
           "type": "string",
           "minLength": 1
@@ -1341,7 +1344,8 @@
         "statements": "[]"
       },
       "facts": [
-        "name"
+        "name",
+        "perInstance"
       ],
       "links": {},
       "required": []
@@ -2294,6 +2298,9 @@
       "provenance": "parser"
     },
     "shorthand": {
+      "provenance": "parser"
+    },
+    "perInstance": {
       "provenance": "parser"
     },
     "construct": {
