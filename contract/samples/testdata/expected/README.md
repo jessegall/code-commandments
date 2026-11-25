@@ -182,6 +182,7 @@ meaning, never from a tree a bridge wrote. A language that truly cannot have an 
 | `contract-vue-file` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
 | `contract-vue-file-modules` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
 | `contract-vue-script-imports` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
+| `contract-vue-script-setup` | issue 957, the contract markers | vue | a `<script setup>` module is `perInstance`; no other language has a module that runs once per instance |
 | `contract-vue-script-jumps` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
 | `contract-vue-script-obligations` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |
 | `contract-vue-script-operators` | doc 65, the contract markers | vue | marked for the vue bridge's contract score (plan 13): its markers state what each line must produce |

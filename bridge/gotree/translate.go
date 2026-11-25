@@ -78,7 +78,7 @@ func (w *writer) between(kind string, from, to token.Pos) *contract.Node {
 		end = max(end, w.fset.Position(to).Offset)
 	}
 
-	return contract.NewNode(contract.Node{Kind: kind, Span: contract.Span{Start: start.Offset, End: end, Line: start.Line}})
+	return contract.NewNode(kind, contract.Span{Start: start.Offset, End: end, Line: start.Line})
 }
 
 func (w *writer) at(kind string, held ast.Node) *contract.Node {
@@ -161,8 +161,8 @@ func visibility(name string) *contract.Effective {
 
 func (w *writer) file(parsed *ast.File) *contract.Node {
 	whole := len(w.source)
-	root := contract.NewNode(contract.Node{Kind: "file", Span: contract.Span{Start: 0, End: whole, Line: 1}})
-	module := contract.NewNode(contract.Node{Kind: "module", Span: contract.Span{Start: 0, End: whole, Line: 1}})
+	root := contract.NewNode("file", contract.Span{Start: 0, End: whole, Line: 1})
+	module := contract.NewNode("module", contract.Span{Start: 0, End: whole, Line: 1})
 	module.Own().Name = parsed.Name.Name
 	var imports, declarations []*contract.Node
 	for index, declared := range parsed.Decls {

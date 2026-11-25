@@ -373,7 +373,7 @@ func (f *File) CommentMatch(comment contract.Comment, line int) Match {
 	span := comment.Span
 	span.Line = line
 
-	return Match{node: contract.NewNode(contract.Node{ID: -1, Kind: CommentKind, Span: span, Facts: &contract.Facts{Name: comment.Form}}), file: f}
+	return Match{node: &contract.Node{ID: -1, Kind: CommentKind, Span: span, Facts: &contract.Facts{Name: comment.Form}}, file: f}
 }
 
 func (f *File) Comments(node *contract.Node) []contract.Comment {

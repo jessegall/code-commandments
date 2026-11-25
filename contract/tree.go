@@ -616,12 +616,8 @@ func (f *Facts) settled() {
 	}
 }
 
-func NewNode(node Node) *Node {
-	if node.Facts == nil {
-		node.Facts = none
-	}
-
-	return &node
+func NewNode(kind string, span Span) *Node {
+	return &Node{Kind: kind, Span: span, Facts: none}
 }
 
 func Untouched() bool {
