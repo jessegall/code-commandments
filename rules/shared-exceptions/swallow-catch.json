@@ -267,102 +267,213 @@
             "no-op"
           ]
         ]
+      ],
+      [
+        "tryEnd",
+        [
+          "last",
+          "$site.parent.body.statements"
+        ]
+      ],
+      [
+        "catchEnd",
+        [
+          "first",
+          "$effective"
+        ]
       ]
     ],
     "having": [
-      "or",
+      "and",
       [
-        "=",
-        [
-          "count",
-          "$effective"
-        ],
-        0
-      ],
-      [
-        "and",
+        "or",
         [
           "=",
           [
             "count",
             "$effective"
           ],
-          1
+          0
         ],
         [
-          "some",
-          "$effective",
-          "exit",
+          "and",
           [
-            "and",
+            "=",
             [
-              "none",
-              [
-                "ownDescendants",
-                "$exit"
-              ],
-              "d",
-              [
-                "=",
-                "$d.kind",
-                "throw"
-              ]
+              "count",
+              "$effective"
             ],
+            1
+          ],
+          [
+            "some",
+            "$effective",
+            "exit",
             [
-              "case",
-              "$exit.kind",
-              {
-                "break": [
-                  "=",
-                  "$site.kind",
-                  "handler"
+              "and",
+              [
+                "none",
+                [
+                  "ownDescendants",
+                  "$exit"
                 ],
-                "continue": [
+                "d",
+                [
                   "=",
-                  "$site.kind",
-                  "handler"
-                ],
-                "return": [
-                  "or",
-                  [
-                    "and",
-                    [
-                      "=",
-                      "$site.kind",
-                      "handler"
-                    ],
-                    [
-                      "=",
-                      [
-                        "count",
-                        "$exit.values"
-                      ],
-                      0
-                    ]
+                  "$d.kind",
+                  "throw"
+                ]
+              ],
+              [
+                "case",
+                "$exit.kind",
+                {
+                  "break": [
+                    "=",
+                    "$site.kind",
+                    "handler"
                   ],
-                  [
-                    "and",
+                  "continue": [
+                    "=",
+                    "$site.kind",
+                    "handler"
+                  ],
+                  "return": [
+                    "or",
                     [
-                      ">",
+                      "and",
                       [
-                        "count",
-                        "$exit.values"
+                        "=",
+                        "$site.kind",
+                        "handler"
                       ],
-                      0
+                      [
+                        "=",
+                        [
+                          "count",
+                          "$exit.values"
+                        ],
+                        0
+                      ]
                     ],
                     [
-                      "every",
-                      "$exit.values",
-                      "v",
+                      "and",
                       [
-                        "absentValue",
-                        "$v"
+                        ">",
+                        [
+                          "count",
+                          "$exit.values"
+                        ],
+                        0
+                      ],
+                      [
+                        "every",
+                        "$exit.values",
+                        "v",
+                        [
+                          "absentValue",
+                          "$v"
+                        ]
                       ]
                     ]
                   ]
+                },
+                false
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$site.kind",
+            "handler"
+          ],
+          [
+            "=",
+            "$site.parent.kind",
+            "try"
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$effective"
+            ],
+            1
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$tryEnd.kind",
+              "return"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$tryEnd.values"
+              ],
+              1
+            ],
+            [
+              "some",
+              "$tryEnd.values",
+              "v",
+              [
+                "and",
+                [
+                  "=",
+                  "$v.literalKind",
+                  "boolean"
+                ],
+                [
+                  "in",
+                  "$v.value",
+                  "true",
+                  true
                 ]
-              },
-              false
+              ]
+            ]
+          ],
+          [
+            "and",
+            [
+              "=",
+              "$catchEnd.kind",
+              "return"
+            ],
+            [
+              "=",
+              [
+                "count",
+                "$catchEnd.values"
+              ],
+              1
+            ],
+            [
+              "some",
+              "$catchEnd.values",
+              "v",
+              [
+                "and",
+                [
+                  "=",
+                  "$v.literalKind",
+                  "boolean"
+                ],
+                [
+                  "in",
+                  "$v.value",
+                  "false",
+                  false
+                ]
+              ]
             ]
           ]
         ]

@@ -186,6 +186,113 @@
           "$x.operands"
         ]
       ]
+    },
+    "ownVocabulary": {
+      "args": [
+        "o"
+      ],
+      "expr": [
+        "or",
+        [
+          "and",
+          [
+            "=",
+            "$o.resolved.kind",
+            "literal"
+          ],
+          [
+            "!=",
+            "$o.resolved.origin",
+            "docblock"
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$o.resolved.kind",
+            "union"
+          ],
+          [
+            "!=",
+            "$o.resolved.origin",
+            "docblock"
+          ],
+          [
+            "every",
+            "$o.resolved.members",
+            "m",
+            [
+              "=",
+              "$m.kind",
+              "literal"
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$o.kind",
+            "access"
+          ],
+          [
+            "exists",
+            "$o.member.refers"
+          ],
+          [
+            "not",
+            [
+              "exists",
+              [
+                "declarationOf",
+                "$o.member"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "subjects": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "case",
+        "$d.kind",
+        {
+          "dispatch": [
+            "list",
+            "$d.subject"
+          ]
+        },
+        [
+          "filter",
+          [
+            "flatten",
+            [
+              "map",
+              [
+                "follow",
+                "$d",
+                "else",
+                "if"
+              ],
+              "r",
+              [
+                "comparedIn",
+                "$r.condition"
+              ]
+            ]
+          ],
+          "x",
+          [
+            "!=",
+            "$x.kind",
+            "literal"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -274,6 +381,24 @@
               "=",
               "$d.subject.member.name",
               "value"
+            ]
+          ]
+        ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "every",
+            [
+              "subjects",
+              "$d"
+            ],
+            "o",
+            [
+              "ownVocabulary",
+              "$o"
             ]
           ]
         ]

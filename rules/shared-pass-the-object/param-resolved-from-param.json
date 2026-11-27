@@ -199,6 +199,23 @@
         ]
       ],
       [
+        "every",
+        "$keys",
+        "k",
+        [
+          "and",
+          [
+            "=",
+            "$k.kind",
+            "reference"
+          ],
+          [
+            "idKey",
+            "$k"
+          ]
+        ]
+      ],
+      [
         "exists",
         [
           "typeDeclaration",
