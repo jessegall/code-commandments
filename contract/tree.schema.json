@@ -1939,7 +1939,8 @@
       "roles": {
         "subject": "1",
         "testedType": "?",
-        "binding": "?"
+        "binding": "?",
+        "pattern": "?"
       },
       "facts": [
         "negated",
@@ -2088,7 +2089,8 @@
         "subpatterns": "[]",
         "bindings": "[]",
         "constrainedType": "?",
-        "value": "?"
+        "value": "?",
+        "member": "?"
       },
       "facts": [
         "form",

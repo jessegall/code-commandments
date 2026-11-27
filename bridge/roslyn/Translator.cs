@@ -1041,6 +1041,12 @@ public sealed partial class ContractWriter
                 ConstantPatternSyntax { Expression: TypeSyntax named } when model.GetSymbolInfo(named).Symbol is ITypeSymbol =>
                     New("type-test", test).Fact("form", "is").Fact("negated", negated).Holds("subject", Expression(test.Expression)).Holds("testedType", TypeExpression(named)),
                 _ when OfConstants(pattern) => ConstantTest(test, pattern, negated),
+                RecursivePatternSyntax record => New("type-test", test)
+                    .Fact("form", "is")
+                    .Fact("negated", negated)
+                    .Holds("subject", Expression(test.Expression))
+                    .Holds("testedType", record.Type is null ? null : TypeExpression(record.Type))
+                    .Holds("pattern", Pattern(record)),
                 _ => Unsupported(test, "is-pattern"),
             };
         }

@@ -309,7 +309,9 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`fallback`**: `subject`, `replacement` (evaluated only when the trigger holds). Fact `trigger` (`null` for
   `??`, `falsy` for PHP's short ternary `a ?: b`).
 - **`conditional`**: `condition`, `consequent`, `alternative`.
-- **`type-test`**: `subject`, `testedType?` (absent only on a type switch, whose arms carry the types), `binding?` (C# `x is Money m`, a type switch's bound name). Facts
+- **`type-test`**: `subject`, `testedType?` (absent on a type switch, whose arms carry the types, and on a test of a
+  pattern that names no type), `binding?` (C# `x is Money m`, a type switch's bound name), `pattern?` (the record
+  pattern the subject is matched against: C#'s `x is { Min: not null }`, which also holds only when `x` is there). Facts
   `negated` (`!is`, `not isinstance`), `form` (`instanceof`, `is`, `isinstance`, `type-switch`). Python's
   `isinstance(x, A)` is a type-test where the compiler resolves the callee to the builtin.
 - **`cast`**: `operand`, `targetType`. Fact `form` (`checked`: C# `(T)x` or PHP `(int)$x`, which converts or
