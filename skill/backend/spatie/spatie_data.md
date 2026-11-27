@@ -8,7 +8,9 @@
 
 **Seal the class, type each field as what it really is, and build it through `::from`.**
 
-1. **A Data class is a leaf.** `final`, with `public readonly` promoted constructor properties.
+1. **A Data class is a leaf.** `final`, with `public readonly` promoted constructor properties. The one
+   exception is a Data object with a single owner: held in one private property and never handed out. It may
+   change itself in place (`$this->run->endProcess($id)`), since no one else can see it change.
 2. **Each field has one honest type.** There are three different things a field can be, and each has its own
    spelling:
 
@@ -59,7 +61,11 @@ $order = OrderData::from($row);
 ### non-final-data
 
 A Data class that is not `final`, or whose properties are not `readonly` promoted. It is a leaf, not a base class,
-and a value that can be changed after it was built cannot be trusted.
+and a value that can be changed after it was built cannot be trusted by anyone else who holds it.
+
+That is also where it stops: a Data object whose only holder is one private property of one class, never
+returned, passed on or assigned elsewhere, has no one else to surprise. Its properties may drop `readonly`, and it
+may change itself through a method that says what happened (`endProcess($id)`) instead of building a copy.
 
 ```php
 // Bad
@@ -76,6 +82,27 @@ final class AddressData extends Data
         public readonly string $street,
         public readonly string $city,
     ) {}
+}
+
+// Good: one private owner, never handed out
+final class SessionRun extends Data
+{
+    public function __construct(public array $liveProcesses) {}   // ← not readonly: only its owner holds it
+
+    public function endProcess(string $processId): void
+    {
+        $this->liveProcesses = array_values(array_diff($this->liveProcesses, [$processId]));
+    }
+}
+
+final class ReadyState
+{
+    private readonly SessionRun $run;                             // ← the only holder
+
+    public function onExit(ProcessExited $event): void
+    {
+        $this->run->endProcess($event->processId);
+    }
 }
 ```
 
