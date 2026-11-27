@@ -269,41 +269,64 @@
               "call"
             ],
             [
+              "every",
+              [
+                "filter",
+                [
+                  "flatten",
+                  [
+                    "list",
+                    [
+                      "list",
+                      "$s.expression"
+                    ],
+                    [
+                      "ownDescendants",
+                      "$s.expression"
+                    ]
+                  ]
+                ],
+                "c",
+                [
+                  "=",
+                  "$c.kind",
+                  "call"
+                ]
+              ],
+              "c",
+              [
+                "every",
+                "$c.arguments",
+                "g",
+                [
+                  "declarativeArgument",
+                  "$g.value"
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "some",
+          [
+            "ownDescendants",
+            "$f.body"
+          ],
+          "c",
+          [
+            "and",
+            [
+              "=",
+              "$c.kind",
+              "call"
+            ],
+            [
               ">",
               [
                 "count",
-                "$s.expression.arguments"
+                "$c.arguments"
               ],
               0
-            ],
-            [
-              "every",
-              "$s.expression.arguments",
-              "g",
-              [
-                "or",
-                [
-                  "in",
-                  "$g.value.kind",
-                  "literal",
-                  "collection"
-                ],
-                [
-                  "and",
-                  [
-                    "=",
-                    "$g.value.kind",
-                    "reference"
-                  ],
-                  [
-                    "not",
-                    [
-                      "exists",
-                      "$g.value.binding"
-                    ]
-                  ]
-                ]
-              ]
             ]
           ]
         ]
@@ -465,6 +488,69 @@
             "=",
             "$c.callee.member.name",
             "$f.name"
+          ]
+        ]
+      ]
+    },
+    "declarativeArgument": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "or",
+        [
+          "in",
+          "$v.kind",
+          "literal",
+          "collection"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "reference"
+          ],
+          [
+            "not",
+            [
+              "exists",
+              "$v.binding"
+            ]
+          ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "function"
+          ],
+          [
+            "=",
+            "$v.body.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$v.body.subject.kind",
+            "reference"
+          ],
+          [
+            "=",
+            "$v.body.subject.name",
+            [
+              "get",
+              [
+                "get",
+                [
+                  "first",
+                  "$v.parameters"
+                ],
+                "binding"
+              ],
+              "name"
+            ]
           ]
         ]
       ]
