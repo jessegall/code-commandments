@@ -560,6 +560,65 @@
           ]
         ]
       ]
+    },
+    "mixedIntoModels": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$t.form",
+          "trait"
+        ],
+        [
+          ">",
+          [
+            "count",
+            [
+              "filter",
+              [
+                "referrers",
+                "$t"
+              ],
+              "u",
+              [
+                "=",
+                "$u.role",
+                "mixins"
+              ]
+            ]
+          ],
+          0
+        ],
+        [
+          "every",
+          [
+            "filter",
+            [
+              "referrers",
+              "$t"
+            ],
+            "u",
+            [
+              "=",
+              "$u.role",
+              "mixins"
+            ]
+          ],
+          "u",
+          [
+            "assignable",
+            [
+              "enclosing",
+              "$u",
+              "type"
+            ],
+            "model"
+          ]
+        ]
+      ]
     }
   },
   "find": {
@@ -647,6 +706,14 @@
               [
                 "laravel.ownerIs",
                 "$c",
+                "eloquent-builder"
+              ]
+            ],
+            [
+              "not",
+              [
+                "laravel.ownerIs",
+                "$c",
                 "model-factory"
               ]
             ],
@@ -722,6 +789,17 @@
                       [
                         "exemptedBy",
                         "no-container",
+                        [
+                          "enclosing",
+                          "$r",
+                          "type"
+                        ]
+                      ]
+                    ],
+                    [
+                      "proven",
+                      [
+                        "mixedIntoModels",
                         [
                           "enclosing",
                           "$r",

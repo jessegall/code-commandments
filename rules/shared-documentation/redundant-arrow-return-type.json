@@ -34,6 +34,19 @@
         "!=",
         "$f.body.kind",
         "block"
+      ],
+      [
+        "!=",
+        "$f.returnType.form",
+        "opaque"
+      ],
+      [
+        "=",
+        [
+          "count",
+          "$f.returnType.typeArguments"
+        ],
+        0
       ]
     ],
     "let": [

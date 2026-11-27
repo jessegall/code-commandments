@@ -88,6 +88,13 @@
               "aggregate-root"
             ]
           ]
+        ],
+        [
+          "not",
+          [
+            "builtOnlyByItself",
+            "$d"
+          ]
         ]
       ]
     },
@@ -270,6 +277,34 @@
                 "public"
               ]
             ]
+          ]
+        ]
+      ]
+    },
+    "builtOnlyByItself": {
+      "args": [
+        "d"
+      ],
+      "expr": [
+        "some",
+        "$d.writtenMembers",
+        "m",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "function"
+          ],
+          [
+            "=",
+            "$m.form",
+            "constructor"
+          ],
+          [
+            "=",
+            "$m.effective.visibility",
+            "private"
           ]
         ]
       ]
