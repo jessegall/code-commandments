@@ -263,6 +263,28 @@ class ProjectCall {
 header = call.project()
 ```
 
+### made-null-then-checked
+
+A function turns a condition into an absence of its own making, `x = c ? find() : none`, and then asks again
+whether `x` is there, once or in every branch that follows. Two different reasons for "nothing" (the condition was
+false, the lookup found nothing) are folded into one null, and each guard re-decides what the first line already
+knew. Decide on the condition once: return early where there is nothing to do, so from there on the value is
+certain, and let a branch that is done return instead of the next one re-testing it.
+
+```pseudo
+// Bad
+turn = stop.hasClosingWords() ? turns.find(stop.turnId) : none   // ← a null made from a condition
+if (turn != none and not turn.hasOffered(words)) { offer(words) }
+if (turn != none and turn.hasOffered(words) and turn.isPending()) { keepPrivate() }   // ← asked again
+
+// Good
+if (not stop.hasClosingWords()) { return }
+turn = turns.find(stop.turnId)
+if (turn == none) { return }
+if (not turn.hasOffered(words)) { offer(words); return }
+if (turn.isPending()) { keepPrivate() }
+```
+
 ### blank-string-default
 
 A required text parameter defaults to `""`. A caller that forgets it gets a blank that travels on as if it were data.

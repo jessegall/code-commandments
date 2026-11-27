@@ -624,6 +624,14 @@
         "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen"
     },
     {
+        "key": "sin_made-null-then-checked",
+        "title": "made-null-then-checked",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A local is made null by a conditional (`c ? x : null`) and then checked against null again later in the same function"
+    },
+    {
         "key": "sin_manufactured-fake-fill",
         "title": "manufactured-fake-fill",
         "type": "flag",

@@ -15,6 +15,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`erased-null-object`** — A blank-rendering Null Object written into a `string` slot — coerced back to `''` — `erased-null-object`
 - **`false-for-nothing`** — A return typed `X|false`: `false` stands in for "nothing" or "failed", and every caller must test for it. — `false-for-nothing`
 - **`falsely-optional-field`** — A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen — `falsely-optional-field`
+- **`made-null-then-checked`** — A local is made null by a conditional (`c ? x : null`) and then checked against null again later in the same function — `made-null-then-checked`
 - **`manufactured-fake-fill`** — An empty scalar stands in for a missing key a lookup is asked for — `manufactured-fake-fill`
 - **`masked-invariant`** — Masking an optional field behind a literal hides a value the design requires — `masked-invariant`
 - **`match-default-returns-null`** — The default arm silently returns an absent value — `match-default-returns-null`

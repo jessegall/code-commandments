@@ -1146,6 +1146,34 @@
             ],
             "detail": true
         },
+        "sin_made-null-then-checked": {
+            "title": "made-null-then-checked",
+            "help": "A local is made null by a conditional (`c ? x : null`) and then checked against null again later in the same function",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_manufactured-fake-fill": {
             "title": "manufactured-fake-fill",
             "help": "An empty scalar stands in for a missing key a lookup is asked for",

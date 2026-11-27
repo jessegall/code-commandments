@@ -272,6 +272,28 @@ class ProjectCall {
 header = call.project()
 ```
 
+### made-null-then-checked
+
+A function turns a condition into an absence of its own making, `x = c ? find() : none`, and then asks again
+whether `x` is there, once or in every branch that follows. Two different reasons for "nothing" (the condition was
+false, the lookup found nothing) are folded into one null, and each guard re-decides what the first line already
+knew. Decide on the condition once: return early where there is nothing to do, so from there on the value is
+certain, and let a branch that is done return instead of the next one re-testing it.
+
+```pseudo
+// Bad
+turn = stop.hasClosingWords() ? turns.find(stop.turnId) : none   // ← a null made from a condition
+if (turn != none and not turn.hasOffered(words)) { offer(words) }
+if (turn != none and turn.hasOffered(words) and turn.isPending()) { keepPrivate() }   // ← asked again
+
+// Good
+if (not stop.hasClosingWords()) { return }
+turn = turns.find(stop.turnId)
+if (turn == none) { return }
+if (not turn.hasOffered(words)) { offer(words); return }
+if (turn.isPending()) { keepPrivate() }
+```
+
 ### blank-string-default
 
 A required text parameter defaults to `""`. A caller that forgets it gets a blank that travels on as if it were data.
@@ -482,7 +504,7 @@ class Cart {
 ## Commands
 
 - `{{binary}} judge --skill=shared/absence` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `capability-probe-hub`, `checked-then-read`, `coalesced-loop-subject`, `conditional-array-spread`, `csharp-null-forgiven`, `de-nulled-finder`, `defended-certain-field`, `erased-null-object`, `false-for-nothing`, `falsely-optional-field`, `manufactured-fake-fill`, `masked-invariant`, `match-default-returns-null`, `nullable-callback`, `nullable-registry-lookup`, `option-as-nullable`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `capability-probe-hub`, `checked-then-read`, `coalesced-loop-subject`, `conditional-array-spread`, `csharp-null-forgiven`, `de-nulled-finder`, `defended-certain-field`, `erased-null-object`, `false-for-nothing`, `falsely-optional-field`, `made-null-then-checked`, `manufactured-fake-fill`, `masked-invariant`, `match-default-returns-null`, `nullable-callback`, `nullable-registry-lookup`, `option-as-nullable`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
