@@ -568,6 +568,14 @@
         "help": "The loop header replaces a missing collection with an empty one"
     },
     {
+        "key": "sin_coalesced-past-default",
+        "title": "coalesced-past-default",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "A call's missing result coalesced with a fallback the called method would take as its own default argument (`$headers->get('X') ?? $fallback`)"
+    },
+    {
         "key": "sin_conditional-array-spread",
         "title": "conditional-array-spread",
         "type": "flag",

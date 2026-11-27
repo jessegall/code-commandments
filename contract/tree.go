@@ -871,9 +871,10 @@ type OutsideMember struct {
 
 // OutsideParameter is a parameter of an outside member.
 type OutsideParameter struct {
-	Name     string   `json:"name"`
-	Declared *Type    `json:"declared,omitempty"`
-	Flags    []string `json:"flags,omitempty"`
+	Name       string   `json:"name"`
+	Declared   *Type    `json:"declared,omitempty"`
+	Documented *Type    `json:"documented,omitempty"`
+	Flags      []string `json:"flags,omitempty"`
 }
 
 // Alias is a module path alias imports resolve through.

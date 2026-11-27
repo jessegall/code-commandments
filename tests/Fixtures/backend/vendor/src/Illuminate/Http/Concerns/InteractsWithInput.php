@@ -9,7 +9,7 @@ trait InteractsWithInput
     public function server($key = NULL, $default = NULL) {}
     /** @return bool */
     public function hasHeader($key) {}
-    /** @return string|array|null */
+    /** @param string|array|null $default @return string|array|null */
     public function header($key = NULL, $default = NULL) {}
     /** @return string|null */
     public function bearerToken() {}
@@ -17,7 +17,7 @@ trait InteractsWithInput
     public function keys() {}
     /** @return array */
     public function all($keys = NULL) {}
-    /** @return mixed */
+    /** @param mixed $default @return mixed */
     public function input($key = NULL, $default = NULL) {}
     /** @return \Illuminate\Support\Fluent */
     public function fluent($key = NULL, array $default = array (
@@ -87,7 +87,7 @@ trait InteractsWithInput
     public function date($key, $format = NULL, $tz = NULL) {}
     /** @return \Carbon\CarbonInterval|null */
     public function interval($key, $unit = NULL) {}
-    /** @return TEnum|TDefault */
+    /** @param TDefault $default @return TEnum|TDefault */
     public function enum($key, $enumClass, $default = NULL) {}
     /** @return TEnum[] */
     public function enums($key, $enumClass) {}

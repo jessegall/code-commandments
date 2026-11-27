@@ -285,6 +285,21 @@ if (not turn.hasOffered(words)) { offer(words); return }
 if (turn.isPending()) { keepPrivate() }
 ```
 
+### coalesced-past-default
+
+A call whose missing result is coalesced with a fallback, when the method called already takes that fallback as its
+own default argument. `headers.get(name) ?? fresh()` asks the method for nothing, receives the null it returns for
+want of a default, and then replaces it: the method's own answer to "and if it is not there?" is skipped, and the
+reader has to see that the two halves belong together. Hand the fallback to the parameter the method declares for it.
+
+```pseudo
+// Bad
+key = request.headers.get(IDEMPOTENCY_HEADER) ?? newUlid()   // ← get() takes the fallback itself
+
+// Good
+key = request.headers.get(IDEMPOTENCY_HEADER, newUlid())
+```
+
 ### blank-string-default
 
 A required text parameter defaults to `""`. A caller that forgets it gets a blank that travels on as if it were data.

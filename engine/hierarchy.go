@@ -311,3 +311,27 @@ func named(nodes []Match) []string {
 
 	return names
 }
+
+// CalledOutsideMember is the library method a call is bound to, as the library declares it: the method of that name on
+// the call's target type or on the nearest supertype that declares it. False where the call names no target type or
+// no library declares the method.
+func (m Match) CalledOutsideMember() (contract.OutsideMember, bool) {
+	if m.node == nil || m.file == nil || m.node.Target == nil || m.node.Target.Type == "" {
+		return contract.OutsideMember{}, false
+	}
+	target := m.node.Target
+	owners := []string{target.Type}
+	if types, typed := m.Types(); typed {
+		owners = append(owners, Supertypes(types, target.Type)...)
+	}
+	symbols := outsideSymbols(m.file.Codebase(), m.file.Language())
+	for _, owner := range owners {
+		for _, member := range symbols[owner].Members {
+			if member.Kind == "method" && strings.EqualFold(member.Name, target.Name) {
+				return member, true
+			}
+		}
+	}
+
+	return contract.OutsideMember{}, false
+}

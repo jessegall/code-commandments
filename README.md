@@ -370,7 +370,7 @@ _27 skills. Full table in [README.skills.md](README.skills.md)._
 Every problem the tool finds, and the rule file that finds it:
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_180 sins across 27 skills. Full tables in [README.sins.md](README.sins.md)._
+_181 sins across 27 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## License

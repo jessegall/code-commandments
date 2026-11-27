@@ -246,6 +246,7 @@ judged.
 | `or` | truth, truth, … | truth | true when one operand is true; false when every operand is false; unknown otherwise |
 | `origin` | value | text | where a node's declaration lies: project, library or unknown |
 | `originRank` | value | number | how much a type's origin is to be trusted: compiler 4, written 3, attribute 2, documented 1, inferred 0 |
+| `outsideParameters` | node | list | the parameters of the library method a call is bound to, in order, each a record of name, type, documented, returns (the documented return, else the declared one), optional, nullDefault and variadic; unknown where no library declares it |
 | `overriders` | node | list | every function in the program whose obligations name the function: the members that override or implement it |
 | `ownAncestors` | node | list | every node above the node, nearest first, up to the function it is written in |
 | `ownDescendants` | node, text | list | every node under the node, leaving out what a function, type or comprehension written inside it holds, only those of the kind or category named when one is; empty for no node, unknown for a node the parser recovered from |

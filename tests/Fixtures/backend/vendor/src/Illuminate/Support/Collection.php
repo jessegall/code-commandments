@@ -63,7 +63,7 @@ class Collection implements \ArrayAccess, \Illuminate\Contracts\Support\CanBeEsc
     public function flip() {}
     /** @return $this */
     public function forget($keys) {}
-    /** @return TValue|TGetDefault */
+    /** @param TGetDefault|(\Closure(): TGetDefault) $default @return TValue|TGetDefault */
     public function get($key, $default = NULL) {}
     /** @return TValue|TGetOrPutValue */
     public function getOrPut($key, $value) {}

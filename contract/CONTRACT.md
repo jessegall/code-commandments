@@ -455,7 +455,7 @@ attached to what it documents, so every documentation rule reads one list.
 
 | key | what | provenance |
 |---|---|---|
-| `symbols` | declarations outside the scanned files: PHP reflects them from vendor, C# reads referenced assemblies. Each `{"symbol", "kind", "name", "file"?, "internal"?, "extends"?, "implements"?, "uses"?, "modifiers"?, "members"?}`, closed over every ancestor and every class a member's type names | compiler |
+| `symbols` | declarations outside the scanned files: PHP reflects them from vendor, C# reads referenced assemblies. Each `{"symbol", "kind", "name", "file"?, "internal"?, "extends"?, "implements"?, "uses"?, "modifiers"?, "members"?}`, closed over every ancestor and every class a member's type names. A method member's `parameters` are each `{"name", "declared"?, "documented"?, "flags"?}`: `documented` is the type its `@param` names, and `flags` among `variadic`, `by-ref`, `promoted`, `optional` and `null-default` (its default is `null`) | compiler |
 | `unreadable` | `[{"symbol", "reason"}]`: classes the project's own loader failed on | compiler |
 | `loader` | why the project's own loader was not used, absent when it was | compiler |
 | `packages` | the installed packages: `[{"name", "version", "ecosystem"}]` (`composer`, `pip`, `nuget`, `npm`, `go`) | package |

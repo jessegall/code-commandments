@@ -1,0 +1,214 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "coalesced-past-default",
+    "aliases": [
+      "CoalescedPastDefault"
+    ],
+    "skill": "shared/absence",
+    "description": "A call's missing result coalesced with a fallback the called method would take as its own default argument (`$headers->get('X') ?? $fallback`)",
+    "rule": "Hand the fallback to the method's default parameter instead of coalescing the null it returns for want of one.",
+    "suggestion": "Pass the fallback as the argument the method already declares for it: `$headers->get('X', $fallback)`."
+  },
+  "find": {
+    "select": "fallback",
+    "as": "f",
+    "where": [
+      "and",
+      [
+        "not",
+        "$f.file.test"
+      ],
+      [
+        "=",
+        "$f.trigger",
+        "null"
+      ],
+      [
+        "=",
+        "$f.subject.kind",
+        "call"
+      ],
+      [
+        "none",
+        "$f.subject.arguments",
+        "a",
+        [
+          "or",
+          [
+            "exists",
+            "$a.label"
+          ],
+          [
+            "and",
+            [
+              "exists",
+              "$a.spread"
+            ],
+            [
+              "!=",
+              "$a.spread",
+              "none"
+            ]
+          ]
+        ]
+      ],
+      [
+        "!=",
+        "$f.replacement.kind",
+        "throw"
+      ]
+    ],
+    "let": [
+      [
+        "call",
+        "$f.subject"
+      ],
+      [
+        "next",
+        [
+          "at",
+          [
+            "outsideParameters",
+            "$f.subject"
+          ],
+          [
+            "count",
+            "$f.subject.arguments"
+          ]
+        ]
+      ],
+      [
+        "defaultType",
+        [
+          "case",
+          [
+            "exists",
+            [
+              "get",
+              "$next",
+              "documented"
+            ]
+          ],
+          {
+            "true": [
+              "get",
+              "$next",
+              "documented"
+            ]
+          },
+          [
+            "get",
+            "$next",
+            "type"
+          ]
+        ]
+      ]
+    ],
+    "having": [
+      "and",
+      [
+        "exists",
+        "$next"
+      ],
+      [
+        "=",
+        [
+          "get",
+          "$next",
+          "optional"
+        ],
+        true
+      ],
+      [
+        "=",
+        [
+          "get",
+          "$next",
+          "nullDefault"
+        ],
+        true
+      ],
+      [
+        "=",
+        [
+          "get",
+          "$next",
+          "variadic"
+        ],
+        false
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            [
+              "isNullable",
+              [
+                "typeOf",
+                "$call"
+              ]
+            ],
+            false
+          ]
+        ]
+      ],
+      [
+        "returnsItsDefault",
+        "$defaultType",
+        [
+          "get",
+          "$next",
+          "returns"
+        ]
+      ]
+    ],
+    "emit": "$f"
+  },
+  "definitions": {
+    "returnsItsDefault": {
+      "args": [
+        "default",
+        "returned"
+      ],
+      "expr": [
+        "some",
+        [
+          "typeMembers",
+          "$default"
+        ],
+        "t",
+        [
+          "and",
+          [
+            "!=",
+            [
+              "get",
+              "$t",
+              "name"
+            ],
+            "null"
+          ],
+          [
+            "some",
+            [
+              "typeMembers",
+              "$returned"
+            ],
+            "r",
+            [
+              "sameType",
+              "$t",
+              "$r"
+            ]
+          ]
+        ]
+      ]
+    }
+  }
+}

@@ -69,7 +69,7 @@ trait EnumeratesValues
     public function eachSpread(callable $callback) {}
     /** @return bool */
     public function every($key, $operator = NULL, $value = NULL) {}
-    /** @return TValue|null */
+    /** @param mixed $value @return TValue|null */
     public function firstWhere($key, $operator = NULL, $value = NULL) {}
     public function hasMany($key = NULL, $operator = NULL, $value = NULL): bool {}
     /** @return TValue|TValueDefault */

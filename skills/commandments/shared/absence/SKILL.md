@@ -294,6 +294,21 @@ if (not turn.hasOffered(words)) { offer(words); return }
 if (turn.isPending()) { keepPrivate() }
 ```
 
+### coalesced-past-default
+
+A call whose missing result is coalesced with a fallback, when the method called already takes that fallback as its
+own default argument. `headers.get(name) ?? fresh()` asks the method for nothing, receives the null it returns for
+want of a default, and then replaces it: the method's own answer to "and if it is not there?" is skipped, and the
+reader has to see that the two halves belong together. Hand the fallback to the parameter the method declares for it.
+
+```pseudo
+// Bad
+key = request.headers.get(IDEMPOTENCY_HEADER) ?? newUlid()   // ← get() takes the fallback itself
+
+// Good
+key = request.headers.get(IDEMPOTENCY_HEADER, newUlid())
+```
+
 ### blank-string-default
 
 A required text parameter defaults to `""`. A caller that forgets it gets a blank that travels on as if it were data.
@@ -504,7 +519,7 @@ class Cart {
 ## Commands
 
 - `{{binary}} judge --skill=shared/absence` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `capability-probe-hub`, `checked-then-read`, `coalesced-loop-subject`, `conditional-array-spread`, `csharp-null-forgiven`, `de-nulled-finder`, `defended-certain-field`, `erased-null-object`, `false-for-nothing`, `falsely-optional-field`, `made-null-then-checked`, `manufactured-fake-fill`, `masked-invariant`, `match-default-returns-null`, `nullable-callback`, `nullable-registry-lookup`, `option-as-nullable`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `capability-probe-hub`, `checked-then-read`, `coalesced-loop-subject`, `coalesced-past-default`, `conditional-array-spread`, `csharp-null-forgiven`, `de-nulled-finder`, `defended-certain-field`, `erased-null-object`, `false-for-nothing`, `falsely-optional-field`, `made-null-then-checked`, `manufactured-fake-fill`, `masked-invariant`, `match-default-returns-null`, `nullable-callback`, `nullable-registry-lookup`, `option-as-nullable`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

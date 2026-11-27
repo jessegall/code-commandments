@@ -196,7 +196,16 @@ final class OutsideSymbols
                 if ($parameter->hasType()) {
                     $entry['declared'] = $this->type($parameter->getType());
                 }
-                $flags = array_keys(array_filter(['variadic' => $parameter->isVariadic(), 'by-ref' => $parameter->isPassedByReference(), 'promoted' => $parameter->isPromoted()]));
+                if ($doc !== false && preg_match('/@param\s+([^\n]+?)\s+(?:\.\.\.)?\$' . preg_quote($parameter->getName(), '/') . '\b/', $doc, $documentedParameter)) {
+                    $entry['documented'] = $this->documentedType($documentedParameter[1], $reflection->getName());
+                }
+                $flags = array_keys(array_filter([
+                    'variadic' => $parameter->isVariadic(),
+                    'by-ref' => $parameter->isPassedByReference(),
+                    'promoted' => $parameter->isPromoted(),
+                    'optional' => $parameter->isOptional(),
+                    'null-default' => $parameter->isDefaultValueAvailable() && !$parameter->isDefaultValueConstant() && $parameter->getDefaultValue() === null,
+                ]));
                 if ($flags !== []) {
                     $entry['flags'] = $flags;
                 }

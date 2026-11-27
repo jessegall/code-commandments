@@ -28,6 +28,7 @@ func init() {
 		"memberGroup":   {operands: []valueType{node}, gives: text, says: "the group a member belongs to in a type's layout: enum-case, constant, static-field, field-public, field-protected, field-private, field-hooked, constructor or method"},
 		"functionRole":  {operands: []valueType{node}, gives: list, says: "the roles a function plays: constructor, named-constructor, getter, setter, override, test, sole-statement"},
 		"parameterOf":   {operands: []valueType{node}, gives: node, says: "the parameter of the called declaration an argument binds to, by its label or its position; unknown where the call's target is not resolved"},
+		"outsideParameters": {operands: []valueType{node}, gives: list, says: "the parameters of the library method a call is bound to, in order, each a record of name, type, documented, returns (the documented return, else the declared one), optional, nullDefault and variadic; unknown where no library declares it"},
 		"annotated":     {operands: []valueType{node, text}, gives: list, says: "the attributes, annotations or decorators on a declaration that name the symbol given, by what they resolve to"},
 	}, map[string]computation{
 		"typeOf": func(_ evaluation, operands []value) value { return onNode(operands, typeOf) },
@@ -88,6 +89,9 @@ func init() {
 			return truthValue(engine.TruthOf(sameType(first, second)))
 		},
 		"fieldsOf": func(e evaluation, operands []value) value { return fieldsOf(e, operands[0]) },
+		"outsideParameters": func(_ evaluation, operands []value) value {
+			return onNode(operands, func(call engine.Match) value { return outsideParameters(call) })
+		},
 		"fieldType": func(e evaluation, operands []value) value {
 			_, field, read := fieldNamed(e, operands)
 			if !read {
@@ -416,6 +420,42 @@ func functionRoles(site engine.Match) value {
 	add("sole-statement", len(site.Child("body").ChildrenIn("statements")) == 1)
 
 	return known(roles)
+}
+
+// outsideParameters is the parameters of the library method a call is bound to, each a record of what the library
+// declares about it, with what the method returns.
+func outsideParameters(call engine.Match) value {
+	member, declared := call.CalledOutsideMember()
+	if !declared {
+		return unknown
+	}
+	returned := member.Documented
+	if returned == nil || returned.Kind == "opaque" {
+		returned = member.Returns
+	}
+	records := make([]value, 0, len(member.Parameters))
+	for _, parameter := range member.Parameters {
+		records = append(records, known(record{
+			"name":        known(parameter.Name),
+			"type":        typeOrNone(parameter.Declared),
+			"documented":  typeOrNone(parameter.Documented),
+			"returns":     typeOrNone(returned),
+			"optional":    known(slices.Contains(parameter.Flags, "optional")),
+			"nullDefault": known(slices.Contains(parameter.Flags, "null-default")),
+			"variadic":    known(slices.Contains(parameter.Flags, "variadic")),
+		}))
+	}
+
+	return known(records)
+}
+
+// typeOrNone is a type as a value, no value where there is none.
+func typeOrNone(held *contract.Type) value {
+	if held == nil {
+		return known(nil)
+	}
+
+	return known(held)
 }
 
 // parameterOf is the parameter of the called declaration an argument binds to.

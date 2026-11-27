@@ -950,6 +950,34 @@
             ],
             "detail": true
         },
+        "sin_coalesced-past-default": {
+            "title": "coalesced-past-default",
+            "help": "A call's missing result coalesced with a fallback the called method would take as its own default argument (`$headers->get('X') ?? $fallback`)",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_conditional-array-spread": {
             "title": "conditional-array-spread",
             "help": "A spread branch supplies an empty collection as a placeholder",

@@ -479,13 +479,18 @@
               "declared": {
                 "$ref": "#/$defs/type"
               },
+              "documented": {
+                "$ref": "#/$defs/type"
+              },
               "flags": {
                 "type": "array",
                 "items": {
                   "enum": [
                     "variadic",
                     "by-ref",
-                    "promoted"
+                    "promoted",
+                    "optional",
+                    "null-default"
                   ]
                 },
                 "uniqueItems": true
