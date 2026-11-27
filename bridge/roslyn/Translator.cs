@@ -821,6 +821,10 @@ public sealed partial class ContractWriter
             _ => Unsupported(expression, expression.Kind().ToString()),
         };
 
+        /// <summary>The operator <paramref name="token"/> names in <paramref name="expression"/>: a <c>+</c> that yields a string joins text, so it is a concatenation.</summary>
+        private string? Operator(ExpressionSyntax expression, string token) =>
+            token == "+" && model.GetTypeInfo(expression).Type?.SpecialType == SpecialType.System_String ? "concatenate" : Operators.GetValueOrDefault(token);
+
         private bool IsTypeOrNamespace(ExpressionSyntax expression) =>
             expression is PredefinedTypeSyntax || model.GetSymbolInfo(expression).Symbol is INamedTypeSymbol or INamespaceSymbol;
 
@@ -936,7 +940,7 @@ public sealed partial class ContractWriter
 
             return New("assignment", assignment)
                 .Fact("mode", mode)
-                .Fact("operator", mode == "compound" ? Operators.GetValueOrDefault(assignment.OperatorToken.Text[..^1]) : null)
+                .Fact("operator", mode == "compound" ? Operator(assignment, assignment.OperatorToken.Text[..^1]) : null)
                 .HoldsAll("targets", [Expression(assignment.Left)])
                 .HoldsAll("values", [Expression(assignment.Right)]);
         }
@@ -958,7 +962,7 @@ public sealed partial class ContractWriter
                 SyntaxKind.IsExpression => New("type-test", binary).Fact("form", "is").Holds("subject", Expression(binary.Left)).Holds("testedType", TypeExpression((TypeSyntax)binary.Right)),
                 SyntaxKind.AsExpression => New("cast", binary).Fact("form", "safe").Holds("operand", Expression(binary.Left)).Holds("targetType", TypeExpression((TypeSyntax)binary.Right)),
                 _ => New("binary", binary)
-                    .Fact("operator", Operators.GetValueOrDefault(binary.OperatorToken.Text))
+                    .Fact("operator", Operator(binary, binary.OperatorToken.Text))
                     .Holds("left", Expression(binary.Left))
                     .Holds("right", Expression(binary.Right)),
             };

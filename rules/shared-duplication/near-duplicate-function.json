@@ -232,106 +232,6 @@
         ]
       ]
     },
-    "declaration": {
-      "args": [
-        "f"
-      ],
-      "expr": [
-        "and",
-        [
-          ">",
-          [
-            "count",
-            [
-              "effective",
-              "$f.body"
-            ]
-          ],
-          0
-        ],
-        [
-          "every",
-          [
-            "effective",
-            "$f.body"
-          ],
-          "s",
-          [
-            "and",
-            [
-              "=",
-              "$s.kind",
-              "expression-statement"
-            ],
-            [
-              "=",
-              "$s.expression.kind",
-              "call"
-            ],
-            [
-              "every",
-              [
-                "filter",
-                [
-                  "flatten",
-                  [
-                    "list",
-                    [
-                      "list",
-                      "$s.expression"
-                    ],
-                    [
-                      "ownDescendants",
-                      "$s.expression"
-                    ]
-                  ]
-                ],
-                "c",
-                [
-                  "=",
-                  "$c.kind",
-                  "call"
-                ]
-              ],
-              "c",
-              [
-                "every",
-                "$c.arguments",
-                "g",
-                [
-                  "declarativeArgument",
-                  "$g.value"
-                ]
-              ]
-            ]
-          ]
-        ],
-        [
-          "some",
-          [
-            "ownDescendants",
-            "$f.body"
-          ],
-          "c",
-          [
-            "and",
-            [
-              "=",
-              "$c.kind",
-              "call"
-            ],
-            [
-              ">",
-              [
-                "count",
-                "$c.arguments"
-              ],
-              0
-            ]
-          ]
-        ]
-      ]
-    },
     "buildsItsOwnType": {
       "args": [
         "f"
@@ -491,69 +391,6 @@
           ]
         ]
       ]
-    },
-    "declarativeArgument": {
-      "args": [
-        "v"
-      ],
-      "expr": [
-        "or",
-        [
-          "in",
-          "$v.kind",
-          "literal",
-          "collection"
-        ],
-        [
-          "and",
-          [
-            "=",
-            "$v.kind",
-            "reference"
-          ],
-          [
-            "not",
-            [
-              "exists",
-              "$v.binding"
-            ]
-          ]
-        ],
-        [
-          "and",
-          [
-            "=",
-            "$v.kind",
-            "function"
-          ],
-          [
-            "=",
-            "$v.body.kind",
-            "access"
-          ],
-          [
-            "=",
-            "$v.body.subject.kind",
-            "reference"
-          ],
-          [
-            "=",
-            "$v.body.subject.name",
-            [
-              "get",
-              [
-                "get",
-                [
-                  "first",
-                  "$v.parameters"
-                ],
-                "binding"
-              ],
-              "name"
-            ]
-          ]
-        ]
-      ]
     }
   },
   "find": {
@@ -590,7 +427,7 @@
             "$f"
           ],
           [
-            "declaration",
+            "tree.declaresOnly",
             "$f"
           ],
           [

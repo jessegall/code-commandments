@@ -490,6 +490,10 @@
           [
             "resolvedRequestAction",
             "$f"
+          ],
+          [
+            "tree.declaresOnly",
+            "$f"
           ]
         ]
       },
