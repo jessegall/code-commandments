@@ -10,7 +10,7 @@
       "HandKeyRemap"
     ],
     "skill": "php/spatie-data-hydration",
-    "description": "A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`",
+    "description": "A `::from([...])` mechanically renames `$src['snake_key']` \u2192 `camelKey` by hand, instead of a class-level `#[MapInputName]`",
     "rule": "Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.",
     "suggestion": "`#[MapInputName(SnakeCaseMapper::class)]` on the class, then `SomeData::from($src)`.",
     "requires": {
@@ -148,6 +148,37 @@
                     "$e"
                   ]
                 ],
+                "e",
+                "$e.value.subject.name"
+              ]
+            ],
+            1
+          ],
+          [
+            "every",
+            "$items",
+            "e",
+            [
+              "and",
+              [
+                "=",
+                "$e.value.kind",
+                "access"
+              ],
+              [
+                "=",
+                "$e.value.subject.kind",
+                "reference"
+              ]
+            ]
+          ],
+          [
+            "=",
+            [
+              "distinctCount",
+              [
+                "map",
+                "$items",
                 "e",
                 "$e.value.subject.name"
               ]
