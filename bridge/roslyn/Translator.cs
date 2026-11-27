@@ -1080,7 +1080,7 @@ public sealed partial class ContractWriter
             RecursivePatternSyntax record => New("pattern", record)
                 .Fact("form", "record")
                 .Holds("constrainedType", record.Type is null ? null : TypeExpression(record.Type))
-                .HoldsAll("subpatterns", (record.PositionalPatternClause?.Subpatterns ?? default).Concat(record.PropertyPatternClause?.Subpatterns ?? default).Select(sub => Pattern(sub.Pattern)))
+                .HoldsAll("subpatterns", (record.PositionalPatternClause?.Subpatterns ?? default).Concat(record.PropertyPatternClause?.Subpatterns ?? default).Select(sub => Pattern(sub.Pattern).Holds("member", sub.ExpressionColon is { } tested ? Expression(tested.Expression) : null)))
                 .HoldsAll("bindings", record.Designation is null ? [] : Bound(record.Designation)),
             RelationalPatternSyntax relational => New("pattern", relational)
                 .Fact("form", "relational")

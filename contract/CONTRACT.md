@@ -354,7 +354,8 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
   only names a variable is that `binding`), `bindings[]` (what a rest or binding pattern names), `constrainedType?`,
   `value?`. Fact `form` (`wildcard`, `binding`, `value`, `type`, `sequence`, `mapping`, `record`, `or`, `and`,
   `not`, `relational`, `rest`), and `operator` on a relational pattern, the comparison it makes (`greater`, as in C#'s
-  `> 0`).
+  `> 0`). A record pattern's subpattern that tests a named property or field (C#'s `{ Listing: not null }`) holds
+  `member?`, the reference to what it tests, so a pattern reads as a check of that member.
 
 ### Markup (Vue templates)
 

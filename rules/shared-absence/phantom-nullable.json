@@ -164,6 +164,19 @@
               "unary"
             ]
           ]
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$x.role",
+            "member"
+          ],
+          [
+            "=",
+            "$x.parent.kind",
+            "pattern"
+          ]
         ]
       ]
     },
@@ -206,6 +219,42 @@
           "=",
           "$t.name",
           "mixed"
+        ]
+      ]
+    },
+    "testedByPattern": {
+      "args": [
+        "x",
+        "owner"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$x.kind",
+          "reference"
+        ],
+        [
+          "=",
+          "$x.role",
+          "member"
+        ],
+        [
+          "=",
+          "$x.parent.kind",
+          "pattern"
+        ],
+        [
+          "=",
+          [
+            "enclosing",
+            [
+              "declarationOf",
+              "$x"
+            ],
+            "type"
+          ],
+          "$owner"
         ]
       ]
     }
@@ -654,8 +703,16 @@
           [
             "and",
             [
-              "tree.selfField",
-              "$x"
+              "or",
+              [
+                "tree.selfField",
+                "$x"
+              ],
+              [
+                "testedByPattern",
+                "$x",
+                "$owner"
+              ]
             ],
             [
               "or",
