@@ -50,7 +50,7 @@ func init() {
 		"subtypes":          {operands: []valueType{anyValue}, gives: list, says: "every type declaration of the codebase that extends, implements or mixes in the type, at any depth"},
 		"isSubtype":         {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether the first type is the second or reaches it through what it extends, implements or mixes in; unknown past a type the codebase does not declare"},
 		"symbolOf":          {operands: []valueType{node}, gives: text, says: "the symbol a node is or names: its own symbol, what it refers to, or its call's target; unknown where none is resolved"},
-		"sameSymbol":        {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two nodes or symbols name the same declaration: for local names by the binding they reach, never by spelling"},
+		"sameSymbol":        {operands: []valueType{anyValue, anyValue}, gives: truth, says: "whether two nodes or symbols name the same declaration: for local names by the binding they reach or a declaration (a parameter, a declarator) introduces, never by spelling"},
 		"declarationsOf":    {operands: []valueType{anyValue}, gives: list, says: "every declaration of a symbol, or of what a node names: partial classes and overloads each once"},
 		"origin":            {operands: []valueType{anyValue}, gives: text, says: "where a node's declaration lies: project, library or unknown"},
 		"moduleOf":          {operands: []valueType{anyValue}, gives: text, says: "the module of a node, or of the declaration a symbol names: its namespace, package or folder; no value for a symbol the project does not declare"},
@@ -1016,6 +1016,9 @@ func bindingOf(site engine.Match) (int, bool) {
 	}
 	if linked := site.Node().Linked("binding"); len(linked) == 1 {
 		return linked[0], true
+	}
+	if declared := site.Child("binding"); declared.Exists() && declared.Node().Kind == "binding" {
+		return declared.Node().ID, true
 	}
 
 	return 0, false

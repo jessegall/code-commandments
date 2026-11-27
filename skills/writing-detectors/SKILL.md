@@ -283,7 +283,7 @@ judged.
 | `rowsOf` | text, value | list | the rows of one of the find's relations whose fields equal a record's: every row when no record is given |
 | `sameItems` | list, list | truth | whether two lists hold the same items, order and repeats aside |
 | `sameModule` | value, value | truth | whether two nodes or symbols lie in one module |
-| `sameSymbol` | value, value | truth | whether two nodes or symbols name the same declaration: for local names by the binding they reach, never by spelling |
+| `sameSymbol` | value, value | truth | whether two nodes or symbols name the same declaration: for local names by the binding they reach or a declaration (a parameter, a declarator) introduces, never by spelling |
 | `sameType` | value, value | truth | whether two types are the same by their shape, however each is spelled and wherever it came from |
 | `selfMember` | node | node | the member declaration a node reads or writes through the instance the method runs on; none when it reads none, unknown when the member is not resolved |
 | `siblings` | node | list | every node in the same role of the node's parent, the node too, in order; empty for no node, unknown under a parent the parser recovered from |

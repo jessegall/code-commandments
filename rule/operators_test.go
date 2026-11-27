@@ -162,6 +162,9 @@ func TestTheTreeOperatorsWalkAndCompareTheSampleTrees(t *testing.T) {
 		{"selectors", "python", `{"select":"if","as":"i","where":["not",["dominates",["first","$i.then.statements"],"$i.condition"]]}`, 1},
 		{"selectors", "python", `{"select":"function","as":"f","where":["=",["fingerprint","$f","renamed"],["fingerprint","$f","renamed"]]}`, 2},
 		{"selectors", "python", `{"select":"function","as":"f","where":["occurs","$f",["first",["filter",["descendants","$f","access"],"x",["=","$x.member.name","total"]]],"exact"]}`, 1},
+		{"selectors", "php", `{"select":"loop","as":"l","let":[["f",["enclosing","$l","function"]]],"having":["sameSymbol","$l.iterable",["last","$f.parameters"]]}`, 1},
+		{"selectors", "python", `{"select":"loop","as":"l","let":[["f",["enclosing","$l","function"]]],"having":["sameSymbol","$l.iterable",["last","$f.parameters"]]}`, 1},
+		{"selectors", "php", `{"select":"loop","as":"l","let":[["f",["enclosing","$l","function"]]],"having":["sameSymbol","$l.body",["last","$f.parameters"]]}`, 0},
 	} {
 		if got := found(t, each.sample, each.tree, each.find); got != each.wanted {
 			t.Errorf("%s/%s: %s found %d, where %d is right", each.sample, each.tree, each.find, got, each.wanted)
