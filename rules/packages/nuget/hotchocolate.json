@@ -1,0 +1,20 @@
+{
+  "package": "HotChocolate",
+  "ecosystem": "nuget",
+  "versions": ">=13",
+  "provenance": "HotChocolate's source generator binds the static methods of a class it marks as a schema type as that type's field resolvers, so the framework calls them however private they are",
+  "entries": [],
+  "exemptions": [
+    {
+      "attributes": [
+        "HotChocolate.Types.ObjectTypeAttribute",
+        "HotChocolate.Types.ExtendObjectTypeAttribute",
+        "HotChocolate.Types.QueryTypeAttribute",
+        "HotChocolate.Types.MutationTypeAttribute",
+        "HotChocolate.Types.SubscriptionTypeAttribute"
+      ],
+      "tag": "called-by-convention",
+      "why": "A schema type's static methods are its field resolvers, which the generated schema calls by convention."
+    }
+  ]
+}

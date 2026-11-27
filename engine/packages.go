@@ -239,6 +239,23 @@ func readManifests(folder string, versions map[string]map[string]string) {
 			}
 		}
 	}
+	if text, err := os.ReadFile(filepath.Join(folder, "Directory.Packages.props")); err == nil {
+		var central struct {
+			Groups []struct {
+				Pins []struct {
+					Include string `xml:"Include,attr"`
+					Version string `xml:"Version,attr"`
+				} `xml:"PackageVersion"`
+			} `xml:"ItemGroup"`
+		}
+		if xml.Unmarshal(text, &central) == nil {
+			for _, group := range central.Groups {
+				for _, pin := range group.Pins {
+					add(NuGet, pin.Include, pin.Version)
+				}
+			}
+		}
+	}
 	projects, _ := filepath.Glob(filepath.Join(folder, "*.csproj"))
 	for _, project := range projects {
 		text, err := os.ReadFile(project)

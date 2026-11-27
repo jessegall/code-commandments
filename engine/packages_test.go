@@ -90,6 +90,16 @@ func TestHasEffectOfAnEFCoreDeferredQueryAndAnExecutingOne(t *testing.T) {
 	}
 }
 
+func TestAPackageVersionPinnedCentrallyIsHeld(t *testing.T) {
+	pins := `<Project><ItemGroup><PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.4" /></ItemGroup></Project>`
+	calls := packaged(t, "csharp", "Directory.Packages.props", pins,
+		map[string]string{"symbol": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync", "type": "Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions", "name": "ToListAsync"},
+	)
+	if effect := calls[0].HasEffect("executes-query"); effect != engine.True {
+		t.Errorf("with EF Core pinned in Directory.Packages.props, ToListAsync executes %v", effect)
+	}
+}
+
 func TestPackageEffectIsUnknownWithoutALockFile(t *testing.T) {
 	calls := packaged(t, "php", "", "",
 		map[string]string{"symbol": `Illuminate\Database\Eloquent\Builder::get`, "type": `Illuminate\Database\Eloquent\Builder`, "name": "get"})

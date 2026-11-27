@@ -710,6 +710,30 @@
             "trait"
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "and",
+          [
+            "=",
+            "$m.kind",
+            "function"
+          ],
+          [
+            "proven",
+            [
+              "some",
+              "$owner.attributes",
+              "a",
+              [
+                "exemptedBy",
+                "called-by-convention",
+                "$a"
+              ]
+            ]
+          ]
+        ]
       ]
     ],
     "emit": "$m"
