@@ -88,11 +88,12 @@ public sealed partial class ContractWriter(IReadOnlyList<string> roots, IReadOnl
         var project = asked.Read();
         var readings = new Readings(project);
         var trees = project.Trees.ToDictionary(tree => tree.FilePath, StringComparer.Ordinal);
+        var realReads = asked.Reads.Select(read => (Read: read, Real: Real(read))).ToList();
 
         foreach (var file in asked.Files.Where(trees.ContainsKey))
         {
             var tree = trees[file];
-            var reads = asked.Reads.Where(read => read != file).Select(Real).ToList();
+            var reads = realReads.Where(read => read.Read != file).Select(read => read.Real).ToList();
             Line(output, json => WriteFile(json, readings, project, tree, project.Model(tree), reads));
             files++;
         }

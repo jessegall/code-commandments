@@ -96,25 +96,29 @@ public sealed class Workspace
 
         var readers = order.SelectMany(csproj => reach[csproj]).GroupBy(other => other).ToDictionary(group => group.Key, group => group.Count());
         var compilations = new Dictionary<string, Lazy<(List<SyntaxTree> Sources, CSharpCompilation Compilation)>>(StringComparer.Ordinal);
-        var reads = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var ownReads = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var packages = new Dictionary<string, Reach>(StringComparer.Ordinal);
+
+        Reach PackagesOf(string project) => packages.TryGetValue(project, out var found) ? found : packages[project] = References.Of(project);
 
         foreach (var csproj in order)
         {
             var files = owned.GetValueOrDefault(csproj) ?? [];
             var usings = GlobalUsings.Of(csproj, solution.GeneratedUsingsOf(csproj));
-            var own = References.Of(csproj);
+            var own = PackagesOf(csproj);
             var reached = reach[csproj].Where(compilations.ContainsKey).ToList();
-            reads[csproj] = [..Settings(csproj, solution), ..files, ..reach[csproj].SelectMany(other => reads[other])];
+            ownReads[csproj] = [..Settings(csproj, solution), ..files];
+            List<string> reads = [..ownReads[csproj], ..reach[csproj].SelectMany(other => ownReads[other])];
             compilations[csproj] = new(() =>
             {
                 var sources = files.Select(Parse).ToList();
                 var projects = reached.Select(other => compilations[other].Value.Compilation.ToMetadataReference());
-                var assemblies = References.Load(own, reach[csproj].Select(References.Of), loaded);
+                var assemblies = References.Load(own, reach[csproj].Select(PackagesOf), loaded);
 
                 return (sources, CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, CSharpSyntaxTree.ParseText(usings, Options)], [..assemblies, ..projects], Compiled));
             });
             var compiled = compilations[csproj];
-            WriteAsked(reads[csproj], files, () => compiled.Value, asked, solution.Projects[csproj].IsTestProject(), write);
+            WriteAsked(reads, files, () => compiled.Value, asked, solution.Projects[csproj].IsTestProject(), write);
 
             foreach (var other in reach[csproj].Where(readers.ContainsKey))
             {
