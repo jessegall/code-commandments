@@ -693,7 +693,7 @@ public sealed partial class ContractWriter
 
         private TreeNode Unsupported(SyntaxNode node, string construct) => New("unsupported", node)
             .Fact("construct", construct)
-            .HoldsAll("parts", node.ChildNodes().OfType<ExpressionSyntax>().Select(part => part is TypeSyntax type ? TypeExpression(type) : Expression(part)));
+            .HoldsAll("parts", node.ChildNodes().OfType<ExpressionSyntax>().Select(part => part is TypeSyntax type && IsTypeOrNamespace(part) ? TypeExpression(type) : Expression(part)));
 
         // Expressions -----------------------------------------------------------------------------------------------
 
@@ -729,6 +729,8 @@ public sealed partial class ContractWriter
             BaseExpressionSyntax parent => New("reference", parent).Fact("name", "base").Fact("form", "parent"),
             PredefinedTypeSyntax keyword => New("reference", keyword).Fact("name", keyword.Keyword.ValueText).Fact("form", "name"),
             QualifiedNameSyntax qualified => Access(qualified, qualified.Left, qualified.Right, "static", false),
+            MemberAccessExpressionSyntax access when IsPresenceTest(access) =>
+                Comparison(access, "not-identical", Expression(access.Expression), New("literal", access.Name).Fact("literalKind", "null")),
             MemberAccessExpressionSyntax access => Access(access, access.Expression, access.Name, IsTypeOrNamespace(access.Expression) ? "static" : "instance", false),
             ConditionalAccessExpressionSyntax conditional => Conditional(conditional),
             MemberBindingExpressionSyntax binding => New("access", binding)
@@ -810,6 +812,10 @@ public sealed partial class ContractWriter
 
         private bool IsTypeOrNamespace(ExpressionSyntax expression) =>
             expression is PredefinedTypeSyntax || model.GetSymbolInfo(expression).Symbol is INamedTypeSymbol or INamespaceSymbol;
+
+        /// <summary>Whether <paramref name="access"/> is <c>x.HasValue</c> on a <c>Nullable&lt;T&gt;</c>, which the compiler reads as <c>x != null</c>.</summary>
+        private bool IsPresenceTest(MemberAccessExpressionSyntax access) =>
+            model.GetSymbolInfo(access).Symbol is IPropertySymbol { Name: nameof(Nullable<int>.HasValue), ContainingType.OriginalDefinition.SpecialType: SpecialType.System_Nullable_T };
 
         /// <summary>A name read or written, and the declaration it names: a type, or a field, property or event of the solution.</summary>
         private TreeNode Reference(SyntaxNode name, string written)

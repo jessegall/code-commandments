@@ -144,6 +144,25 @@
             "$p.binding.name"
           ]
         ]
+      ],
+      [
+        "not",
+        [
+          "proven",
+          [
+            "=",
+            [
+              "get",
+              [
+                "enclosing",
+                "$p.parent",
+                "type"
+              ],
+              "form"
+            ],
+            "interface"
+          ]
+        ]
       ]
     ],
     "having": [
