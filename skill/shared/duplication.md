@@ -177,6 +177,37 @@ name = reflected.shortName()
 parent = reflected.parent()
 ```
 
+### repeated-reach
+
+The same member of another object is reached through at several sites: `request.headers.get(…)` written out once
+per value. Each copy hides what it reads behind how it reads it. Reach through once, in a method that names the
+value. When the object is yours, give it that method (`grant.isHolding()`, not `grant.status.isHolding()`); when it
+is not, wrap it in a reader, one small type that holds the object and has one method per value.
+
+```pseudo
+// Bad
+function of(request) {
+    call = LoaderInput.fromHeader(request.headers.get(LoaderInput.HEADER))
+    loader = declarations.loader(request.headers.get(LoaderCall.HEADER))   // ← reaches into the headers again
+    …
+}
+
+// Good
+class LoaderCall {
+    constructor(private headers)
+
+    static of(request) { return new LoaderCall(request.headers) }
+    loader() { return headers.get(LoaderCall.HEADER) }
+    input() { return LoaderInput.fromHeader(headers.get(LoaderInput.HEADER)) }
+}
+
+function of(request) {
+    call = LoaderCall.of(request)
+    loader = declarations.loader(call.loader())   // ← each value read by its name
+    …
+}
+```
+
 ### converted-argument
 
 Most callers convert a value the same way just to satisfy one parameter. The conversion belongs inside the

@@ -186,6 +186,37 @@ name = reflected.shortName()
 parent = reflected.parent()
 ```
 
+### repeated-reach
+
+The same member of another object is reached through at several sites: `request.headers.get(…)` written out once
+per value. Each copy hides what it reads behind how it reads it. Reach through once, in a method that names the
+value. When the object is yours, give it that method (`grant.isHolding()`, not `grant.status.isHolding()`); when it
+is not, wrap it in a reader, one small type that holds the object and has one method per value.
+
+```pseudo
+// Bad
+function of(request) {
+    call = LoaderInput.fromHeader(request.headers.get(LoaderInput.HEADER))
+    loader = declarations.loader(request.headers.get(LoaderCall.HEADER))   // ← reaches into the headers again
+    …
+}
+
+// Good
+class LoaderCall {
+    constructor(private headers)
+
+    static of(request) { return new LoaderCall(request.headers) }
+    loader() { return headers.get(LoaderCall.HEADER) }
+    input() { return LoaderInput.fromHeader(headers.get(LoaderInput.HEADER)) }
+}
+
+function of(request) {
+    call = LoaderCall.of(request)
+    loader = declarations.loader(call.loader())   // ← each value read by its name
+    …
+}
+```
+
 ### converted-argument
 
 Most callers convert a value the same way just to satisfy one parameter. The conversion belongs inside the
@@ -270,7 +301,7 @@ HANDLERS = implementationsOf(PaymentHandler)
 ## Commands
 
 - `{{binary}} judge --skill=shared/duplication` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `converted-argument`, `divergent-twin`, `duplicate-function`, `list-mirrors-folder`, `near-duplicate-function`, `repeated-folder-path`, `repeated-guard`, `repeated-named-call`, `repeated-static-factory`, `repeated-type-guard`, `unnamed-vocabulary-literal`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `converted-argument`, `divergent-twin`, `duplicate-function`, `list-mirrors-folder`, `near-duplicate-function`, `repeated-folder-path`, `repeated-guard`, `repeated-named-call`, `repeated-reach`, `repeated-static-factory`, `repeated-type-guard`, `unnamed-vocabulary-literal`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

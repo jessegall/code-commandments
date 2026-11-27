@@ -1,0 +1,122 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "repeated-reach",
+    "aliases": [
+      "RepeatedReach"
+    ],
+    "skill": "shared/duplication",
+    "description": "One member of another object is reached through (`$request->headers->get(\u2026)`) at more than one site, instead of a method that names each value it reads",
+    "rule": "Reach through another object's member once. When the object is yours, give it the method that answers; when it is not, wrap it in a reader, one small type with a named method per value.",
+    "suggestion": "Wrap what you reach into in a reader (`LoaderCall::of($request)`) with one method per value (`loader()`, `input()`), or give the object you own the method (`$grant->isHolding()`), and call that.",
+    "unpublished": true,
+    "reporting": {
+      "crossFile": false
+    }
+  },
+  "definitions": {
+    "reachesThrough": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$c.callee.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$c.callee.form",
+          "instance"
+        ],
+        [
+          "=",
+          "$c.callee.subject.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$c.callee.subject.form",
+          "instance"
+        ],
+        [
+          "not",
+          [
+            "isSelf",
+            "$c.callee.subject.subject"
+          ]
+        ],
+        [
+          "!=",
+          [
+            "get",
+            [
+              "consumer",
+              "$c"
+            ],
+            "use"
+          ],
+          "discarded"
+        ]
+      ]
+    }
+  },
+  "find": {
+    "from": "call",
+    "as": "c",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "not",
+            "$c.file.test"
+          ],
+          [
+            "reachesThrough",
+            "$c"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$c",
+          "key": [
+            "list",
+            "$c.file.fromProject",
+            [
+              "fingerprint",
+              "$c.callee.subject",
+              "exact"
+            ]
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "count",
+            "$rows"
+          ],
+          2
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}
