@@ -77,6 +77,23 @@ function archive(customer: Customer) { … }
 function archiveAll() { … }
 ```
 
+### constant-argument
+
+Every caller of one of your methods passes the same constant for one parameter. A value nobody varies is not a
+choice: the parameter only makes each caller repeat it. Name the method for the value, or drop the parameter.
+
+```pseudo
+// Bad
+period.label("Y-m-d")
+export.label("Y-m-d")
+window.label("Y-m-d")   // ← every caller passes the same format
+
+// Good
+function dateLabel() { return this.label("Y-m-d") }
+
+period.dateLabel()
+```
+
 ## In your language
 
 - **PHP, C#, TypeScript, Go.** Two methods. A `bool` that only adjusts one detail of a single behaviour is a named

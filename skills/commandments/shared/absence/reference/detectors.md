@@ -6,6 +6,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`blank-string-on-the-wire`** — A string sent over the wire that the frontend reads as absent when it is blank. — `blank-string-on-the-wire`
 - **`cancelled-coalesce`** — A fallback compared against the same value it falls back to (`(name ?? '') !== ''`, `(name or "") != ""`): missing and empty end up in one branch without saying so — `cancelled-coalesce`
 - **`capability-probe-hub`** — Several methods each ask the same field if it has a capability before using it — `capability-probe-hub`
+- **`checked-then-read`** — One lookup is asked twice: a key is tested (`has(k)`, `isset($a[k])`) and then read with the same key, instead of one read that answers with the absence handled — `checked-then-read`
 - **`coalesced-loop-subject`** — The loop header replaces a missing collection with an empty one — `coalesced-loop-subject`
 - **`conditional-array-spread`** — A spread branch supplies an empty collection as a placeholder — `conditional-array-spread`
 - **`csharp-null-forgiven`** — The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding — `csharp-null-forgiven`

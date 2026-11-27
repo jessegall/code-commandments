@@ -245,6 +245,24 @@ class ExportPreferences {
 }
 ```
 
+### checked-then-read
+
+A key is tested and then read again: `has(k)` before `get(k)`, `isset(a[k])` before `a[k]`. One lookup is asked
+twice, and the answer to the first can be out of date by the second. Ask once, in a read that says the value may be
+missing, and let the owner of the store give that answer.
+
+```pseudo
+// Bad
+header = request.headers.has(PROJECT) ? request.headers.get(PROJECT) : none   // ← asks the store twice
+
+// Good: the owner answers once, with the absence in its type
+class ProjectCall {
+    function project(): Option<string> { return Option.of(this.headers.get(PROJECT)) }
+}
+
+header = call.project()
+```
+
 ### blank-string-default
 
 A required text parameter defaults to `""`. A caller that forgets it gets a blank that travels on as if it were data.

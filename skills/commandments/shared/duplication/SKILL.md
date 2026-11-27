@@ -238,6 +238,46 @@ schedule(reminder.at)
 function schedule(at: Date) { … }
 ```
 
+### recast-result
+
+Most callers convert what one of your methods returns in the same way. The method answers in a type its callers do
+not want, so each of them fixes it. Convert once, where the value is made, and return the type they need.
+
+```pseudo
+// Bad
+function code(): string | null { return this.code }
+
+print("[" + string(tag.code()) + "]")
+sheet.add(upper(string(tag.code())))   // ← every caller converts the same result
+
+// Good
+function code(): string { return string(this.code) }
+
+print("[" + tag.code() + "]")
+sheet.add(upper(tag.code()))
+```
+
+### repeated-record-shape
+
+The same record is built by hand at several sites: one type is handed a keyed array of the same keys, and part of
+the values is the same every time. That shared part is a case of the type, written out again at each caller. Give
+the type a named constructor for each case and call it.
+
+```pseudo
+// Bad
+return Reply.from({ token: call.token, status: "unavailable", value: none })
+…
+return Reply.from({ token: call.token, status: "invalid", value: none })   // ← the same record, built again
+
+// Good
+class Reply {
+    static unavailable(call) { return Reply.from({ token: call.token, status: "unavailable", value: none }) }
+    static invalid(call) { return Reply.from({ token: call.token, status: "invalid", value: none }) }
+}
+
+return Reply.unavailable(call)
+```
+
 ### repeated-folder-path
 
 One folder spelled out at three or more sites. Rename the folder and you are searching strings. Put it in one
@@ -301,7 +341,7 @@ HANDLERS = implementationsOf(PaymentHandler)
 ## Commands
 
 - `{{binary}} judge --skill=shared/duplication` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `converted-argument`, `divergent-twin`, `duplicate-function`, `list-mirrors-folder`, `near-duplicate-function`, `repeated-folder-path`, `repeated-guard`, `repeated-named-call`, `repeated-reach`, `repeated-static-factory`, `repeated-type-guard`, `unnamed-vocabulary-literal`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `converted-argument`, `divergent-twin`, `duplicate-function`, `list-mirrors-folder`, `near-duplicate-function`, `recast-result`, `repeated-folder-path`, `repeated-guard`, `repeated-named-call`, `repeated-reach`, `repeated-record-shape`, `repeated-static-factory`, `repeated-type-guard`, `unnamed-vocabulary-literal`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

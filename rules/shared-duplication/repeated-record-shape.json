@@ -1,0 +1,247 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "repeated-record-shape",
+    "aliases": [
+      "RepeatedRecordShape"
+    ],
+    "skill": "shared/duplication",
+    "description": "One call is handed a keyed array of the same keys, with a part of the same values, at more than one site, instead of a named constructor on the type it fills",
+    "rule": "Build a record of one shape in one place: give the type it fills a named constructor for each case, and call that.",
+    "suggestion": "Add a named constructor for each case (`LoaderReplyData::unavailable($call)`) that writes the keys once, and replace each keyed array with it.",
+    "reporting": {
+      "crossFile": true
+    }
+  },
+  "definitions": {
+    "keyedRecord": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "and",
+        [
+          ">=",
+          [
+            "count",
+            "$v.entries"
+          ],
+          3
+        ],
+        [
+          "every",
+          "$v.entries",
+          "e",
+          [
+            "and",
+            [
+              "=",
+              "$e.key.kind",
+              "literal"
+            ],
+            [
+              "not",
+              [
+                "in",
+                "$e.expansion",
+                "positional",
+                "keyed"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "fillsProjectType": {
+      "args": [
+        "call"
+      ],
+      "expr": [
+        "and",
+        [
+          "=",
+          "$call.callee.kind",
+          "access"
+        ],
+        [
+          "=",
+          "$call.callee.form",
+          "static"
+        ],
+        [
+          "exists",
+          [
+            "typeDeclaration",
+            "$call.callee.subject.refers"
+          ]
+        ]
+      ]
+    },
+    "builtInsideItsType": {
+      "args": [
+        "call"
+      ],
+      "expr": [
+        "=",
+        [
+          "typeDeclaration",
+          "$call.callee.subject.refers"
+        ],
+        [
+          "enclosing",
+          "$call",
+          "type"
+        ]
+      ]
+    },
+    "sharesAValue": {
+      "args": [
+        "row",
+        "rows"
+      ],
+      "expr": [
+        "some",
+        [
+          "get",
+          "$row",
+          "pairs"
+        ],
+        "x",
+        [
+          ">=",
+          [
+            "count",
+            [
+              "filter",
+              "$rows",
+              "r",
+              [
+                "has",
+                [
+                  "get",
+                  "$r",
+                  "pairs"
+                ],
+                "$x"
+              ]
+            ]
+          ],
+          2
+        ]
+      ]
+    }
+  },
+  "find": {
+    "from": "collection",
+    "as": "v",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "not",
+            "$v.file.test"
+          ],
+          [
+            "=",
+            "$v.parent.kind",
+            "argument"
+          ],
+          [
+            "=",
+            "$v.parent.parent.kind",
+            "call"
+          ],
+          [
+            "keyedRecord",
+            "$v"
+          ],
+          [
+            "fillsProjectType",
+            "$v.parent.parent"
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "builtInsideItsType",
+                "$v.parent.parent"
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$v",
+          "key": [
+            "list",
+            [
+              "fingerprint",
+              "$v.parent.parent.callee",
+              "exact"
+            ],
+            [
+              "sort",
+              [
+                "map",
+                "$v.entries",
+                "e",
+                "$e.key.text"
+              ]
+            ]
+          ],
+          "pairs": [
+            "map",
+            "$v.entries",
+            "e",
+            [
+              "concat",
+              [
+                "text",
+                "$e.key.text"
+              ],
+              ":",
+              [
+                "fingerprint",
+                "$e.value",
+                "exact"
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          ">=",
+          [
+            "count",
+            "$rows"
+          ],
+          2
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "where": [
+          "sharesAValue",
+          "$row",
+          "$rows"
+        ]
+      },
+      {
+        "emit": "$row.anchor",
+        "group": "$key"
+      }
+    ]
+  }
+}

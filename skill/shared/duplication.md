@@ -229,6 +229,46 @@ schedule(reminder.at)
 function schedule(at: Date) { … }
 ```
 
+### recast-result
+
+Most callers convert what one of your methods returns in the same way. The method answers in a type its callers do
+not want, so each of them fixes it. Convert once, where the value is made, and return the type they need.
+
+```pseudo
+// Bad
+function code(): string | null { return this.code }
+
+print("[" + string(tag.code()) + "]")
+sheet.add(upper(string(tag.code())))   // ← every caller converts the same result
+
+// Good
+function code(): string { return string(this.code) }
+
+print("[" + tag.code() + "]")
+sheet.add(upper(tag.code()))
+```
+
+### repeated-record-shape
+
+The same record is built by hand at several sites: one type is handed a keyed array of the same keys, and part of
+the values is the same every time. That shared part is a case of the type, written out again at each caller. Give
+the type a named constructor for each case and call it.
+
+```pseudo
+// Bad
+return Reply.from({ token: call.token, status: "unavailable", value: none })
+…
+return Reply.from({ token: call.token, status: "invalid", value: none })   // ← the same record, built again
+
+// Good
+class Reply {
+    static unavailable(call) { return Reply.from({ token: call.token, status: "unavailable", value: none }) }
+    static invalid(call) { return Reply.from({ token: call.token, status: "invalid", value: none }) }
+}
+
+return Reply.unavailable(call)
+```
+
 ### repeated-folder-path
 
 One folder spelled out at three or more sites. Rename the folder and you are searching strings. Put it in one

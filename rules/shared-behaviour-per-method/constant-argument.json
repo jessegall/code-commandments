@@ -1,0 +1,229 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "constant-argument",
+    "aliases": [
+      "ConstantArgument"
+    ],
+    "skill": "shared/behaviour-per-method",
+    "description": "Every caller of one of the project's methods passes the same constant for one parameter, so the parameter is not a choice",
+    "rule": "A value every caller passes is not a parameter: name the method for it, or give the choice a name of its own.",
+    "suggestion": "Add a method named for the value (`dateLabel()` for `label('Y-m-d')`) and call it, or drop the parameter."
+  },
+  "definitions": {
+    "constantValue": {
+      "args": [
+        "v"
+      ],
+      "expr": [
+        "or",
+        [
+          "=",
+          "$v.kind",
+          "literal"
+        ],
+        [
+          "and",
+          [
+            "=",
+            "$v.kind",
+            "access"
+          ],
+          [
+            "=",
+            "$v.form",
+            "static"
+          ],
+          [
+            "=",
+            "$v.subject.kind",
+            "reference"
+          ]
+        ]
+      ]
+    }
+  },
+  "find": {
+    "from": "argument",
+    "as": "g",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "not",
+            "$g.file.test"
+          ],
+          [
+            "=",
+            "$g.parent.kind",
+            "call"
+          ],
+          [
+            "constantValue",
+            "$g.value"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "declared": [
+            "declarationOf",
+            "$g.parent"
+          ],
+          "at": [
+            "position",
+            "$g"
+          ],
+          "written": [
+            "fingerprint",
+            "$g.value",
+            "exact"
+          ]
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            "exists",
+            "$declared"
+          ],
+          [
+            "exists",
+            "$at"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "declared": "$declared",
+          "at": "$at",
+          "written": "$written",
+          "key": [
+            "concat",
+            "$declared.file.path",
+            "@",
+            [
+              "text",
+              "$declared.span.start"
+            ],
+            "#",
+            [
+              "text",
+              "$at"
+            ]
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              "$rows"
+            ],
+            3
+          ],
+          [
+            "=",
+            [
+              "count",
+              [
+                "distinct",
+                [
+                  "map",
+                  "$rows",
+                  "r",
+                  [
+                    "get",
+                    "$r",
+                    "written"
+                  ]
+                ]
+              ]
+            ],
+            1
+          ],
+          [
+            "=",
+            [
+              "count",
+              "$rows"
+            ],
+            [
+              "count",
+              [
+                "tree.callsOf",
+                [
+                  "get",
+                  [
+                    "first",
+                    "$rows"
+                  ],
+                  "declared"
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "project": {
+          "parameter": [
+            "at",
+            [
+              "get",
+              [
+                "get",
+                [
+                  "first",
+                  "$rows"
+                ],
+                "declared"
+              ],
+              "parameters"
+            ],
+            [
+              "get",
+              [
+                "first",
+                "$rows"
+              ],
+              "at"
+            ]
+          ]
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            "exists",
+            "$parameter"
+          ],
+          [
+            "not",
+            [
+              "in",
+              "$parameter.collects",
+              "rest",
+              "keywords"
+            ]
+          ]
+        ]
+      },
+      {
+        "emit": "$parameter"
+      }
+    ]
+  }
+}

@@ -254,6 +254,24 @@ class ExportPreferences {
 }
 ```
 
+### checked-then-read
+
+A key is tested and then read again: `has(k)` before `get(k)`, `isset(a[k])` before `a[k]`. One lookup is asked
+twice, and the answer to the first can be out of date by the second. Ask once, in a read that says the value may be
+missing, and let the owner of the store give that answer.
+
+```pseudo
+// Bad
+header = request.headers.has(PROJECT) ? request.headers.get(PROJECT) : none   // ← asks the store twice
+
+// Good: the owner answers once, with the absence in its type
+class ProjectCall {
+    function project(): Option<string> { return Option.of(this.headers.get(PROJECT)) }
+}
+
+header = call.project()
+```
+
 ### blank-string-default
 
 A required text parameter defaults to `""`. A caller that forgets it gets a blank that travels on as if it were data.
@@ -464,7 +482,7 @@ class Cart {
 ## Commands
 
 - `{{binary}} judge --skill=shared/absence` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `capability-probe-hub`, `coalesced-loop-subject`, `conditional-array-spread`, `csharp-null-forgiven`, `de-nulled-finder`, `defended-certain-field`, `erased-null-object`, `false-for-nothing`, `falsely-optional-field`, `manufactured-fake-fill`, `masked-invariant`, `match-default-returns-null`, `nullable-callback`, `nullable-registry-lookup`, `option-as-nullable`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `blank-string-on-the-wire`, `cancelled-coalesce`, `capability-probe-hub`, `checked-then-read`, `coalesced-loop-subject`, `conditional-array-spread`, `csharp-null-forgiven`, `de-nulled-finder`, `defended-certain-field`, `erased-null-object`, `false-for-nothing`, `falsely-optional-field`, `manufactured-fake-fill`, `masked-invariant`, `match-default-returns-null`, `nullable-callback`, `nullable-registry-lookup`, `option-as-nullable`, `phantom-nullable`, `placeholder-filled-data`, `raw-decoded-array-return`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference

@@ -73,6 +73,7 @@ final class RoundedRates
         return self::$rounded[$region];
     }
 
+    #[Sinful(CheckedThenRead::class)]
     #[Righteous(MutableStaticState::class)]
     public static function floor(string $region, float $rate): float
     {

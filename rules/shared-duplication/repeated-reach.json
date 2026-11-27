@@ -62,6 +62,291 @@
             "use"
           ],
           "discarded"
+        ],
+        [
+          "not",
+          [
+            "namedForwarder",
+            "$c"
+          ]
+        ],
+        [
+          "not",
+          [
+            "ownState",
+            "$c"
+          ]
+        ],
+        [
+          "not",
+          [
+            "heldLibraryClient",
+            "$c"
+          ]
+        ]
+      ]
+    },
+    "chainRoot": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "get",
+        [
+          "first",
+          [
+            "receiverChain",
+            "$c"
+          ]
+        ],
+        "node"
+      ]
+    },
+    "namedForwarder": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$c",
+            "function-like"
+          ]
+        ],
+        "f",
+        [
+          "and",
+          [
+            "exists",
+            "$f.name"
+          ],
+          [
+            "or",
+            [
+              "=",
+              "$f.body",
+              "$c"
+            ],
+            [
+              "=",
+              "$f.body",
+              "$c.parent"
+            ],
+            [
+              "and",
+              [
+                "=",
+                [
+                  "count",
+                  "$f.body.statements"
+                ],
+                1
+              ],
+              [
+                "or",
+                [
+                  "=",
+                  "$c.parent.kind",
+                  "return"
+                ],
+                [
+                  "=",
+                  "$c.parent.parent.kind",
+                  "return"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "ownState": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "proven",
+        [
+          "=",
+          [
+            "typeDeclaration",
+            [
+              "get",
+              [
+                "typeOf",
+                [
+                  "chainRoot",
+                  "$c"
+                ]
+              ],
+              "name"
+            ]
+          ],
+          [
+            "enclosing",
+            "$c",
+            "type"
+          ]
+        ]
+      ]
+    },
+    "heldLibraryClient": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "and",
+        [
+          "proven",
+          [
+            "libraryMember",
+            "$c"
+          ]
+        ],
+        [
+          "or",
+          [
+            "isSelf",
+            [
+              "chainRoot",
+              "$c"
+            ]
+          ],
+          [
+            "proven",
+            [
+              "not",
+              [
+                "handedIn",
+                "$c"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "rootType": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "case",
+        [
+          "proven",
+          [
+            "exists",
+            [
+              "get",
+              [
+                "typeOf",
+                "$c.callee.subject.subject"
+              ],
+              "name"
+            ]
+          ]
+        ],
+        {
+          "true": [
+            "get",
+            [
+              "typeOf",
+              "$c.callee.subject.subject"
+            ],
+            "name"
+          ]
+        },
+        ""
+      ]
+    },
+    "handedIn": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "list",
+          [
+            "enclosing",
+            "$c",
+            "function-like"
+          ]
+        ],
+        "f",
+        [
+          "and",
+          [
+            "!=",
+            [
+              "get",
+              "$f.effective",
+              "visibility"
+            ],
+            "private"
+          ],
+          [
+            "some",
+            "$f.parameters",
+            "p",
+            [
+              "sameSymbol",
+              [
+                "chainRoot",
+                "$c"
+              ],
+              "$p"
+            ]
+          ]
+        ]
+      ]
+    },
+    "libraryMember": {
+      "args": [
+        "c"
+      ],
+      "expr": [
+        "some",
+        [
+          "receiverChain",
+          "$c"
+        ],
+        "l",
+        [
+          "and",
+          [
+            "=",
+            [
+              "get",
+              "$l",
+              "node"
+            ],
+            "$c.callee.subject"
+          ],
+          [
+            "nonempty",
+            [
+              "get",
+              "$l",
+              "owner"
+            ]
+          ],
+          [
+            "not",
+            [
+              "exists",
+              [
+                "typeDeclaration",
+                [
+                  "get",
+                  "$l",
+                  "owner"
+                ]
+              ]
+            ]
+          ]
         ]
       ]
     }
@@ -93,6 +378,10 @@
               "fingerprint",
               "$c.callee.subject",
               "exact"
+            ],
+            [
+              "rootType",
+              "$c"
             ]
           ]
         }

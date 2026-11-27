@@ -894,6 +894,34 @@
             ],
             "detail": true
         },
+        "sin_checked-then-read": {
+            "title": "checked-then-read",
+            "help": "One lookup is asked twice: a key is tested (`has(k)`, `isset($a[k])`) and then read with the same key, instead of one read that answers with the absence handled",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_coalesced-loop-subject": {
             "title": "coalesced-loop-subject",
             "help": "The loop header replaces a missing collection with an empty one",
@@ -1348,6 +1376,34 @@
             "type": "flag",
             "default": "true",
             "group": "shared/absence",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_constant-argument": {
+            "title": "constant-argument",
+            "help": "Every caller of one of the project's methods passes the same constant for one parameter, so the parameter is not a choice",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/behaviour-per-method",
             "when": [
                 {
                     "language_php": true
@@ -2070,6 +2126,34 @@
             ],
             "detail": true
         },
+        "sin_recast-result": {
+            "title": "recast-result",
+            "help": "Most callers convert what one of the project's methods returns the same way, instead of the method returning that type",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/duplication",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
         "sin_repeated-folder-path": {
             "title": "repeated-folder-path",
             "help": "One folder is spelled out at three or more sites across separate scopes",
@@ -2129,6 +2213,34 @@
         "sin_repeated-named-call": {
             "title": "repeated-named-call",
             "help": "The same `with`-style method is called with the same named argument at 2+ sites, instead of a named helper on the type.",
+            "type": "flag",
+            "default": "true",
+            "group": "shared/duplication",
+            "when": [
+                {
+                    "language_php": true
+                },
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_py": true
+                },
+                {
+                    "language_cs": true
+                },
+                {
+                    "language_go": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_repeated-record-shape": {
+            "title": "repeated-record-shape",
+            "help": "One call is handed a keyed array of the same keys, with a part of the same values, at more than one site, instead of a named constructor on the type it fills",
             "type": "flag",
             "default": "true",
             "group": "shared/duplication",

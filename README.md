@@ -240,6 +240,7 @@ Every command explains itself with `--help`:
 | `commandments config` | Inspect and manage .commandments/config.json — what is configured, and what is actually running. |
 | `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
 | `commandments rule explain <file> [--line=N]` | Work on a rule of your own: see the tree it reads, try it on a path, prove it on the samples that mark it, and print the schema an editor checks it by. |
+| `commandments skills check` | Check the installed skills the binary reads loose. |
 | `commandments exemptions` | List the exemption tags — what a package registers to quiet a general rule on its own boundary types. |
 | `commandments info <sin\|detector>` | Explain one sin — what it flags, why it is a sin, how to fix it, and a worked example. |
 | `commandments trigger-eval` | Measure whether skill descriptions pull their own skill in — and stay out of their neighbours'. |
@@ -369,7 +370,7 @@ _27 skills. Full table in [README.skills.md](README.skills.md)._
 Every problem the tool finds, and the rule file that finds it:
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_175 sins across 27 skills. Full tables in [README.sins.md](README.sins.md)._
+_179 sins across 27 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## License

@@ -20,6 +20,7 @@ final class ReservedSkus
     /**
      * @return list<string>
      */
+    #[Sinful(CheckedThenRead::class)]
     #[Sinful(KeyedLookupEnvy::class)]
     public function forItem(CatalogItem $item): array
     {

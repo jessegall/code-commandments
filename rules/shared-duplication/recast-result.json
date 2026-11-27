@@ -1,0 +1,143 @@
+{
+  "$schema": "commandments:generic-rule/v2",
+  "engine": [
+    "php"
+  ],
+  "sin": {
+    "name": "recast-result",
+    "aliases": [
+      "RecastResult"
+    ],
+    "skill": "shared/duplication",
+    "description": "Most callers convert what one of the project's methods returns the same way, instead of the method returning that type",
+    "rule": "Convert a result once, where it is made: have the method return the type its callers need.",
+    "suggestion": "Move the conversion into the method (`return (string) $this->headers->get($name);`), declare that return type, and drop the casts at its callers."
+  },
+  "find": {
+    "from": "cast",
+    "as": "v",
+    "pipeline": [
+      {
+        "where": [
+          "and",
+          [
+            "not",
+            "$v.file.test"
+          ],
+          [
+            "=",
+            "$v.operand.kind",
+            "call"
+          ],
+          [
+            "exists",
+            "$v.targetType.name"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$v",
+          "declared": [
+            "declarationOf",
+            "$v.operand"
+          ],
+          "type": "$v.targetType.name"
+        }
+      },
+      {
+        "where": [
+          "and",
+          [
+            "exists",
+            "$declared"
+          ],
+          [
+            "=",
+            [
+              "origin",
+              [
+                "symbolOf",
+                "$declared"
+              ]
+            ],
+            "project"
+          ],
+          [
+            "exists",
+            "$declared.returnType"
+          ],
+          [
+            "!=",
+            "$declared.returnType.name",
+            "mixed"
+          ]
+        ]
+      },
+      {
+        "project": {
+          "anchor": "$anchor",
+          "declared": "$declared",
+          "key": [
+            "concat",
+            "$declared.file.path",
+            "@",
+            [
+              "text",
+              "$declared.span.start"
+            ],
+            "#",
+            "$type"
+          ]
+        }
+      },
+      {
+        "groupBy": "$key"
+      },
+      {
+        "having": [
+          "and",
+          [
+            ">=",
+            [
+              "count",
+              "$rows"
+            ],
+            2
+          ],
+          [
+            ">=",
+            [
+              "multiply",
+              [
+                "count",
+                "$rows"
+              ],
+              2
+            ],
+            [
+              "count",
+              [
+                "tree.callsOf",
+                [
+                  "get",
+                  [
+                    "first",
+                    "$rows"
+                  ],
+                  "declared"
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      {
+        "expand": "$rows"
+      },
+      {
+        "emit": "$row.anchor"
+      }
+    ]
+  }
+}

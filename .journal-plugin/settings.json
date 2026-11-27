@@ -552,6 +552,14 @@
         "help": "Several methods each ask the same field if it has a capability before using it"
     },
     {
+        "key": "sin_checked-then-read",
+        "title": "checked-then-read",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "One lookup is asked twice: a key is tested (`has(k)`, `isset($a[k])`) and then read with the same key, instead of one read that answers with the absence handled"
+    },
+    {
         "key": "sin_coalesced-loop-subject",
         "title": "coalesced-loop-subject",
         "type": "flag",
@@ -686,6 +694,14 @@
         "kind": "flag",
         "default": true,
         "help": "A function returns decoded data before checking and giving it a type"
+    },
+    {
+        "key": "sin_constant-argument",
+        "title": "constant-argument",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Every caller of one of the project's methods passes the same constant for one parameter, so the parameter is not a choice"
     },
     {
         "key": "sin_flag-argument",
@@ -888,6 +904,14 @@
         "help": "Two functions run the same code with different names or data"
     },
     {
+        "key": "sin_recast-result",
+        "title": "recast-result",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "Most callers convert what one of the project's methods returns the same way, instead of the method returning that type"
+    },
+    {
         "key": "sin_repeated-folder-path",
         "title": "repeated-folder-path",
         "type": "flag",
@@ -910,6 +934,14 @@
         "kind": "flag",
         "default": true,
         "help": "The same `with`-style method is called with the same named argument at 2+ sites, instead of a named helper on the type."
+    },
+    {
+        "key": "sin_repeated-record-shape",
+        "title": "repeated-record-shape",
+        "type": "flag",
+        "kind": "flag",
+        "default": true,
+        "help": "One call is handed a keyed array of the same keys, with a part of the same values, at more than one site, instead of a named constructor on the type it fills"
     },
     {
         "key": "sin_repeated-static-factory",

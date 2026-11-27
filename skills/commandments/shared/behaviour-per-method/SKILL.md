@@ -86,6 +86,23 @@ function archive(customer: Customer) { … }
 function archiveAll() { … }
 ```
 
+### constant-argument
+
+Every caller of one of your methods passes the same constant for one parameter. A value nobody varies is not a
+choice: the parameter only makes each caller repeat it. Name the method for the value, or drop the parameter.
+
+```pseudo
+// Bad
+period.label("Y-m-d")
+export.label("Y-m-d")
+window.label("Y-m-d")   // ← every caller passes the same format
+
+// Good
+function dateLabel() { return this.label("Y-m-d") }
+
+period.dateLabel()
+```
+
 ## In your language
 
 - **PHP, C#, TypeScript, Go.** Two methods. A `bool` that only adjusts one detail of a single behaviour is a named
@@ -96,7 +113,7 @@ function archiveAll() { … }
 ## Commands
 
 - `{{binary}} judge --skill=shared/behaviour-per-method` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `flag-argument`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constant-argument`, `flag-argument`.
 - `{{binary}} report --detector=<Detector> --reason="…" --best-design="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
