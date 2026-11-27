@@ -321,9 +321,7 @@ func (k *keptLines) outlineOf(file string) string {
 	if outline == contested {
 		return k.contestedOutline(file)
 	}
-	if !strings.HasPrefix(outline, "contents ") {
-		k.outlines.Store(file, outline)
-	}
+	k.outlines.Store(file, outline)
 
 	return outline
 }
