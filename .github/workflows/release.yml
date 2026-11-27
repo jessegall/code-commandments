@@ -89,11 +89,11 @@ jobs:
             exit 0
           fi
 
-          # Only the plugin's own files, the rule files the binary reads loose, the fixtures, test data and the
+          # Only the plugin's own files, the rule files and the lessons the binary reads loose, the fixtures, test data and the
           # generated READMEs may differ from the release whose binary this tag runs; anything else is what the binary
           # is built from, and then the tag must pin itself so it is built.
           changed="$(git diff --name-only "refs/tags/$pinned" "$RELEASE_COMMIT")"
-          built_from="$(grep -v -E '^(\.journal-plugin/|journal-plugin(\.[0-9]+)*\.json$|rules/.+\.json$|tests/|.+/testdata/|README[^/]*\.md$)' <<< "$changed" || true)"
+          built_from="$(grep -v -E '^(\.journal-plugin/|journal-plugin(\.[0-9]+)*\.json$|rules/.+\.json$|skills/.+\.(md|json)$|skill/.+\.md$|tests/|.+/testdata/|README[^/]*\.md$)' <<< "$changed" || true)"
           if [ -n "$built_from" ]; then
             echo "$RELEASE_VERSION runs the binary of $pinned, but these files it is built from changed since; pin $RELEASE_VERSION so it is built:" >&2
             echo "$built_from" >&2
@@ -106,10 +106,11 @@ jobs:
             exit 1
           fi
 
-          # The pinned binary reads this commit's rules folder loose: every rule must load in it, or the release
-          # would ship rules it cannot run.
+          # The pinned binary reads this commit's rules and skills folders loose: every rule and skill must load in it, or
+          # the release would ship what it cannot run.
           COMMANDMENTS_RELEASE="$pinned" sh .journal-plugin/fetch
           bin/commandments-release rule check
+          bin/commandments-release skills check
 
           echo "builds=false" >> "$GITHUB_OUTPUT"
           echo "$RELEASE_VERSION changes only the plugin's files and runs the binary of $pinned, so nothing is built" >&2

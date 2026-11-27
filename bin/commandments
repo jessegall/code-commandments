@@ -224,9 +224,11 @@ function remember(string $binary): void
 
 $binary = binary();
 remember($binary);
-// The binary reads this version's rules loose, so a release that changes only rules runs on the binary it has.
-if (! getenv('COMMANDMENTS_SHIPPED_RULES')) {
-    putenv('COMMANDMENTS_SHIPPED_RULES=' . dirname(__DIR__) . '/rules');
+// The binary reads this version's rules and skills loose, so a release that changes only them runs on the binary it has.
+foreach (['COMMANDMENTS_SHIPPED_RULES' => 'rules', 'COMMANDMENTS_SHIPPED_SKILLS' => 'skills'] as $variable => $folder) {
+    if (! getenv($variable)) {
+        putenv($variable . '=' . dirname(__DIR__) . '/' . $folder);
+    }
 }
 $process = proc_open([$binary, ...array_slice($argv, 1)], [STDIN, STDOUT, STDERR], $pipes);
 

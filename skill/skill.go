@@ -145,11 +145,24 @@ func Slugged(slug string) (Skill, bool) {
 }
 
 func (d Definition) Opening() string {
+	return OpeningOf(d.Body)
+}
+
+func (d Definition) Principle() string {
+	return PrincipleOf(d.Body)
+}
+
+func OpeningOf(lesson string) string {
 	var said []string
-	for _, line := range strings.Split(d.Body, "\n") {
+	for _, line := range strings.Split(lesson, "\n") {
 		sentence, quoted := strings.CutPrefix(line, "> ")
-		if !quoted || strings.HasPrefix(sentence, "Read this") {
-			break
+		switch {
+		case quoted && strings.HasPrefix(sentence, "🔱"):
+			continue
+		case !quoted && len(said) == 0:
+			continue
+		case !quoted || strings.HasPrefix(sentence, "Read this"):
+			return strings.Join(said, " ")
 		}
 		said = append(said, sentence)
 	}
@@ -157,8 +170,8 @@ func (d Definition) Opening() string {
 	return strings.Join(said, " ")
 }
 
-func (d Definition) Principle() string {
-	_, after, found := strings.Cut(d.Body, "## The principle\n")
+func PrincipleOf(lesson string) string {
+	_, after, found := strings.Cut(lesson, "## The principle\n")
 	if !found {
 		return ""
 	}

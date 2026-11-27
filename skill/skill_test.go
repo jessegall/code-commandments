@@ -29,3 +29,14 @@ func TestASlugNamesItsSkillUnderTheEngineItWasPublishedUnder(t *testing.T) {
 		t.Error("a former engine name does not make up a subject that is not there")
 	}
 }
+
+func TestTheOpeningReadsTheSameFromARenderedLessonAsFromItsBody(t *testing.T) {
+	body := "> One home for one piece of knowledge.\n> Second line.\n> Read this before you paste.\n\n## The principle\nWrite it once.\n\n## The sins\n"
+	rendered := "---\nname: commandments-shared-x\ndescription: \"x\"\n---\n\n# X\n\n> 🔱 **Load `fix-at-the-source` first.** The rule above all.\n\n" + body
+	if skill.OpeningOf(rendered) != skill.OpeningOf(body) || skill.OpeningOf(body) != "One home for one piece of knowledge. Second line." {
+		t.Errorf("opening from the rendered lesson %q, from its body %q", skill.OpeningOf(rendered), skill.OpeningOf(body))
+	}
+	if skill.PrincipleOf(rendered) != "Write it once." {
+		t.Errorf("principle from the rendered lesson %q", skill.PrincipleOf(rendered))
+	}
+}

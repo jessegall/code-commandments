@@ -4,6 +4,7 @@ package commands
 import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/curriculum"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/exemptions"
 	"github.com/jessegall/code-commandments/cli/freeze"
@@ -54,6 +55,7 @@ func Kernel(version string) *cli.Kernel {
 		config.Command{Version: version},
 		layers.Command{},
 		rules.Command{},
+		curriculum.Command{},
 		exemptions.Command{},
 		info.Command{Scaffoldable: scaffold.Scaffoldable()},
 		triggers.Command{},

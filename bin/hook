@@ -7,6 +7,7 @@ here=$(dirname "$0")
 if [ -z "$COMMANDMENTS_GO_BINARY$COMMANDMENTS_RELEASE" ] && [ -r "$here/.binary" ]; then
     binary=$(cat "$here/.binary")
     export COMMANDMENTS_SHIPPED_RULES="${COMMANDMENTS_SHIPPED_RULES:-$here/../rules}"
+    export COMMANDMENTS_SHIPPED_SKILLS="${COMMANDMENTS_SHIPPED_SKILLS:-$here/../skills}"
     [ -x "$binary" ] && exec "$binary" "$@"
 fi
 

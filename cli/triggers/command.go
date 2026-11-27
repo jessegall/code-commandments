@@ -4,6 +4,7 @@ package triggers
 import (
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"math"
 	"os/exec"
 	"slices"
@@ -93,7 +94,7 @@ func selected(query string) ([]set, error) {
 			continue
 		}
 
-		raw, err := skills.Files.ReadFile("commandments/" + definition.Slug + "/evals/triggers.json")
+		raw, err := fs.ReadFile(skills.Files, "commandments/" + definition.Slug + "/evals/triggers.json")
 		if err != nil {
 			continue
 		}

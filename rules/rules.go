@@ -16,6 +16,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/folders"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/skill"
@@ -44,23 +45,9 @@ func overrideFolder() string {
 	return filepath.Join(filepath.Dir(running), "rules")
 }
 
-// installedFolder is the installed version's rules folder, read loose so a release that changes only rules runs on the
-// binary it already has: the folder COMMANDMENTS_SHIPPED_RULES names, else the package's rules folder above the binary.
-func installedFolder() string {
-	if named := os.Getenv("COMMANDMENTS_SHIPPED_RULES"); named != "" {
-		return named
-	}
-	running, err := os.Executable()
-	if err != nil {
-		return ""
-	}
-
-	return filepath.Join(filepath.Dir(running), "..", "rules")
-}
-
 // shipped is the catalogue as it is read: the installed version's rules folder whole, or the embedded files where there
 // is none, each replaced by a file at the same path in the override folder, and every further file there added.
-var shipped = catalogue(installedFolder(), overrideFolder())
+var shipped = catalogue(folders.Installed("COMMANDMENTS_SHIPPED_RULES", "rules"), overrideFolder())
 
 func catalogue(installed, override string) fs.FS {
 	files := fstest.MapFS{}

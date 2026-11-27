@@ -95,9 +95,10 @@ func (c Command) describe(detector rule.Detector, full bool, console cli.Console
 	}
 	paragraph(console, sin.Description)
 
-	why := teaching.Opening()
+	lesson := shippedLesson(teaching)
+	why := skill.OpeningOf(lesson)
 	if full {
-		why += "\n\n" + teaching.Principle()
+		why += "\n\n" + skill.PrincipleOf(lesson)
 	}
 
 	heading(console, "Why it is a sin")
@@ -157,6 +158,14 @@ func reportedHere(names []string) []reported.Row {
 	}
 
 	return mine
+}
+
+func shippedLesson(teaching skill.Definition) string {
+	if raw, err := fs.ReadFile(skills.Files, "commandments/"+teaching.Slug+"/SKILL.md"); err == nil {
+		return string(raw)
+	}
+
+	return teaching.Body
 }
 
 func published(teaching skill.Definition) string {
