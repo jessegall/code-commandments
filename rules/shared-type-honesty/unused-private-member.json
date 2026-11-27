@@ -372,6 +372,25 @@
               "exists",
               "$m.receiver"
             ]
+          ],
+          [
+            "none",
+            "$m.modifiers",
+            "x",
+            [
+              "=",
+              "$x",
+              "partial"
+            ]
+          ],
+          [
+            "not",
+            [
+              "in",
+              "$m.form",
+              "get",
+              "set"
+            ]
           ]
         ],
         "declarator": [

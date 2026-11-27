@@ -442,7 +442,41 @@ public sealed partial class ContractWriter
                 }))
                 .HoldsAll("parameters", parameters?.Parameters.Select(Parameter) ?? [])
                 .Holds("returnType", returnType is null ? null : TypeExpression(returnType))
-                .Holds("body", body is not null ? Block(body) : arrow is { Expression.IsMissing: false } ? Expression(arrow.Expression) : null);
+                .Holds("body", FunctionBody(node, body, arrow));
+        }
+
+        private TreeNode? FunctionBody(SyntaxNode node, BlockSyntax? body, ArrowExpressionClauseSyntax? arrow) => (node, body, arrow) switch
+        {
+            (ConstructorDeclarationSyntax { Initializer: { } initializer }, _, _) => ConstructorBody(initializer, body, arrow),
+            (_, not null, _) => Block(body),
+            (_, _, { Expression.IsMissing: false }) => Expression(arrow.Expression),
+            _ => null,
+        };
+
+        /// <summary>
+        /// A constructor's body with its <c>: base(...)</c> or <c>: this(...)</c> call as the first statement, so what that
+        /// call passes is read like any other call's arguments.
+        /// </summary>
+        private TreeNode ConstructorBody(ConstructorInitializerSyntax initializer, BlockSyntax? body, ArrowExpressionClauseSyntax? arrow)
+        {
+            var keyword = initializer.ThisOrBaseKeyword;
+            var call = Target(New("call", initializer), initializer)
+                .Holds("callee", New("reference", keyword).Fact("name", keyword.ValueText).Fact("form", keyword.IsKind(SyntaxKind.BaseKeyword) ? "parent" : "self"))
+                .HoldsAll("arguments", initializer.ArgumentList.Arguments.Select(Argument));
+            List<TreeNode> statements = [New("expression-statement", initializer).Holds("expression", call)];
+
+            if (body is not null)
+            {
+                statements.AddRange(body.Statements.Select(Statement));
+            }
+            else if (arrow is { Expression.IsMissing: false })
+            {
+                statements.Add(New("expression-statement", arrow).Holds("expression", Expression(arrow.Expression)));
+            }
+
+            SyntaxNode last = (SyntaxNode?)body ?? (SyntaxNode?)arrow ?? initializer;
+
+            return New("block", TextSpan.FromBounds(initializer.SpanStart, last.Span.End)).HoldsAll("statements", statements);
         }
 
         /// <summary>
@@ -780,7 +814,8 @@ public sealed partial class ContractWriter
         /// <summary>A name read or written, and the declaration it names: a type, or a field, property or event of the solution.</summary>
         private TreeNode Reference(SyntaxNode name, string written)
         {
-            var named = model.GetSymbolInfo(name).Symbol;
+            var info = model.GetSymbolInfo(name);
+            var named = info.Symbol ?? (info.CandidateReason is CandidateReason.MemberGroup ? info.CandidateSymbols.FirstOrDefault() : null);
             var refers = named switch
             {
                 INamedTypeSymbol type => Remembered(type),
