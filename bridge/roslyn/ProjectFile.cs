@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
 
 namespace CodeCommandments.Bridge;
 
@@ -54,6 +55,19 @@ public sealed class ProjectFile
             .SelectMany(document => document.Descendants().Where(element => element.Name.LocalName == "ImplicitUsings"))
             .Select(element => element.Value.Trim())
             .FirstOrDefault() is "enable" or "true";
+
+    /// <summary>The nullable context the project compiles in, as its <c>Nullable</c> property sets it; disabled where it sets none, as the SDK leaves it.</summary>
+    public NullableContextOptions Nullable() =>
+        documents
+            .SelectMany(document => document.Descendants().Where(element => element.Name.LocalName == "Nullable"))
+            .Select(element => element.Value.Trim().ToLowerInvariant())
+            .FirstOrDefault() switch
+        {
+            "enable" or "true" => NullableContextOptions.Enable,
+            "warnings" => NullableContextOptions.Warnings,
+            "annotations" => NullableContextOptions.Annotations,
+            _ => NullableContextOptions.Disable,
+        };
 
     /// <summary>
     /// Is this a test project — <c>IsTestProject</c> set, as the test SDK sets it, or the test SDK

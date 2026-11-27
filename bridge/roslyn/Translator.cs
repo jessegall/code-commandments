@@ -565,6 +565,17 @@ public sealed partial class ContractWriter
 
         private TreeNode Block(BlockSyntax block) => New("block", block).HoldsAll("statements", block.Statements.Select(Statement));
 
+        /// <summary>A branch or a body as a block: one written without braces is a block of its one statement, as every other language writes it.</summary>
+        private TreeNode Branch(StatementSyntax statement) => statement is BlockSyntax block ? Block(block) : New("block", statement).HoldsAll("statements", [Statement(statement)]);
+
+        /// <summary>An else: an else-if as the if it is, any other as a block.</summary>
+        private TreeNode? Else(ElseClauseSyntax? clause) => clause?.Statement switch
+        {
+            null => null,
+            IfStatementSyntax chained => Statement(chained),
+            { } other => Branch(other),
+        };
+
         private TreeNode Statement(StatementSyntax statement) => statement switch
         {
             BlockSyntax block => Block(block),
@@ -572,23 +583,23 @@ public sealed partial class ContractWriter
             ExpressionStatementSyntax expression => New("expression-statement", expression).Holds("expression", Expression(expression.Expression)),
             IfStatementSyntax @if => New("if", @if)
                 .Holds("condition", Expression(@if.Condition))
-                .Holds("then", Statement(@if.Statement))
-                .Holds("else", @if.Else is null ? null : Statement(@if.Else.Statement)),
+                .Holds("then", Branch(@if.Statement))
+                .Holds("else", Else(@if.Else)),
             ForStatementSyntax loop => For(loop),
             ForEachStatementSyntax loop => New("loop", loop)
                 .Fact("form", "for-each")
                 .Fact("async", loop.AwaitKeyword.IsKind(SyntaxKind.AwaitKeyword))
                 .HoldsAll("bindings", [Binding(loop.Identifier)])
                 .Holds("iterable", Expression(loop.Expression))
-                .Holds("body", Statement(loop.Statement)),
+                .Holds("body", Branch(loop.Statement)),
             ForEachVariableStatementSyntax loop => New("loop", loop)
                 .Fact("form", "for-each")
                 .Fact("async", loop.AwaitKeyword.IsKind(SyntaxKind.AwaitKeyword))
                 .HoldsAll("bindings", Bound(loop.Variable))
                 .Holds("iterable", Expression(loop.Expression))
-                .Holds("body", Statement(loop.Statement)),
-            WhileStatementSyntax loop => New("loop", loop).Fact("form", "while").Holds("condition", Expression(loop.Condition)).Holds("body", Statement(loop.Statement)),
-            DoStatementSyntax loop => New("loop", loop).Fact("form", "do-while").Holds("body", Statement(loop.Statement)).Holds("condition", Expression(loop.Condition)),
+                .Holds("body", Branch(loop.Statement)),
+            WhileStatementSyntax loop => New("loop", loop).Fact("form", "while").Holds("condition", Expression(loop.Condition)).Holds("body", Branch(loop.Statement)),
+            DoStatementSyntax loop => New("loop", loop).Fact("form", "do-while").Holds("body", Branch(loop.Statement)).Holds("condition", Expression(loop.Condition)),
             ReturnStatementSyntax @return => New("return", @return).HoldsAll("values", @return.Expression is null ? [] : [Expression(@return.Expression)]),
             ThrowStatementSyntax @throw => New("throw", @throw).Holds("value", @throw.Expression is null ? null : Expression(@throw.Expression)),
             BreakStatementSyntax @break => New("break", @break),
@@ -602,8 +613,8 @@ public sealed partial class ContractWriter
                 .Fact("form", "using")
                 .Fact("async", @using.AwaitKeyword.IsKind(SyntaxKind.AwaitKeyword))
                 .HoldsAll("resources", @using.Declaration is not null ? @using.Declaration.Variables.Select(Declarator) : @using.Expression is not null ? [Expression(@using.Expression)] : [])
-                .Holds("body", Statement(@using.Statement)),
-            LockStatementSyntax @lock => New("resource-scope", @lock).Fact("form", "lock").HoldsAll("resources", [Expression(@lock.Expression)]).Holds("body", Statement(@lock.Statement)),
+                .Holds("body", Branch(@using.Statement)),
+            LockStatementSyntax @lock => New("resource-scope", @lock).Fact("form", "lock").HoldsAll("resources", [Expression(@lock.Expression)]).Holds("body", Branch(@lock.Statement)),
             LocalFunctionStatementSyntax local => Function(local, "local", local.Identifier.ValueText, local.TypeParameterList, local.ParameterList, local.ReturnType, local.Body, local.ExpressionBody, local.Modifiers, local.AttributeLists),
             YieldStatementSyntax { RawKind: (int)SyntaxKind.YieldBreakStatement } yield => New("return", yield),
             YieldStatementSyntax yield => New("expression-statement", yield).Holds("expression", New("yield", TextSpan.FromBounds(yield.YieldKeyword.SpanStart, yield.Expression!.Span.End)).Holds("value", Expression(yield.Expression))),
@@ -636,7 +647,7 @@ public sealed partial class ContractWriter
                 .HoldsAll("initializer", initializer)
                 .Holds("condition", loop.Condition is null ? null : Expression(loop.Condition))
                 .HoldsAll("steps", loop.Incrementors.Select(Expression))
-                .Holds("body", Statement(loop.Statement));
+                .Holds("body", Branch(loop.Statement));
         }
 
         private TreeNode Handler(CatchClauseSyntax handler)

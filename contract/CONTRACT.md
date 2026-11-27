@@ -225,7 +225,9 @@ ordered list of zero or more), its links, its facts, and when its parts are eval
 - **`no-op`**: an empty statement: `;`, Python `pass`, an empty Go statement.
 - **`if`**: `initializer?` (Go's `if x := f(); x > 0`, evaluated once, first), `condition`, `then`, `else?`.
   An `else` that is itself an `if` is an else-if (`else if`, `elif`, `elseif`); an `else` that is a `block`
-  holding an `if` is an if nested in an else. Structure alone tells the two apart.
+  holding an `if` is an if nested in an else. Structure alone tells the two apart. A `then`, an `else` that is not
+  an else-if, and a loop's or a resource scope's `body` are always a `block`: one written without braces is a block
+  of its one statement.
 - **`dispatch`**: a switch, match or type switch. `subject?` (Go's `switch {}` has none; a type switch's
   subject is a `type-test`), `arms[]`. Facts `form` (`switch`, `match`, `type-switch`), `exhaustive` (only
   where the compiler proves it).

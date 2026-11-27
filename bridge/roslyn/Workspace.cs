@@ -115,7 +115,7 @@ public sealed class Workspace
                 var projects = reached.Select(other => compilations[other].Value.Compilation.ToMetadataReference());
                 var assemblies = References.Load(own, reach[csproj].Select(PackagesOf), loaded);
 
-                return (sources, CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, CSharpSyntaxTree.ParseText(usings, Options)], [..assemblies, ..projects], Compiled));
+                return (sources, CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, CSharpSyntaxTree.ParseText(usings, Options)], [..assemblies, ..projects], Compiled.WithNullableContextOptions(solution.Projects[csproj].Nullable())));
             });
             var compiled = compilations[csproj];
             WriteAsked(reads, files, () => compiled.Value, asked, solution.Projects[csproj].IsTestProject(), write);
@@ -223,7 +223,7 @@ public sealed class Workspace
 
         compiling.Remove(csproj);
 
-        return compilations[csproj] = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, usings], [..assemblies, ..projects], Compiled);
+        return compilations[csproj] = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, usings], [..assemblies, ..projects], Compiled.WithNullableContextOptions(solution.Projects[csproj].Nullable()));
     }
 
     /// <summary>Every project <paramref name="csproj"/> reaches through its project references, however deep, bar one still being compiled.</summary>
