@@ -65,7 +65,7 @@ _179 sins across 27 skills._
 | `manual-input-cast` | PHP | A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once |
 | `nested-type-missing-typescript` | PHP | A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it) |
 | `new-data-object` | PHP | `new <Data subclass>` instead of `::from()` / a `fromX()` factory |
-| `non-final-data` | PHP | Data class not `final` / props not `readonly` promoted |
+| `non-final-data` | PHP | Data class not `final`, or a promoted property not `readonly` on a Data object others can hold |
 | `null-to-optional-map` | PHP | A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T\|Optional` slot needs) |
 | `nullable-wire-object` | PHP | A nested Data or pure enum on a `#[TypeScript]` Data is typed `T \| null` — it ships `null` on the wire where `T \| Optional` would OMIT it (what the frontend's `x?.` reads for "absent") |
 | `prefer-optional-create` | PHP | A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer |

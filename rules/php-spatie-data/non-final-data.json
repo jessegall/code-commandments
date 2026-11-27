@@ -10,8 +10,8 @@
       "NonFinalData"
     ],
     "skill": "php/spatie-data",
-    "description": "Data class not `final` / props not `readonly` promoted",
-    "rule": "Seal a Data class `final` with `readonly` promoted props — it's a leaf, not a base.",
+    "description": "Data class not `final`, or a promoted property not `readonly` on a Data object others can hold",
+    "rule": "Seal a Data class `final` with `readonly` promoted props; only a Data object held by one private property, never handed out, may change in place.",
     "requires": {
       "name": "spatie/laravel-data",
       "ecosystem": "composer"
@@ -30,16 +30,33 @@
       [
         "nonempty",
         "$t.name"
-      ],
+      ]
+    ],
+    "let": [
       [
-        "none",
-        "$t.modifiers",
-        "m",
+        "mutableSlots",
         [
-          "in",
-          "$m",
-          "final",
-          "abstract"
+          "filter",
+          [
+            "spatie.slotsOf",
+            "$t"
+          ],
+          "s",
+          [
+            "and",
+            [
+              "=",
+              "$s.kind",
+              "parameter"
+            ],
+            [
+              "not",
+              [
+                "proven",
+                "$s.effective.readonly"
+              ]
+            ]
+          ]
         ]
       ]
     ],
@@ -50,16 +67,47 @@
         "$t"
       ],
       [
-        "none",
+        "or",
         [
-          "referrers",
-          "$t"
+          "and",
+          [
+            "none",
+            "$t.modifiers",
+            "m",
+            [
+              "in",
+              "$m",
+              "final",
+              "abstract"
+            ]
+          ],
+          [
+            "none",
+            [
+              "referrers",
+              "$t"
+            ],
+            "r",
+            [
+              "=",
+              "$r.role",
+              "bases"
+            ]
+          ]
         ],
-        "r",
         [
-          "=",
-          "$r.role",
-          "bases"
+          "and",
+          [
+            "nonempty",
+            "$mutableSlots"
+          ],
+          [
+            "not",
+            [
+              "tree.heldPrivatelyOnly",
+              "$t"
+            ]
+          ]
         ]
       ]
     ],

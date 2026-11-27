@@ -713,6 +713,108 @@
         },
         null
       ]
+    },
+    "typeHolders": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "filter",
+        [
+          "referrers",
+          "$t"
+        ],
+        "u",
+        [
+          "and",
+          [
+            "=",
+            "$u.kind",
+            "type-expression"
+          ],
+          [
+            "not",
+            [
+              "proven",
+              [
+                "=",
+                [
+                  "enclosing",
+                  "$u",
+                  "type"
+                ],
+                "$t"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "heldPrivatelyOnly": {
+      "args": [
+        "t"
+      ],
+      "expr": [
+        "and",
+        [
+          ">=",
+          [
+            "count",
+            [
+              "tree.typeHolders",
+              "$t"
+            ]
+          ],
+          1
+        ],
+        [
+          "every",
+          [
+            "tree.typeHolders",
+            "$t"
+          ],
+          "u",
+          [
+            "and",
+            [
+              "=",
+              "$u.role",
+              "declaredType"
+            ],
+            [
+              "=",
+              "$u.parent.kind",
+              "field"
+            ],
+            [
+              "=",
+              "$u.parent.effective.visibility",
+              "private"
+            ],
+            [
+              "every",
+              [
+                "referrers",
+                "$u.parent"
+              ],
+              "r",
+              [
+                "in",
+                [
+                  "case",
+                  "$r.kind",
+                  {
+                    "access": "$r.role"
+                  },
+                  "$r.parent.role"
+                ],
+                "subject",
+                "targets"
+              ]
+            ]
+          ]
+        ]
+      ]
     }
   }
 }

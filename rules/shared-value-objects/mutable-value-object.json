@@ -596,6 +596,13 @@
           ]
         ],
         0
+      ],
+      [
+        "not",
+        [
+          "tree.heldPrivatelyOnly",
+          "$owner"
+        ]
       ]
     ],
     "emit": "$f"

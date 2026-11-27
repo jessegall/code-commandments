@@ -445,7 +445,7 @@
         "type": "flag",
         "kind": "flag",
         "default": true,
-        "help": "Data class not `final` / props not `readonly` promoted"
+        "help": "Data class not `final`, or a promoted property not `readonly` on a Data object others can hold"
     },
     {
         "key": "sin_null-to-optional-map",

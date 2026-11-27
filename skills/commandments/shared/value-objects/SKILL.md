@@ -174,6 +174,9 @@ class Shift {
 A value type that writes its own field after construction. Two holders of what should be the same value can now end
 up different, and neither knows. Make the type immutable and derive a new one to change it.
 
+A value with one owner is the exception: when its only holder is one private field, never returned, passed on or
+assigned elsewhere, no one else can see it change, so it may change itself in place.
+
 ```pseudo
 // Bad
 class Money {

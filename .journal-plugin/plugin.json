@@ -654,7 +654,7 @@
         },
         "sin_non-final-data": {
             "title": "non-final-data",
-            "help": "Data class not `final` / props not `readonly` promoted",
+            "help": "Data class not `final`, or a promoted property not `readonly` on a Data object others can hold",
             "type": "flag",
             "default": "true",
             "group": "php/spatie-data",
